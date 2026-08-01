@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ZONES_TO_WIN } from '../../src/sim/territory.ts';
 import { SIM_DT } from '../../src/core/clock.ts';
 import {
   ADAPTATIONS,
@@ -193,9 +194,17 @@ describe('operations advance on achievement, never on a clock', () => {
     stepUntil(world, (w) => w.operation >= 4, 200);
 
     expect(world.operation, 'the last gate closed, so the operation advanced').toBe(4);
-    expect(world.finalResponse, 'arriving is what summons the response').toBe(true);
-    expect(world.events.some((e) => e.t === 'finalResponse')).toBe(true);
+    // Arriving at the final operation must NOT summon the response. The colony has to take the
+    // kitchen first — otherwise the player is handed a 62-second extermination while still needing
+    // to establish three regions from scratch, which is a combination with no counterplay.
+    expect(world.finalResponse, 'arriving alone does not summon the response').toBe(false);
     expect(world.status).toBe('playing');
+
+    // Holding the third region is what brings the can out.
+    for (const z of world.zones.slice(0, ZONES_TO_WIN)) z.hold = 0.95;
+    stepWorld(world, SIM_DT);
+    expect(world.finalResponse, 'taking the kitchen summons the response').toBe(true);
+    expect(world.events.some((e) => e.t === 'finalResponse')).toBe(true);
   }, 60_000);
 
   it('every operation card names its brief and its checklist', () => {

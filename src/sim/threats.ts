@@ -1,5 +1,7 @@
 import { dist2 } from '../core/math.ts';
 import {
+  WORLD_H,
+  WORLD_W,
   BAIT_DPS,
   BAIT_RADIUS,
   FOOT_KILL_RADIUS,
@@ -204,21 +206,39 @@ export function sweepRegion(world: World, tx: number, ty: number): void {
  */
 export function spawnSpray(world: World, tx: number, ty: number, targeted = false): void {
   if (world.sprays.length >= 2) return;
+  // Pick the authored path whose *shape* best suits the target, then slide the whole path so its
+  // closest point sits on the target.
+  //
+  // Choosing the nearest authored path and walking it unchanged was not good enough: when the
+  // player's hottest corridor sat away from every authored line the cloud missed it by up to 1 800
+  // units, and "the extermination is aimed at your own map" stopped being true. Translating keeps
+  // the motion learnable — the sweeps still move the way they always did — while guaranteeing the
+  // can is emptied over the ground the household actually has evidence about.
   let spec = SPRAY_PATHS[0];
   let bestD = Infinity;
+  let bestIdx = 0;
   for (const p of SPRAY_PATHS) {
-    let near = Infinity;
-    for (const pt of p.points) near = Math.min(near, dist2(pt.x, pt.y, tx, ty));
-    if (near < bestD) {
-      bestD = near;
-      spec = p;
+    for (let i = 0; i < p.points.length; i++) {
+      const d = dist2(p.points[i].x, p.points[i].y, tx, ty);
+      if (d < bestD) {
+        bestD = d;
+        spec = p;
+        bestIdx = i;
+      }
     }
   }
-  const p0 = spec.points[0];
+  const anchor = spec.points[bestIdx];
+  const ox = tx - anchor.x;
+  const oy = ty - anchor.y;
+  const path = spec.points.map((p) => ({
+    x: Math.max(120, Math.min(WORLD_W - 120, p.x + ox)),
+    y: Math.max(120, Math.min(WORLD_H - 120, p.y + oy)),
+  }));
+  const p0 = path[0];
   world.sprays.push({
     id: world.nextId++,
     targeted,
-    path: spec.points.map((p) => ({ x: p.x, y: p.y })),
+    path,
     seg: 0,
     t: 0,
     speed: 128,

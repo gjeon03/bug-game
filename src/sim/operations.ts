@@ -1,4 +1,11 @@
-import { cheapestOffer, MILESTONE_POPULATION, specById } from './adaptations.ts';
+import {
+  canAffordSafely,
+  cheapestOffer,
+  MILESTONE_POPULATION,
+  PURCHASE_BUFFER_FOOD,
+  PURCHASE_BUFFER_WATER,
+  specById,
+} from './adaptations.ts';
 import { MAX_ROUTES } from './constants.ts';
 import { activeRoutine, specFor } from './routines.ts';
 import { heldZones, nextZoneToHold, ZONES_TO_WIN, zoneName } from './territory.ts';
@@ -456,8 +463,7 @@ export function resolveHud(world: World): Hud {
   //    larder emptied, the shortage warning never got a turn, and the colony starved to death being
   //    told to spend food it did not have. An offer never expires, so deferring it costs nothing.
   const offer = cheapestOffer(world);
-  const affordable =
-    offer !== null && world.colony.food >= offer.costFood && world.colony.water >= offer.costWater;
+  const affordable = offer !== null && canAffordSafely(world, offer);
   if (offer && affordable) {
     base.objective = 'Choose an adaptation — press 1, 2 or 3.';
     base.source = 'adaptation:offer';
@@ -465,9 +471,9 @@ export function resolveHud(world: World): Hud {
   }
   const offerBlocker = offer
     ? `${offer.name} is waiting on ${
-        world.colony.food < offer.costFood
-          ? `${Math.ceil(offer.costFood - world.colony.food)} more food`
-          : `${Math.ceil(offer.costWater - world.colony.water)} more moisture`
+        world.colony.food < offer.costFood + PURCHASE_BUFFER_FOOD
+          ? `${Math.max(1, Math.ceil(offer.costFood + PURCHASE_BUFFER_FOOD - world.colony.food))} more food`
+          : `${Math.max(1, Math.ceil(offer.costWater + PURCHASE_BUFFER_WATER - world.colony.water))} more moisture`
       }.`
     : null;
 
@@ -567,7 +573,7 @@ export function cappedAdvice(
 
   // Something to buy right now?
   const offer = cheapestOffer(world);
-  if (offer && c.food >= offer.costFood && c.water >= offer.costWater) {
+  if (offer && canAffordSafely(world, offer)) {
     return {
       text: `${noun} full — spend it: ${offer.name} costs ${offer.costFood} food.`,
       source: 'capped:adaptation',

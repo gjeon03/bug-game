@@ -39,8 +39,8 @@ export const ADAPTATIONS: readonly AdaptationSpec[] = [
     name: 'Crowded nursery',
     blurb: 'Nest capacity +10. Eggs mature 35 % faster.',
     downside: 'Upkeep +25 %. More bodies means more traffic to notice.',
-    costFood: 34,
-    costWater: 20,
+    costFood: 24,
+    costWater: 14,
   },
   {
     id: 'brood2',
@@ -71,8 +71,8 @@ export const ADAPTATIONS: readonly AdaptationSpec[] = [
     name: 'Wider mandibles',
     blurb: 'Each roach carries 45 % more per trip.',
     downside: 'Sources drain 40 % faster, and a drained source is noticed.',
-    costFood: 30,
-    costWater: 18,
+    costFood: 22,
+    costWater: 12,
   },
   {
     id: 'forage2',
@@ -103,8 +103,8 @@ export const ADAPTATIONS: readonly AdaptationSpec[] = [
     name: 'Wall-hugging scent',
     blurb: 'Trails laid under cover last twice as long and leave 40 % less evidence.',
     downside: 'Carrying is 12 % slower. Concealment is not free.',
-    costFood: 30,
-    costWater: 24,
+    costFood: 22,
+    costWater: 16,
   },
   {
     id: 'shadow2',
@@ -318,4 +318,24 @@ export function cheapestOffer(world: World): AdaptationSpec | null {
     if (!best || s.costFood + s.costWater < best.costFood + best.costWater) best = s;
   }
   return best;
+}
+
+/**
+ * Reserve the colony keeps back when *deciding* whether to buy.
+ *
+ * A purchase is legal the moment the larder covers its price, but the guidance must not push the
+ * player into spending their last mouthful: measured in a real-browser run, buying the first
+ * adaptation the instant it became affordable took food from 35 to 1 and the colony lost four
+ * roaches to starvation before the next delivery landed. The choice never expires, so waiting a few
+ * seconds costs nothing — and this is what turns a trap into a goal.
+ */
+export const PURCHASE_BUFFER_FOOD = 14;
+export const PURCHASE_BUFFER_WATER = 10;
+
+/** Whether taking this adaptation now would leave the colony able to keep feeding itself. */
+export function canAffordSafely(world: World, spec: AdaptationSpec): boolean {
+  return (
+    world.colony.food >= spec.costFood + PURCHASE_BUFFER_FOOD &&
+    world.colony.water >= spec.costWater + PURCHASE_BUFFER_WATER
+  );
 }

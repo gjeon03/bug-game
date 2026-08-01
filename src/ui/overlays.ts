@@ -1,3 +1,4 @@
+import { specById } from '../sim/adaptations.ts';
 import { operationSpec } from '../sim/operations.ts';
 import { CAUSE_LABELS, tierName, topCause } from '../sim/suspicion.ts';
 import { ZONES } from '../sim/territory.ts';
@@ -199,12 +200,23 @@ export class Overlays {
             : ''
         }
         <ul class="criteria">
-          ${ZONES.map((z: { id: string; name: string }) => {
-            const st = world.zones.find((s2) => s2.id === z.id);
-            const pct = Math.round((st?.hold ?? 0) * 100);
-            return critLine(pct >= 80, `Hold ${z.name}`, `${pct}%`);
-          }).join('')}
+          ${[...world.zones]
+            .sort((a, b) => b.hold - a.hold)
+            .slice(0, 4)
+            .map((st) => {
+              const z = ZONES.find((zz: { id: string; name: string }) => zz.id === st.id);
+              const pct = Math.round(st.hold * 100);
+              return critLine(pct >= 80, `Hold ${z ? z.name : st.id}`, `${pct}%`);
+            })
+            .join('')}
         </ul>
+        ${
+          world.adaptations.taken.length > 0
+            ? `<p><strong>This colony became:</strong> ${world.adaptations.taken
+                .map((id) => specById(id)?.name ?? id)
+                .join(' · ')}. A different set is a different run.</p>`
+            : '<p>This colony never specialised. Adaptations open at 11, 17, 24 and 30 roaches.</p>'
+        }
         ${statsHtml([
           ['Run time', formatTime(world.stats.runSeconds)],
           ['Deliveries', `${world.stats.deliveries}`],

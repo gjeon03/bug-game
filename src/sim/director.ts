@@ -60,6 +60,7 @@ export function updateDirector(world: World, dt: number): void {
   scheduleRoutines(world, dt);
   updatePressure(world, dt);
 
+  checkFinalResponse(world);
   advanceOperation(world);
 }
 
@@ -78,10 +79,22 @@ function advanceOperation(world: World): void {
   world.cardTime = 6.5;
   world.stats.operationsCompleted = next - 1;
   world.events.push({ t: 'operation', index: next });
+}
 
-  // Reaching operation 4 is what summons the extermination response — the ending is caused by the
-  // player arriving, not by a clock running out.
-  if (next === 4) beginFinalResponse(world);
+/**
+ * The household commits to extermination when the colony has actually taken the kitchen.
+ *
+ * Triggering it on *entering* operation 4 was unfair and undramatic in the same breath: the player
+ * arrived needing to establish three regions from scratch and was given 62 seconds to do it under
+ * spray — a combination with no counterplay, which the contract forbids. Measured: the run reached
+ * operation 4 at 386 s and was exterminated at 448 s holding nothing.
+ *
+ * Triggering it on the third region held makes the ending a consequence of success. You take the
+ * kitchen, and *that* is what brings the can out.
+ */
+function checkFinalResponse(world: World): void {
+  if (world.finalResponse || world.operation < 4) return;
+  if (heldZones(world).length >= ZONES_TO_WIN) beginFinalResponse(world);
 }
 
 /** How far past its soft time the current operation has run, in seconds. */
@@ -272,8 +285,13 @@ function updateFinalResponse(world: World, dt: number): void {
   const t = world.finalResponseTime;
   const wave = Math.floor(t / 16);
   if (wave > world.finalWave && world.sprays.length < 2) {
+    // The first cloud goes for the worst place the household knows about, full stop — the
+    // spread-the-pressure exclusion that keeps ordinary responses from stacking is exactly wrong
+    // for the finale, and it was sending the opening cloud somewhere the colony had barely been.
+    // Later waves do spread, so the whole map is not hammered in one spot.
+    const first = world.finalWave < 0;
     world.finalWave = wave;
-    const hot = hottestCell(world, (i) => world.recentTargets.includes(i));
+    const hot = hottestCell(world, (i) => !first && world.recentTargets.includes(i));
     const home = homeNest(world);
     const target = hot ?? { x: home.x, y: home.y, index: -1, heat: 1 };
     spawnSpray(world, target.x, target.y, true);
