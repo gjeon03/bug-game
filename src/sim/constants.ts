@@ -73,6 +73,34 @@ export const WORKER_HARVEST_TIME = 0.85;
 export const HARVEST_SLOTS = 4;
 export const WORKER_SEPARATION = 17;
 export const WORKER_LOOKAHEAD = 4;
+/**
+ * Minimum centre-to-centre distance enforced *positionally* between two workers.
+ *
+ * The old steering-blend separation could not do this job. It added a normalised push into the
+ * desired-direction vector, which was then re-normalised to the worker's target speed — so the push
+ * only ever changed a worker's heading, never its spacing, and at the two moments spacing matters
+ * most (harvesting, where target speed is 0, and queueing, where it is 12 %) it produced exactly
+ * zero correction. Roaches stacked on the same pixel.
+ *
+ * A drawn roach is ~2.6 x its 8-unit collision radius long and ~1.5 x wide, so 22 units is a little
+ * over one body width: bodies touch and jostle, which is what an insect column should look like,
+ * but never fuse into one silhouette.
+ */
+export const WORKER_CLEARANCE = 22;
+/** Fraction of the overlap resolved per step. 0.55 converges in ~4 steps without visible jitter. */
+export const WORKER_RELAX = 0.55;
+/** Half-width of one direction's lane, measured perpendicular to the trail. */
+export const LANE_OFFSET = 13;
+/** Per-worker spread inside its own lane, so a lane is a band rather than a second single file. */
+export const LANE_JITTER = 7;
+/** Radius of the ring of harvest positions around a resource node. */
+export const HARVEST_RING = 30;
+/** Radius of the waiting ring for workers that arrived at a full resource. */
+export const QUEUE_RING = 58;
+/** Seconds without useful progress before the stuck watchdog begins recovering a worker. */
+export const STUCK_GRACE = 1.1;
+/** Radians per second a worker may rotate. A roach pivots fast, but not instantly. */
+export const WORKER_TURN_RATE = 13;
 export const WORKER_PANIC_TIME = 1.8;
 export const NYMPH_TIME = 6;
 

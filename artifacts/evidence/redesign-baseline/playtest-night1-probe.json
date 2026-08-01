@@ -1,0 +1,197 @@
+{
+  "cautious": {
+    "scenario": "cautious",
+    "readyMs": 351,
+    "firstInputMs": 432,
+    "firstObjective": "MOISTURE RUNNING OUT — run a trail to water now or the colony dies.",
+    "tutorial": "W A S D — get out of the crack.",
+    "firstDeliverySeconds": null,
+    "deliverStartedAt": 8.18333333333332,
+    "afterDelivery": {
+      "food": 199.94933333333327,
+      "pop": 10
+    },
+    "outcomeSeconds": 42.6,
+    "status": "interlude",
+    "loseCause": null,
+    "finalColony": {
+      "food": 196.82933333333176,
+      "water": 101.30640000000336,
+      "foodCap": 200,
+      "waterCap": 160,
+      "population": 14,
+      "capacity": 14,
+      "brood": 0,
+      "hatched": 8,
+      "lost": 0,
+      "totalFood": 242.7290666666868,
+      "totalWater": 115,
+      "upgrades": {
+        "brood": false,
+        "cache": false,
+        "escape": false
+      }
+    },
+    "suspicion": {
+      "value": 2.2388882645591366,
+      "tier": 0,
+      "peak": 3.5593204543508983,
+      "floor": 1.9576262498929942,
+      "lastCause": "droppings"
+    },
+    "counts": {
+      "workers": 14,
+      "workersOutbound": 9,
+      "workersInbound": 4,
+      "workersCarrying": 4,
+      "workersPanicking": 0,
+      "workersTrapped": 0,
+      "corpses": 0,
+      "hazards": 0,
+      "patrols": 0,
+      "sprays": 0,
+      "footfalls": 0,
+      "pheromoneNodes": 93
+    },
+    "winCriteria": {
+      "population": false,
+      "food": false,
+      "water": false,
+      "nests": false,
+      "survived": false
+    },
+    "probe": {
+      "samples": 1772,
+      "maxWorkers": 14,
+      "stuckEvents": 0,
+      "worstStuckSeconds": 0,
+      "stuckSample": [],
+      "overlapEvents": 0,
+      "worstOverlapSeconds": 0,
+      "overlapSample": [],
+      "carryMismatch": 0,
+      "cappedFoodSeconds": 65.3,
+      "cappedWaterSeconds": 0,
+      "cappedPopSeconds": 2.1,
+      "longestPlateauSeconds": 114.9,
+      "longestPlateauAt": 134.8,
+      "decisions": 5,
+      "decisionLog": [
+        {
+          "t": 0.8333333333333343,
+          "kind": "objective",
+          "detail": "MOISTURE RUNNING OUT — run a trail to water now or the colony dies."
+        },
+        {
+          "t": 0.8333333333333343,
+          "kind": "threat-tier",
+          "detail": "tier 0"
+        },
+        {
+          "t": 11.133333333333466,
+          "kind": "objective",
+          "detail": "FOOD AND MOISTURE RUNNING OUT — run a trail to water now or the colony dies."
+        },
+        {
+          "t": 19.933333333333483,
+          "kind": "objective",
+          "detail": "MOISTURE RUNNING OUT — run a trail to water now or the colony dies."
+        },
+        {
+          "t": 134.93333333333285,
+          "kind": "objective",
+          "detail": "Keep both food and moisture flowing."
+        }
+      ],
+      "objectiveLog": [
+        {
+          "t": 0.8333333333333343,
+          "objective": "MOISTURE RUNNING OUT — run a trail to water now or the colony dies."
+        },
+        {
+          "t": 11.133333333333466,
+          "objective": "FOOD AND MOISTURE RUNNING OUT — run a trail to water now or the colony dies."
+        },
+        {
+          "t": 19.933333333333483,
+          "objective": "MOISTURE RUNNING OUT — run a trail to water now or the colony dies."
+        },
+        {
+          "t": 134.93333333333285,
+          "objective": "Keep both food and moisture flowing."
+        }
+      ],
+      "tierLog": [
+        {
+          "t": 0.8333333333333343,
+          "tier": 0
+        }
+      ]
+    },
+    "perfMid": {
+      "label": "cautious-mid",
+      "frames": 567,
+      "durationMs": 12003.40000000596,
+      "p50": 23.7,
+      "p95": 25.9,
+      "p99": 26.7,
+      "worst": 27,
+      "mean": 21.17,
+      "over16": 412,
+      "over33": 0,
+      "over50": 0,
+      "over100": 0,
+      "over50Pct": 0,
+      "cpuP50": 0.3,
+      "cpuP95": 0.5,
+      "cpuP99": 0.6,
+      "cpuWorst": 0.7,
+      "peak": {
+        "roaches": 11,
+        "workers": 10,
+        "hazards": 1,
+        "particles": 92,
+        "voices": 4,
+        "drawCalls": 61,
+        "pheromoneNodes": 63
+      }
+    },
+    "perf": [
+      {
+        "label": "cautious-mid",
+        "frames": 567,
+        "durationMs": 12003.40000000596,
+        "p50": 23.7,
+        "p95": 25.9,
+        "p99": 26.7,
+        "worst": 27,
+        "mean": 21.17,
+        "over16": 412,
+        "over33": 0,
+        "over50": 0,
+        "over100": 0,
+        "over50Pct": 0,
+        "cpuP50": 0.3,
+        "cpuP95": 0.5,
+        "cpuP99": 0.6,
+        "cpuWorst": 0.7,
+        "peak": {
+          "roaches": 11,
+          "workers": 10,
+          "hazards": 1,
+          "particles": 92,
+          "voices": 4,
+          "drawCalls": 61,
+          "pheromoneNodes": 63
+        }
+      }
+    ],
+    "errors": [],
+    "watch": {
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "requests": 3
+    }
+  }
+}

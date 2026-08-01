@@ -1,10 +1,18 @@
 import { clamp, clamp01, dist2 } from '../core/math.ts';
 import {
   EXPOSURE_AVERSION,
+  HARVEST_RING,
   LABOUR_SHARE_CAP,
+  LANE_JITTER,
+  LANE_OFFSET,
   EVIDENCE_BASELINE,
   HARVEST_SLOTS,
+  QUEUE_RING,
+  STUCK_GRACE,
+  WORKER_CLEARANCE,
   WORKER_EVIDENCE_CEILING,
+  WORKER_RELAX,
+  WORKER_TURN_RATE,
   NODE_LIFE,
   NODE_REINFORCE,
   NYMPH_TIME,
@@ -194,10 +202,18 @@ export function updateWorkers(world: World, dt: number): void {
         if (target < 0) target = 0;
         if (target > nodes.length - 1) target = nodes.length - 1;
         const tn = nodes[target];
-        const d = Math.max(1, Math.hypot(tn.x - w.x, tn.y - w.y));
-        dirX = (tn.x - w.x) / d;
-        dirY = (tn.y - w.y) / d;
-        // Bias along the trail tangent so the column stays single-file instead of clumping.
+        // Two counter-flowing lanes, offset perpendicular to the trail tangent. Outbound roaches
+        // ride one side of the scent corridor and returning roaches the other, each with a stable
+        // spread inside its own lane. This is the difference between a trail that reads as one long
+        // segmented animal and one that reads as traffic.
+        const lateral = sign * LANE_OFFSET + w.lane * LANE_JITTER;
+        const tx = tn.x - tn.dy * lateral;
+        const ty = tn.y + tn.dx * lateral;
+        const d = Math.max(1, Math.hypot(tx - w.x, ty - w.y));
+        dirX = (tx - w.x) / d;
+        dirY = (ty - w.y) / d;
+        // Bias along the trail tangent so a worker commits to the corridor instead of cutting
+        // across it every time the lateral term flips sign near a bend.
         dirX += tn.dx * sign * 0.5;
         dirY += tn.dy * sign * 0.5;
 
@@ -214,9 +230,11 @@ export function updateWorkers(world: World, dt: number): void {
                 w.timer = WORKER_HARVEST_TIME;
                 w.targetResource = res.id;
               } else {
-                // The node is crowded: wait your turn. A visible queue at a crumb pile is the
-                // readable version of "this source cannot feed the whole colony".
-                speedMul = 0.12;
+                // The source is full: take a place on the waiting ring instead of pressing into the
+                // roaches already feeding. Previously this branch only scaled speed to 12 %, which
+                // parked every waiting worker on the same node — the pile players reported.
+                w.state = 'queue';
+                w.targetResource = res.id;
               }
             } else {
               w.state = 'inbound';
@@ -226,13 +244,67 @@ export function updateWorkers(world: World, dt: number): void {
             deliver(world, w, nest.x, nest.y);
           }
         }
-        speedMul = w.carrying ? 0.78 : 1;
+        if (w.state === 'outbound' || w.state === 'inbound') speedMul = w.carrying ? 0.78 : 1;
+        break;
+      }
+
+      // ── Waiting for a feeding slot ──────────────────────────────────────────
+      // An explicit state, not a speed multiplier. A queue that the simulation knows about can be
+      // drawn as a queue, cannot be mistaken for a stuck worker by the watchdog, and dissolves the
+      // moment the source frees up or runs dry.
+      case 'queue': {
+        const res = findResource(world, w.targetResource);
+        if (!res || res.depleted) {
+          w.state = 'inbound';
+          w.nodeIndex = -1;
+          break;
+        }
+        if (res.busy < HARVEST_SLOTS) {
+          w.state = 'harvest';
+          w.timer = WORKER_HARVEST_TIME;
+          res.busy++;
+          break;
+        }
+        const a = ringAngle(w, 1);
+        const qx = res.x + Math.cos(a) * QUEUE_RING;
+        const qy = res.y + Math.sin(a) * QUEUE_RING;
+        const qd = Math.hypot(qx - w.x, qy - w.y);
+        if (qd > 10) {
+          dirX = (qx - w.x) / qd;
+          dirY = (qy - w.y) / qd;
+          speedMul = 0.55;
+        } else {
+          // Face the queue's head so a waiting column reads as intent, not as a malfunction.
+          w.angle = turnToward(w.angle, Math.atan2(res.y - w.y, res.x - w.x), 6 * dt);
+          speedMul = 0;
+        }
         break;
       }
 
       case 'harvest': {
         w.timer -= dt;
-        speedMul = 0;
+        // Feed from a position on a ring around the crumb pile rather than standing inside it. Four
+        // harvesters used to hold four identical transforms, which is what made a working resource
+        // node look like one malformed roach.
+        const hres = findResource(world, w.targetResource);
+        if (hres) {
+          const a = ringAngle(w, 0);
+          const hx = hres.x + Math.cos(a) * HARVEST_RING;
+          const hy = hres.y + Math.sin(a) * HARVEST_RING;
+          const hd = Math.hypot(hx - w.x, hy - w.y);
+          if (hd > 6) {
+            dirX = (hx - w.x) / hd;
+            dirY = (hy - w.y) / hd;
+            speedMul = 0.5;
+          } else {
+            // Face the food while feeding: a still roach pointing at what it is eating reads as
+            // "working", a still roach pointing anywhere else reads as "broken".
+            w.angle = Math.atan2(hres.y - w.y, hres.x - w.x);
+            speedMul = 0;
+          }
+        } else {
+          speedMul = 0;
+        }
         if (w.timer <= 0) {
           const res = findResource(world, w.targetResource);
           if (res) {
@@ -339,7 +411,9 @@ export function updateWorkers(world: World, dt: number): void {
       }
     }
 
-    // ── Separation keeps the column readable instead of a blob.
+    // ── Steering-level separation: anticipates a neighbour and goes around it. This is the part
+    // that makes traffic look intentional. It is *not* what guarantees spacing — see the positional
+    // relaxation pass after this loop, which is what actually holds bodies apart.
     let sx = 0;
     let sy = 0;
     hash.query(w.x, w.y, WORKER_SEPARATION, (id) => {
@@ -382,8 +456,28 @@ export function updateWorkers(world: World, dt: number): void {
     }
 
     const sp = Math.hypot(w.vx, w.vy);
-    if (sp > 4) w.angle = Math.atan2(w.vy, w.vx);
+    // Turn toward the heading at a bounded rate instead of snapping to it. Snapping made a worker
+    // whose velocity crossed zero — every arrival, every jostle — spin 180 degrees in one frame,
+    // which is the "impossible orientation change" that reads as a broken sprite. Harvesters keep
+    // the facing they were given so they stay pointed at their food.
+    if (sp > 4 && w.state !== 'harvest') {
+      w.angle = turnToward(w.angle, Math.atan2(w.vy, w.vx), WORKER_TURN_RATE * dt);
+    }
     w.gait += (sp / 26) * dt + dt * 0.4;
+
+    // ── Stuck watchdog. "Useful progress" is defined per state, so a worker legitimately standing
+    // still (feeding, waiting its turn, sheltering) is never mistaken for a broken one.
+    const progressed = madeProgress(w, sp);
+    if (progressed) {
+      w.stuckTime = 0;
+      w.recoverStage = 0;
+      w.markX = w.x;
+      w.markY = w.y;
+      w.markIndex = w.nodeIndex;
+    } else {
+      w.stuckTime += dt;
+      if (w.stuckTime > STUCK_GRACE) recoverWorker(w, home);
+    }
 
     // ── Exposure sampling is round-robin: one sixth of the colony per step.
     if ((world.tick + i) % 6 === 0) {
@@ -396,9 +490,157 @@ export function updateWorkers(world: World, dt: number): void {
     }
   }
 
+  // ── Positional separation relaxation ──────────────────────────────────────
+  //
+  // Steering cannot guarantee spacing, because a steering force is normalised away by the speed
+  // clamp and vanishes entirely at zero speed. This pass works on positions directly, so it holds
+  // bodies apart whether they are running, queueing or standing still.
+  //
+  // Jacobi-style: every pair's correction is accumulated first and applied afterwards, so the
+  // result does not depend on iteration order and the simulation stays deterministic.
+  const cx = world.workerPushX;
+  const cy = world.workerPushY;
+  for (let i = 0; i < workers.length; i++) {
+    cx[i] = 0;
+    cy[i] = 0;
+  }
+  hash.clear();
+  for (let i = 0; i < workers.length; i++) {
+    if (workers[i].alive) hash.insert(i, workers[i].x, workers[i].y);
+  }
+  for (let i = 0; i < workers.length; i++) {
+    const w = workers[i];
+    if (!w.alive || w.state === 'trapped') continue;
+    hash.query(w.x, w.y, WORKER_CLEARANCE, (id) => {
+      // Each unordered pair is handled once, by its lower index.
+      if (id <= i) return;
+      const o = workers[id];
+      if (!o.alive || o.state === 'trapped') return;
+      let dx = o.x - w.x;
+      let dy = o.y - w.y;
+      let d = Math.hypot(dx, dy);
+      if (d >= WORKER_CLEARANCE) return;
+      if (d < 0.0001) {
+        // Exactly coincident: separate along a stable per-pair axis rather than a random one, or
+        // the pair would jitter differently on every replay of the same seed.
+        const a = ((i * 31 + id * 17) % 360) * DEG;
+        dx = Math.cos(a);
+        dy = Math.sin(a);
+        d = 1;
+      }
+      const push = ((WORKER_CLEARANCE - d) * WORKER_RELAX) / 2;
+      const nx = dx / d;
+      const ny = dy / d;
+      cx[i] -= nx * push;
+      cy[i] -= ny * push;
+      cx[id] += nx * push;
+      cy[id] += ny * push;
+    });
+  }
+  for (let i = 0; i < workers.length; i++) {
+    const w = workers[i];
+    if (!w.alive || (cx[i] === 0 && cy[i] === 0)) continue;
+    w.x += cx[i];
+    w.y += cy[i];
+    // Being pushed apart must never push anyone through cabinetry.
+    const c = collideCircle(w.x, w.y, WORKER_RADIUS);
+    if (c.hit) {
+      w.x = c.x;
+      w.y = c.y;
+    }
+  }
+
   world.colony.population = alive;
   world.exposedWorkers = exposed;
   if (alive > world.stats.peakPopulation) world.stats.peakPopulation = alive;
+}
+
+const DEG = Math.PI / 180;
+const GOLDEN = 2.399963229728653;
+
+/**
+ * A stable, well-spread angle for this worker on a ring around a point.
+ *
+ * Derived from the worker's own identity rather than from a shared counter, so two workers never
+ * hold the same slot and a worker does not jump slots when a neighbour dies.
+ */
+function ringAngle(w: Worker, salt: number): number {
+  return (w.lane + 1) * GOLDEN * 3 + w.variant * 1.7 + salt * 0.9;
+}
+
+function turnToward(from: number, to: number, maxStep: number): number {
+  let delta = to - from;
+  while (delta > Math.PI) delta -= Math.PI * 2;
+  while (delta < -Math.PI) delta += Math.PI * 2;
+  if (delta > maxStep) delta = maxStep;
+  else if (delta < -maxStep) delta = -maxStep;
+  return from + delta;
+}
+
+/**
+ * Useful progress, defined per state.
+ *
+ * A worker that is feeding, waiting on a full source, sheltering in a crack or growing from a nymph
+ * is doing its job while standing still; only the states that are *supposed* to be making headway
+ * are held to a movement test.
+ */
+function madeProgress(w: Worker, speed: number): boolean {
+  switch (w.state) {
+    case 'outbound':
+    case 'inbound':
+      return (
+        w.nodeIndex !== w.markIndex ||
+        dist2(w.x, w.y, w.markX, w.markY) > 36 ||
+        w.carrying !== null ||
+        speed > 20
+      );
+    case 'harvest':
+    case 'queue':
+    case 'trapped':
+      return true;
+    case 'panic':
+      return dist2(w.x, w.y, w.markX, w.markY) > 36 || speed > 20;
+    default:
+      // Idle is only a problem when a worker is idling somewhere it cannot be recruited from.
+      return true;
+  }
+}
+
+/**
+ * Escalating recovery for a worker that has stopped making progress.
+ *
+ * Nothing here teleports a visible roach. Each stage is a thing a real insect does when it is
+ * blocked: re-read the scent, step sideways, then give up and walk home.
+ */
+function recoverWorker(w: Worker, home: { x: number; y: number }): void {
+  w.recoverStage++;
+  w.stuckTime = 0;
+  if (w.recoverStage === 1) {
+    // Re-read the trail from scratch: the usual cause is a node index that no longer matches where
+    // the body actually is, after a hazard shove or a route edit.
+    w.nodeIndex = -1;
+    w.lostTime = 0;
+    return;
+  }
+  if (w.recoverStage === 2) {
+    // Step out of the corridor and try again — enough to clear a corner or a jam.
+    const a = w.angle + Math.PI / 2 + (w.variant % 2 === 0 ? 0 : Math.PI);
+    w.vx = Math.cos(a) * w.speed * 0.9;
+    w.vy = Math.sin(a) * w.speed * 0.9;
+    w.lane = -w.lane;
+    return;
+  }
+  // Still nothing: abandon the route and walk home. An explicit, understandable failure state.
+  w.routeId = -1;
+  w.nodeIndex = -1;
+  w.recoverStage = 0;
+  w.state = w.carrying ? 'inbound' : 'idle';
+  if (!w.carrying) {
+    w.targetNest = null;
+    const d = Math.max(1, Math.hypot(home.x - w.x, home.y - w.y));
+    w.vx = ((home.x - w.x) / d) * w.speed * 0.6;
+    w.vy = ((home.y - w.y) / d) * w.speed * 0.6;
+  }
 }
 
 function deliver(world: World, w: Worker, x: number, y: number): void {

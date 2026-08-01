@@ -10,7 +10,15 @@ export type SuspicionCause =
   'seen' | 'corpse' | 'traffic' | 'depleted' | 'trap' | 'expansion' | 'noise' | 'droppings';
 
 export type WorkerState =
-  'idle' | 'outbound' | 'harvest' | 'inbound' | 'panic' | 'trapped' | 'dying';
+  | 'idle'
+  | 'outbound'
+  /** Arrived at a source that is already being worked by its full complement: waiting on the ring. */
+  | 'queue'
+  | 'harvest'
+  | 'inbound'
+  | 'panic'
+  | 'trapped'
+  | 'dying';
 
 export interface Solid {
   id: string;
@@ -141,6 +149,20 @@ export interface Worker {
   targetResource: string | null;
   targetNest: string | null;
   nymphTime: number;
+  /**
+   * Stable lateral position within the trail corridor, in [-1, 1]. Combined with `dirSign` this is
+   * what turns a single-file column — the "centipede" — into two counter-flowing lanes of
+   * individually spaced roaches.
+   */
+  lane: number;
+  /** Seconds since this worker last made progress that is useful *for its current state*. */
+  stuckTime: number;
+  /** How many recovery steps the watchdog has already applied. Reset on real progress. */
+  recoverStage: number;
+  /** Position the watchdog last saw, so "useful progress" is measured, not assumed. */
+  markX: number;
+  markY: number;
+  markIndex: number;
 }
 
 export interface Corpse {

@@ -1,4 +1,5 @@
 import type { PerfWindowResult, Telemetry } from './core/telemetry.ts';
+import { WORKER_RADIUS } from './sim/constants.ts';
 import type { World } from './sim/world.ts';
 
 /**
@@ -108,6 +109,58 @@ export interface TestApi {
   setPaused(paused: boolean): void;
   errors: string[];
   assetAudit(): Record<string, unknown>;
+  /**
+   * Per-worker diagnostic records. Read-only, and never drawn in normal play — this exists so a
+   * harness can measure stuck duration, body overlap and carry/render agreement instead of guessing
+   * at them from screenshots.
+   */
+  workers(): WorkerDiagnostic[];
+}
+
+export interface WorkerDiagnostic {
+  id: number;
+  state: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  angle: number;
+  routeId: number;
+  nodeIndex: number;
+  dirSign: number;
+  carrying: string | null;
+  carryAmount: number;
+  targetResource: string | null;
+  targetNest: string | null;
+  lostTime: number;
+  radius: number;
+}
+
+export function workerDiagnostics(world: World): WorkerDiagnostic[] {
+  const out: WorkerDiagnostic[] = [];
+  for (let i = 0; i < world.workers.length; i++) {
+    const w = world.workers[i];
+    if (!w.alive) continue;
+    out.push({
+      id: i,
+      state: w.state,
+      x: w.x,
+      y: w.y,
+      vx: w.vx,
+      vy: w.vy,
+      angle: w.angle,
+      routeId: w.routeId,
+      nodeIndex: w.nodeIndex,
+      dirSign: w.dirSign,
+      carrying: w.carrying,
+      carryAmount: w.carryAmount,
+      targetResource: w.targetResource,
+      targetNest: w.targetNest,
+      lostTime: w.lostTime,
+      radius: WORKER_RADIUS * w.scale,
+    });
+  }
+  return out;
 }
 
 export function snapshot(world: World, paused: boolean, overlay: string): StateSnapshot {

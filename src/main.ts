@@ -12,7 +12,13 @@ import { Renderer, type RenderSettings } from './render/renderer.ts';
 import { WORLD_H, WORLD_W } from './sim/constants.ts';
 import { stepWorld } from './sim/sim.ts';
 import { createWorld, type World } from './sim/world.ts';
-import { snapshot, telemetrySnapshot, type LogicalKey, type TestApi } from './testapi.ts';
+import {
+  snapshot,
+  telemetrySnapshot,
+  workerDiagnostics,
+  type LogicalKey,
+  type TestApi,
+} from './testapi.ts';
 import { Hud } from './ui/hud.ts';
 import { Overlays } from './ui/overlays.ts';
 import { loadSettings, saveBestRun, saveSettings, type Settings } from './ui/settings.ts';
@@ -719,6 +725,9 @@ const api: TestApi = {
     setPaused(next);
   },
   errors,
+  workers() {
+    return workerDiagnostics(world);
+  },
   assetAudit() {
     return {
       version: VERSION,

@@ -155,6 +155,12 @@ export interface World {
   finalTally: FinalTally | null;
 
   workerHash: SpatialHash;
+  /**
+   * Scratch accumulators for the worker separation relaxation pass. Allocated once with the world so
+   * the hot loop never allocates, and owned by the world so a restart cannot inherit them.
+   */
+  workerPushX: Float32Array;
+  workerPushY: Float32Array;
   /** Scratch counter used by the traffic suspicion term. */
   exposedWorkers: number;
   /** Length of pheromone trail currently sitting on exposed floor. */
@@ -195,6 +201,12 @@ function makeWorker(): Worker {
     targetResource: null,
     targetNest: null,
     nymphTime: 0,
+    lane: 0,
+    stuckTime: 0,
+    recoverStage: 0,
+    markX: 0,
+    markY: 0,
+    markIndex: -1,
   };
 }
 
@@ -236,6 +248,14 @@ export function spawnWorker(
     // walked back to the home crack and left the chamber's own supply lines unstaffed.
     w.targetNest = nestId;
     w.nymphTime = asNymph ? 6 : 0;
+    // Drawn once and kept for life: a worker that re-rolled its lane every time it picked up a route
+    // would weave across the corridor instead of holding a line.
+    w.lane = r.range(-1, 1);
+    w.stuckTime = 0;
+    w.recoverStage = 0;
+    w.markX = w.x;
+    w.markY = w.y;
+    w.markIndex = -1;
     return w;
   }
   return null;
@@ -436,6 +456,8 @@ export function createWorld(seed: number): World {
     },
 
     workerHash: new SpatialHash(WORLD_W, WORLD_H, 96),
+    workerPushX: new Float32Array(WORKER_CAP),
+    workerPushY: new Float32Array(WORKER_CAP),
     exposedWorkers: 0,
     exposedTrail: 0,
     pheromoneNodeCount: 0,
