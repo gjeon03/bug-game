@@ -9,6 +9,7 @@ import {
   NEST_INTEGRITY_DRAIN,
   PATROL_STEP_INTERVAL,
   SPRAY_DPS,
+  SPRAY_FLUSH_RADIUS,
   SPRAY_RADIUS,
   SUSPICION_WEIGHTS,
   TRAP_ARM_TIME,
@@ -138,11 +139,12 @@ export function deployBait(world: World, count: number, night: NightIndex): void
   }
 }
 
-export function spawnSpray(world: World, index: number): void {
+export function spawnSpray(world: World, index: number, targeted = false): void {
   const spec = SPRAY_PATHS[index % SPRAY_PATHS.length];
   const p0 = spec.points[0];
   world.sprays.push({
     id: world.nextId++,
+    targeted,
     path: spec.points.map((p) => ({ x: p.x, y: p.y })),
     seg: 0,
     t: 0,
@@ -367,11 +369,27 @@ export function updateThreats(world: World, dt: number): void {
   }
 }
 
-/** True when the point is inside a claimed crack, where nothing the household owns can reach. */
+/**
+ * True when the point is inside a claimed crack and the crack itself is not being sprayed into.
+ *
+ * Shelter is the colony's answer to a cloud passing overhead. It is deliberately *not* an answer to
+ * an exterminator who has walked up to the opening and emptied the can into it — otherwise reaching
+ * the extermination tier would carry no risk at all, and the whole evidence economy would be
+ * decoration.
+ */
 function sheltered(world: World, x: number, y: number): boolean {
   for (let i = 0; i < world.nests.length; i++) {
     const n = world.nests[i];
-    if (n.claimed && dist2(x, y, n.x, n.y) < 95 * 95) return true;
+    if (!n.claimed || dist2(x, y, n.x, n.y) >= 95 * 95) continue;
+    let flushed = false;
+    for (let j = 0; j < world.sprays.length; j++) {
+      const s = world.sprays[j];
+      if (s.targeted && dist2(s.x, s.y, n.x, n.y) < SPRAY_FLUSH_RADIUS * SPRAY_FLUSH_RADIUS) {
+        flushed = true;
+        break;
+      }
+    }
+    if (!flushed) return true;
   }
   return false;
 }
@@ -420,7 +438,9 @@ export function requestResponse(world: World, tier: number): void {
       spawnPatrol(world, world.night, 2);
       break;
     case 4:
-      spawnSpray(world, world.night % SPRAY_PATHS.length);
+      // Extermination: two clouds, and their paths run over the cracks.
+      spawnSpray(world, world.night % SPRAY_PATHS.length, true);
+      spawnSpray(world, (world.night + 2) % SPRAY_PATHS.length, true);
       deployTraps(world, 1, world.night);
       break;
     default:

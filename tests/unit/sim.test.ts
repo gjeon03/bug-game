@@ -383,14 +383,26 @@ describe('outcomes', () => {
     expect(Object.values(world.winCriteria).every(Boolean)).toBe(true);
   });
 
-  it('falls short of victory and reports extermination instead', () => {
+  it('reports falling short separately from being wiped out', () => {
+    // A surviving colony that simply did not build enough is "not established", not "exterminated" —
+    // the failure card has to name what actually went wrong.
     const world = createWorld(511);
     world.night = 3;
     world.nightTime = world.nightLength - 0.1;
     stepWorld(world, 0.2);
     expect(world.status).toBe('lost');
-    expect(world.loseCause).toBe('exterminated');
+    expect(world.loseCause).toBe('notEstablished');
     expect(world.winCriteria.population).toBe(false);
+
+    // With nobody left, the same moment is an extermination.
+    const wiped = createWorld(512);
+    wiped.night = 3;
+    wiped.nightTime = wiped.nightLength - 0.1;
+    for (const w of wiped.workers) w.alive = false;
+    wiped.colony.population = 0;
+    stepWorld(wiped, 0.2);
+    expect(wiped.status).toBe('lost');
+    expect(wiped.loseCause).toBe('exterminated');
   });
 
   it('reports a colony collapse when nothing is left to promote', () => {

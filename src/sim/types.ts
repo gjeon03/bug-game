@@ -4,7 +4,7 @@ export type RunStatus = 'playing' | 'interlude' | 'won' | 'lost';
 export type NightIndex = 1 | 2 | 3;
 
 export type DeathCause = 'foot' | 'trap' | 'spray' | 'starve' | 'thirst' | 'bait';
-export type LoseCause = 'collapse' | 'nestDestroyed' | 'exterminated';
+export type LoseCause = 'collapse' | 'nestDestroyed' | 'exterminated' | 'notEstablished';
 
 export type SuspicionCause =
   'seen' | 'corpse' | 'traffic' | 'depleted' | 'trap' | 'expansion' | 'noise' | 'droppings';
@@ -211,6 +211,12 @@ export interface Patrol {
 
 export interface Spray {
   id: number;
+  /**
+   * True for a cloud sent by the extermination tier, which is aimed at the cracks and flushes
+   * roaches out of them. The scripted end-of-night sweep is not targeted: a colony that kept its
+   * evidence down can ride that one out inside the walls, which is the point of claiming cracks.
+   */
+  targeted: boolean;
   path: { x: number; y: number }[];
   seg: number;
   t: number;

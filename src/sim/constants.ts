@@ -172,6 +172,8 @@ export const BAIT_RADIUS = 74;
 /** Probability per second that a roach standing in bait dies. Low enough to leave time to flee. */
 export const BAIT_DPS = 0.12;
 export const SPRAY_RADIUS = 210;
+/** How close a spray must get to a crack before it flushes the roaches sheltering inside it. */
+export const SPRAY_FLUSH_RADIUS = 150;
 /** Probability per second that a roach inside a fully ramped spray cloud dies. */
 export const SPRAY_DPS = 0.8;
 export const MAX_HAZARDS = 12;

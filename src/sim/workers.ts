@@ -259,7 +259,7 @@ export function updateWorkers(world: World, dt: number): void {
         // roaches pour into the walls and wait it out, which is both what real ones do and the
         // reason claiming cracks is worth the evidence it costs. The escape tunnel reaches furthest.
         const esc = world.nests.find((n) => n.claimed && n.upgrade === 'escape');
-        let refuge: { x: number; y: number } | null = null;
+        let refuge: { x: number; y: number; id: string } | null = null;
         let bestD2 = Infinity;
         for (let k = 0; k < world.nests.length; k++) {
           const n = world.nests[k];
@@ -282,7 +282,9 @@ export function updateWorkers(world: World, dt: number): void {
             w.state = 'idle';
             w.panicTime = 0;
             w.routeId = -1;
-            w.targetNest = null;
+            // Live where you sheltered. Resetting to the home crack sent the whole colony marching
+            // back across open floor after every sweep, which is both slow and more evidence.
+            w.targetNest = refuge.id;
             break;
           }
         } else {

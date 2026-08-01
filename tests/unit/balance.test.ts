@@ -258,8 +258,9 @@ describe('a competently played run is winnable', () => {
       claimAt(
         world,
         [
-          [2000, 2300],
-          [1000, 2400],
+          [1240, 1830],
+          [1000, 2350],
+          [1000, 2450],
         ],
         'crackPantry',
       ),
@@ -284,6 +285,7 @@ describe('a competently played run is winnable', () => {
       claimAt(
         world,
         [
+          [1000, 2450],
           [1400, 2300],
           [2000, 2300],
           [2600, 2000],
@@ -315,8 +317,21 @@ describe('a competently played run is winnable', () => {
       ],
     );
 
-    // Sit in cover and let the colony work.
-    driveTo(world, 3470, 1750, { timeout: 40 });
+    // Sit in cover and keep the lines alive through the sweep, as a player would.
+    for (let k = 0; k < 16 && world.status === 'playing'; k++) {
+      driveTo(world, 3470, 1750, { timeout: 30 });
+      idle(world, 12);
+      if (world.status === 'playing' && world.routes.filter((r) => r.linked).length < 3) {
+        route(
+          world,
+          [[3470, 2100]],
+          [
+            [3450, 2490],
+            [P.trashSpill.x, P.trashSpill.y],
+          ],
+        );
+      }
+    }
     while (world.status === 'playing') idle(world, 1);
 
     const c = world.colony;

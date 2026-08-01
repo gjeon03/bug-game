@@ -13,7 +13,7 @@ import {
 } from './constants.ts';
 import { CAUSE_LABELS, tierName, topCause } from './suspicion.ts';
 import { requestResponse, spawnPatrol, spawnSpray } from './threats.ts';
-import type { NightIndex } from './types.ts';
+import type { LoseCause, NightIndex } from './types.ts';
 import { homeNest, type World } from './world.ts';
 
 /**
@@ -248,12 +248,14 @@ function evaluateFinal(world: World): void {
   if (all) {
     world.status = 'won';
     world.events.push({ t: 'win' });
-  } else {
-    lose(world, 'exterminated');
+    return;
   }
+  // Falling short is not the same as being wiped out, and saying "exterminated" over a living colony
+  // of forty that simply never finished its third chamber is a lie about what went wrong.
+  lose(world, c.population > 0 ? 'notEstablished' : 'exterminated');
 }
 
-function lose(world: World, cause: 'collapse' | 'nestDestroyed' | 'exterminated'): void {
+function lose(world: World, cause: LoseCause): void {
   if (world.status === 'lost' || world.status === 'won') return;
   world.status = 'lost';
   world.loseCause = cause;

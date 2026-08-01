@@ -150,14 +150,18 @@ export class Overlays {
         ? 'Colony collapsed'
         : cause === 'nestDestroyed'
           ? 'Nest destroyed'
-          : 'Exterminated';
+          : cause === 'notEstablished'
+            ? 'Not established'
+            : 'Exterminated';
     const lede = won
       ? 'Behind the baseboard, under the island, inside the pantry wall — the colony is self-sustaining. They will never get all of you now.'
       : cause === 'collapse'
         ? 'Nothing left to send out. The last of the brood died in the dark.'
         : cause === 'nestDestroyed'
           ? 'They found the home crack and emptied a can into it.'
-          : 'The sweep finished. The kitchen is quiet.';
+          : cause === 'notEstablished'
+            ? 'Dawn. You are still here — but not enough of you, and not dug in deep enough. By tonight they will have finished what they started.'
+            : 'The sweep finished. The kitchen is quiet.';
 
     const best = loadBestRun();
     const crit = world.winCriteria;

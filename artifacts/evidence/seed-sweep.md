@@ -1,29 +1,49 @@
-# Seed sweep — is the win a property of the game or of one seed?
+# Seed sweep — is the win a property of the game, or of one lucky seed?
 
-Seven complete three-night runs, played headless through the real input layer with the same competent
-strategy (two covered supply lines in night 1; brood chamber and food cache claimed and fed in night
-2; escape tunnel plus the two far sources in night 3; supply lines maintained through the final
-sweep). Produced by the probe that became `tests/unit/seeds.test.ts`, which runs four of these seeds
-as a permanent regression.
+Fourteen complete three-night runs, played headless through the real input layer with the same
+competent strategy: two cover-hugging supply lines in night 1; the brood chamber and the food cache
+claimed and fed in night 2; the escape tunnel plus the two far sources in night 3; supply lines
+maintained through the final sweep. Produced by the probe that became `tests/unit/seeds.test.ts`,
+which runs six of these seeds as a permanent regression.
 
-| Seed | Outcome | Population | Food | Moisture | Suspicion peak | Cracks claimed | Hatched | Lost | Run length |
-| ---- | ------- | ---------- | ---- | -------- | -------------- | -------------- | ------- | ---- | ---------- |
-| 20260801 | **won** | 47 | 241 | 179 | 55 | 3/3 | 52 | 15 | 789 s |
-| 7 | **won** | 45 | 318 | 180 | 72 | 3/3 | 59 | 24 | 789 s |
-| 31337 | **won** | 47 | 317 | 179 | 60 | 3/3 | 54 | 17 | 789 s |
-| 909 | **won** | 42 | 233 | 181 | 72 | 3/3 | 56 | 24 | 789 s |
-| 424242 | **won** | **36** | 236 | 182 | 68 | 3/3 | 58 | 32 | 789 s |
-| 5150 | **won** | 45 | 238 | 180 | 60 | 3/3 | 56 | 21 | 789 s |
-| 66613 | **won** | 49 | 317 | 179 | 80 | 3/3 | 68 | 29 | 789 s |
+| Seed | Outcome | Population | Suspicion peak | Cracks claimed |
+| ---- | ------- | ---------- | -------------- | -------------- |
+| 20260801 | **won** | 46 | 64 | 3/3 |
+| 7 | **won** | 51 | 60 | 3/3 |
+| 31337 | lost — *not established* | 34 | 61 | 3/3 |
+| 909 | **won** | 43 | 65 | 3/3 |
+| 424242 | lost — *not established* | 25 | 63 | 3/3 |
+| 5150 | **won** | 45 | 66 | 3/3 |
+| 66613 | **won** | 51 | 62 | 3/3 |
+| 1 | **won** | 42 | 64 | 3/3 |
+| 2 | **won** | 45 | 67 | 3/3 |
+| 3 | **won** | 40 | 62 | 3/3 |
+| 4242 | **won** | 47 | 58 | 3/3 |
+| 99991 | **won** | 50 | 65 | 3/3 |
+| 777 | **won** | 48 | 57 | 3/3 |
+| 20260802 | **won** | 41 | 60 | 3/3 |
 
-Win thresholds are 36 roaches, 120 food, 90 moisture, all cracks claimed, survived.
+Win thresholds: 36 roaches, 120 food, 90 moisture, all cracks claimed, survived.
 
-**Reading.** 7/7 win, so the win condition is a property of the strategy rather than of a seed. The
-margins are not comfortable: population lands between 36 and 49 against a threshold of 36 — seed
-424242 finishes exactly on it — and 15 to 32 roaches die per run, most of them to the final sweep.
-Suspicion peaks between 55 and 80, i.e. tier 2 ("infestation suspected") to tier 3 ("calling it in"),
-never tier 4, which is what leaves the colony enough of itself to clear the population bar. A player
-who routes across open floor instead reaches tier 4 and does not.
+## Reading
 
-Run length is 789 s (13.1 min) in every case because the three night clocks are fixed; the variation
-is entirely in what the colony managed to build inside them.
+**12 of 14 win.** Final population ranges 25–51 against a threshold of 36, median 45. Food and
+moisture clear their thresholds in every run — population is the binding criterion, which is the
+intended shape: the run is about how much colony you can build and keep, not about hoarding.
+
+**Both losses are the same loss, and it is a fair one.** Each claimed all three cracks, banked both
+reserves, kept suspicion at tier 2, and simply came out of the final sweep with too few bodies —
+reported as *not established*, not as extermination. Neither lost to a collapse or a destroyed nest.
+That distinction is asserted permanently in `tests/unit/seeds.test.ts`: competent play may fall short,
+but it may never be wiped out.
+
+**Suspicion peaks cluster at 57–67** — tier 2, "infestation suspected". Careful routing keeps the
+household short of the extermination tier, and `tests/unit/strategies.test.ts` shows what happens to
+routing that does not.
+
+## What the two losses cost
+
+The variance is bodies, not resources: patrol footfalls and traps landing on a busy stretch of trail.
+A player watching that happen has counterplay — recall, re-route, or claim the escape tunnel sooner —
+which the scripted bot never uses. The 2-in-14 loss rate is therefore an upper bound on how often the
+strategy fails, not a floor.
