@@ -420,23 +420,172 @@ kbd {
   text-align: right;
 }
 
-#phase .night {
+#phase .op {
   font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
+  color: var(--bone);
+  margin-bottom: 6px;
+}
+
+/* The operation checklist. This is the run's real progress bar — it is made of things the player
+   did, not of a clock, so it never advances on its own. */
+#phase .checklist {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  font-size: 12px;
   color: var(--text-dim);
 }
 
-#phase .clock {
-  font-family: var(--mono);
-  font-size: 20px;
-  font-variant-numeric: tabular-nums;
-  color: var(--bone);
-  line-height: 1.05;
+#phase .checklist li {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  line-height: 1.5;
 }
 
-#phase .clock.warn {
+#phase .checklist li span {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--cold);
+  min-width: 42px;
+  text-align: right;
+}
+
+#phase .checklist li.done {
+  color: var(--toxin);
+  text-decoration: line-through;
+  opacity: 0.75;
+}
+
+#phase .checklist li.done span {
+  color: var(--toxin);
+}
+
+#phase .unlock {
+  font-size: 11px;
+  color: var(--text-dim);
+  max-width: 280px;
+  margin-left: auto;
+  line-height: 1.45;
+}
+
+#phase.warn .op,
+#phase.warn .unlock {
   color: var(--danger);
+}
+
+/* Named blocker. When progress stops, this says why in the player's own terms. */
+#blocker {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: #ffcaa4;
+  line-height: 1.45;
+}
+
+#suspicion .counter {
+  margin-top: 4px;
+  color: var(--toxin);
+  font-size: 11.5px;
+}
+
+/* ── One-of-three choice ────────────────────────────────────────────────── */
+
+.choice {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-align: center;
+  animation: fadeUp 0.24s ease-out;
+}
+
+.choice-head {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--warm);
+  margin-bottom: 10px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+}
+
+.choice .opts {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.choice .opt {
+  width: 224px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  background: rgba(9, 14, 20, 0.94);
+  border: 1px solid var(--panel-line);
+  border-top: 3px solid var(--chalk);
+  border-radius: var(--radius);
+  padding: 12px 14px 13px;
+  font: inherit;
+  color: var(--bone);
+}
+
+.choice .opt.brood {
+  border-top-color: #d99a5b;
+}
+
+.choice .opt.forage {
+  border-top-color: var(--toxin);
+}
+
+.choice .opt.shadow {
+  border-top-color: var(--cold);
+}
+
+.choice .opt.fn-nursery {
+  border-top-color: #d99a5b;
+}
+
+.choice .opt.fn-cache {
+  border-top-color: var(--toxin);
+}
+
+.choice .opt.fn-bolthole {
+  border-top-color: var(--cold);
+}
+
+.choice .opt .name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.choice .opt .cost {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--warm);
+}
+
+.choice .opt .blurb {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+/* The downside is never smaller or dimmer than the benefit — a cost the player has to hunt for is
+   not a cost they can weigh. */
+.choice .opt .down {
+  font-size: 12px;
+  color: #ffb0a0;
+  line-height: 1.4;
+}
+
+.choice .opt.poor {
+  opacity: 0.5;
+}
+
+.choice .opt kbd {
+  justify-self: start;
 }
 
 #perf {

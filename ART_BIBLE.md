@@ -185,3 +185,63 @@ Mix priority: **player action > immediate lethal danger > nearby human > colony/
 - Human: distant floor creak → footstep thud with sub-bass and a dish rattle → the room-light click.
 - Trap: a dry adhesive snap. Spray: a bright hiss with a long tail. Victory: the colony chitter
   swelling into a warm swarm bed. Eradication: everything cut to a single ringing tone in 40 ms.
+
+---
+
+## Legibility rules added by the redesign
+
+These were written after a measured visual audit found the kitchen unreadable at the gameplay camera.
+They are rules, not preferences: a frame that breaks one of them is a defect.
+
+### 1. A fixture must be identifiable by its own drawing
+
+No floating label may be load-bearing. Every solid carries a `role`, and the bake draws what that role
+_is_: a basin, tap and drain for the sink; four burners, oven glass and knobs for the stove; a door
+seam, handle, condenser grille and magnets for the fridge; door panels, cup handles and a plinth for
+cabinetry. If the player cannot name a fixture from a screenshot, the fixture is wrong.
+
+### 2. Material values must survive the darkness multiply
+
+The scene is multiplied by roughly 0.49 in the lighting composite. Material bases previously spanned
+17/255, so five values of grey separated a dishwasher from a pantry. The families are now spread
+across 20 → 74 in the red channel, which survives the multiply with a visible step between every pair.
+
+### 3. The 30–300 unit band must be populated
+
+Everything used to be either under 10 units (invisible) or over 400 (architecture), so nothing told
+the player how big a cockroach is. Domestic props fill the band and every one earns its place by doing
+at least one job: a landmark for navigation, a scale reference, a resource marker, a motivated light,
+or evidence that somebody lives here.
+
+### 4. Light must sit on the thing that emits it
+
+Every source is anchored to its fixture — the oven clock on the stove, the seam light on the fridge
+door, the hall spill through the doorway gap that now actually exists in the bottom wall. Light with
+no visible cause reads as a rendering artefact.
+
+### 5. Depth comes from occlusion, not from gradients
+
+Props with height are drawn _after_ the roaches, so the colony visibly passes underneath a slipper, a
+broom head, a detergent bottle. Combined with per-object contact shadows and the toe-kick voids, that
+is the whole depth stack — and it is the only one a top-down view gets honestly.
+
+### 6. One shape, one meaning
+
+The circle had become the game's universal marker: unclaimed nests, objectives, route ends, the
+scout's own highlight and every pickup were all rings differing only in radius and dash pattern, which
+is why players read them as debug output. The vocabulary is now:
+
+| Meaning            | Form                                                                                         |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| The colony's scent | A continuous tapered **ribbon** with directional flow inside it                              |
+| A live route end   | A filled **scent-drop**, pointing into the route                                             |
+| An unfinished end  | The same drop, hollow                                                                        |
+| A dry end          | The same drop, struck through                                                                |
+| The player         | Warm rim-light — and warm is now reserved for the player and for what the player must act on |
+
+### 7. The scent trail is a thing, not a series of markers
+
+It was drawn as one additive glow blob per node with per-node jitter and per-node size variation — an
+evenly spaced chain of glowing circles, which is precisely what a debug visualiser looks like. It is
+now a single three-pass stroke per route (bloom, body, core) with a travelling dash for flow, and its
+colour carries its state so the player never has to count anything.

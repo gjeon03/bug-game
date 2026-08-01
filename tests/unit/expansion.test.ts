@@ -1,70 +1,72 @@
 import { describe, expect, it } from 'vitest';
+import { SIM_DT } from '../../src/core/clock.ts';
 import { doInteract, interactTarget } from '../../src/sim/colony.ts';
 import { NESTS } from '../../src/sim/kitchen.ts';
+import { stepWorld } from '../../src/sim/sim.ts';
 import { createWorld } from '../../src/sim/world.ts';
+import { dist, path, pt } from '../map.ts';
 import { driveTo } from './helpers.ts';
 
-/** Every authored crack must be physically reachable and claimable once its night arrives. */
-describe('expansion nodes', () => {
+/**
+ * Every authored foothold must be physically reachable and claimable once its operation arrives.
+ *
+ * The old version of this kept a hand-written `legs` record keyed by crack id, so adding or renaming
+ * a crack made `legs[spec.id]` `undefined` and the test *threw* instead of failing informatively.
+ * The walk is generated from the map now, so the property holds for whatever cracks exist.
+ */
+describe('footholds', () => {
   for (const spec of NESTS.filter((n) => !n.home)) {
-    it(`${spec.id} is reachable and claimable on night ${spec.unlockNight}`, () => {
+    it(`${spec.id} is reachable and claimable in operation ${spec.unlockOp}`, () => {
       const world = createWorld(4242);
-      world.night = spec.unlockNight;
+      // Placed at the operation that opens this crack — the equivalent of the old `world.night =
+      // spec.unlockNight` — with the reserves to pay for it, because the subject is reachability.
+      world.operation = spec.unlockOp;
       world.colony.food = 200;
       world.colony.water = 200;
 
-      // Walk there in stages so the straight-line driver does not fight the cabinetry.
-      const legs: Record<string, [number, number][]> = {
-        crackIsland: [
-          [700, 2000],
-          [1100, 1900],
-          [spec.x, spec.y],
-        ],
-        crackPantry: [
-          [800, 2050],
-          [900, 2450],
-          [spec.x, spec.y],
-        ],
-        crackWall: [
-          [900, 2050],
-          [1400, 2490],
-          [2400, 2500],
-          [3450, 2490],
-          [3480, 1950],
-          [spec.x, spec.y],
-        ],
-      };
-
-      for (const [x, y] of legs[spec.id]) {
-        driveTo(world, x, y, { timeout: 40, arrive: 46 });
+      for (const p of path({ x: world.scout.x, y: world.scout.y }, pt(spec))) {
+        driveTo(world, p.x, p.y, { timeout: 40, arrive: 44 });
       }
 
-      const dx = world.scout.x - spec.x;
-      const dy = world.scout.y - spec.y;
-      expect(Math.hypot(dx, dy), `scout could not reach ${spec.id}`).toBeLessThan(100);
+      expect(dist(world.scout, spec), `scout could not reach ${spec.id}`).toBeLessThan(100);
 
       const target = interactTarget(world);
       expect(target?.id).toBe(spec.id);
+      expect(target?.kind).toBe('claim');
       expect(target?.affordable).toBe(true);
 
+      // Read the reserves at the moment of the claim: upkeep has been running the whole walk.
+      const foodBefore = world.colony.food;
+      const waterBefore = world.colony.water;
       doInteract(world);
       const nest = world.nests.find((n) => n.id === spec.id)!;
       expect(nest.claimed).toBe(true);
-      if (spec.upgrade) expect(world.colony.upgrades[spec.upgrade]).toBe(true);
-    });
+      // Claiming buys ground, and the ground is worth capacity before it is fitted out.
+      expect(world.colony.food).toBeCloseTo(foodBefore - spec.costFood, 5);
+      expect(world.colony.water).toBeCloseTo(waterBefore - spec.costWater, 5);
+      expect(nest.fn).toBeNull();
+      expect(world.stats.firstClaimAt).toBeGreaterThanOrEqual(0);
+    }, 30_000);
   }
 
-  it('a claim is refused with a reason when the colony cannot pay', () => {
-    const world = createWorld(9);
-    world.night = 2;
-    world.colony.food = 1;
-    world.colony.water = 1;
-    driveTo(world, 700, 2000, { timeout: 30 });
-    driveTo(world, 1100, 1900, { timeout: 30 });
-    driveTo(world, 1362, 1796, { timeout: 30, arrive: 46 });
+  it('a crack that has not opened yet reports when it will, instead of failing silently', () => {
+    const later = NESTS.find((n) => !n.home && n.unlockOp > 1);
+    expect(later, 'the map must gate at least one crack behind a later operation').toBeDefined();
 
-    doInteract(world);
-    expect(world.nests.find((n) => n.id === 'crackIsland')!.claimed).toBe(false);
-    expect(world.hint).toContain('needs');
-  });
+    const world = createWorld(9);
+    world.colony.food = 200;
+    world.colony.water = 200;
+    for (const p of path({ x: world.scout.x, y: world.scout.y }, pt(later!))) {
+      driveTo(world, p.x, p.y, { timeout: 40, arrive: 44 });
+    }
+
+    const target = interactTarget(world);
+    expect(target?.kind).toBe('sealed');
+    world.input.interactPressed = true;
+    stepWorld(world, SIM_DT);
+
+    expect(world.nests.find((n) => n.id === later!.id)!.claimed).toBe(false);
+    expect(world.hint).toContain(String(later!.unlockOp));
+    expect(world.hint.toLowerCase()).toContain('operation');
+  }, 30_000);
 });

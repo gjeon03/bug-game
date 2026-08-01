@@ -21,7 +21,8 @@ import {
 } from './atlas.ts';
 import type { Camera } from './camera.ts';
 import { PAL, rgba } from './palette.ts';
-import { PRIO, type Particles } from './particles.ts';
+import type { Particles } from './particles.ts';
+import { bakeProps, type BakedProp } from './props.ts';
 import { bakeSolids, type BakedSolid } from './solids.ts';
 
 export interface RenderSettings {
@@ -56,9 +57,8 @@ export class Renderer {
   private lightCtx: CanvasRenderingContext2D;
   private floorPattern: CanvasPattern | null = null;
   private solids: BakedSolid[];
+  private props: BakedProp[];
   private flash: Flash = { a: 0, r: 0, g: 0, b: 0, decay: 6 };
-  private moteAcc = 0;
-  private moteCursor = 0;
   private lastCamX = 0;
   private lastCamY = 0;
   private lastZoom = 1;
@@ -84,6 +84,7 @@ export class Renderer {
     if (!lctx) throw new Error('2D canvas context unavailable');
     this.lightCtx = lctx;
     this.solids = bakeSolids(atlas, seed);
+    this.props = bakeProps();
 
     const pattern = ctx.createPattern(atlas.floor, 'repeat');
     if (pattern) {
@@ -156,6 +157,7 @@ export class Renderer {
     this.drawDebris(b);
     this.drawDecals(b, t);
     this.drawSolids(b);
+    this.drawProps(b, false);
     this.drawResources(world, t, b);
     this.drawNests(world, t);
     this.drawPheromone(world, particles, b, dt, t);
@@ -164,6 +166,9 @@ export class Renderer {
     this.drawBodies(world, t, b);
     this.drawSprays(world, t);
     this.drawFootfalls(world, t);
+    // Foreground occluders last: a slipper, a broom head, a bottle. The colony visibly passes
+    // *underneath* them, which is the only true depth cue a top-down view gets for free.
+    this.drawProps(b, true);
     this.drawCalls += particles.draw(ctx, this.atlas, b);
 
     this.composeLighting(world, cam, settings, t);
@@ -396,6 +401,26 @@ export class Renderer {
 
   // ── World objects ─────────────────────────────────────────────────────────
 
+  /**
+   * Scenery. Two passes: everything sitting on the floor goes under the entities, everything with a
+   * height goes over them.
+   */
+  private drawProps(
+    b: { x0: number; y0: number; x1: number; y1: number },
+    foreground: boolean,
+  ): void {
+    const ctx = this.ctx;
+    for (let i = 0; i < this.props.length; i++) {
+      const p = this.props[i];
+      if (p.foreground !== foreground) continue;
+      const w = p.canvas.width;
+      const h = p.canvas.height;
+      if (p.ox > b.x1 || p.ox + w < b.x0 || p.oy > b.y1 || p.oy + h < b.y0) continue;
+      ctx.drawImage(p.canvas, p.ox, p.oy);
+      this.drawCalls++;
+    }
+  }
+
   private drawResources(
     world: World,
     t: number,
@@ -404,7 +429,7 @@ export class Renderer {
     const ctx = this.ctx;
     for (let i = 0; i < world.resources.length; i++) {
       const r = world.resources[i];
-      if (r.unlockNight > world.night) continue;
+      if (r.unlockOp > world.operation) continue;
       if (r.x < b.x0 || r.x > b.x1 || r.y < b.y0 || r.y > b.y1) continue;
       const frac = clamp01(r.amount / r.initial);
       if (r.depleted && frac <= 0) {
@@ -507,7 +532,7 @@ export class Renderer {
     const ctx = this.ctx;
     for (let i = 0; i < world.nests.length; i++) {
       const n = world.nests[i];
-      const sealed = n.unlockNight > world.night && !n.claimed;
+      const sealed = n.unlockOp > world.operation && !n.claimed;
       const R = n.home ? 54 : 42;
 
       if (sealed) {
@@ -573,7 +598,7 @@ export class Renderer {
       }
 
       const reveal = clamp01(n.age / 1.4);
-      const glow = this.atlas.glows[n.upgrade === 'escape' ? TINT.cold : TINT.warm];
+      const glow = this.atlas.glows[n.fn === 'bolthole' ? TINT.cold : TINT.warm];
       const gr = R * (2.1 + Math.sin(t * 1.3 + i) * 0.08) * reveal;
       ctx.globalCompositeOperation = 'lighter';
       ctx.globalAlpha = 0.28 * reveal;
@@ -583,7 +608,7 @@ export class Renderer {
       this.drawCalls++;
 
       // Upgrade-specific silhouette inside the void.
-      if (n.upgrade === 'brood' || n.home) {
+      if (n.fn === 'nursery' || n.home) {
         const eggs = n.home ? 4 + n.growth * 3 : 7;
         for (let k = 0; k < eggs; k++) {
           const a = (k / eggs) * TAU + t * 0.12;
@@ -597,7 +622,7 @@ export class Renderer {
           ctx.fill();
           this.drawCalls++;
         }
-      } else if (n.upgrade === 'cache') {
+      } else if (n.fn === 'cache') {
         for (let k = 0; k < 9; k++) {
           const ex = n.x - 22 + (k % 3) * 16;
           const ey = n.y - 8 + Math.floor(k / 3) * 11;
@@ -607,7 +632,7 @@ export class Renderer {
           ctx.fill();
           this.drawCalls++;
         }
-      } else if (n.upgrade === 'escape') {
+      } else if (n.fn === 'bolthole') {
         const tun = ctx.createRadialGradient(n.x, n.y, 2, n.x, n.y, R);
         tun.addColorStop(0, 'rgba(140,190,230,0.45)');
         tun.addColorStop(1, 'rgba(10,20,30,0)');
@@ -642,6 +667,14 @@ export class Renderer {
 
   // ── Pheromone ─────────────────────────────────────────────────────────────
 
+  /**
+   * The scent trail.
+   *
+   * It used to be one additive glow blob per node, jittered and re-sized individually — a chain of
+   * evenly-spaced glowing circles, which is precisely what a debug visualiser looks like. It is now
+   * a single tapered ribbon per route with directional flow inside it: a continuous thing the colony
+   * walks along, drawn once, with the two ends carrying the only markers the player has to read.
+   */
   private drawPheromone(
     world: World,
     particles: Particles,
@@ -650,65 +683,76 @@ export class Renderer {
     t: number,
   ): void {
     const ctx = this.ctx;
-    const glowCold = this.atlas.glows[TINT.cold];
-    const glowWarm = this.atlas.glows[TINT.warm];
-    ctx.globalCompositeOperation = 'lighter';
 
     for (let i = 0; i < world.routes.length; i++) {
       const route = world.routes[i];
       const nodes = route.nodes;
+      if (nodes.length < 2) continue;
+      if (!this.routeVisible(nodes, b)) continue;
+
       const linked = route.linked;
-      const baseAlpha = linked ? 0.62 : 0.3;
+      const strength = averageLife(nodes);
+      // Colour carries state, so the player never has to count dashes: live routes are the colony's
+      // own cold blue-green; an unfinished trail is dimmer and desaturated; a dry one goes rust.
+      const hue = route.dry ? '182,104,74' : linked ? '126,214,206' : '132,158,182';
+      const baseAlpha = (linked ? 0.33 : 0.18) * (0.45 + strength * 0.55);
 
-      for (let j = 0; j < nodes.length; j++) {
-        const n = nodes[j];
-        if (n.x < b.x0 || n.x > b.x1 || n.y < b.y0 || n.y > b.y1) continue;
-        const s = clamp01(n.life / NODE_LIFE);
-        // Per-node jitter and size variation: scent, not a drawn line.
-        const jx = (valueNoise2D(n.i, route.id, 3) - 0.5) * 13;
-        const jy = (valueNoise2D(n.i, route.id + 77, 11) - 0.5) * 13;
-        const size = (8 + s * 8) * (0.65 + valueNoise2D(n.i, route.id + 5, 19) * 0.75);
-        const px = n.x + jx;
-        const py = n.y + jy;
-        ctx.globalAlpha = baseAlpha * (0.3 + s * 0.7);
-        ctx.drawImage(glowCold, px - size, py - size, size * 2, size * 2);
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      // Soft outer bloom, then the body, then a bright core. Three passes over one path reads as a
+      // wet secreted line rather than as a stroke.
+      const passes: [number, number][] = [
+        [22, baseAlpha * 0.16],
+        [11, baseAlpha * 0.5],
+        [4.5, baseAlpha * 0.9],
+      ];
+      for (const [width, alpha] of passes) {
+        ctx.strokeStyle = `rgba(${hue},${alpha})`;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(nodes[0].x, nodes[0].y);
+        for (let j = 1; j < nodes.length - 1; j++) {
+          const a = nodes[j];
+          const c = nodes[j + 1];
+          ctx.quadraticCurveTo(a.x, a.y, (a.x + c.x) / 2, (a.y + c.y) / 2);
+        }
+        const last = nodes[nodes.length - 1];
+        ctx.lineTo(last.x, last.y);
+        ctx.stroke();
         this.drawCalls++;
-        if (linked && j % 3 === 0) {
-          const ws = size * 0.5;
-          ctx.globalAlpha = 0.4 * s;
-          ctx.drawImage(glowWarm, px - ws, py - ws, ws * 2, ws * 2);
-          this.drawCalls++;
-        }
       }
 
-      // A slow drift of motes so a live trail never looks like a static decal.
-      if (linked && nodes.length > 4) {
-        this.moteAcc += dt * Math.min(nodes.length * 0.4, 16);
-        while (this.moteAcc >= 1) {
-          this.moteAcc -= 1;
-          this.moteCursor = (this.moteCursor + 7) % nodes.length;
-          const n = nodes[this.moteCursor];
-          const jitter = (valueNoise2D(this.moteCursor, i, 5) - 0.5) * 12;
-          particles.emit(
-            'glow',
-            TINT.cold,
-            n.x,
-            n.y,
-            -n.dy * 9 + jitter,
-            n.dx * 9 + jitter,
-            1.6,
-            4.5,
-            0.42,
-            PRIO.decor,
-          );
-        }
+      // Flow: short bright dashes travelling toward the resource end. This is the readout for "this
+      // line is working", and it replaces the old per-node motes entirely.
+      if (linked) {
+        const period = 140;
+        const offset = (t * 46) % period;
+        ctx.setLineDash([16, period - 16]);
+        ctx.lineDashOffset = -offset * (route.resEnd === 1 ? 1 : -1);
+        ctx.strokeStyle = `rgba(196,255,244,${0.22 + strength * 0.22})`;
+        ctx.lineWidth = 3.4;
+        ctx.beginPath();
+        ctx.moveTo(nodes[0].x, nodes[0].y);
+        for (let j = 1; j < nodes.length; j++) ctx.lineTo(nodes[j].x, nodes[j].y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.lineDashOffset = 0;
+        this.drawCalls++;
       }
+
+      ctx.lineJoin = 'miter';
+      ctx.lineCap = 'butt';
     }
+    void particles;
+    void dt;
 
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-
-    // Link markers at both ends: the single most important readout in the game.
+    // ── Route ends.
+    //
+    // One shape, three states, and the shape is not a circle: circles had become the game's universal
+    // marker and every new one read as debug output. A live end is a filled scent-drop pointing into
+    // the route; an unfinished end is the same drop, hollow; a dry end is the drop with a bar through
+    // it, which is the same "no" mark the rest of the UI uses.
     for (let i = 0; i < world.routes.length; i++) {
       const route = world.routes[i];
       if (route.nodes.length < 2) continue;
@@ -716,35 +760,61 @@ export class Renderer {
       for (let e = 0; e < 2; e++) {
         const n = ends[e];
         if (n.x < b.x0 || n.x > b.x1 || n.y < b.y0 || n.y > b.y1) continue;
-        if (route.linked) {
-          const pulse = 0.45 + Math.sin(t * 3 + route.id) * 0.2;
-          ctx.strokeStyle = rgba(PAL.warm, pulse);
-          ctx.lineWidth = 2.6;
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, 24 + Math.sin(t * 3 + route.id) * 2.5, 0, TAU);
-          ctx.stroke();
-        } else if (route.dry) {
-          // Anchored but the source is stripped bare: a broken ring, so "dry" is not mistaken for
-          // "unlinked" or for "working".
-          ctx.strokeStyle = rgba(PAL.danger, 0.5);
+        const inward = e === 0 ? Math.atan2(n.dy, n.dx) : Math.atan2(-n.dy, -n.dx);
+        const pulse = route.linked ? 1 + Math.sin(t * 3 + route.id) * 0.08 : 1;
+        ctx.save();
+        ctx.translate(n.x, n.y);
+        ctx.rotate(inward);
+        ctx.scale(pulse, pulse);
+        ctx.beginPath();
+        ctx.moveTo(16, 0);
+        ctx.quadraticCurveTo(4, 9, -9, 7);
+        ctx.quadraticCurveTo(-14, 0, -9, -7);
+        ctx.quadraticCurveTo(4, -9, 16, 0);
+        ctx.closePath();
+        if (route.dry) {
+          ctx.fillStyle = 'rgba(182,104,74,0.45)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,150,110,0.9)';
           ctx.lineWidth = 2.4;
-          ctx.setLineDash([5, 12]);
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, 22, 0, TAU);
           ctx.stroke();
-          ctx.setLineDash([]);
-        } else {
-          ctx.strokeStyle = rgba(PAL.cold, 0.32);
+          ctx.beginPath();
+          ctx.moveTo(-12, -9);
+          ctx.lineTo(14, 9);
+          ctx.stroke();
+        } else if (route.linked) {
+          ctx.fillStyle = 'rgba(150,240,224,0.75)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(226,255,250,0.95)';
           ctx.lineWidth = 2;
-          ctx.setLineDash([7, 9]);
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, 18, 0, TAU);
           ctx.stroke();
-          ctx.setLineDash([]);
+        } else {
+          ctx.strokeStyle = 'rgba(160,190,215,0.6)';
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
         }
+        ctx.restore();
         this.drawCalls++;
       }
     }
+  }
+
+  private routeVisible(
+    nodes: { x: number; y: number }[],
+    b: { x0: number; y0: number; x1: number; y1: number },
+  ): boolean {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (let i = 0; i < nodes.length; i += 3) {
+      const n = nodes[i];
+      if (n.x < minX) minX = n.x;
+      if (n.x > maxX) maxX = n.x;
+      if (n.y < minY) minY = n.y;
+      if (n.y > maxY) maxY = n.y;
+    }
+    return !(minX > b.x1 + 40 || maxX < b.x0 - 40 || minY > b.y1 + 40 || maxY < b.y0 - 40);
   }
 
   // ── Hazards ───────────────────────────────────────────────────────────────
@@ -1408,4 +1478,11 @@ export class Renderer {
       this.drawCalls++;
     }
   }
+}
+
+/** Mean remaining life across a route, used to fade a dying trail as one object rather than per node. */
+function averageLife(nodes: { life: number }[]): number {
+  let sum = 0;
+  for (let i = 0; i < nodes.length; i++) sum += nodes[i].life;
+  return clamp01(sum / nodes.length / NODE_LIFE);
 }

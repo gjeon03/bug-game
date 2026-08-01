@@ -361,7 +361,7 @@ function nearestResource(world: World, x: number, y: number): string | null {
     const r = world.resources[i];
     // A drained node still anchors its route: the line stays on screen so the player can see which
     // supply ran dry, instead of the whole route silently vanishing along with its workforce.
-    if (r.unlockNight > world.night) continue;
+    if (r.unlockOp > world.operation) continue;
     const d = dist2(r.x, r.y, x, y);
     if (d < bestD) {
       bestD = d;

@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test';
 import {
   DATA_DIR,
+  HOME,
   PLACES,
+  firstFood,
+  layLine,
   boot,
   driveTo,
   expectClean,
@@ -30,9 +33,7 @@ test.describe('restart and lifecycle', () => {
 
     for (let i = 0; i < 5; i++) {
       // Generate real state first: a route, workers hauling, evidence on the floor.
-      await driveTo(page, PLACES.home.x + 20, PLACES.home.y, { timeout: 20_000 });
-      await driveTo(page, PLACES.dishCrumbs.x, PLACES.dishCrumbs.y, { lay: true, timeout: 30_000 });
-      await releaseAll(page);
+      await layLine(page, { x: HOME.x + 20, y: HOME.y }, PLACES[firstFood.id]);
       await waitForState(page, (s) => s.routes.some((r) => r.linked), 20_000);
       await page.waitForTimeout(2500);
 
@@ -42,14 +43,18 @@ test.describe('restart and lifecycle', () => {
       const t0 = Date.now();
       await page.evaluate(() => window.__roach.newRun());
       // A restart must be playable immediately, without a reload.
-      await driveTo(page, PLACES.home.x + 120, PLACES.home.y, { timeout: 8000, arrive: 45 });
+      await driveTo(page, HOME.x + 120, HOME.y, { timeout: 8000, arrive: 45 });
       const restartMs = Date.now() - t0;
 
       const fresh = await state(page);
       const tele = await page.evaluate(() => window.__roach.telemetry());
 
       expect(fresh.status).toBe('playing');
-      expect(fresh.night).toBe(1);
+      expect(fresh.operation).toBe(1);
+      expect(fresh.operationTime).toBeLessThan(6);
+      expect(fresh.adaptations.taken).toEqual([]);
+      expect(fresh.zones.every((z) => z.hold === 0)).toBe(true);
+      expect(fresh.heat.total).toBe(0);
       expect(fresh.routes.length).toBe(0);
       expect(fresh.counts.corpses).toBe(0);
       expect(fresh.counts.hazards).toBe(0);
@@ -84,9 +89,12 @@ test.describe('restart and lifecycle', () => {
     // Nothing may creep across restarts.
     const voices = samples.map((s) => Number(s.voices));
     const particles = samples.map((s) => Number(s.particles));
+    const listeners = samples.map((s) => Number(s.listeners));
     expect(Math.max(...voices)).toBeLessThanOrEqual(24);
     expect(Math.max(...particles)).toBeLessThanOrEqual(900);
     expect(Number(samples[4].workers)).toBe(Number(samples[0].workers));
+    // The spec already collected this and never looked at it: a restart must not add globals.
+    expect(Math.max(...listeners)).toBe(Math.min(...listeners));
     await shot(page, '12-after-five-restarts');
     expectClean(w);
   });
@@ -97,7 +105,7 @@ test.describe('restart and lifecycle', () => {
   }) => {
     const w = watch(page);
     await boot(page, 2020);
-    await driveTo(page, PLACES.home.x + 120, PLACES.home.y, { timeout: 10_000 });
+    await driveTo(page, HOME.x + 120, HOME.y, { timeout: 10_000 });
     await releaseAll(page);
 
     // Headless Chromium keeps servicing rAF for a backgrounded target, so a real bringToFront does
@@ -135,7 +143,7 @@ test.describe('restart and lifecycle', () => {
     expect(after.status).toBe('playing');
 
     // And it must still play afterwards.
-    const moved = await driveTo(page, PLACES.home.x + 260, PLACES.home.y, { timeout: 12_000 });
+    const moved = await driveTo(page, HOME.x + 260, HOME.y, { timeout: 12_000 });
     expect(moved.ok).toBe(true);
     expectClean(w);
   });

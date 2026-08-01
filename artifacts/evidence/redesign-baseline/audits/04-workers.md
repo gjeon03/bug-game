@@ -28,8 +28,6 @@ Derived from `atlas.ts:256` (`lengths[1] = 20 * ATLAS_SCALE`) and the `drawRoach
 At play zoom (`camera.ts:26`, ≈1.25 at 1280 px) the drawn roach is ≈39 × 41 px and the separation
 radius is 21 px.
 
----
-
 ## W1 — Separation is a direction blend, not a force. This is the centipede. (CRITICAL)
 
 **Symptom.** Workers on a trail run nose-to-tail with no gap, reading as one long segmented animal.
@@ -73,16 +71,14 @@ that is 5.8 units per gap — and every endpoint re-synchronises them (W5, W15).
 | median longitudinal gap along the trail tangent | **5.1** units (p05 = 0.36) |
 | predicted from speed spread alone | 5.8 units — matches |
 | median nearest-neighbour distance | **16.0** units (p05 = 4.1, p01 = 1.9) |
-| neighbour closer than one body length (20) | **79.2 %** |
-| neighbour inside the drawn legspan (36) | **98.7 %** |
-| neighbour closer than 2 × `WORKER_RADIUS` (16) | **50.1 %** |
+| neighbour within one body length (20) / legspan (36) / 2R (16) | **79.2 % / 98.7 % / 50.1 %** |
 | median lateral offset from the trail | 18.3 (ribbon ≈ 37 wide) |
 
-A 20-unit body with a 5-unit gap is 75 % overlap. That is literally a centipede: a continuous band of
-identical overlapping segments along a 1-D curve.
+A 20-unit body with a 5-unit gap is 75 % overlap: a continuous band of identical overlapping segments
+along a 1-D curve — literally a centipede.
 
-**Repro.** `scratchpad/conga.repro.ts` (seed 31337; lay the cautious `dishCrumbs` line, `spawnWorker`
-×40 at home, `idle` 20 s, sample 70 s).
+**Repro.** `conga.repro.ts` (seed 31337; lay the cautious `dishCrumbs` line, `spawnWorker` ×40 at
+home, `idle` 20 s, sample 70 s).
 
 **Fix.** Make separation a velocity-space term, not a heading term. Compute the steering direction
 from the path only, convert to `tvx/tvy` at `w.speed * speedMul`, **then** add a separation velocity
@@ -99,8 +95,6 @@ Raise `WORKER_SEPARATION` to ≥ 34 (W2). Add an explicit longitudinal term: a w
 same-route neighbour is *ahead within 30 units along the tangent* should scale `speedMul` down —
 that is the car-following rule this system needs and does not have.
 
----
-
 ## W2 — The separation radius is half the drawn creature (CRITICAL)
 
 **Symptom.** Even where spacing "works", legs and antennae are drawn through neighbouring bodies.
@@ -116,8 +110,6 @@ not at individual nodes, so no other geometric term keeps bodies apart.
 much throughput on a narrow line, keep 34 laterally with a separate ~26 longitudinal follow distance
 — but pick the numbers from the sprite footprint, not from feel.
 
----
-
 ## W3 — There is essentially no per-worker visual variation (CRITICAL)
 
 **Symptom.** Every roach in the column is identical, which is what turns overlap into "one animal".
@@ -125,28 +117,23 @@ much throughput on a narrow line, keep 34 laterally with a separate ~26 longitud
 **Root causes.**
 
 1. **The nymph ramp destroys size variation.** `world.ts:231` gives each worker
-   `scale = rng.range(0.9, 1.08)`. `workers.ts:83-86` then overwrites it every frame while
-   `nymphTime > 0`: `w.scale = 0.55 + 0.45 * (1 - w.nymphTime / NYMPH_TIME)`, which terminates at
-   exactly **1.0**. Every worker after the starting six is hatched as a nymph
-   (`colony.ts:103`, `colony.ts:301` pass `asNymph = true`), so every hatched worker ends at scale
-   1.000–1.001. Measured in real play (seed 31337, two routes, 150 s): 8 of 14 workers at scale
+   `scale = rng.range(0.9, 1.08)`. `workers.ts:83-86` overwrites it every frame while
+   `nymphTime > 0`: `w.scale = 0.55 + 0.45 * (1 - w.nymphTime / NYMPH_TIME)`, terminating at exactly
+   **1.0**. Every worker after the starting six is hatched as a nymph (`colony.ts:103`, `:301` pass
+   `asNymph = true`). Measured in real play (seed 31337, two routes, 150 s): 8 of 14 workers at scale
    **1.001**, the other six being the original starting population. In a 46-worker late colony
    virtually the whole workforce is one size.
-2. **`variant` is never read by the renderer.** `grep variant src/render/` → no hits. It is used only
-   for the trapped wobble (`workers.ts:92`), panic jitter (`workers.ts:293`) and the acquire stagger
-   (`workers.ts:458`).
-3. **One row, one palette, eight frames.** `atlas.ts:255-265` bakes exactly three rows
-   (scout/worker/nymph) × 9 columns. All workers share `WORKER_PAL` (`palette.ts:41-50`). The entire
-   colony is drawn from **eight** distinct images.
-4. **Gait phase is the only differentiator**, and it is quantised to 8 states
-   (`renderer.ts:1005`, `Math.floor(w.gait) % GAIT_FRAMES`).
+2. **`variant` is never read by the renderer.** `grep variant src/render/` → no hits. It drives only
+   the trapped wobble (`workers.ts:92`), panic jitter (`:293`) and acquire stagger (`:458`).
+3. **One row, one palette, eight frames.** `atlas.ts:255-265` bakes three rows (scout/worker/nymph) ×
+   9 columns; all workers share `WORKER_PAL` (`palette.ts:41-50`). The colony is drawn from **eight**
+   distinct images, and gait phase — quantised to those 8 states (`renderer.ts:1005`) — is the only
+   differentiator left.
 
 **Fix.** Stop overwriting `scale` — ramp a separate `w.growth` and blit at `scale * growth`. Bake 3–4
-worker palette variants into extra atlas rows (shell hue ±8°, lightness ±12 %) and select by
-`w.variant`; that is ~3 more rows of a 9 × 3 atlas and costs nothing at runtime. Vary gait *rate* per
-worker (`w.gaitRate = rng.range(0.85, 1.15)`) so neighbours do not step in lockstep.
-
----
+worker palette variants into extra atlas rows (shell hue ±8°, lightness ±12 %) selected by
+`w.variant`; ~3 more rows costs nothing at runtime. Vary gait *rate* per worker
+(`w.gaitRate = rng.range(0.85, 1.15)`) so neighbours do not step in lockstep.
 
 ## W4 — Harvesting disables separation completely (HIGH)
 
@@ -168,8 +155,6 @@ does worker-vs-worker collision (`collideCircle` is called only against `SOLIDS`
 the path stays live. Better: assign each harvest slot a fixed offset around the node
 (`angle = slot / HARVEST_SLOTS * TAU`, radius 22) so four harvesters read as four roaches around a
 crumb rather than a blob.
-
----
 
 ## W5 — The resource queue is dead code; waiting workers orbit the endpoint (HIGH)
 
@@ -202,8 +187,6 @@ the 14–18 the branch intends; **0.90 facing reversals > 90° per second** at t
 position around `nodes[endIdx]`, not the node itself. `res.busy` should also be drawn: it has **zero**
 renderer references, so `HARVEST_SLOTS` is invisible to the player.
 
----
-
 ## W6 — `HARVEST_SLOTS` is not enforced (HIGH)
 
 **Symptom.** More than four roaches harvest simultaneously; the "this source cannot feed the colony"
@@ -219,8 +202,6 @@ same step reads the same stale `busy`. With `busy = 3`, three arrivals in one st
 **Repro.** `scratchpad/conga.repro.ts`, field `busyMax`.
 
 **Fix.** `res.busy++` on the same line that sets `w.state = 'harvest'`. One line.
-
----
 
 ## W7 — Panic never times out (HIGH)
 
@@ -249,8 +230,6 @@ workers **exactly 0.35**, never lower. **Repro:** `states.repro.ts`, test `panic
 total panic with a hard `w.panicElapsed > 6 → go idle`. Line 282-283 also teleports the worker up to
 26 units on arrival (`w.x = refuge.x + rng.signed() * 26`), a visible pop; lerp it instead.
 
----
-
 ## W8 — A carrier with no route has no watchdog and gets stuck against furniture (HIGH)
 
 **Symptom.** Roaches wedged against a cabinet, holding food, forever.
@@ -277,8 +256,6 @@ drop the cargo or force `state = 'idle'` so `tryAcquireRoute` / `redistribute` c
 term this wants a coarse navmesh or wall-following; the watchdog alone converts a permanent stall
 into a visible give-up.
 
----
-
 ## W9 — The walk cycle is 15× too slow: roaches skate (HIGH)
 
 **Symptom.** Legs move, but the roach glides; motion looks detached from the body.
@@ -288,24 +265,18 @@ tripod cycle (`GAIT_FRAMES = 8`, `renderer.ts:1005`).
 
 | speed | gait units/s | strides/s | body lengths/s | **body lengths per stride** |
 | --- | --- | --- | --- | --- |
-| 118 | 4.94 | 0.617 | 5.90 | **9.6** |
-| 130 | 5.40 | 0.675 | 6.50 | **9.6** |
-| 148 | 6.09 | 0.762 | 7.40 | **9.7** |
+| 118 / 130 / 148 | 4.94 / 5.40 / 6.09 | 0.617 / 0.675 / 0.762 | 5.90 / 6.50 / 7.40 | **9.6 / 9.6 / 9.7** |
 | 36 (idle wander) | 1.78 | 0.223 | 1.80 | **8.1** |
 
 A real roach covers well under one body length per stride. At 9.6 the tarsi slide ~19 units per step.
-Separately, the frame index changes only 5.4 times/second, so at 60 fps each of the eight leg poses
-is held for ~11 frames and then snaps — sliding plus snapping is exactly the "malformed / broken"
-read.
+Separately the frame index changes only 5.4 times/second, so at 60 fps each of the eight leg poses is
+held for ~11 frames and then snaps — sliding plus snapping is exactly the "malformed" read.
 
-**Fix.** `w.gait += (sp / 2.2) * dt` gives ~2.4 strides/s at 130 u/s (≈2.7 body lengths per stride),
-which is still generous and removes the skate. Then either raise `GAIT_FRAMES` to 12–16 or
-interpolate: blit two adjacent frames with a cross-fade, or drive the legs procedurally like the
-antennae already are. Trapped workers use `w.gait += dt * 14` (`workers.ts:91`) — **2.6× faster than
-a running worker** while standing still, which reads as a stuck animation rather than a struggle;
-give trapped workers a distinct sprite frame instead.
-
----
+**Fix.** `w.gait += (sp / 2.2) * dt` gives ~2.4 strides/s at 130 u/s (≈2.7 body lengths per stride)
+and removes the skate. Then either raise `GAIT_FRAMES` to 12–16, cross-fade adjacent frames, or drive
+the legs procedurally as the antennae already are. Trapped workers use `w.gait += dt * 14`
+(`workers.ts:91`) — **2.6× faster than a running worker** while standing still, which reads as a
+stuck animation rather than a struggle; give them a distinct frame instead.
 
 ## W10 — Draw order interleaves shadows, bodies, antennae and cargo (MEDIUM)
 
@@ -321,7 +292,7 @@ under others, depending on array index.
 
 Draw order itself is *stable* (pool index, `world.ts:209-211` reuses the first dead slot), so this is
 not frame-to-frame z-fighting — but there is **no y-sort**, so occlusion is unrelated to screen depth,
-and a newly hatched roach that lands in a low pool slot renders under every older roach.
+and a newly hatched roach landing in a low pool slot renders under every older roach.
 
 `ANTENNA_BUDGET = 30` (`renderer.ts:44`) with `WORKER_CAP = 90` and a typical 46-worker colony means
 roughly half the visible roaches have antennae. The budget is consumed in pool order *after* viewport
@@ -329,10 +300,8 @@ culling (`renderer.ts:1002` `continue`s before `antennaLeft--`), so the set chan
 the camera bounds: **antennae visibly pop on and off** as the camera moves.
 
 **Fix.** Three passes: all shadows → all bodies (y-sorted) → all antennae and cargo. Sorting 46
-workers per frame is nothing. Allocate the antenna budget by distance to the camera centre so the
-set is spatially stable, or drop the budget entirely — it is 2 draw calls per worker.
-
----
+workers per frame is nothing. Allocate the antenna budget by distance to camera centre so the set is
+spatially stable, or drop the budget — it is 2 draw calls per worker.
 
 ## W11 — Cargo is an unattached ellipse in unscaled units (MEDIUM)
 
@@ -347,38 +316,32 @@ highlight ellipse — no outline, no shadow, no contact with the body:
 1039   ctx.ellipse(cx, cy + bob, 4.4, 4, 0, 0, TAU);           // water, rotation 0 not w.angle
 ```
 
-Three concrete defects: (a) the offset `11` and the radii `5, 4` / `4.4, 4` are **not multiplied by
-`w.scale`**, so on a 0.9-scale worker (body half-length 9.9) the blob sits past the abdomen tip and
-detaches; (b) the water blob uses rotation `0` while food uses `w.angle` — inconsistent; (c) at
-10 × 8 units with a 2.6-unit specular dot it reads as a floating bead, not as something gripped.
-The 20-unit body's wing case ends at `-0.55L = -11`, so the blob is centred exactly on the abdomen
-tip — the worst possible place for "is it attached?".
+Three defects: (a) the offset `11` and the radii `5, 4` / `4.4, 4` are **not multiplied by `w.scale`**,
+so on a 0.9-scale worker (body half-length 9.9) the blob sits past the abdomen tip and detaches;
+(b) the water blob uses rotation `0` while food uses `w.angle`; (c) at 10 × 8 units with a 2.6-unit
+specular dot it reads as a floating bead. The wing case ends at `-0.55L = -11`, so the blob is
+centred exactly on the abdomen tip — the worst possible place for "is it attached?".
 
-**Fix.** Scale the offset and radii by `w.scale`; draw the cargo *behind* the body in the same pass so
-the abdomen overlaps its front edge; add a 1-unit dark rim (`PAL.ink`) so it separates from the
-shell; use `w.angle` for both kinds. Consider an over-the-back silhouette notch instead of a bead.
-
----
+**Fix.** Scale the offset and radii by `w.scale`; draw the cargo behind the body so the abdomen
+overlaps its front edge; add a 1-unit dark rim (`PAL.ink`); use `w.angle` for both kinds.
 
 ## W12 — Corpses and nymphs render wrong (MEDIUM)
 
 - **Every corpse is drawn as an adult worker.** `renderer.ts:956`:
-  `this.blitRoach(1, DEAD_FRAME, c.x, c.y, c.angle, c.scale)` — row is hardcoded `1`. A nymph killed
-  at `nymphTime = 3` has `scale = 0.775` (`workers.ts:85`), so it renders as a shrunken *brown adult*
-  where a pale nymph died. `Corpse` (`types.ts:146-156`) carries no type field to fix this with.
+  `this.blitRoach(1, DEAD_FRAME, c.x, c.y, c.angle, c.scale)` — the row is hardcoded `1`. A nymph
+  killed at `nymphTime = 3` has `scale = 0.775` (`workers.ts:85`), so it renders as a shrunken *brown
+  adult* where a pale nymph died. `Corpse` (`types.ts:146-156`) has no type field to fix this with.
 - **The 41st corpse deletes the oldest instantly.** `workers.ts:52`:
   `if (world.corpses.length > 40) world.corpses.shift()`. Normal removal is at `age > 95`
   (`threats.ts:368`) after a 22 s fade (`renderer.ts:955`), so the capped one vanishes mid-frame at
-  92 % opacity. During a spray or a sweep this is a visible pop.
-- **Nymph → adult is a one-frame pop.** At the instant `nymphTime` crosses zero the sprite switches
-  row 2 → row 1 (`renderer.ts:1003-1004`): pale `NYMPH_PAL` at `L = 13` becomes dark `WORKER_PAL` at
-  `L = 20` — a **+54 % size jump and a full palette change in one frame**.
+  92 % opacity — visible during a spray or a sweep.
+- **Nymph → adult is a one-frame pop.** As `nymphTime` crosses zero the sprite switches row 2 → row 1
+  (`renderer.ts:1003-1004`): pale `NYMPH_PAL` at `L = 13` becomes dark `WORKER_PAL` at `L = 20` — a
+  **+54 % size jump and a full palette change in one frame**.
 
-**Fix.** Add `type: 'worker' | 'nymph'` to `Corpse` and pass it to `blitRoach`. Replace the `shift()`
-with "kill the oldest by forcing `age = 95`" so it fades. Cross-fade the nymph/adult rows over the
-last 0.5 s of `NYMPH_TIME`, or use the growth scale (W3) to make the transition continuous.
-
----
+**Fix.** Add `type: 'worker' | 'nymph'` to `Corpse` and pass it to `blitRoach`. Replace `shift()` with
+forcing `age = 95` on the oldest so it fades. Cross-fade the nymph/adult rows over the last 0.5 s of
+`NYMPH_TIME`, or use the growth scale (W3) to make the transition continuous.
 
 ## W13 — Six sim states, one and a half visual states (MEDIUM)
 
@@ -396,31 +359,24 @@ last 0.5 s of `NYMPH_TIME`, or use the growth scale (W3) to make the transition 
 | `dying` | — | **unreachable**: `grep "'dying'" src/` matches only the type declaration. Nothing sets it, and the `switch` at `workers.ts:105` has no case, so it would fall to `default: break` with `dirX = dirY = 0` → the worker freezes alive forever, still counted in `population`. A latent trap. |
 
 So a panicking roach past the 30-antenna budget is pixel-identical to a hauling one, and a trapped
-roach is a normally-walking roach with strands *behind* it.
-
-**Fix.** Give panic a real read (body tilt, faster gait, a short dust puff), draw trap strands after
-bodies, and either implement `dying` or delete it from the union.
-
----
+roach is a normally-walking roach with strands *behind* it. **Fix:** give panic a real read (body
+tilt, faster gait, a dust puff), draw trap strands after bodies, and either implement `dying` or
+delete it from the union.
 
 ## W14 — Legs clip into cabinetry by 9–13 units (MEDIUM)
 
 `collideCircle(w.x, w.y, WORKER_RADIUS)` (`workers.ts:373`) keeps the *centre* 8 units from a solid
 edge, but the hind tarsus reaches 21.1 units behind the centre and the mid tarsus 16.6 units
-laterally. A worker with its back to a cabinet therefore has its hind legs **13 units inside** the
-cabinet; one running parallel to a wall clips **8.6 units**. At play zoom that is 11–16 px of roach
-inside the furniture, and cover-hugging is the behaviour the whole exposure design encourages
-(`field.ts:180-188`), so it happens constantly.
+laterally. A worker with its back to a cabinet has its hind legs **13 units inside** it; one running
+parallel to a wall clips **8.6 units**. At play zoom that is 11–16 px of roach inside the furniture,
+and cover-hugging is what the whole exposure design encourages (`field.ts:180-188`).
 
 **No true penetration of the body centre was observed** — `isInsideSolid(w.x, w.y)` was false on
-100 % of samples across both runs (46 workers × 70 s and 9 workers × 90 s). Ordering is correct:
-separation edits the heading (line 356) → integrate (371-372) → `collideCircle` resolves (373-382),
-so separation can never push a worker through a wall.
+100 % of samples across both runs (46 × 70 s and 9 × 90 s). Ordering is correct: separation edits the
+heading (356) → integrate (371-372) → `collideCircle` resolves (373-382), so separation can never
+push a worker through a wall.
 
-**Fix.** Either raise `WORKER_RADIUS` toward 12 (accepting the throughput cost on narrow gaps) or
-shorten the drawn hind leg. Raising the radius also helps W1/W2.
-
----
+**Fix.** Raise `WORKER_RADIUS` toward 12 (which also helps W1/W2) or shorten the drawn hind leg.
 
 ## W15 — Departures happen in synchronised bursts of 7–12 (MEDIUM)
 
@@ -432,57 +388,52 @@ with `variant = rng.int(0, 3)` (`world.ts:230`). Only **four** phase groups exis
 same tick, from within 22 units of the same nest (`world.ts:214-215`), scoring the same routes with
 near-identical `d2`.
 
-**Measured** (34 workers, one route, 60 s): only **4** acquisition events, of sizes
-**12, 10, 9, 7** — mean 9.5 workers departing on a single tick; 100 % of events had ≥ 3.
-
-**Repro.** `scratchpad/states.repro.ts`, test `route acquisition burst…`.
+**Measured** (34 workers, one route, 60 s): only **4** acquisition events, of sizes **12, 10, 9, 7** —
+mean 9.5 workers departing on a single tick; 100 % of events had ≥ 3. **Repro:** `states.repro.ts`,
+test `route acquisition burst…`.
 
 **Fix.** Use a per-worker random phase (`w.acquirePhase = rng.int(0, 18)`) rather than deriving it
-from a 4-value field, and add a per-nest departure cooldown (~0.25 s) so a burst becomes a stream.
+from a 4-value field, plus a per-nest departure cooldown (~0.25 s) so a burst becomes a stream.
 Combined with W1's follow-distance rule this is what converts the column into traffic.
-
----
 
 ## Answers to the seven questions, indexed
 
 1. **Why a single-file conga line?** → **W1** (separation is normalised away; zero closing-speed
-   correction at any distance; measured median longitudinal gap 5.1 units on a 20-unit body) plus
-   **W2** (17-unit radius vs 33-unit legspan) and **W3** (identical sprites). Separation force is not
-   merely weaker than path attraction — along the direction of travel it is *exactly zero*.
+   correction at *any* distance; measured median longitudinal gap 5.1 units on a 20-unit body) plus
+   **W2** (17-unit radius vs 33-unit legspan) and **W3** (identical sprites). Separation is not merely
+   weaker than path attraction — along the direction of travel it is *exactly zero*.
 2. **Queueing / reservation?** → **None. W5** (the 0.12 brake is dead code, overwritten at line 229;
    waiting workers orbit at 73.9 u/s) and **W6** (`busy` never incremented on entry; measured 8/4).
-   The 5th..Nth workers do not queue — they circle the endpoint at full speed, up to 18 within 70
-   units, and `busy` is never rendered at all.
+   The 5th..Nth workers circle the endpoint at full speed, up to 18 within 70 units, and `busy` is
+   never rendered at all.
 3. **Stuck states / watchdogs.** → **W13** table. No watchdog: on-trail `outbound`/`inbound`,
    no-route `inbound` (**W8**, 20.6 % never delivered in 90 s), `panic` (**W7**, permanent), `dying`
-   (unreachable, would freeze forever). A worker whose route is deleted mid-transit goes through
-   `releaseWorkers` (`pheromone.ts:62-71`) → keeps cargo, `state = 'inbound'`, `routeId = -1` → the
-   unwatched straight-line walk of W8.
-4. **Rendering / cargo / draw order / facing.** → **W11** (cargo is an unscaled floating ellipse,
-   code quoted), **W10** (shadow-over-neighbour, antenna budget churn; order is stable but unsorted).
-   Facing comes from velocity with a threshold of 4 against speeds of 118–148
-   (`workers.ts:384-385`), so it does not flicker at low speed — it flips at *full* speed at the
-   resource endpoint, measured **0.90 reversals > 90° per second** at one node (**W5**).
+   (unreachable, would freeze forever). A worker whose route dies mid-transit goes through
+   `releaseWorkers` (`pheromone.ts:62-71`) → keeps cargo, `inbound`, `routeId = -1` → W8's unwatched
+   straight-line walk.
+4. **Rendering / cargo / draw order / facing.** → **W11** (unscaled floating ellipse, quoted),
+   **W10** (shadow-over-neighbour, antenna churn; order stable but unsorted). Facing comes from
+   velocity with a threshold of 4 against speeds of 118–148 (`workers.ts:384-385`), so it does *not*
+   flicker at low speed — it flips at full speed at the resource endpoint, **0.90 reversals > 90° per
+   second** at one node (**W5**).
 5. **Do workers penetrate solids?** → The centre never does (0 % of samples); separation is applied
-   before collision, which is the correct order. But the drawn legs do, by 9–13 units (**W14**).
-6. **Are corpses / nymphs / panicking / trapped distinguishable?** → Corpses yes (pose + fade) but
-   always drawn as adults (**W12**); nymphs yes until a one-frame pop (**W12**); panicking only via
-   antenna amplitude and only for the first 30 bodies (**W13**); trapped only via strands drawn
-   underneath everything (**W13**).
+   before collision, the correct order. The drawn legs do, by 9–13 units (**W14**).
+6. **Corpses / nymphs / panicking / trapped distinguishable?** → Corpses yes (pose + fade) but always
+   drawn as adults (**W12**); nymphs yes until a one-frame pop (**W12**); panicking only via antenna
+   amplitude and only for the first 30 bodies (**W13**); trapped only via strands drawn underneath
+   everything (**W13**).
 7. **Enough per-worker variation?** → **No — W3.** Eight distinct images for the whole colony, one
    palette, and `scale` forced to 1.000 for every hatched worker by the nymph ramp.
 
 ## Suggested order of repair
 
-`W6` and `W5` are one-line and three-line fixes with immediate visible payoff. `W1` + `W2` are the
+`W6` and `W5` are one- and three-line fixes with immediate visible payoff. `W1` + `W2` are the
 structural fix and must land together (raising the radius without fixing the normalisation does
-nothing). `W3` and `W9` are what make the fixed spacing legible. `W7` and `W8` remove the two
-permanent stalls. `W10`–`W14` are polish once the movement is right.
+nothing). `W3` and `W9` make the fixed spacing legible. `W7` and `W8` remove the two permanent
+stalls. `W10`–`W15` are polish once the movement is right.
 
-## Repro artefacts
-
-Throwaway, in
-`/private/tmp/claude-501/-Users-jeongyeong-yeon-Documents-LOCAL-bug-game/4d470ed7-d200-410f-8106-392e84c32ebb/scratchpad/`:
-`base/` (pinned `git archive 3242189` checkout), `conga.repro.ts`, `stuck.repro.ts`,
-`states.repro.ts`, `workers.repro.ts`, `base/vitest.repro.config.ts`.
-Run: `cd <scratchpad>/base && npx vitest run --config <scratchpad>/base/vitest.repro.config.ts`.
+**Repro artefacts** (throwaway) in the session scratchpad
+`…/4d470ed7-d200-410f-8106-392e84c32ebb/scratchpad/`: `base/` (pinned `git archive 3242189`
+checkout), `conga.repro.ts`, `stuck.repro.ts`, `states.repro.ts`, `workers.repro.ts`,
+`base/vitest.repro.config.ts`. Run:
+`cd <scratchpad>/base && npx vitest run --config <scratchpad>/base/vitest.repro.config.ts`.

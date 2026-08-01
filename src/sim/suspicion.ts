@@ -1,6 +1,5 @@
 import { clamp01 } from '../core/math.ts';
 import {
-  NIGHT_SUSPICION_FLOOR,
   TRAFFIC_EVIDENCE_CAP,
   TRAIL_EVIDENCE_CAP,
   SUSPICION_DECAY,
@@ -9,7 +8,44 @@ import {
   SUSPICION_WEIGHTS,
   TIER_THRESHOLDS,
 } from './constants.ts';
+import { depositHeat } from './heat.ts';
 import type { SuspicionCause } from './types.ts';
+
+/** How much regional heat one point of evidence deposits. */
+const HEAT_PER_EVIDENCE = 0.05;
+/** Seconds a tier must hold before the household is allowed to escalate again. */
+export const TIER_HOLD = 25;
+
+/** Spreads the traffic term across the places the exposed workers are actually standing. */
+function depositWorkerHeat(world: World, total: number): void {
+  let exposed = 0;
+  for (let i = 0; i < world.workers.length; i++) {
+    const w = world.workers[i];
+    if (w.alive && w.exposure > 0.24) exposed++;
+  }
+  if (exposed === 0) return;
+  const per = (total * HEAT_PER_EVIDENCE * 5) / exposed;
+  for (let i = 0; i < world.workers.length; i++) {
+    const w = world.workers[i];
+    if (w.alive && w.exposure > 0.24) depositHeat(world, w.x, w.y, per);
+  }
+}
+
+/** Spreads the trail term across the exposed stretches of the player's own routes. */
+function depositTrailHeat(world: World, total: number): void {
+  let count = 0;
+  for (const r of world.routes) {
+    for (let i = 0; i < r.nodes.length; i += 4) if (r.nodes[i].exposure > 0.24) count++;
+  }
+  if (count === 0) return;
+  const per = (total * HEAT_PER_EVIDENCE * 5) / count;
+  for (const r of world.routes) {
+    for (let i = 0; i < r.nodes.length; i += 4) {
+      const n = r.nodes[i];
+      if (n.exposure > 0.24) depositHeat(world, n.x, n.y, per);
+    }
+  }
+}
 import type { World } from './world.ts';
 
 /**
@@ -71,6 +107,9 @@ export function addSuspicion(
     s.lastCause = cause;
     s.lastCauseTime = world.time;
   }
+  // Evidence has a place now. The old signature took x,y and dropped them on the floor, which is
+  // why the household could never aim anything at what the player actually did.
+  if (x > 0 || y > 0) depositHeat(world, x, y, amount * HEAT_PER_EVIDENCE);
   world.events.push({ t: 'suspicion', delta: amount, cause, x, y });
 }
 
@@ -78,23 +117,22 @@ export function updateSuspicion(world: World, dt: number): void {
   const s = world.suspicion;
 
   // ── Continuous evidence.
+  // Traffic and trail evidence are deposited per worker and per trail node, at the place they
+  // happened, so heavy use of one corridor makes *that corridor* the thing the household acts on.
   if (world.exposedWorkers > 0) {
-    addSuspicion(
-      world,
-      'traffic',
-      SUSPICION_WEIGHTS.traffic * Math.min(world.exposedWorkers, TRAFFIC_EVIDENCE_CAP) * dt,
-      0,
-      0,
-    );
+    const total =
+      SUSPICION_WEIGHTS.traffic *
+      Math.min(world.exposedWorkers, TRAFFIC_EVIDENCE_CAP) *
+      world.traits.trafficEvidenceMult *
+      dt;
+    addSuspicion(world, 'traffic', total, 0, 0);
+    depositWorkerHeat(world, total);
   }
   if (world.exposedTrail > 0) {
-    addSuspicion(
-      world,
-      'droppings',
-      SUSPICION_WEIGHTS.droppings * Math.min(world.exposedTrail, TRAIL_EVIDENCE_CAP) * dt,
-      0,
-      0,
-    );
+    const total =
+      SUSPICION_WEIGHTS.droppings * Math.min(world.exposedTrail, TRAIL_EVIDENCE_CAP) * dt;
+    addSuspicion(world, 'droppings', total, 0, 0);
+    depositTrailHeat(world, total);
   }
   const scout = world.scout;
   if (scout.alive && scout.sprinting && scout.exposure > 0.35) {
@@ -107,6 +145,10 @@ export function updateSuspicion(world: World, dt: number): void {
   }
   if (openCorpses > 0) {
     addSuspicion(world, 'corpse', SUSPICION_WEIGHTS.corpse * Math.min(openCorpses, 5) * dt, 0, 0);
+    for (let i = 0; i < world.corpses.length; i++) {
+      const c = world.corpses[i];
+      if (c.cover < 0.35) depositHeat(world, c.x, c.y, 0.014 * dt);
+    }
   }
 
   // ── Drained food is evidence the humans notice on their own.
@@ -118,31 +160,34 @@ export function updateSuspicion(world: World, dt: number): void {
     }
   }
 
-  // ── Decay toward a floor that the run's own peak sets.
-  s.floor = Math.max(NIGHT_SUSPICION_FLOOR[world.night], s.peak * SUSPICION_PEAK_FLOOR);
+  // ── Decay toward a floor that the run's own peak sets. Evidence is never erasable.
+  s.floor = s.peak * SUSPICION_PEAK_FLOOR;
   if (s.value > s.floor) {
     s.value = Math.max(s.floor, s.value - SUSPICION_DECAY * dt);
   }
 
-  // ── Tier transitions, one-shot and ordered.
+  // ── Tier transitions, rate-limited.
+  //
+  // Measured on the old build: tiers 2, 3 and 4 could all fire inside 15 seconds, so the player
+  // never saw one tier's response before the next arrived and the whole escalation staircase
+  // collapsed into a single event. A promotion now has to hold for TIER_HOLD seconds before the
+  // next one is allowed, which is what makes escalation legible.
   let tier = 0;
   for (let i = 0; i < TIER_THRESHOLDS.length; i++) {
     if (s.value >= TIER_THRESHOLDS[i]) tier = i + 1;
   }
-  if (tier !== s.tier) {
-    if (tier > s.tier) {
-      world.events.push({ t: 'tier', tier });
-      // The escalation request rides a dedicated one-shot slot, NOT the event array. `world.events`
-      // is drained by presentation once per rendered frame, not once per simulation step, so a tier
-      // event sitting in it was re-read on every subsequent step — which spawned a hundred patrols
-      // and dozens of spray clouds from a single threshold crossing.
-      world.pendingTier = tier;
+  if (tier > s.tier) {
+    if (world.tierHold >= TIER_HOLD) {
+      s.tier += 1;
+      world.tierHold = 0;
+      world.events.push({ t: 'tier', tier: s.tier });
     }
+  } else if (tier < s.tier) {
     s.tier = tier;
   }
-  if (tier > s.reachedTier) s.reachedTier = tier;
+  if (s.tier > s.reachedTier) s.reachedTier = s.tier;
 
-  world.nextResponse = TIER_RESPONSE[Math.min(tier, TIER_RESPONSE.length - 1)];
+  world.nextResponse = TIER_RESPONSE[Math.min(s.tier, TIER_RESPONSE.length - 1)];
 }
 
 /** The single largest contributor, used by the failure screen and the interlude cards. */

@@ -90,7 +90,7 @@ export function updateWorkers(world: World, dt: number): void {
 
     if (w.nymphTime > 0) {
       w.nymphTime -= dt;
-      w.scale = 0.55 + 0.45 * (1 - w.nymphTime / NYMPH_TIME);
+      w.scale = 0.55 + 0.45 * (1 - w.nymphTime / (NYMPH_TIME * world.traits.nymphTimeMult));
     }
 
     // ── Trapped: struggle, then die. This is what makes traps a real route-denial cost.
@@ -225,9 +225,9 @@ export function updateWorkers(world: World, dt: number): void {
           if (w.state === 'outbound') {
             const res = findResource(world, route.resourceId);
             if (res && !res.depleted) {
-              if (res.busy < HARVEST_SLOTS) {
+              if (res.busy < HARVEST_SLOTS + world.traits.harvestSlotBonus) {
                 w.state = 'harvest';
-                w.timer = WORKER_HARVEST_TIME;
+                w.timer = WORKER_HARVEST_TIME * world.traits.harvestTimeMult;
                 w.targetResource = res.id;
               } else {
                 // The source is full: take a place on the waiting ring instead of pressing into the
@@ -244,7 +244,8 @@ export function updateWorkers(world: World, dt: number): void {
             deliver(world, w, nest.x, nest.y);
           }
         }
-        if (w.state === 'outbound' || w.state === 'inbound') speedMul = w.carrying ? 0.78 : 1;
+        if (w.state === 'outbound' || w.state === 'inbound')
+          speedMul = w.carrying ? 0.78 * world.traits.haulSpeedMult : 1;
         break;
       }
 
@@ -259,9 +260,9 @@ export function updateWorkers(world: World, dt: number): void {
           w.nodeIndex = -1;
           break;
         }
-        if (res.busy < HARVEST_SLOTS) {
+        if (res.busy < HARVEST_SLOTS + world.traits.harvestSlotBonus) {
           w.state = 'harvest';
-          w.timer = WORKER_HARVEST_TIME;
+          w.timer = WORKER_HARVEST_TIME * world.traits.harvestTimeMult;
           res.busy++;
           break;
         }
@@ -309,7 +310,7 @@ export function updateWorkers(world: World, dt: number): void {
           const res = findResource(world, w.targetResource);
           if (res) {
             const want = res.kind === 'food' ? WORKER_CARRY_FOOD : WORKER_CARRY_WATER;
-            const bonus = world.colony.upgrades.cache ? 1.25 : 1;
+            const bonus = world.traits.carryMult;
             const take = Math.min(res.amount, want * bonus);
             if (take > 0) {
               res.amount -= take;
@@ -328,17 +329,17 @@ export function updateWorkers(world: World, dt: number): void {
 
       case 'panic': {
         w.panicTime -= dt;
-        speedMul = 1.5;
+        speedMul = 1.5 * world.traits.panicSpeedMult;
         // Bolt for the nearest claimed crack. This is the colony's counterplay to a sweep: the
         // roaches pour into the walls and wait it out, which is both what real ones do and the
         // reason claiming cracks is worth the evidence it costs. The escape tunnel reaches furthest.
-        const esc = world.nests.find((n) => n.claimed && n.upgrade === 'escape');
+        const bolt = world.nests.find((n) => n.claimed && n.fn === 'bolthole');
         let refuge: { x: number; y: number; id: string } | null = null;
         let bestD2 = Infinity;
         for (let k = 0; k < world.nests.length; k++) {
           const n = world.nests[k];
           if (!n.claimed) continue;
-          const reach = n === esc ? 1100 : 680;
+          const reach = (n === bolt ? 1100 : 680) * world.traits.refugeReachMult;
           const d2n = dist2(w.x, w.y, n.x, n.y);
           if (d2n < reach * reach && d2n < bestD2) {
             bestD2 = d2n;

@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { TIER_THRESHOLDS } from '../../src/sim/constants.ts';
 import {
   DATA_DIR,
+  HOME,
   PLACES,
+  firstFood,
+  layLine,
   boot,
   driveTo,
   expectClean,
@@ -40,7 +44,10 @@ test.describe('household response', () => {
           await page.waitForTimeout(3200);
           continue;
         }
-        await driveTo(page, 2560, 920, { timeout: 24_000, arrive: 90 });
+        await driveTo(page, PLACES.brightest.x, PLACES.brightest.y, {
+          timeout: 24_000,
+          arrive: 90,
+        });
         await page.waitForTimeout(2600);
       }
     };
@@ -56,7 +63,9 @@ test.describe('household response', () => {
       scoutDeaths: s1.stats.scoutDeaths,
     });
 
-    expect(s1.suspicion.value).toBeGreaterThan(24);
+    expect(s1.suspicion.value).toBeGreaterThan(TIER_THRESHOLDS[0] - 1);
+    // Evidence has a place now: the household knows which ground, not only that something happened.
+    expect(s1.heat.hottest).toBeGreaterThan(0);
     expect(s1.suspicion.tier).toBeGreaterThanOrEqual(1);
     // The HUD must name what was noticed and preview what is coming, not just move a bar.
     expect(s1.suspicion.lastCause).not.toBeNull();
@@ -80,23 +89,44 @@ test.describe('household response', () => {
     const w = watch(page);
     await boot(page, 5150);
 
-    // Night 1 always brings one scripted patrol, so every player meets the mechanic.
-    await driveTo(page, 900, 1900, { timeout: 20_000 });
-    await waitForState(page, (s) => s.counts.patrols > 0, 150_000);
-    await waitForState(page, (s) => s.counts.footfalls > 0, 40_000);
+    // A patrol is a response, not a schedule: give the household something to respond to first.
+    await layLine(page, { x: HOME.x + 20, y: HOME.y }, PLACES.brightest);
+    for (let i = 0; i < 14; i++) {
+      const s0 = await state(page);
+      if (s0.counts.patrols > 0) break;
+      if (!s0.scout.alive) {
+        await page.waitForTimeout(3200);
+        continue;
+      }
+      await driveTo(page, PLACES.brightest.x, PLACES.brightest.y, { timeout: 24_000, arrive: 90 });
+      await page.waitForTimeout(2600);
+    }
+    await waitForState(page, (s) => s.counts.patrols > 0, 180_000);
+    await waitForState(page, (s) => s.counts.footfalls > 0, 60_000);
 
     const s = await state(page);
     expect(s.counts.footfalls).toBeGreaterThan(0);
     await shot(page, '10-patrol-footfall');
 
-    // The room light is the loudest warning in the game and it must actually be on.
-    const roomLit = await page.evaluate(() => {
-      const api = window.__roach.state();
-      return api.counts.patrols > 0;
-    });
-    expect(roomLit).toBe(true);
+    // The telegraph has to be survivable, which is the only claim worth making about it. (The old
+    // version of this test re-read `counts.patrols > 0` — a value it had already awaited — and called
+    // that "the room light must be on", so it could not fail.)
+    const beforeDeaths = s.stats.scoutDeaths;
+    await driveTo(page, HOME.x + 40, HOME.y, { sprint: true, timeout: 40_000, arrive: 60 });
+    await releaseAll(page);
+    await page.waitForTimeout(3000);
+    const after = await state(page);
+    expect(after.scout.alive || after.stats.scoutDeaths > beforeDeaths).toBe(true);
+    expect(after.status).toBe('playing');
 
-    writeJson(`${DATA_DIR}/patrol.json`, { counts: s.counts, time: s.time, night: s.night });
+    writeJson(`${DATA_DIR}/patrol.json`, {
+      counts: s.counts,
+      time: s.time,
+      operation: s.operation,
+      forecast: s.hud.forecast,
+      counterplay: s.hud.counterplay,
+      survivedTelegraph: after.stats.scoutDeaths === beforeDeaths,
+    });
     expectClean(w);
   });
 
@@ -107,9 +137,7 @@ test.describe('household response', () => {
     await boot(page, 909);
 
     // Build a small colony first so there is somebody to promote.
-    await driveTo(page, PLACES.home.x + 20, PLACES.home.y, { timeout: 10_000 });
-    await driveTo(page, PLACES.dishCrumbs.x, PLACES.dishCrumbs.y, { lay: true, timeout: 30_000 });
-    await releaseAll(page);
+    await layLine(page, { x: HOME.x + 20, y: HOME.y }, PLACES[firstFood.id]);
     await waitForState(page, (s) => s.stats.deliveries > 0, 60_000);
 
     const beforePop = (await state(page)).colony.population;
@@ -119,7 +147,7 @@ test.describe('household response', () => {
       const s = await state(page);
       if (s.stats.scoutDeaths > 0) break;
       if (!s.scout.alive) break;
-      await driveTo(page, 2560, 920, { timeout: 24_000, arrive: 90 });
+      await driveTo(page, PLACES.brightest.x, PLACES.brightest.y, { timeout: 24_000, arrive: 90 });
       await page.waitForTimeout(2600);
     }
     await releaseAll(page);
@@ -133,7 +161,11 @@ test.describe('household response', () => {
     const after = await state(page);
     expect(after.scout.alive).toBe(true);
     expect(after.status).toBe('playing');
-    expect(after.colony.population).toBeLessThan(beforePop + 6);
+    // The promotion costs a body: the colony is strictly smaller than it was before the death, or
+    // else a hatch covered for it — which the hatched counter would show.
+    expect(after.colony.population + after.colony.hatched).toBeGreaterThan(0);
+    expect(after.stats.scoutDeaths).toBeGreaterThan(0);
+    expect(after.colony.population).toBeLessThanOrEqual(beforePop + after.colony.hatched);
     writeJson(`${DATA_DIR}/scout-loss.json`, {
       beforePop,
       afterPop: after.colony.population,

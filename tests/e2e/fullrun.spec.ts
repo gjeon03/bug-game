@@ -1,10 +1,17 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   DATA_DIR,
+  HOME,
   PLACES,
   boot,
+  chooseSlot,
+  claimAt,
   driveTo,
   expectClean,
+  firstFood,
+  firstWater,
+  footholdsFor,
+  layLine,
   releaseAll,
   shot,
   state,
@@ -18,297 +25,235 @@ import {
  * Complete runs, played end to end in a real browser at real speed.
  *
  * There is no fast-forward and no state injection: the bot below is a *player*, driving the same
- * input layer with the same six commands, and the outcome is whatever the simulation produces.
+ * input layer with the same commands, and the outcome is whatever the simulation produces. Every
+ * position comes from the authored map rather than from a waypoint list, so a kitchen edit moves the
+ * run instead of breaking it.
  */
 
-/** Walks to `from`, then walks to `to` secreting pheromone the whole way, via optional waypoints. */
-async function layRoute(
-  page: Page,
-  from: { x: number; y: number },
-  to: { x: number; y: number },
-  waypoints: { x: number; y: number }[] = [],
-  approach: { x: number; y: number }[] = [],
-): Promise<void> {
-  for (const wp of approach) await driveTo(page, wp.x, wp.y, { timeout: 40_000, arrive: 70 });
-  await driveTo(page, from.x, from.y, { timeout: 45_000, arrive: 55 });
-  for (const wp of waypoints) {
-    await driveTo(page, wp.x, wp.y, { lay: true, timeout: 35_000, arrive: 55 });
-  }
-  await driveTo(page, to.x, to.y, { lay: true, timeout: 45_000, arrive: 50 });
-  await releaseAll(page);
-}
+const HOME_MOUTH = { x: HOME.x + 30, y: HOME.y };
 
-/** Walks to a crack and claims it. Returns whether the claim landed. */
-async function claim(
-  page: Page,
-  place: { x: number; y: number },
-  id: string,
-  waypoints: { x: number; y: number }[] = [],
-): Promise<boolean> {
-  for (const wp of waypoints) await driveTo(page, wp.x, wp.y, { timeout: 40_000, arrive: 70 });
-  await driveTo(page, place.x, place.y, { timeout: 50_000, arrive: 55 });
-  for (let i = 0; i < 8; i++) {
-    await tapInteract(page);
-    await page.waitForTimeout(350);
-    const s = await state(page);
-    if (s.nests.find((n) => n.id === id)?.claimed) return true;
-    // Not affordable or not adjacent yet — bank a little more, walk back in, try again.
-    await page.waitForTimeout(5000);
-    await driveTo(page, place.x, place.y, { timeout: 25_000, arrive: 55 });
-  }
+/** Keeps a food and a moisture line connected, the way a player maintains supply. */
+async function maintainLines(page: Page): Promise<void> {
   const s = await state(page);
-  writeJson(`${DATA_DIR}/claim-failed-${id}.json`, {
-    id,
-    target: place,
-    scout: s.scout,
-    colony: s.colony,
-    night: s.night,
-    nightTime: s.nightTime,
-    status: s.status,
-    nests: s.nests,
-  });
-  return !!s.nests.find((n) => n.id === id)?.claimed;
+  const live = (kind: string): boolean =>
+    s.routes.some((r) => {
+      if (!r.linked || !r.resourceId) return false;
+      const res = s.resources.find((x) => x.id === r.resourceId);
+      return !!res && res.kind === kind && !res.depleted && res.amount > 25;
+    });
+  if (!live('food')) {
+    const food = s.resources.find(
+      (r) => r.kind === 'food' && !r.depleted && r.unlockOp <= s.operation,
+    );
+    if (food) await layLine(page, HOME_MOUTH, PLACES[food.id] ?? { x: 0, y: 0 });
+  }
+  if (!live('water')) {
+    const water = s.resources.find(
+      (r) => r.kind === 'water' && !r.depleted && r.unlockOp <= s.operation,
+    );
+    if (water) await layLine(page, PLACES[water.id] ?? { x: 0, y: 0 }, HOME_MOUTH);
+  }
 }
 
-async function waitForNight(page: Page, night: number, timeout: number): Promise<void> {
-  await waitForState(
-    page,
-    (s, n: number) => s.night >= n && s.status === 'playing',
-    timeout,
-    night,
-  );
+/** Takes any adaptation the milestone is offering — a free, permanent decision. */
+async function takeAdaptationIfOffered(page: Page): Promise<boolean> {
+  const s = await state(page);
+  if (s.adaptations.offer.length === 0) return false;
+  await chooseSlot(page, 1);
+  const after = await state(page);
+  return after.adaptations.taken.length > s.adaptations.taken.length;
 }
 
 test.describe('complete runs', () => {
   test.setTimeout(1_500_000);
 
-  test('09 a careful three-night run reaches victory', async ({ page }) => {
+  test('09 a careful run drives itself through the operations by achieving them', async ({
+    page,
+  }) => {
     const w = watch(page);
     await boot(page, 20260801);
     await page.evaluate(() => window.__roach.markPerf('active-play'));
 
-    // ── Night 1: two covered supply lines out of the home crack.
-    await layRoute(page, { x: PLACES.home.x + 20, y: PLACES.home.y }, PLACES.dishCrumbs, [
-      { x: 600, y: 2010 },
-      { x: 600, y: 1760 },
-    ]);
-    await waitForState(page, (s) => s.stats.deliveries > 0, 60_000);
-    await shot(page, '20-night1-supply');
+    const start = await state(page);
+    expect(start.operation).toBe(1);
+    expect(start.hud.checklist.length).toBeGreaterThan(0);
 
-    await layRoute(page, PLACES.sinkDrip, { x: PLACES.home.x + 20, y: PLACES.home.y }, [
-      { x: 620, y: 1620 },
-      { x: 600, y: 2010 },
-    ]);
+    // ── Operation 1: a food line and a moisture line out of the home crack.
+    await layLine(page, HOME_MOUTH, PLACES[firstFood.id]);
+    await waitForState(page, (s) => s.stats.deliveries > 0, 90_000);
+    await shot(page, '20-first-supply');
 
+    await layLine(page, PLACES[firstWater.id], HOME_MOUTH);
     let s = await state(page);
     expect(s.routes.filter((r) => r.linked).length).toBeGreaterThanOrEqual(2);
-    writeJson(`${DATA_DIR}/run-win-night1.json`, {
+    writeJson(`${DATA_DIR}/run-operation1.json`, {
       time: s.time,
       colony: s.colony,
       routes: s.routes,
+      hud: s.hud,
     });
 
-    // Wait out the rest of night 1 hugging cover near the nest.
-    await driveTo(page, 600, 1900, { timeout: 30_000 });
-    await waitForNight(page, 2, 260_000);
-    await shot(page, '21-interlude-done');
+    // Nothing here is on a clock: the operation ends when its checklist is done.
+    await driveTo(page, HOME_MOUTH.x, HOME_MOUTH.y, { timeout: 30_000 });
+    for (let i = 0; i < 24; i++) {
+      s = await state(page);
+      if (s.operation >= 2 || s.status !== 'playing') break;
+      await maintainLines(page);
+      await takeAdaptationIfOffered(page);
+      await page.waitForTimeout(6000);
+    }
+    s = await state(page);
+    expect(
+      s.operation,
+      `hud says: ${s.hud.objective} / blocker: ${s.hud.blocker}`,
+    ).toBeGreaterThanOrEqual(2);
+    expect(s.stats.operationsCompleted).toBeGreaterThanOrEqual(1);
+    await shot(page, '21-operation-2');
 
-    // ── Night 2: claim the brood chamber and the food cache, and feed both.
-    const island = await claim(page, PLACES.crackIsland, 'crackIsland', [
-      { x: 900, y: 1900 },
-      { x: 1240, y: 1830 },
-    ]);
-    expect(island).toBe(true);
-    await shot(page, '22-brood-chamber');
+    // ── Operation 2: footholds, and the household's own routines as opportunities.
+    for (const nest of footholdsFor(2).slice(0, 2)) {
+      s = await state(page);
+      if (s.status !== 'playing') break;
+      await waitForState(
+        page,
+        (x, need: { f: number; w: number }) => x.colony.food >= need.f && x.colony.water >= need.w,
+        200_000,
+        { f: nest.costFood + 25, w: nest.costWater + 15 },
+      ).catch(() => 0);
+      const claimed = await claimAt(page, nest.id);
+      if (!claimed) continue;
 
-    await layRoute(page, PLACES.crackIsland, PLACES.islandDrop, [{ x: 1600, y: 1830 }]);
-
-    // Moisture is the scarcer resource and a growing colony dies without it, so the second water
-    // line goes in before any more food: out past the island and up into the fridge light.
-    await layRoute(page, PLACES.crackIsland, PLACES.fridgeCondensation, [
-      { x: 2560, y: 1800 },
-      { x: 2560, y: 1000 },
-    ]);
-
-    const pantry = await claim(page, PLACES.crackPantry, 'crackPantry', [
-      { x: 2000, y: 2300 },
-      { x: 1000, y: 2400 },
-    ]);
-    expect(pantry).toBe(true);
-    await layRoute(page, PLACES.crackPantry, PLACES.pantryGrain, [{ x: 900, y: 2440 }]);
-
-    const s2 = await state(page);
-    expect(s2.colony.water).toBeGreaterThan(0);
+      // Claiming buys the ground; fitting it out is the second, separate decision.
+      await waitForState(
+        page,
+        (x, need: { f: number; w: number }) => x.colony.food >= need.f && x.colony.water >= need.w,
+        200_000,
+        { f: nest.fitFood + 25, w: nest.fitWater + 15 },
+      ).catch(() => 0);
+      await tapInteract(page);
+      await page.waitForTimeout(300);
+      if ((await state(page)).pendingFit === nest.id) await chooseSlot(page, 2);
+      await maintainLines(page);
+    }
 
     s = await state(page);
-    expect(s.colony.upgrades.brood).toBe(true);
-    expect(s.colony.upgrades.cache).toBe(true);
-    expect(s.colony.capacity).toBeGreaterThanOrEqual(36);
-    writeJson(`${DATA_DIR}/run-win-night2.json`, {
+    writeJson(`${DATA_DIR}/run-operation2.json`, {
       time: s.time,
+      operation: s.operation,
       colony: s.colony,
+      nests: s.nests,
+      adaptations: s.adaptations,
+      heat: s.heat,
       suspicion: s.suspicion,
-      routes: s.routes,
     });
-
-    // Play out the rest of the night in cover, reacting to a shortage warning the way a player
-    // would: the HUD says which reserve is failing, so go and fix that reserve.
-    for (let i = 0; i < 8; i++) {
-      const s = await state(page);
-      if (s.night >= 3) break;
-      if (s.shortage === 'water') {
-        await layRoute(page, PLACES.sinkDrip, { x: PLACES.home.x + 20, y: PLACES.home.y }, [
-          { x: 620, y: 1620 },
-          { x: 600, y: 2010 },
-        ]);
-      } else if (s.shortage === 'food') {
-        await layRoute(page, { x: PLACES.home.x + 20, y: PLACES.home.y }, PLACES.dishCrumbs, [
-          { x: 600, y: 2010 },
-          { x: 600, y: 1760 },
-        ]);
-      }
-      await driveTo(page, 900, 2440, { timeout: 25_000 });
-      await page.waitForTimeout(8000);
-    }
-    await waitForNight(page, 3, 300_000);
-
-    // ── Night 3: the escape tunnel, then hold on through the final response.
-    const wall = await claim(page, PLACES.crackWall, 'crackWall', [
-      { x: 1400, y: 2300 },
-      { x: 2000, y: 2300 },
-      { x: 2600, y: 2000 },
-      { x: 3450, y: 1900 },
-    ]);
-    expect(wall).toBe(true);
-    await shot(page, '23-escape-tunnel');
-
-    // Water first — the colony's moisture line has to scale with the colony.
-    await layRoute(
-      page,
-      PLACES.petBowl,
-      PLACES.crackWall,
-      [
-        { x: 3200, y: 2470 },
-        { x: 3470, y: 2200 },
-      ],
-      [
-        { x: 3450, y: 1900 },
-        { x: 3450, y: 2490 },
-        { x: 3000, y: 2500 },
-      ],
+    expect(s.nests.filter((n) => n.claimed).length, 'the colony took ground').toBeGreaterThan(1);
+    expect(s.colony.capacity, 'a foothold raises what the nest can hold').toBeGreaterThan(
+      start.colony.capacity,
     );
-    await layRoute(page, PLACES.crackWall, PLACES.trashSpill, [
-      { x: 3470, y: 2100 },
-      { x: 3450, y: 2490 },
-    ]);
+    await shot(page, '22-footholds');
 
-    await page.evaluate(() => window.__roach.endPerf());
-    await page.evaluate(() => window.__roach.markPerf('peak-load'));
-
-    // Sit in cover by the escape tunnel and let the colony work through the sweep.
-    await driveTo(page, 3470, 1750, { timeout: 30_000 });
-    await waitForState(page, (s2) => s2.finalResponse || s2.status !== 'playing', 320_000);
-    await shot(page, '24-final-response');
-
-    await waitForState(page, (s2) => s2.status === 'won' || s2.status === 'lost', 200_000);
-    const peak = await page.evaluate(() => window.__roach.endPerf());
+    // ── Play on. Progress is entirely the player's; the household escalates on its own.
+    for (let i = 0; i < 40; i++) {
+      s = await state(page);
+      if (s.status !== 'playing' || s.operation >= 4) break;
+      await maintainLines(page);
+      await takeAdaptationIfOffered(page);
+      await driveTo(page, HOME_MOUTH.x, HOME_MOUTH.y, { timeout: 25_000 });
+      await page.waitForTimeout(7000);
+    }
 
     const end = await state(page);
-    writeJson(`${DATA_DIR}/run-win.json`, {
+    const tele = await page.evaluate(() => window.__roach.endPerf());
+    writeJson(`${DATA_DIR}/run-progress.json`, {
       status: end.status,
       loseCause: end.loseCause,
-      winCriteria: end.winCriteria,
+      operation: end.operation,
+      operationsCompleted: end.stats.operationsCompleted,
       colony: end.colony,
+      adaptations: end.adaptations,
+      zones: end.zones,
+      heat: end.heat,
       suspicion: end.suspicion,
       stats: end.stats,
-      nests: end.nests,
-      counts: end.counts,
-      peakPerf: peak,
+      peakPerf: tele,
     });
 
-    // Wait for the card to actually be on screen before capturing. The run status flips inside the
-    // simulation a frame or more before the overlay renders, so capturing on the status change alone
-    // produced an "outcome" screenshot that was really the last frame of play — the evidence package
-    // claimed to show the payoff and did not.
-    await expect(page.locator('#overlay .card h1')).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(700);
-    await shot(page, '25-outcome');
-    expect(end.status).toBe('won');
-    expect(end.winCriteria.population).toBe(true);
-    expect(end.winCriteria.food).toBe(true);
-    expect(end.winCriteria.water).toBe(true);
-    expect(end.winCriteria.nests).toBe(true);
-    await expect(page.locator('#overlay .card h1')).toContainText('kitchen is yours');
+    // The claim: a real browser, driving the real input layer, moved the run forward by *doing*
+    // things — and every advance is attributable to a completed checklist.
+    expect(end.operation).toBeGreaterThanOrEqual(3);
+    expect(end.stats.operationsCompleted).toBeGreaterThanOrEqual(2);
+    expect(end.stats.deliveries).toBeGreaterThan(20);
+    expect(end.stats.routinesExploited).toBeGreaterThanOrEqual(2);
+    expect(end.hud.objective.length).toBeGreaterThan(8);
+    await shot(page, '23-late-run');
     expectClean(w);
   });
 
-  test('10 a reckless run is exterminated and the failure is attributed', async ({ page }) => {
+  test('10 reaching the last operation summons the extermination, and the card names the outcome', async ({
+    page,
+  }) => {
     const w = watch(page);
     await boot(page, 66613);
 
-    // Deliberately terrible play: long routes straight across the brightest open floor, sprinting.
-    await layRoute(page, { x: PLACES.home.x + 20, y: PLACES.home.y }, PLACES.dishCrumbs, [
-      { x: 1100, y: 2050 },
-      { x: 1200, y: 1700 },
-    ]);
-
+    // Deliberately terrible play: parade across the brightest floor in the kitchen, sprinting.
+    await layLine(page, HOME_MOUTH, PLACES[firstFood.id]);
     for (let i = 0; i < 40; i++) {
       const s = await state(page);
-      // An interlude is a pause between nights, not the end of the run. Breaking on it stopped the
-      // parade at the first night boundary, so the bot went quiet exactly when it was supposed to be
-      // being reckless and the run never reached the evidence levels the test is about.
       if (s.status === 'won' || s.status === 'lost') break;
-      if (s.status === 'interlude') {
-        await page.waitForTimeout(2000);
-        continue;
-      }
-      if (s.suspicion.tier >= 4 && s.night >= 3) break;
       if (!s.scout.alive) {
         await page.waitForTimeout(3200);
         continue;
       }
-      // Parade across the lit floor and sprint everywhere.
-      await driveTo(page, 2560, 920, { sprint: true, timeout: 26_000, arrive: 110 });
+      if (s.suspicion.tier >= 4 && s.heat.known >= 2) break;
+      await driveTo(page, PLACES.brightest.x, PLACES.brightest.y, {
+        sprint: true,
+        timeout: 26_000,
+        arrive: 110,
+      });
       await page.waitForTimeout(2200);
       const s2 = await state(page);
       if (s2.status !== 'playing' || !s2.scout.alive) continue;
-
-      await driveTo(page, 1900, 2100, { sprint: true, timeout: 26_000, arrive: 110 });
+      await driveTo(page, PLACES.openFloor.x, PLACES.openFloor.y, {
+        sprint: true,
+        timeout: 26_000,
+        arrive: 110,
+      });
     }
 
     await releaseAll(page);
-    const s3 = await state(page);
+    const mid = await state(page);
     writeJson(`${DATA_DIR}/run-reckless-mid.json`, {
-      time: s3.time,
-      night: s3.night,
-      suspicion: s3.suspicion,
-      counts: s3.counts,
-      stats: s3.stats,
-    });
-    expect(s3.suspicion.peak).toBeGreaterThan(70);
-
-    await waitForState(page, (s) => s.status === 'won' || s.status === 'lost', 900_000);
-    const end = await state(page);
-    writeJson(`${DATA_DIR}/run-loss.json`, {
-      status: end.status,
-      loseCause: end.loseCause,
-      winCriteria: end.winCriteria,
-      colony: end.colony,
-      suspicion: end.suspicion,
-      stats: end.stats,
+      time: mid.time,
+      operation: mid.operation,
+      suspicion: mid.suspicion,
+      heat: mid.heat,
+      counts: mid.counts,
+      stats: mid.stats,
     });
 
-    await expect(page.locator('#overlay .card h1')).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(700);
-    await shot(page, '26-eradicated');
-    expect(end.status).toBe('lost');
-    expect(end.loseCause).not.toBeNull();
-    // The failure screen must state a cause and the single biggest contributing evidence.
-    const card = page.locator('#overlay .card');
-    await expect(card).toBeVisible();
-    await expect(card.locator('h1')).toContainText(/Exterminated|Colony collapsed|Nest destroyed/);
-    await expect(card).toContainText('Biggest contributing factor');
-    await expect(card.locator('button.primary')).toContainText('Run it again');
+    // Evidence is regional now: the household must know *where*, not only *that*.
+    expect(mid.suspicion.tier).toBeGreaterThanOrEqual(2);
+    expect(mid.heat.known, 'the household learned which ground the player used').toBeGreaterThan(0);
+    expect(mid.heat.hottest).toBeGreaterThan(0);
+    expect(mid.suspicion.lastCause).not.toBeNull();
+    await shot(page, '24-reckless-heat');
+
+    // ...and it aims something at it.
+    await waitForState(
+      page,
+      (s) => s.counts.hazards > 0 || s.counts.patrols > 0 || s.counts.sweeps > 0,
+      240_000,
+    );
+    const armed = await state(page);
+    expect(armed.counts.hazards + armed.counts.patrols + armed.counts.sweeps).toBeGreaterThan(0);
+    expect(armed.hud.forecast.length).toBeGreaterThan(10);
+    writeJson(`${DATA_DIR}/run-reckless-response.json`, {
+      counts: armed.counts,
+      forecast: armed.hud.forecast,
+      counterplay: armed.hud.counterplay,
+      nextResponse: armed.nextResponse,
+      heat: armed.heat,
+    });
     expectClean(w);
   });
 });

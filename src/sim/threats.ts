@@ -21,7 +21,7 @@ import { coverAt } from './field.ts';
 import { PATROL_PATHS, SPRAY_PATHS, TRAP_SITES } from './kitchen.ts';
 import { killScout } from './scout.ts';
 import { addSuspicion } from './suspicion.ts';
-import type { NightIndex } from './types.ts';
+import { spawnSweep, updateSweeps } from './routines.ts';
 import { killWorker, panicWorkers } from './workers.ts';
 import { homeNest, type World } from './world.ts';
 
@@ -38,17 +38,37 @@ import { homeNest, type World } from './world.ts';
  * spray clouds ramp their lethality in over the first second.
  */
 
-export function spawnPatrol(world: World, night: NightIndex, index: number): void {
-  const candidates = PATROL_PATHS.filter((p) => p.night <= night);
-  if (candidates.length === 0) return;
-  const spec = candidates[index % candidates.length];
+/**
+ * Sends a human toward a place the household is suspicious of.
+ *
+ * The authored path nearest the target is chosen, so patrol routes stay learnable — a player who
+ * memorised where the feet walk keeps that knowledge — while *which* route gets walked is now a
+ * consequence of where the colony has been working.
+ */
+/** Seconds a live hazard stays on the floor before the household tidies it away. */
+export const HAZARD_LIFE = 115;
+/** A trap that has caught its fill is cleared sooner — it is visibly full. */
+export const HAZARD_SPENT_LIFE = 26;
+
+export function spawnPatrol(world: World, tx: number, ty: number): void {
+  if (world.patrols.length >= 2) return;
+  let spec = PATROL_PATHS[0];
+  let bestD = Infinity;
+  for (const p of PATROL_PATHS) {
+    let near = Infinity;
+    for (const pt of p.points) near = Math.min(near, dist2(pt.x, pt.y, tx, ty));
+    if (near < bestD) {
+      bestD = near;
+      spec = p;
+    }
+  }
   const p0 = spec.points[0];
   world.patrols.push({
     id: world.nextId++,
     path: spec.points.map((p) => ({ x: p.x, y: p.y })),
     seg: 0,
     t: 0,
-    speed: 210 + night * 26,
+    speed: 210 + world.suspicion.tier * 22,
     x: p0.x,
     y: p0.y,
     angle: 0,
@@ -57,35 +77,70 @@ export function spawnPatrol(world: World, night: NightIndex, index: number): voi
     coneRange: 900,
     looking: false,
     life: 0,
-    night,
+    night: 1,
     done: false,
   });
   world.events.push({ t: 'lightOn', x: p0.x, y: p0.y });
 }
 
-/** Ranks authored trap sites by how much player traffic actually crossed them. */
-export function deployTraps(world: World, count: number, night: NightIndex): void {
-  const scored: { x: number; y: number; score: number }[] = [];
+/**
+ * Scores a candidate site by how much *worker traffic* actually crossed it.
+ *
+ * The old version summed trail nodes and never read `route.traffic`, so a line six roaches were
+ * pounding and a line nobody used scored identically. Traps are supposed to be the household
+ * noticing you, which means they have to be aimed at bodies, not at geometry.
+ */
+function trafficScore(world: World, x: number, y: number, radius: number): number {
+  let score = 0;
+  for (let r = 0; r < world.routes.length; r++) {
+    const route = world.routes[r];
+    if (!route.linked) continue;
+    const weight = 1 + route.traffic * 0.9;
+    for (let n = 0; n < route.nodes.length; n += 2) {
+      const node = route.nodes[n];
+      if (dist2(node.x, node.y, x, y) < radius * radius) score += weight * (1 + node.exposure * 2);
+    }
+  }
+  for (let w = 0; w < world.workers.length; w++) {
+    const worker = world.workers[w];
+    if (!worker.alive) continue;
+    if (dist2(worker.x, worker.y, x, y) < radius * radius) score += 0.6;
+  }
+  return score;
+}
+
+/** Picks the best authored hazard site inside a region the household has noticed. */
+function siteNear(
+  world: World,
+  tx: number,
+  ty: number,
+  minSpacing: number,
+  prefersCover: boolean,
+): { x: number; y: number } | null {
+  let best: { x: number; y: number } | null = null;
+  let bestScore = -Infinity;
   for (let i = 0; i < TRAP_SITES.length; i++) {
     const site = TRAP_SITES[i];
-    if (world.hazards.some((h) => dist2(h.x, h.y, site.x, site.y) < 200 * 200)) continue;
-    let score = 0;
-    for (let r = 0; r < world.routes.length; r++) {
-      const route = world.routes[r];
-      if (!route.linked) continue;
-      for (let n = 0; n < route.nodes.length; n += 2) {
-        const node = route.nodes[n];
-        if (dist2(node.x, node.y, site.x, site.y) < 190 * 190) score += 1 + node.exposure * 2;
-      }
+    if (dist2(site.x, site.y, tx, ty) > 620 * 620) continue;
+    if (world.hazards.some((h) => dist2(h.x, h.y, site.x, site.y) < minSpacing * minSpacing)) {
+      continue;
     }
-    // A site with no traffic at all is still a candidate, but a distant last resort.
-    score += (1 - coverAt(site.x, site.y)) * 0.4;
-    scored.push({ x: site.x, y: site.y, score });
+    const score =
+      trafficScore(world, site.x, site.y, 190) +
+      (prefersCover ? coverAt(site.x, site.y) * 1.2 : (1 - coverAt(site.x, site.y)) * 0.5);
+    if (score > bestScore) {
+      bestScore = score;
+      best = { x: site.x, y: site.y };
+    }
   }
-  scored.sort((a, b) => b.score - a.score);
-  for (let i = 0; i < Math.min(count, scored.length); i++) {
+  return best;
+}
+
+export function deployTraps(world: World, count: number, tx: number, ty: number): void {
+  for (let i = 0; i < count; i++) {
     if (world.hazards.length >= MAX_HAZARDS) break;
-    const s = scored[i];
+    const s = siteNear(world, tx, ty, 210, false);
+    if (!s) break;
     world.hazards.push({
       id: world.nextId++,
       kind: 'trap',
@@ -97,31 +152,17 @@ export function deployTraps(world: World, count: number, night: NightIndex): voi
       capacity: TRAP_CAPACITY,
       age: 0,
       sprung: 0,
-      night,
+      night: 1,
     });
     world.events.push({ t: 'trapArmed', x: s.x, y: s.y, kind: 'trap' });
   }
 }
 
-export function deployBait(world: World, count: number, night: NightIndex): void {
-  const scored: { x: number; y: number; score: number }[] = [];
-  for (let i = 0; i < TRAP_SITES.length; i++) {
-    const site = TRAP_SITES[i];
-    if (world.hazards.some((h) => dist2(h.x, h.y, site.x, site.y) < 240 * 240)) continue;
-    let score = coverAt(site.x, site.y);
-    for (let r = 0; r < world.routes.length; r++) {
-      const route = world.routes[r];
-      if (!route.linked) continue;
-      for (let n = 0; n < route.nodes.length; n += 3) {
-        if (dist2(route.nodes[n].x, route.nodes[n].y, site.x, site.y) < 210 * 210) score += 1.5;
-      }
-    }
-    scored.push({ x: site.x, y: site.y, score });
-  }
-  scored.sort((a, b) => b.score - a.score);
-  for (let i = 0; i < Math.min(count, scored.length); i++) {
+export function deployBait(world: World, count: number, tx: number, ty: number): void {
+  for (let i = 0; i < count; i++) {
     if (world.hazards.length >= MAX_HAZARDS) break;
-    const s = scored[i];
+    const s = siteNear(world, tx, ty, 250, true);
+    if (!s) break;
     world.hazards.push({
       id: world.nextId++,
       kind: 'bait',
@@ -133,14 +174,46 @@ export function deployBait(world: World, count: number, night: NightIndex): void
       capacity: 999,
       age: 0,
       sprung: 0,
-      night,
+      night: 1,
     });
     world.events.push({ t: 'trapArmed', x: s.x, y: s.y, kind: 'bait' });
   }
 }
 
-export function spawnSpray(world: World, index: number, targeted = false): void {
-  const spec = SPRAY_PATHS[index % SPRAY_PATHS.length];
+/** A cleaning pass across a region the household has decided is dirty. */
+export function sweepRegion(world: World, tx: number, ty: number): void {
+  const dx = tx < 1800 ? 1 : -1;
+  spawnSweep(
+    world,
+    [
+      { x: tx - 340 * dx, y: ty - 260 },
+      { x: tx, y: ty },
+      { x: tx + 360 * dx, y: ty + 240 },
+    ],
+    198,
+  );
+}
+
+/**
+ * Spray.
+ *
+ * The path is chosen to pass through the region the household is acting on, so a cloud is always a
+ * consequence of somewhere the colony worked. `targeted` clouds go for the cracks themselves and
+ * flush roaches out of shelter; untargeted ones can be ridden out inside a claimed crack, which is
+ * what makes claiming cracks worth its evidence.
+ */
+export function spawnSpray(world: World, tx: number, ty: number, targeted = false): void {
+  if (world.sprays.length >= 2) return;
+  let spec = SPRAY_PATHS[0];
+  let bestD = Infinity;
+  for (const p of SPRAY_PATHS) {
+    let near = Infinity;
+    for (const pt of p.points) near = Math.min(near, dist2(pt.x, pt.y, tx, ty));
+    if (near < bestD) {
+      bestD = near;
+      spec = p;
+    }
+  }
   const p0 = spec.points[0];
   world.sprays.push({
     id: world.nextId++,
@@ -202,6 +275,7 @@ function advanceAlongPath(
 }
 
 export function updateThreats(world: World, dt: number): void {
+  updateSweeps(world, dt);
   // ── Patrols.
   let lightTarget = 0;
   for (let i = world.patrols.length - 1; i >= 0; i--) {
@@ -259,6 +333,14 @@ export function updateThreats(world: World, dt: number): void {
   for (let i = world.hazards.length - 1; i >= 0; i--) {
     const h = world.hazards[i];
     h.age += dt;
+    // Hazards age out. Nothing used to remove them — ever — so a run reached MAX_HAZARDS against 14
+    // authored sites and the household permanently lost its only non-patrol response, which is why
+    // the late game went quiet. A spent or elderly hazard is now cleared away like a real one.
+    const expired = h.capacity <= 0 ? h.age > HAZARD_SPENT_LIFE : h.age > HAZARD_LIFE;
+    if (expired) {
+      world.hazards.splice(i, 1);
+      continue;
+    }
     if (!h.armed) {
       h.armTime -= dt;
       if (h.armTime <= 0) h.armed = true;
@@ -418,32 +500,4 @@ function impact(world: World, x: number, y: number): void {
 
   // Stepping on something is how a human finds out for certain.
   if (killed > 0) addSuspicion(world, 'seen', 1, x, y);
-}
-
-/** Called on a tier rising edge. Each family arrives once per tier, never double-spawned. */
-export function requestResponse(world: World, tier: number): void {
-  // Belt and braces: even a mis-wired caller cannot stack responses without bound.
-  if (world.patrols.length >= 3 || world.sprays.length >= 3) return;
-  switch (tier) {
-    case 1:
-      if (world.patrols.length === 0) spawnPatrol(world, world.night, world.tick % 2);
-      break;
-    case 2:
-      deployTraps(world, 2, world.night);
-      if (world.patrols.length === 0) spawnPatrol(world, world.night, 1);
-      break;
-    case 3:
-      deployTraps(world, 2, world.night);
-      deployBait(world, 1, world.night);
-      spawnPatrol(world, world.night, 2);
-      break;
-    case 4:
-      // Extermination: two clouds, and their paths run over the cracks.
-      spawnSpray(world, world.night % SPRAY_PATHS.length, true);
-      spawnSpray(world, (world.night + 2) % SPRAY_PATHS.length, true);
-      deployTraps(world, 1, world.night);
-      break;
-    default:
-      break;
-  }
 }

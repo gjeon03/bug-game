@@ -10,7 +10,10 @@ import { Camera } from './render/camera.ts';
 import { PRIO, Particles } from './render/particles.ts';
 import { Renderer, type RenderSettings } from './render/renderer.ts';
 import { WORLD_H, WORLD_W } from './sim/constants.ts';
+import { chooseAdaptation, specById } from './sim/adaptations.ts';
+import { chooseFunction } from './sim/colony.ts';
 import { stepWorld } from './sim/sim.ts';
+import type { FootholdFunction } from './sim/types.ts';
 import { createWorld, type World } from './sim/world.ts';
 import {
   snapshot,
@@ -171,13 +174,38 @@ function keyDown(e: KeyboardEvent): void {
   switch (code) {
     case 'Escape':
     case 'KeyP':
-      if (world.status === 'playing' || world.status === 'interlude') setPaused(!paused);
+      if (world.status === 'playing') setPaused(!paused);
       break;
     case 'KeyR':
       startRun();
       break;
+    // One-of-three choices — adaptations and foothold fit-outs share the same three keys because
+    // they are the same shape of decision. Only one of the two can ever be open at a time.
+    case 'Digit1':
+    case 'Digit2':
+    case 'Digit3': {
+      const slot = Number(e.code.slice(5)) - 1;
+      if (world.adaptations.offer.length > slot) {
+        const id = world.adaptations.offer[slot];
+        const result = chooseAdaptation(world, id);
+        if (result === 'tooPoor') {
+          const spec = specById(id);
+          world.hint = spec
+            ? `${spec.name} needs ${spec.costFood} food and ${spec.costWater} moisture.`
+            : 'Not enough in the larder yet.';
+          world.hintTime = 3;
+        }
+      } else if (world.pendingFit) {
+        const fns: FootholdFunction[] = ['nursery', 'cache', 'bolthole'];
+        if (chooseFunction(world, fns[slot]) === 'tooPoor') {
+          world.hint = 'Not enough in the larder to fit that out.';
+          world.hintTime = 3;
+        }
+      }
+      break;
+    }
     case 'Enter':
-      if (world.status === 'interlude') world.intent.skipInterlude = true;
+      if (world.cardTime > 0) world.cardTime = 0;
       else if (world.status === 'won' || world.status === 'lost') startRun();
       break;
     case 'KeyE':
@@ -481,8 +509,75 @@ function processEvents(rs: RenderSettings): void {
           Math.random,
         );
         break;
-      case 'phase':
+      case 'operation':
         renderer.addFlash(60, 90, 130, 0.24, 2.4, rs);
+        audio.operationCard(e.index);
+        break;
+      case 'routineWarn':
+        audio.routineWarn(e.kind, panOf(e.x));
+        renderer.addFlash(70, 90, 120, 0.1, 1.2, rs);
+        break;
+      case 'routineStart':
+        audio.routineStart(e.kind, panOf(e.x));
+        particles.burst(
+          'glow',
+          TINT.warm,
+          e.x,
+          e.y,
+          14,
+          90,
+          0.8,
+          6,
+          0.5,
+          PRIO.feedback,
+          Math.random,
+        );
+        break;
+      case 'routineTaken':
+        audio.routineTaken(panOf(e.x));
+        break;
+      case 'routineEnd':
+        audio.routineEnd(panOf(e.x));
+        break;
+      case 'sweepWarn':
+        audio.sweepWarn(panOf(e.x));
+        break;
+      case 'sweepStart':
+        audio.sweepPass(panOf(e.x));
+        break;
+      case 'adapt':
+        audio.adapt(e.family);
+        renderer.addFlash(150, 200, 190, 0.2, 1.6, rs);
+        break;
+      case 'fitOut':
+        audio.fitOut(panOf(e.x));
+        particles.burst(
+          'chip',
+          TINT.amber,
+          e.x,
+          e.y,
+          16,
+          110,
+          0.7,
+          5,
+          0.8,
+          PRIO.feedback,
+          Math.random,
+        );
+        camera.shake = Math.min(9, camera.shake + 5);
+        break;
+      case 'repair':
+        audio.repair(panOf(e.x));
+        break;
+      case 'zoneHeld':
+        audio.zoneHeld();
+        break;
+      case 'zoneLost':
+        audio.zoneLost();
+        break;
+      case 'finalResponse':
+        audio.finalResponse();
+        renderer.addFlash(200, 60, 40, 0.32, 2.6, rs);
         break;
       case 'win':
         audio.victory();
@@ -522,8 +617,11 @@ function frame(now: number): void {
   processEvents(rs);
 
   // Overlay state follows the simulation, never the other way round.
-  if (world.status === 'interlude' && overlays.kind !== 'interlude') overlays.showInterlude(world);
-  else if (world.status === 'playing' && overlays.kind === 'interlude') overlays.hide();
+  // The operation card is a reward beat, not a modal: it appears when the player finishes an
+  // operation and clears itself, and it never pauses the simulation.
+  if (world.cardTime > 0 && overlays.kind !== 'operation' && !paused)
+    overlays.showOperationCard(world);
+  else if (world.cardTime <= 0 && overlays.kind === 'operation') overlays.hide();
   else if (
     (world.status === 'won' || world.status === 'lost') &&
     overlays.kind !== 'win' &&
@@ -639,7 +737,21 @@ function frame(now: number): void {
   }
 
   renderer.draw(world, camera, particles, rs, now / 1000, dtRender);
-  audio.updateBeds(world.colony.population, world.sprays.length > 0, dtRender);
+  // The house's own sound is derived from what the household is doing, not from a music cue: the
+  // fridge is loud while its door is open, the tap runs while somebody is washing up, and the room's
+  // noise floor rises with the alert level.
+  let fridgeOpen = 0;
+  let waterRunning = 0;
+  for (const r of world.routines) {
+    if (r.phase !== 'incoming' && r.phase !== 'active') continue;
+    if (r.kind === 'snack') fridgeOpen = Math.max(fridgeOpen, r.light);
+    if (r.kind === 'dishes') waterRunning = Math.max(waterRunning, r.phase === 'active' ? 1 : 0.35);
+  }
+  audio.updateBeds(world.colony.population, world.sprays.length > 0, dtRender, {
+    fridgeOpen,
+    water: waterRunning,
+    alert: world.suspicion.tier / 4,
+  });
 
   canvas.classList.toggle('laying', s.laying);
 

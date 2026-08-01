@@ -1,283 +1,141 @@
-import { expect, it } from 'vitest';
-import { SIM_DT } from '../../src/core/clock.ts';
-import { NESTS, RESOURCES } from '../../src/sim/kitchen.ts';
-import { stepWorld } from '../../src/sim/sim.ts';
+import { describe, expect, it } from 'vitest';
 import { createWorld, type World } from '../../src/sim/world.ts';
-import { driveTo, idle } from './helpers.ts';
+import { knownCellCount, totalHeat } from '../../src/sim/heat.ts';
+import { firstResource, HOME, pt, satellitesFor } from '../map.ts';
+import { bankUntil, claimNest, layLine, playFor, type PlayerOptions } from './play.ts';
 
-const HOME = NESTS[0];
-const P = Object.fromEntries(RESOURCES.map((r) => [r.id, r])) as Record<
-  string,
-  (typeof RESOURCES)[number]
->;
-const N = Object.fromEntries(NESTS.map((n) => [n.id, n])) as Record<string, (typeof NESTS)[number]>;
-type Pt = [number, number];
-function route(w: World, approach: Pt[], lay: Pt[]): void {
-  for (const [x, y] of approach) driveTo(w, x, y, { timeout: 45, arrive: 55 });
-  for (const [x, y] of lay) driveTo(w, x, y, { lay: true, timeout: 45, arrive: 50 });
-  w.input.lay = false;
-}
-function claimAt(w: World, approach: Pt[], id: string): boolean {
-  for (const [x, y] of approach) driveTo(w, x, y, { timeout: 45, arrive: 60 });
-  const nest = N[id];
-  driveTo(w, nest.x, nest.y, { timeout: 45, arrive: 50 });
-  for (let a = 0; a < 6; a++) {
-    w.input.interactPressed = true;
-    stepWorld(w, SIM_DT);
-    if (w.nests.find((n) => n.id === id)!.claimed) return true;
-    idle(w, 8);
-    driveTo(w, nest.x, nest.y, { timeout: 20, arrive: 50 });
-  }
-  return w.nests.find((n) => n.id === id)!.claimed;
-}
+/**
+ * Two ways to play the same seed.
+ *
+ * This is the design thesis as an executable claim: cover-hugging routing and routing through the
+ * light produce different growth *and* different household pressure. The old version of this test was
+ * three hand-scripted 120-line runs across three fixed nights; this one asks the same player for two
+ * different *intents* and lets `tests/map.ts` work out the geometry.
+ */
+
+const CAUTIOUS: PlayerOptions = { style: 'covered' };
+const RECKLESS: PlayerOptions = { style: 'open', detour: true, reckless: true };
+
 interface Outcome {
+  operation: number;
   status: string;
+  loseCause: string | null;
   tier: number;
   droppings: number;
+  heat: number;
+  knownCells: number;
   population: number;
+  peakPopulation: number;
+  deliveries: number;
+  scoutDeaths: number;
 }
 
-function outcome(w: World): Outcome {
+function play(seed: number, opts: PlayerOptions, seconds: number): Outcome {
+  const world = createWorld(seed);
+  layLine(world, { x: HOME.x + 30, y: HOME.y }, pt(firstResource('food')), opts);
+  layLine(world, pt(firstResource('water')), { x: HOME.x + 30, y: HOME.y }, opts);
+
+  const until = world.time + seconds;
+  while (world.time < until && world.status === 'playing') {
+    playFor(world, 25, opts);
+    // Both players take ground when they can afford it; only the routing differs.
+    for (const sat of satellitesFor(world.operation)) {
+      if (world.nests.find((n) => n.id === sat.id)!.claimed) continue;
+      if (world.colony.food < sat.costFood + 30) continue;
+      claimNest(world, sat.id, opts);
+      break;
+    }
+  }
+  return summarise(world);
+}
+
+function summarise(world: World): Outcome {
   return {
-    status: w.status,
-    tier: w.suspicion.reachedTier,
-    droppings: w.suspicion.causes.droppings,
-    population: w.colony.population,
+    operation: world.operation,
+    status: world.status,
+    loseCause: world.loseCause,
+    tier: world.suspicion.reachedTier,
+    droppings: world.suspicion.causes.droppings,
+    heat: totalHeat(world),
+    knownCells: knownCellCount(world),
+    population: world.colony.population,
+    peakPopulation: world.stats.peakPopulation,
+    deliveries: world.stats.deliveries,
+    scoutDeaths: world.stats.scoutDeaths,
   };
 }
 
-/**
- * The three playtest strategies from TEST_PLAN, played headless end to end.
- *
- * This is the design thesis as an executable claim: careful routing wins, aggressive routing grows
- * faster and gets caught, and routing across bare tile through the light kills the colony outright.
- */
-it('cautious play wins where aggressive and reckless routing do not', () => {
-  let cautious: Outcome, aggressive: Outcome, poor: Outcome;
+describe('routing style changes the run', () => {
+  it('cautious and reckless play produce different growth and a different price per haul', () => {
+    const cautious = play(31337, CAUTIOUS, 320);
+    const reckless = play(31337, RECKLESS, 320);
+    const note = JSON.stringify({ cautious, reckless });
 
-  // ── Cautious: cover-hugging everywhere, minimal exposure.
-  {
-    const w = createWorld(31337);
-    route(
-      w,
-      [[HOME.x + 20, HOME.y]],
-      [
-        [600, 2010],
-        [600, 1760],
-        [P.dishCrumbs.x, P.dishCrumbs.y],
-      ],
-    );
-    route(
-      w,
-      [
-        [620, 1620],
-        [P.sinkDrip.x, P.sinkDrip.y],
-      ],
-      [
-        [620, 1620],
-        [600, 2010],
-        [HOME.x + 20, HOME.y],
-      ],
-    );
-    while (w.night < 2 && w.status !== 'lost') idle(w, 1);
-    claimAt(
-      w,
-      [
-        [900, 1900],
-        [1240, 1830],
-      ],
-      'crackIsland',
-    );
-    route(
-      w,
-      [],
-      [
-        [1600, 1820],
-        [1872, 1830],
-        [P.islandDrop.x, P.islandDrop.y],
-      ],
-    );
-    claimAt(
-      w,
-      [
-        [1240, 1830],
-        [1000, 2350],
-        [1000, 2450],
-      ],
-      'crackPantry',
-    );
-    route(
-      w,
-      [],
-      [
-        [900, 2440],
-        [P.pantryGrain.x, P.pantryGrain.y],
-      ],
-    );
-    while (w.night < 3 && w.status === 'playing') idle(w, 1);
-    claimAt(
-      w,
-      [
-        [1000, 2450],
-        [1400, 2300],
-        [2000, 2300],
-        [2600, 2000],
-        [3450, 1900],
-      ],
-      'crackWall',
-    );
-    route(
-      w,
-      [
-        [3450, 2490],
-        [3000, 2500],
-        [P.petBowl.x, P.petBowl.y],
-      ],
-      [
-        [3200, 2470],
-        [3470, 2200],
-        [N.crackWall.x, N.crackWall.y],
-      ],
-    );
-    route(
-      w,
-      [],
-      [
-        [3470, 2100],
-        [3450, 2490],
-        [P.trashSpill.x, P.trashSpill.y],
-      ],
-    );
-    for (let k = 0; k < 16 && w.status === 'playing'; k++) {
-      driveTo(w, 3470, 1750, { timeout: 30 });
-      idle(w, 12);
-      if (w.status === 'playing' && w.routes.filter((r) => r.linked).length < 3)
-        route(
-          w,
-          [[3470, 2100]],
-          [
-            [3450, 2490],
-            [P.trashSpill.x, P.trashSpill.y],
-          ],
-        );
+    // ── Growth. A line that goes the long way through the light is slow as well as loud, so the
+    // careful colony is simply further along the run.
+    expect(cautious.deliveries, note).toBeGreaterThan(reckless.deliveries * 3);
+    expect(cautious.peakPopulation, note).toBeGreaterThan(reckless.peakPopulation);
+    expect(cautious.operation, note).toBeGreaterThanOrEqual(reckless.operation);
+
+    // ── Price. The honest comparison is not total evidence — the careful colony runs for longer and
+    // hauls far more — but what each haul *cost*. This is the number the whole design turns on.
+    const cost = (o: Outcome): number => o.droppings / Math.max(1, o.deliveries);
+    expect(
+      cost(reckless),
+      `evidence per delivery: reckless ${cost(reckless).toFixed(2)} vs cautious ${cost(cautious).toFixed(2)}`,
+    ).toBeGreaterThan(cost(cautious) * 3);
+
+    // ── Both are real runs, not one run and one stalled world.
+    expect(reckless.deliveries, note).toBeGreaterThan(0);
+    expect(cautious.deliveries, note).toBeGreaterThan(0);
+  }, 90_000);
+
+  it('a careful run is never wiped out by the household inside the opening operations', () => {
+    const cautious = play(31337, CAUTIOUS, 320);
+    const note = JSON.stringify(cautious);
+    // Falling short is a legitimate loss; being exterminated for playing carefully is not.
+    expect(['playing', 'won'], note).toContain(cautious.status);
+    expect(cautious.loseCause, note).toBeNull();
+  }, 60_000);
+
+  it('the household ends up knowing about the ground the player used, on either strategy', () => {
+    const cautious = play(66613, CAUTIOUS, 260);
+    const reckless = play(66613, RECKLESS, 260);
+    const note = JSON.stringify({ cautious, reckless });
+    // Evidence can never be ground to zero, whichever way the player routes.
+    expect(cautious.tier + reckless.tier, note).toBeGreaterThan(0);
+    expect(Math.max(cautious.heat, reckless.heat), note).toBeGreaterThan(0);
+  }, 90_000);
+});
+
+describe('a competent opening is reproducible', () => {
+  it('supplies itself and finishes the first operation on every seed tried', () => {
+    const lines: string[] = [];
+    for (const seed of [20260801, 7, 31337, 909, 5150]) {
+      const world = createWorld(seed);
+      layLine(world, { x: HOME.x + 30, y: HOME.y }, pt(firstResource('food')));
+      layLine(world, pt(firstResource('water')), { x: HOME.x + 30, y: HOME.y });
+      for (let k = 0; k < 30 && world.operation < 2 && world.status === 'playing'; k++) {
+        playFor(world, 20);
+      }
+      // Take the first crack the new operation opens, to prove the economy carries into it.
+      const sat = satellitesFor(world.operation)[0];
+      if (sat) {
+        bankUntil(world, sat.costFood + 30, sat.costWater + 20, 200);
+        claimNest(world, sat.id);
+      }
+
+      const line = `seed ${seed}: op=${world.operation} ${world.status} pop=${world.colony.population} deliveries=${world.stats.deliveries} claimed=${world.nests.filter((n) => n.claimed).length}`;
+      lines.push(line);
+
+      // The win is a property of the strategy, not of the seed: every one of these must complete
+      // operation 1, keep a colony alive, and never lose the home crack.
+      expect(world.operation, line).toBeGreaterThanOrEqual(2);
+      expect(world.status, line).toBe('playing');
+      expect(world.stats.deliveries, line).toBeGreaterThan(8);
+      expect(world.loseCause, line).toBeNull();
+      expect(world.nests.filter((n) => n.claimed).length, line).toBeGreaterThan(1);
     }
-    while (w.status === 'playing') idle(w, 2);
-    cautious = outcome(w);
-  }
-
-  // ── Aggressive: shortest lines straight across the open middle, sprinting between them.
-  {
-    const w = createWorld(31337);
-    route(
-      w,
-      [[HOME.x + 20, HOME.y]],
-      [
-        [900, 1950],
-        [P.dishCrumbs.x, P.dishCrumbs.y],
-      ],
-    );
-    route(
-      w,
-      [[P.sinkDrip.x, P.sinkDrip.y]],
-      [
-        [900, 1600],
-        [HOME.x + 20, HOME.y],
-      ],
-    );
-    while (w.night < 2 && w.status !== 'lost') idle(w, 1);
-    claimAt(w, [[1100, 1950]], 'crackIsland');
-    route(
-      w,
-      [],
-      [
-        [1700, 2000],
-        [P.islandDrop.x, P.islandDrop.y],
-      ],
-    );
-    claimAt(w, [[1200, 2300]], 'crackPantry');
-    route(
-      w,
-      [],
-      [
-        [950, 2380],
-        [P.pantryGrain.x, P.pantryGrain.y],
-      ],
-    );
-    while (w.night < 3 && w.status === 'playing') idle(w, 1);
-    claimAt(
-      w,
-      [
-        [2000, 2200],
-        [3000, 1900],
-        [3450, 1800],
-      ],
-      'crackWall',
-    );
-    route(
-      w,
-      [
-        [3200, 2300],
-        [P.petBowl.x, P.petBowl.y],
-      ],
-      [
-        [3300, 2100],
-        [N.crackWall.x, N.crackWall.y],
-      ],
-    );
-    for (let k = 0; k < 16 && w.status === 'playing'; k++) {
-      driveTo(w, 2600, 1900, { sprint: true, timeout: 30 });
-      idle(w, 12);
-    }
-    while (w.status === 'playing') idle(w, 2);
-    aggressive = outcome(w);
-  }
-
-  // ── Deliberately poor: long loops across bare tile and through the under-sink light.
-  {
-    const w = createWorld(31337);
-    route(
-      w,
-      [[HOME.x + 20, HOME.y]],
-      [
-        [1250, 2250],
-        [1250, 1900],
-        [1050, 1500],
-        [800, 1250],
-        [P.dishCrumbs.x, P.dishCrumbs.y],
-      ],
-    );
-    route(
-      w,
-      [[P.sinkDrip.x, P.sinkDrip.y]],
-      [
-        [1000, 1300],
-        [1200, 1900],
-        [900, 2300],
-        [HOME.x + 20, HOME.y],
-      ],
-    );
-    while (w.status === 'playing' || w.status === 'interlude') {
-      driveTo(w, 2560, 920, { sprint: true, timeout: 26, arrive: 110 });
-      idle(w, 6);
-      if (w.status !== 'playing' && w.status !== 'interlude') break;
-      driveTo(w, 1900, 2100, { sprint: true, timeout: 26, arrive: 110 });
-      idle(w, 6);
-    }
-    poor = outcome(w);
-  }
-
-  const summary = JSON.stringify({ cautious, aggressive, poor });
-
-  // Careful routing wins and never provokes the extermination tier.
-  expect(cautious.status, summary).toBe('won');
-  expect(cautious.tier, summary).toBeLessThan(4);
-
-  // Aggressive routing lays down several times as much evidence and does provoke it.
-  expect(aggressive.droppings, summary).toBeGreaterThan(cautious.droppings * 3);
-  expect(aggressive.tier, summary).toBe(4);
-  expect(aggressive.status, summary).not.toBe('won');
-
-  // Routing across bare tile and through the light kills the colony outright.
-  expect(poor.status, summary).toBe('lost');
-  expect(poor.population, summary).toBe(0);
+    expect(lines.length).toBe(5);
+  }, 120_000);
 });

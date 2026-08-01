@@ -47,7 +47,11 @@ export const RESERVE_COST = 1;
  * surviving colony actually needs — four made the oldest route silently evict itself and could
  * delete the colony's only water supply without the player noticing.
  */
-export const MAX_ROUTES = 5;
+/**
+ * Concurrent routes. Six, not five: the redesign adds household events that are worth an
+ * opportunistic line, and at five the player had to evict a permanent supply line to take one.
+ */
+export const MAX_ROUTES = 6;
 /** How close a route end must be to a nest/resource to count as linked. */
 export const LINK_RADIUS = 92;
 /** How far a worker can be from a trail node and still read it. */
@@ -107,12 +111,27 @@ export const NYMPH_TIME = 6;
 /* ── Colony ────────────────────────────────────────────────────────────────── */
 
 export const START_POPULATION = 6;
-export const BASE_CAPACITY = 14;
-export const CAPACITY_PER_NEST = 8;
-export const BROOD_CHAMBER_CAPACITY = 14;
-export const FOOD_CAP = 200;
-export const WATER_CAP = 160;
-export const CACHE_FOOD_BONUS = 120;
+/**
+ * Base capacity must exceed operation 1's population gate, or the run deadlocks: the only capacity
+ * raisers (footholds, brood adaptations) unlock at operation 2, which needs operation 1 finished.
+ * Found by playing it — the colony sat at 10/10 with the blocker telling the player to claim a
+ * foothold they could not yet claim.
+ */
+export const BASE_CAPACITY = 13;
+/** Claiming a crack alone raises capacity — the ground is worth something before it is fitted out. */
+export const CAPACITY_PER_NEST = 4;
+export const NURSERY_CAPACITY = 10;
+export const BOLTHOLE_CAPACITY = 2;
+/**
+ * Base storage.
+ *
+ * Deliberately small. The measured failure of the old economy was a 200-unit larder that filled in
+ * 112 seconds and then discarded every delivery for the rest of the run. A low ceiling that the
+ * player raises by building is a decision; a high ceiling they cannot move is a dead end.
+ */
+export const FOOD_CAP = 120;
+export const WATER_CAP = 100;
+export const CACHE_FOOD_BONUS = 90;
 export const CACHE_WATER_BONUS = 60;
 export const BROOD_RATE = 0.09;
 export const BROOD_CHAMBER_MULT = 1.75;
@@ -123,8 +142,8 @@ export const BROOD_WATER_COST = 4;
  * stock down to zero before the player's first delivery lands, and starves for reasons the player
  * had no way to see coming.
  */
-export const BROOD_RESERVE_MARGIN_FOOD = 14;
-export const BROOD_RESERVE_MARGIN_WATER = 8;
+export const BROOD_RESERVE_MARGIN_FOOD = 12;
+export const BROOD_RESERVE_MARGIN_WATER = 7;
 export const START_FOOD = 46;
 export const START_WATER = 34;
 export const UPKEEP_FOOD = 0.016;

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld } from '../../src/sim/world.ts';
-import { RESOURCES, NESTS } from '../../src/sim/kitchen.ts';
+import { firstResource, HOME, path, pt } from '../map.ts';
 import { driveTo, idle, stepUntil } from './helpers.ts';
+import { layLine } from './play.ts';
 
-const HOME = NESTS[0];
-const CRUMBS = RESOURCES.find((r) => r.id === 'dishCrumbs')!;
-const DRIP = RESOURCES.find((r) => r.id === 'sinkDrip')!;
+const CRUMBS = firstResource('food');
+const DRIP = firstResource('water');
 
 /**
  * The end-to-end micro-loop: leave the nest, walk to food while secreting pheromone, and have the
@@ -17,30 +17,45 @@ describe('core loop', () => {
 
     // Walk from the nest to the crumbs, laying the whole way.
     expect(driveTo(world, HOME.x + 40, HOME.y, { timeout: 6 })).toBe(true);
-    expect(driveTo(world, CRUMBS.x, CRUMBS.y, { lay: true, timeout: 25 })).toBe(true);
+    for (const p of path({ x: world.scout.x, y: world.scout.y }, pt(CRUMBS))) {
+      driveTo(world, p.x, p.y, { lay: true, timeout: 25, arrive: 40 });
+    }
+    world.input.lay = false;
 
     const route = world.routes[0];
     expect(route).toBeDefined();
     expect(route.nodes.length).toBeGreaterThan(10);
     expect(route.linked).toBe(true);
-    expect(route.resourceId).toBe('dishCrumbs');
-    expect(route.nestId).toBe('home');
+    expect(route.resourceId).toBe(CRUMBS.id);
+    expect(route.nestId).toBe(HOME.id);
 
     const acquired = stepUntil(world, (w) => w.workers.some((x) => x.state === 'outbound'), 12);
     expect(acquired).toBeGreaterThanOrEqual(0);
 
-    const foodBefore = world.colony.food;
-    const delivered = stepUntil(world, (w) => w.stats.deliveries > 0, 45);
-    expect(delivered).toBeGreaterThanOrEqual(0);
-    // Upkeep runs the whole time, so the meaningful assertion is that income arrived at all and that
-    // the reserve stepped up on the delivery frame.
-    expect(world.colony.totalFood).toBeGreaterThan(0);
-    expect(world.colony.food).toBeGreaterThan(foodBefore - 45 * 0.03 * world.colony.population);
+    // The old assertion here compared food against a hand-computed upkeep allowance, which is
+    // near-vacuous — it passed whether or not anything was ever delivered. What the loop actually
+    // promises is that the *store* goes up across the delivery frame, so that is what is measured.
+    const totalBefore = world.colony.totalFood;
+    let stepped = 0;
+    let jumped = false;
+    while (stepped < 45 && !jumped) {
+      const before = world.colony.food;
+      const deliveries = world.stats.deliveries;
+      idle(world, 1 / 60);
+      stepped += 1 / 60;
+      if (world.stats.deliveries > deliveries) jumped = world.colony.food > before;
+    }
+    expect(jumped, 'the larder must step up on the frame a delivery lands').toBe(true);
+    expect(world.colony.totalFood).toBeGreaterThan(totalBefore);
+    expect(world.stats.deliveries).toBeGreaterThan(0);
   });
 
   it('hits the first-delivery pacing budget of 60 seconds', () => {
     const world = createWorld(99);
-    driveTo(world, CRUMBS.x, CRUMBS.y, { lay: true, timeout: 25 });
+    for (const p of path({ x: world.scout.x, y: world.scout.y }, pt(CRUMBS))) {
+      driveTo(world, p.x, p.y, { lay: true, timeout: 25, arrive: 40 });
+    }
+    world.input.lay = false;
     stepUntil(world, (w) => w.stats.deliveries > 0, 45);
     expect(world.stats.firstDeliveryAt).toBeGreaterThan(0);
     expect(world.stats.firstDeliveryAt).toBeLessThan(60);
@@ -48,9 +63,8 @@ describe('core loop', () => {
 
   it('grows the colony when both food and moisture flow', () => {
     const world = createWorld(7);
-    driveTo(world, CRUMBS.x, CRUMBS.y, { lay: true, timeout: 25 });
-    driveTo(world, DRIP.x, DRIP.y, { timeout: 25 });
-    driveTo(world, HOME.x, HOME.y, { lay: true, timeout: 30 });
+    layLine(world, { x: HOME.x + 30, y: HOME.y }, pt(CRUMBS));
+    layLine(world, pt(DRIP), { x: HOME.x + 30, y: HOME.y });
 
     const linked = world.routes.filter((r) => r.linked);
     expect(linked.length).toBe(2);

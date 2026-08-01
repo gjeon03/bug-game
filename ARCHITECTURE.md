@@ -12,7 +12,8 @@ main.ts ─ boot, canvas + DPR, RAF loop, focus handling, wiring
    │              one deliberate exception: it touches `window.localStorage`, guarded, and is excluded
    │              from the DOM-free lint fence for that reason.
    ├── sim/       ALL authoritative game state. DOM-free. Deterministic given (seed, input log).
-   ├── render/    reads sim, never writes it. Canvas2D + procedural atlases + lighting + VFX.
+   ├── render/    reads sim, never writes it. Canvas2D + procedural atlases + baked fixtures/props +
+   │              lighting + VFX.
    ├── audio/     reads sim events, never writes. WebAudio synthesis only.
    ├── ui/        DOM overlay: HUD, menus, onboarding, end cards. Emits intents, never mutates sim.
    └── testapi.ts thin read-mostly seam exposed as window.__roach
@@ -23,18 +24,23 @@ That is what makes the simulation unit-testable in Node and deterministic under 
 
 ## State ownership
 
-| Owner              | Owns                                                                                                                                                                                                       |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sim/world.ts`     | The single mutable `World` object. Created by `createWorld(seed)`; a restart throws the old one away entirely — there is no partial reset path, which is how restart-leak bugs are structurally prevented. |
-| `sim/colony.ts`    | food, water, population, capacity, brood progress, upgrades, nest integrity                                                                                                                                |
-| `sim/scout.ts`     | scout transform, stamina, alive/respawn timer                                                                                                                                                              |
-| `sim/workers.ts`   | worker pool (fixed-capacity, index-recycled — never grows unbounded)                                                                                                                                       |
-| `sim/pheromone.ts` | routes, nodes, reserve                                                                                                                                                                                     |
-| `sim/threats.ts`   | patrols, traps, sprays, their timers                                                                                                                                                                       |
-| `sim/suspicion.ts` | suspicion value, tier, causes ledger                                                                                                                                                                       |
-| `sim/director.ts`  | phase, phase clock, authored beat cursor, run outcome                                                                                                                                                      |
-| `render/*`         | camera, particles, screen shake, atlases (all derived, all disposable)                                                                                                                                     |
-| `ui/*`             | DOM nodes, settings (persisted), onboarding cursor                                                                                                                                                         |
+| Owner                | Owns                                                                                                                                                                                                       |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sim/world.ts`       | The single mutable `World` object. Created by `createWorld(seed)`; a restart throws the old one away entirely — there is no partial reset path, which is how restart-leak bugs are structurally prevented. |
+| `sim/colony.ts`      | food, water, population, capacity, brood progress, upgrades, nest integrity                                                                                                                                |
+| `sim/scout.ts`       | scout transform, stamina, alive/respawn timer                                                                                                                                                              |
+| `sim/workers.ts`     | worker pool (fixed-capacity, index-recycled — never grows unbounded)                                                                                                                                       |
+| `sim/pheromone.ts`   | routes, nodes, reserve                                                                                                                                                                                     |
+| `sim/threats.ts`     | patrols, traps, sprays, cleaning sweeps, their timers                                                                                                                                                      |
+| `sim/suspicion.ts`   | global evidence value, alert tier (rate-limited), causes ledger, and the deposits into the heat grid                                                                                                       |
+| `sim/heat.ts`        | the 12 × 9 regional evidence grid — the household's memory of _where_                                                                                                                                      |
+| `sim/territory.ts`   | per-region hold meters; the win condition lives here                                                                                                                                                       |
+| `sim/routines.ts`    | household routines (opportunities) and cleaning sweeps                                                                                                                                                     |
+| `sim/adaptations.ts` | adaptation offers, choices and the derived `world.traits` every other system reads                                                                                                                         |
+| `sim/operations.ts`  | the four operations, their gates, and the objective hierarchy (`resolveHud`)                                                                                                                               |
+| `sim/director.ts`    | operation advancement, routine scheduling, the household pressure director, run outcome                                                                                                                    |
+| `render/*`           | camera, particles, screen shake, atlases (all derived, all disposable)                                                                                                                                     |
+| `ui/*`               | DOM nodes, settings (persisted), onboarding cursor                                                                                                                                                         |
 
 ## Events and interfaces
 
@@ -86,7 +92,7 @@ gameplay numbers.
 
 ```
 1  input snapshot          (already latched by main.ts before stepping)
-2  director.update         phase clock, authored beats, spawn/unlock gates
+2  director.update         heat decay, territory, routines, milestones, operation gates, pressure
 3  scout.update            input → accel → collide/slide → stamina → trail secretion
 4  pheromone.update        node decay, route validity (nest-linked? resource-linked?)
 5  workers.update          state machine → steering → separation → collide → carry/deliver
@@ -122,6 +128,15 @@ No navmesh, no A\*. Deliberate:
   can never strand units.
 - **Cover** is derived, not authored: any point within `COVER_RADIUS` of a solid edge counts as cover.
   Hugging cabinetry is mechanically safer, which teaches itself.
+- **Spacing is positional, not a force.** Steering is normalised to a target speed, so any separation
+  expressed as a steering force is advisory and vanishes entirely at zero speed. A Jacobi relaxation
+  pass after integration enforces `WORKER_CLEARANCE`, then re-resolves against solids. Corrections are
+  accumulated before they are applied, so the result is order-independent and deterministic.
+- **Lanes.** Each worker holds a lifetime `lane ∈ [-1,1]`; its steering target is offset perpendicular
+  to the trail tangent by `dirSign × LANE_OFFSET + lane × LANE_JITTER`, so outbound and inbound traffic
+  counter-flow in separate bands instead of sharing one centreline.
+- **Endpoint rings and a `queue` state** keep harvesters and waiting workers off each other's exact
+  transform, and a per-state stuck watchdog recovers anything that stops making useful progress.
 
 ## Save / settings boundary
 
@@ -133,10 +148,16 @@ try/catch-guarded so private-mode browsers degrade to defaults instead of throwi
 
 `render/renderer.ts` is the only module that touches the game canvas. Pipeline per frame:
 
-1. floor pattern (baked once) → 2. baked debris/stain layer → 3. solids with drop shadow →
-2. pheromone trails (additive) → 5. resources/cracks/nest → 6. roaches (atlas blits) →
-3. hazards → 8. particles → 9. **lighting composite** (half-res darkness canvas, `multiply`) →
-4. threat overlays / vignette → 11. screen-space flashes.
+1. floor pattern (baked once) → 2. baked debris/stain layer → 3. decals →
+2. **fixtures** (baked per solid, with role-specific detail: basins, burners, door seams, handles,
+   toe-kicks, contact shadows) → 5. **background props** → 6. resources/cracks/nest →
+3. pheromone ribbons → 8. hazards → 9. corpses → 10. roaches (atlas blits) → 11. sprays/footfalls →
+4. **foreground props** (occluders the colony passes under) → 13. particles →
+5. **lighting composite** (half-res darkness canvas, `multiply`) → 15. threat overlays / vignette →
+6. screen-space flashes.
+
+Fixtures and props are baked once into their own canvases at boot, so per-frame cost stays at one
+`drawImage` each while the detail that makes a sink read as a sink is essentially free.
 
 Atlases (`render/atlas.ts`) are generated procedurally into `OffscreenCanvas`/`HTMLCanvasElement` at
 boot from seeded code — they are the shipped final assets. Nothing is fetched.

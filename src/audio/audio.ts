@@ -30,6 +30,9 @@ export class GameAudio {
   private hum: { osc: OscillatorNode[]; gain: GainNode } | null = null;
   private chitter: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   private hiss: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private water: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private roomTone: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private humFilter: BiquadFilterNode | null = null;
 
   private cooldowns = new Map<string, number>();
   voices = 0;
@@ -221,6 +224,7 @@ export class GameAudio {
     oscs.push(lfo);
     lp.connect(g).connect(musicBus);
     this.hum = { osc: oscs, gain: g };
+    this.humFilter = lp;
 
     // Room tone: a very quiet band of noise under everything.
     const tone = ctx.createBufferSource();
@@ -262,15 +266,60 @@ export class GameAudio {
     hs.connect(hsF).connect(hsG).connect(sfxBus);
     hs.start();
     this.hiss = { src: hs, gain: hsG };
+
+    // Running water: filtered noise, only audible while somebody is washing up.
+    const ws = ctx.createBufferSource();
+    ws.buffer = this.noise;
+    ws.loop = true;
+    const wf = ctx.createBiquadFilter();
+    wf.type = 'bandpass';
+    wf.frequency.value = 1900;
+    wf.Q.value = 0.7;
+    const wg = ctx.createGain();
+    wg.gain.value = 0;
+    ws.connect(wf).connect(wg).connect(sfxBus);
+    ws.start();
+    this.water = { src: ws, gain: wg };
+
+    // The room's own noise floor. It rises with the household's alert level, which is the cheapest
+    // possible way to make "they are awake now" audible without saying it.
+    const rs = ctx.createBufferSource();
+    rs.buffer = this.noise;
+    rs.loop = true;
+    const rf = ctx.createBiquadFilter();
+    rf.type = 'lowpass';
+    rf.frequency.value = 620;
+    const rg = ctx.createGain();
+    rg.gain.value = 0.012;
+    rs.connect(rf).connect(rg).connect(musicBus);
+    rs.start();
+    this.roomTone = { src: rs, gain: rg };
   }
 
-  /** Continuous mix updates, called once per rendered frame. */
-  updateBeds(population: number, sprayActive: boolean, dt: number): void {
+  /**
+   * Continuous mix updates, called once per rendered frame.
+   *
+   * The house is a bed, not a backdrop. Three layers move against each other: the colony's own
+   * chitter (rises with population), the appliance hum (swells when the fridge is open), and running
+   * water (only while somebody is at the sink). Between them the room sounds occupied even when the
+   * screen shows nothing but floor.
+   */
+  updateBeds(
+    population: number,
+    sprayActive: boolean,
+    dt: number,
+    house: { fridgeOpen: number; water: number; alert: number } = {
+      fridgeOpen: 0,
+      water: 0,
+      alert: 0,
+    },
+  ): void {
     if (!this.ctx) return;
+    const k = Math.min(1, dt * 2.2);
     if (this.chitter) {
       const target = Math.min(0.075, population * 0.0016);
       const g = this.chitter.gain.gain;
-      g.value += (target - g.value) * Math.min(1, dt * 2.2);
+      g.value += (target - g.value) * k;
     }
     if (this.hiss) {
       const target = sprayActive ? 0.05 : 0;
@@ -278,8 +327,142 @@ export class GameAudio {
       g.value += (target - g.value) * Math.min(1, dt * 4);
     }
     if (this.hum) {
-      this.hum.gain.gain.value = 0.055;
+      // An open fridge is louder and brighter than a closed one — the compressor and the door alarm
+      // are how the player hears the snack routine before they can see it.
+      const target = 0.055 + house.fridgeOpen * 0.05;
+      const g = this.hum.gain.gain;
+      g.value += (target - g.value) * k;
+      if (this.humFilter) {
+        const f = 220 + house.fridgeOpen * 340;
+        this.humFilter.frequency.value += (f - this.humFilter.frequency.value) * k;
+      }
     }
+    if (this.water) {
+      const target = house.water * 0.07;
+      const g = this.water.gain.gain;
+      g.value += (target - g.value) * Math.min(1, dt * 3);
+    }
+    // Alert raises the noise floor of the whole room: at high tiers the house is awake.
+    if (this.roomTone) {
+      const target = 0.012 + house.alert * 0.03;
+      const g = this.roomTone.gain.gain;
+      g.value += (target - g.value) * Math.min(1, dt * 0.9);
+    }
+  }
+
+  // ── Household routines ────────────────────────────────────────────────────
+
+  /** Anticipation: footsteps in the hall, a tap being turned, a bin lid. */
+  routineWarn(kind: 'snack' | 'dishes' | 'trash', pan: number): void {
+    if (!this.sfxBus) return;
+    if (kind === 'snack') {
+      // Two soft floor impacts through the wall.
+      for (let i = 0; i < 3; i++) {
+        this.noiseVoice(this.sfxBus, 0.16, 'lowpass', 170, 1.1, 0.16 - i * 0.03, pan, 0.01);
+      }
+    } else if (kind === 'dishes') {
+      this.toneVoice(this.sfxBus, 'sine', 320, 210, 0.5, 0.06, pan, 0.05);
+      this.noiseVoice(this.sfxBus, 0.6, 'bandpass', 1600, 2.2, 0.05, pan, 0.12);
+    } else {
+      this.noiseVoice(this.sfxBus, 0.24, 'bandpass', 900, 3, 0.14, pan, 0.004);
+      this.toneVoice(this.sfxBus, 'triangle', 180, 120, 0.3, 0.05, pan);
+    }
+  }
+
+  /** Impact: the door opens, the water hits the basin, the bag lands. */
+  routineStart(kind: 'snack' | 'dishes' | 'trash', pan: number): void {
+    if (!this.sfxBus) return;
+    if (kind === 'snack') {
+      this.noiseVoice(this.sfxBus, 0.5, 'lowpass', 420, 0.9, 0.16, pan, 0.02);
+      this.toneVoice(this.sfxBus, 'sine', 90, 62, 0.7, 0.08, pan, 0.03);
+    } else if (kind === 'dishes') {
+      this.noiseVoice(this.sfxBus, 0.9, 'highpass', 900, 0.8, 0.11, pan, 0.2);
+    } else {
+      this.noiseVoice(this.sfxBus, 0.4, 'lowpass', 300, 1.2, 0.2, pan, 0.01);
+    }
+  }
+
+  /** The colony gets its first mouthful out of a routine. */
+  routineTaken(pan: number): void {
+    if (!this.sfxBus) return;
+    this.toneVoice(this.sfxBus, 'triangle', 520, 780, 0.16, 0.07, pan);
+    this.toneVoice(this.sfxBus, 'sine', 780, 1170, 0.2, 0.05, pan, 0.02);
+  }
+
+  routineEnd(pan: number): void {
+    if (!this.sfxBus) return;
+    this.toneVoice(this.sfxBus, 'sine', 260, 150, 0.4, 0.05, pan, 0.03);
+  }
+
+  /** The cloth starts moving. Deliberately dry and close — this one takes your map away. */
+  sweepWarn(pan: number): void {
+    if (!this.sfxBus) return;
+    this.noiseVoice(this.sfxBus, 0.5, 'bandpass', 700, 1.4, 0.1, pan, 0.06);
+  }
+
+  sweepPass(pan: number): void {
+    if (!this.sfxBus || !this.gate('sweep', 0.28)) return;
+    this.noiseVoice(this.sfxBus, 0.42, 'bandpass', 1150, 1.1, 0.09, pan, 0.09);
+  }
+
+  // ── Growth ────────────────────────────────────────────────────────────────
+
+  /** An adaptation is taken. Each family has its own colour so the choice is audible. */
+  adapt(family: 'brood' | 'forage' | 'shadow'): void {
+    if (!this.uiBus) return;
+    const root = family === 'brood' ? 196 : family === 'forage' ? 233 : 165;
+    this.toneVoice(this.uiBus, 'triangle', root, root * 1.5, 0.5, 0.1, 0, 0.01);
+    this.toneVoice(this.uiBus, 'sine', root * 2, root * 3, 0.65, 0.07, 0, 0.02);
+    this.toneVoice(this.uiBus, 'sine', root * 3, root * 4, 0.4, 0.04, 0, 0.03);
+  }
+
+  /** A foothold is fitted out: a low structural thud plus the colony answering. */
+  fitOut(pan: number): void {
+    if (!this.sfxBus) return;
+    this.toneVoice(this.sfxBus, 'sine', 120, 76, 0.55, 0.11, pan, 0.01);
+    this.noiseVoice(this.sfxBus, 0.35, 'bandpass', 640, 2.4, 0.08, pan, 0.02);
+  }
+
+  repair(pan: number): void {
+    if (!this.sfxBus) return;
+    this.noiseVoice(this.sfxBus, 0.3, 'lowpass', 520, 1.4, 0.07, pan, 0.02);
+  }
+
+  /** A region comes under the colony's control. */
+  zoneHeld(): void {
+    if (!this.uiBus) return;
+    this.toneVoice(this.uiBus, 'sine', 330, 495, 0.4, 0.08, 0, 0.01);
+    this.toneVoice(this.uiBus, 'sine', 495, 660, 0.5, 0.05, 0, 0.03);
+  }
+
+  zoneLost(): void {
+    if (!this.uiBus) return;
+    this.toneVoice(this.uiBus, 'sine', 330, 220, 0.4, 0.07, 0, 0.02);
+  }
+
+  /** An operation is completed. */
+  operationCard(index: number): void {
+    if (!this.uiBus) return;
+    const base = 174 + index * 22;
+    for (let i = 0; i < 3; i++) {
+      this.toneVoice(
+        this.uiBus,
+        'triangle',
+        base * (1 + i * 0.5),
+        base * (1.5 + i * 0.5),
+        0.6,
+        0.075 - i * 0.018,
+        0,
+        0.02 + i * 0.05,
+      );
+    }
+  }
+
+  /** The household commits to extermination. */
+  finalResponse(): void {
+    if (!this.musicBus) return;
+    this.toneVoice(this.musicBus, 'sawtooth', 70, 46, 2.4, 0.09, 0, 0.4);
+    this.toneVoice(this.musicBus, 'sine', 140, 92, 2.0, 0.06, 0, 0.3);
   }
 
   // ── Game sounds ───────────────────────────────────────────────────────────

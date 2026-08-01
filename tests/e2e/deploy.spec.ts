@@ -3,10 +3,13 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   DATA_DIR,
+  HOME,
   PLACES,
   boot,
   driveTo,
   expectClean,
+  firstFood,
+  layLine,
   press,
   release,
   releaseAll,
@@ -32,13 +35,7 @@ test.describe('static deployment', () => {
     expect(s.ready).toBe(true);
 
     // It must actually play from the subpath, not merely boot.
-    await driveTo(page, PLACES.home.x + 20, PLACES.home.y, { timeout: 15_000 });
-    const drive = await driveTo(page, PLACES.dishCrumbs.x, PLACES.dishCrumbs.y, {
-      lay: true,
-      timeout: 30_000,
-    });
-    await releaseAll(page);
-    expect(drive.ok).toBe(true);
+    await layLine(page, { x: HOME.x + 20, y: HOME.y }, PLACES[firstFood.id]);
     expect((await state(page)).routes[0].linked).toBe(true);
     await shot(page, '15-nested-path');
 
@@ -65,7 +62,7 @@ test.describe('static deployment', () => {
     });
 
     await boot(page, 5);
-    await driveTo(page, PLACES.home.x + 200, PLACES.home.y, { timeout: 12_000 });
+    await driveTo(page, HOME.x + 200, HOME.y, { timeout: 12_000 });
     await releaseAll(page);
     await page.waitForTimeout(3000);
 
@@ -96,9 +93,7 @@ test.describe('static deployment', () => {
   }) => {
     const w = watch(page);
     await boot(page, 6);
-    await driveTo(page, PLACES.home.x + 20, PLACES.home.y, { timeout: 15_000 });
-    await driveTo(page, PLACES.dishCrumbs.x, PLACES.dishCrumbs.y, { lay: true, timeout: 30_000 });
-    await releaseAll(page);
+    await layLine(page, { x: HOME.x + 20, y: HOME.y }, PLACES[firstFood.id]);
     await page.waitForTimeout(2500);
 
     const audit = await page.evaluate(() => window.__roach.assetAudit());

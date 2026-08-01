@@ -3,8 +3,8 @@ import { SpatialHash } from '../core/spatial.ts';
 import {
   BASE_CAPACITY,
   FOOD_CAP,
-  NIGHT_LENGTH,
   SCOUT_STAMINA_MAX,
+  NYMPH_TIME,
   RESERVE_MAX,
   START_FOOD,
   START_WATER,
@@ -16,7 +16,17 @@ import {
   WORLD_H,
   WORLD_W,
 } from './constants.ts';
+import {
+  baseTraits,
+  createAdaptationState,
+  type AdaptationState,
+  type Traits,
+} from './adaptations.ts';
+import { createHeatGrid, type HeatGrid } from './heat.ts';
 import { NESTS, RESOURCES } from './kitchen.ts';
+import type { Hud, OperationIndex } from './operations.ts';
+import type { Routine, Sweep } from './routines.ts';
+import { createZoneStates, type ZoneState } from './territory.ts';
 import type {
   Colony,
   Corpse,
@@ -26,7 +36,6 @@ import type {
   Intent,
   LoseCause,
   NestNode,
-  NightIndex,
   Patrol,
   ResourceNode,
   Route,
@@ -82,8 +91,17 @@ export interface FinalTally {
   population: number;
   food: number;
   water: number;
-  functionsBuilt: number;
-  functionsTotal: number;
+  hatched: number;
+  lost: number;
+  deliveries: number;
+  peakSuspicion: number;
+  topCause: string | null;
+  runSeconds: number;
+  /** How far through the four operations the run got. */
+  operations: number;
+  /** Regions held at the moment the run was decided. */
+  zones: string[];
+  adaptations: number;
 }
 
 export interface World {
@@ -93,14 +111,53 @@ export interface World {
   tick: number;
 
   status: RunStatus;
-  night: NightIndex;
-  nightTime: number;
-  nightLength: number;
-  interludeTime: number;
-  interludeFrom: NightIndex;
-  /** Set during the final scripted extermination response of night 3. */
+  /** Which of the four operations is live. Advanced by achievement, never by a clock. */
+  operation: OperationIndex;
+  /** Seconds spent inside the current operation. Overrunning `softTime` raises household patience. */
+  operationTime: number;
+  /** Seconds the operation-complete card has left on screen. */
+  cardTime: number;
+  /** Set once the household commits to the final extermination response. */
   finalResponse: boolean;
   finalResponseTime: number;
+
+  /** Regional evidence — the household's memory of where the colony has been. */
+  heat: HeatGrid;
+  /** Per-region hold, which is what the run is actually won with. */
+  zones: ZoneState[];
+  /** Household routines: timed opportunities that also generate pressure. */
+  routines: Routine[];
+  /** Cleaning passes. They delete scent rather than roaches. */
+  sweeps: Sweep[];
+  /** Non-zero while a sweep is actively wiping trail, for audio and VFX. */
+  sweepWiping: number;
+  /** Adaptation choices taken, offered and their derived effects. */
+  adaptations: AdaptationState;
+  traits: Traits;
+  /** Seconds until the next household routine may begin. */
+  routineTimer: number;
+  /** Last routine kind fired, so the same one never runs twice in a row. */
+  lastRoutine: string | null;
+  /** Heat-cell indices the household has recently acted on, so pressure spreads. */
+  recentTargets: number[];
+  /** Threat families used recently, so the player never eats the same answer twice running. */
+  lastActions: string[];
+  /** Wave counter for the extermination response. */
+  finalWave: number;
+  /** Seconds until the household director may act again. */
+  threatCooldown: number;
+  /** Spent threat budget, refilled over time. Caps how much can be happening at once. */
+  threatBudget: number;
+  /** Seconds since the last tier promotion, which rate-limits the escalation staircase. */
+  tierHold: number;
+  /** One-line advice about the live threat, promoted into the objective when it matters. */
+  threatAdvice: string | null;
+  /** Household alert summary shown in the HUD. */
+  forecast: string;
+  /** Counterplay hint for whatever the household is doing, once the player has met it. */
+  counterplay: string | null;
+  /** Foothold awaiting a fit-out choice from the player, or null. */
+  pendingFit: string | null;
 
   scout: Scout;
   workers: Worker[];
@@ -132,6 +189,8 @@ export interface World {
   onboarding: OnboardingState;
 
   objective: string;
+  /** The full objective hierarchy, recomputed once per step. */
+  hud: Hud;
   /** World-space target the objective refers to, so the HUD can point at it. */
   guide: { x: number; y: number; label: string } | null;
   /** Set while a reserve is critically low, so the HUD can escalate the matching meter. */
@@ -171,7 +230,7 @@ export interface World {
   pendingStomp: { x: number; y: number } | null;
   /** One-shot escalation request: the tier just crossed, or -1. Consumed by the director. */
   pendingTier: number;
-  /** One flag per entry in the director's authored beat table. Sized lazily on first update. */
+  /** Retained so the pheromone system can flag a route whose source was removed mid-run. */
   beatFired: boolean[];
 }
 
@@ -247,7 +306,7 @@ export function spawnWorker(
     // A roach born in the brood chamber lives in the brood chamber; without this the whole colony
     // walked back to the home crack and left the chamber's own supply lines unstaffed.
     w.targetNest = nestId;
-    w.nymphTime = asNymph ? 6 : 0;
+    w.nymphTime = asNymph ? NYMPH_TIME * world.traits.nymphTimeMult : 0;
     // Drawn once and kept for life: a worker that re-rolled its lane every time it picked up a route
     // would weave across the corridor instead of holding a line.
     w.lane = r.range(-1, 1);
@@ -274,11 +333,13 @@ export function createWorld(seed: number): World {
     y: n.y,
     home: n.home,
     claimed: n.home,
-    upgrade: n.upgrade,
-    unlockNight: n.unlockNight,
+    fn: null,
+    unlockOp: n.unlockOp,
     label: n.label,
     costFood: n.costFood,
     costWater: n.costWater,
+    fitFood: n.fitFood,
+    fitWater: n.fitWater,
     integrity: 1,
     growth: 0,
     age: n.home ? 999 : 0,
@@ -291,7 +352,7 @@ export function createWorld(seed: number): World {
     y: r.y,
     amount: r.amount,
     initial: r.amount,
-    unlockNight: r.unlockNight,
+    unlockOp: r.unlockOp,
     label: r.label,
     depleted: false,
     depletedReported: false,
@@ -306,11 +367,28 @@ export function createWorld(seed: number): World {
     tick: 0,
 
     status: 'playing',
-    night: 1,
-    nightTime: 0,
-    nightLength: NIGHT_LENGTH[1],
-    interludeTime: 0,
-    interludeFrom: 1,
+    operation: 1,
+    operationTime: 0,
+    cardTime: 0,
+    heat: createHeatGrid(),
+    zones: createZoneStates(),
+    routines: [],
+    sweeps: [],
+    sweepWiping: 0,
+    adaptations: createAdaptationState(),
+    traits: baseTraits(),
+    routineTimer: 46,
+    lastRoutine: null,
+    recentTargets: [],
+    lastActions: [],
+    finalWave: -1,
+    threatCooldown: 26,
+    threatBudget: 0,
+    tierHold: 0,
+    threatAdvice: null,
+    forecast: 'Nobody has noticed anything yet.',
+    counterplay: null,
+    pendingFit: null,
     finalResponse: false,
     finalResponseTime: 0,
 
@@ -363,7 +441,9 @@ export function createWorld(seed: number): World {
       totalWater: 0,
       hatched: 0,
       lost: 0,
-      upgrades: { brood: false, cache: false, escape: false },
+      nurseries: 0,
+      caches: 0,
+      boltholes: 0,
       starving: 0,
       thirsting: 0,
       emptyTime: 0,
@@ -431,10 +511,24 @@ export function createWorld(seed: number): World {
       idleSeconds: 0,
       distanceTravelled: 0,
       trailNodesLaid: 0,
+      routinesExploited: 0,
+      operationsCompleted: 0,
+      functionsBuilt: 0,
     },
     onboarding: { step: 0, stepTime: 0, seenBefore: false, satisfied: false },
 
     objective: 'Leave the crack and find something to eat.',
+    hud: {
+      operation: 'Operation 1 — Establish the nest',
+      objective: 'Leave the crack and find something to eat.',
+      blocker: null,
+      nextUnlock: 'The household starts its night routines — and those are opportunities.',
+      forecast: 'Nobody has noticed anything yet.',
+      counterplay: null,
+      checklist: [],
+      target: null,
+      source: 'boot',
+    },
     guide: null,
     shortage: null,
     banking: false,

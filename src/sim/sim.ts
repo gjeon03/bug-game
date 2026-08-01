@@ -1,5 +1,5 @@
 import { doInteract, updateColony } from './colony.ts';
-import { evaluateRun, handleEscalation, updateDirector } from './director.ts';
+import { evaluateRun, updateDirector } from './director.ts';
 import { updateExposure } from './exposure.ts';
 import { updateOnboarding } from './onboarding.ts';
 import { updatePheromone } from './pheromone.ts';
@@ -24,7 +24,7 @@ export function stepWorld(world: World, dt: number): void {
   world.time += dt;
   world.stats.runSeconds = world.time;
 
-  // 1. Phase clock and authored beats.
+  // 1. Operation gates, household routines and the pressure director.
   updateDirector(world, dt);
 
   if (world.status === 'playing') {
@@ -54,9 +54,8 @@ export function stepWorld(world: World, dt: number): void {
     // 8. Immediate exposure.
     updateExposure(world, dt);
 
-    // 9. Persistent suspicion, then the escalation it triggers.
+    // 9. Persistent suspicion and regional evidence.
     updateSuspicion(world, dt);
-    handleEscalation(world);
 
     // 10. Outcome and objective.
     evaluateRun(world);

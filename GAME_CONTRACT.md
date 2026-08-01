@@ -1,138 +1,134 @@
 # GAME_CONTRACT — Baseboard Empire
 
+Superseded by `REDESIGN_CONTRACT.md` where the two disagree. This file describes the game as it now
+ships.
+
 ## Player-experience thesis
 
-One sentence: _You are the lead scout of a cockroach colony, and every metre of ground you claim in a
-human kitchen is also a metre of evidence that will get your nest exterminated._
+_You secretly turn a lived-in human kitchen into a cockroach domain, and every success teaches the
+household exactly where to exterminate you._
 
 ## Player fantasy
 
-Secretly turn a hostile human kitchen into a thriving cockroach colony, balancing aggressive
-expansion against the evidence that will cause the humans to discover and eradicate the nest.
-
 You are not "a small bug dodging things". You are the **logistics mind** of an infestation: you
-personally walk the routes your colony will use, and the routes you choose are the story of how the
+personally walk every route your colony will use, and the routes you choose are the story of how the
 humans find out about you.
 
 ## Core verbs
 
-| Verb                | Input                 | Meaning                                                               |
-| ------------------- | --------------------- | --------------------------------------------------------------------- |
-| **Skitter**         | `WASD` / arrows       | Move the lead scout. Fast, fragile, wall-hugging.                     |
-| **Lay trail**       | hold `LMB` or `Space` | Secrete a pheromone route from the scout's own body as you walk.      |
-| **Erase / recall**  | hold `RMB` or `X`     | Dissolve trail near the scout; tap to recall all workers to the nest. |
-| **Inspect / claim** | `E`                   | Claim a food/water node or a wall crack; install a nest function.     |
-| **Sprint**          | hold `Shift`          | Emergency burst. Costs stamina, spikes exposure, adds noise evidence. |
-| **Pause / restart** | `Esc` / `R`           | Pause menu, settings, one-key restart.                                |
-
-Six commands. Nothing else is bound to gameplay.
+| Verb                | Input                 | Meaning                                                                  |
+| ------------------- | --------------------- | ------------------------------------------------------------------------ |
+| **Skitter**         | `WASD` / arrows       | Move the lead scout. Fast, fragile, wall-hugging.                        |
+| **Lay trail**       | hold `LMB` or `Space` | Secrete a pheromone route from the scout's own body as you walk.         |
+| **Erase / recall**  | hold `RMB` or `X`     | Dissolve trail near the scout; tap to recall all workers to the nest.    |
+| **Inspect / build** | `E`                   | Claim a crack, fit out a foothold, repair a nest, or inspect a source.   |
+| **Choose**          | `1` `2` `3`           | Answer a one-of-three choice: an adaptation, or what a foothold becomes. |
+| **Sprint**          | hold `Shift`          | Emergency burst. Costs stamina, spikes exposure, adds noise evidence.    |
+| **Pause / restart** | `Esc` / `R`           | Pause menu, settings, one-key restart.                                   |
 
 ## Primary differentiator
 
 **The pheromone route is drawn by the scout's own body.** You cannot paint a route on ground you have
 not personally walked. Scouting _is_ routing. A dangerous shortcut is dangerous for you first, and it
-becomes dangerous for every worker that follows it afterwards. Trail length is a limited, regenerating
-reserve, so route geometry — not unit micromanagement — is the strategic decision layer.
+becomes dangerous for every worker that follows it afterwards.
 
 Workers are never selected, ordered or clicked. They only ever read pheromone.
 
-## Core loop
+## Session arc — four operations, ~15–18 minutes
 
-```
-scout out of the crack
-  → find food / water / a claimable crack
-    → walk back laying pheromone (choose: short + exposed, or long + covered)
-      → workers acquire the trail, carry resources home
-        → colony population and reserves grow
-          → more traffic + more claims = more evidence
-            → suspicion rises, household escalates a response tier
-              → old routes become lethal; re-scout and re-route
-```
+There is no night clock. An operation ends when the player **achieves** its gates. Each operation
+carries a soft time limit; overrunning it makes the household restless rather than ending the run.
 
-## Session arc
+| Operation                          | Gates                                                     | Introduces                                                        |
+| ---------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------- |
+| **1 — Establish the nest**         | 1 food line · 1 moisture line · 12 roaches                | Movement, cover, routing, first delivery, first hatch             |
+| **2 — Infiltrate the routines**    | Exploit 2 household routines · claim 1 satellite foothold | Household events as timed opportunities; footholds; regional heat |
+| **3 — Specialise the infestation** | 3 adaptations · 2 foothold functions · 26 roaches         | Opportunity cost; the household's mid-tier responses              |
+| **4 — Claim the kitchen**          | Hold 3 regions at once · survive the extermination        | Territory; the final high-risk push                               |
 
-Three nights, ~13 minutes total, separated by a short **Household Reaction** card that names what the
-humans noticed and what they will do next.
+## Territory — what the run is actually won with
 
-| Phase                   | Length | Introduces                                                                                                                                                          |
-| ----------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Night 1 — Establish** | ~180 s | Movement, darkness/cover, the nest, one food + one water node, pheromone routing, first delivery, first "you were seen in the open" beat.                           |
-| **Night 2 — Expand**    | ~270 s | Two new kitchen zones, the first crack claim, human patrol (feet + room light), sticky traps if evidence warrants, the short-dangerous vs long-safe route decision. |
-| **Night 3 — Infest**    | ~330 s | All three response families combined, bait, and a final extermination sweep aimed at the home nest.                                                                 |
+Eight semantic regions (sink run, dishwasher, pantry, stove, refrigerator, island, bin corner, hall
+doorway) each carry a **hold** meter. Hold rises while the colony has both a live trail and working
+roaches inside the region, and falls while the household cleans, sprays or lights it. Three regions
+held at once, through the extermination response, is the win.
 
-## Counterplay — what the player can actually do about a response
+Territory cannot be banked the way food can, so route geometry stays load-bearing to the last second.
 
-Every household response has an answer, and each answer is a thing the player builds or a place they
-route around. This is what stops escalation from being a countdown.
+## Economy — every resource has several uses
 
-| Response                     | Counterplay                                                                                                                                                                                                                              |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Footfall                     | Telegraphed for 1.15 s by a contracting decal in the shape of the sole; workers scatter on the telegraph, not on the impact.                                                                                                             |
-| Room light / flashlight cone | Cover. Cabinetry within 120 units suppresses most exposure, and a covered route generates almost no evidence.                                                                                                                            |
-| Sticky trap                  | Placed where _your_ traffic went, so re-routing removes it from play. Workers steer around armed hazards; the scout can be caught and struggles free.                                                                                    |
-| Bait                         | A slow denial zone, not an instant kill — a worker that blunders in has time to leave.                                                                                                                                                   |
-| Extermination spray          | **Claimed cracks are shelter.** A roach inside one cannot be reached by feet or spray, and panicking workers run for the nearest claimed crack — the Escape Tunnel reaching furthest. The home crack also repairs itself between passes. |
+**Food** — brood; adaptations; claiming cracks; fitting out footholds.
+**Moisture** — upkeep; brood survival; claiming and fitting; repairing a damaged nest.
 
-## Win condition
+**Every ceiling is a function of what the player built.** `foodCap`, `waterCap` and `capacity` derive
+from claimed footholds, their fitted functions and chosen adaptations.
 
-At the end of Night 3 the colony must have **survived the final extermination sweep** while holding:
+**Invariant:** whenever food or moisture is at its cap, the HUD names either an affordable spend, the
+thing that would raise the cap, a reason to hold the reserve, or the real bottleneck. A capped
+resource may never produce a dead state.
 
-- population ≥ **36** living roaches,
-- food reserve ≥ **120**,
-- moisture reserve ≥ **90**,
-- **all three** satellite nest functions established (Brood Chamber, Food Cache, Escape Tunnel).
+## Adaptations — 9 in 3 families, ~4 per run
 
-Payoff: the kitchen lights come up on a floor that is visibly, audibly a roach domain.
+A milestone opens at 11 / 17 / 24 / 30 roaches and offers one of three. Taking one closes the
+milestone; the whole tree is not purchasable in a single run.
 
-## Failure conditions
+- **Brood** — capacity, faster maturation, casualty recovery. _Costs_ upkeep and evidence.
+- **Forage** — carry, feeding speed, event exploitation. _Costs_ faster depletion and busier routes.
+- **Shadow** — trail persistence under cover, alarm response, shelter reach, evacuations. _Costs_
+  raw throughput.
 
-1. **Colony collapse** — population reaches 0 with no brood able to produce a replacement scout.
-2. **Nest destroyed** — home-nest integrity reaches 0 (spray sweeps parked on the crack).
-3. **Extermination completed** — the final sweep runs its full course while suspicion is at Tier 4 and
-   the colony is below survival mass.
+Every adaptation changes simulation behaviour, has a stated downside, and lands with synchronised
+VFX, audio and UI.
 
-The failure screen states the cause, the single largest contributing evidence source, full run stats,
-and offers restart on one key.
+## Household pressure
 
-## Intended session duration
+- **Regional evidence heat** — a 12 × 9 grid. Traffic, corpses, drained sources, exposed trail and
+  claims deposit heat where they happen; heat never decays below a fraction of its own peak.
+- **Alert tier** — global, and **rate-limited to one promotion per 25 s** so escalation is legible.
+- **The director decides _what_ from the tier and _where_ from the heat grid**, spends a refilling
+  threat budget, respects a cooldown between actions, never repeats the same family twice running,
+  and never fires a response whose counterplay the colony cannot perform.
 
-12–15 minutes for a complete run. Restart to first input < 2 seconds, no page reload.
+| Response            | Counterplay                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| Footsteps / patrol  | Cover, and the contracting sole telegraph                                           |
+| Cleaning sweep      | Evacuate, then re-lay: it erases scent, not roaches, and leaves a visible aftermath |
+| Sticky trap         | Placed on observed traffic — re-routing removes it from play                        |
+| Bait                | A slow denial zone; a worker that blunders in has time to leave                     |
+| Extermination spray | Claimed cracks are shelter; the bolt-hole adaptation reaches furthest               |
 
-## Control scheme
+## Household routines — opportunities that cost you
 
-Desktop keyboard + mouse only. Remappable directions are out of scope; `WASD` and arrows are both
-always live. All actions have a keyboard alternative so play is possible without a mouse.
+1. **Midnight snack** — the fridge opens, warm light floods a route, fresh crumbs appear briefly.
+2. **Washing up** — a moisture bloom at the sink, and a cloth that erases the scent it crosses.
+3. **Bin run** — the richest food in the kitchen on the most exposed tile in the kitchen.
 
-## Scope boundaries (in)
+Each has anticipation, a telegraph, a decision window, impact, a persistent consequence and recovery.
 
-One kitchen map · one home nest + three authored cracks · one scout control model · pheromone
-logistics · worker population behaviour · immediate exposure · persistent suspicion · three household
-response families · one onboarding sequence · one win state · one eradication state · instant replay ·
-audio/readability settings · static deployment.
+## Win / lose
 
-## Explicit non-goals
+**Win** — hold three regions simultaneously and survive the 62-second extermination response.
+**Lose** — `collapse` (population 0), `nestDestroyed` (home crack integrity 0), or `exterminated`
+(the response ran its course with fewer than three regions held).
 
-Multiplayer, accounts, backend, cloud saves, procedural campaigns, multiple kitchens, open world,
-tech trees, crafting, inventory, dialogue, cinematics, UGC, monetisation, live service, RTS unit
-selection, idle/clicker progression, tower defence lanes.
+The end card states the cause, the largest evidence source, the regions held, and offers restart on
+one key.
 
 ## Gameplay budgets
 
-| Metric                           | Target           |
-| -------------------------------- | ---------------- |
-| First meaningful action          | ≤ 15 s from load |
-| First successful worker delivery | ≤ 60 s           |
-| First crack claimed              | ≤ 5 min          |
-| Mandatory wait with no decision  | ≤ 3 s            |
-| Total run                        | 12–15 min        |
-| Restart to playable              | ≤ 2 s, no reload |
-| Peak living roaches              | 90 (hard cap)    |
-| Concurrent pheromone routes      | 5                |
-| Simultaneous hazards             | ≤ 12             |
+| Metric                              | Target           |
+| ----------------------------------- | ---------------- |
+| First meaningful action             | ≤ 10 s from load |
+| First successful worker delivery    | ≤ 45 s           |
+| First growth choice                 | ≤ 3 min          |
+| Decision-free plateau (normal play) | ≤ 45 s           |
+| Total run                           | 15–18 min        |
+| Restart to playable                 | ≤ 2 s, no reload |
+| Peak living roaches                 | 90 (hard cap)    |
+| Concurrent pheromone routes         | 6                |
+| Simultaneous hazards                | ≤ 12             |
 
 ## Technical budgets
-
-Reference environment recorded in `artifacts/evidence/perf/`.
 
 | Metric                                 | Budget    |
 | -------------------------------------- | --------- |
@@ -147,16 +143,16 @@ Reference environment recorded in `artifacts/evidence/perf/`.
 | State leakage across 5 restarts        | 0         |
 | Production JS bundle (gzip)            | ≤ 150 kB  |
 
-## Observable completion gates
+## Scope boundaries (in)
 
-1. A cold load reaches a playable scout in < 3 s and teaches movement without a wall of text.
-2. Scout → resource → pheromone → worker delivery → visible colony growth completes in one unbroken
-   chain, verified in a real browser.
-3. Each of the three response families is observed reacting to player-generated evidence.
-4. A cautious run, an aggressive run, a deliberate eradication and a victory are all completed and
-   captured.
-5. Five consecutive restarts leave no residual entities, listeners, audio voices or suspicion.
-6. `pnpm verify` is green: format, lint, typecheck, unit tests, production build, browser E2E.
-7. The production build plays correctly when served from a nested `/<repo>/` path.
-8. Every visible/audible element is classified in `ASSET_MANIFEST.md` as intentional/generated/
-   licensed final — zero unintended temporaries.
+One kitchen · one home crack + five claimable footholds · one scout control model · pheromone
+logistics · worker population behaviour · immediate exposure · regional evidence · a responsive
+household director · three household routines · nine adaptations · eight holdable regions · one win
+state · three loss states · instant replay · audio/readability settings · static deployment.
+
+## Explicit non-goals
+
+Multiplayer, accounts, backend, cloud saves, procedural campaigns, multiple kitchens, open world, a
+large tech tree, crafting, inventory, dialogue, cinematics, UGC, monetisation, live service, RTS unit
+selection, per-worker micromanagement, idle/clicker progression, tower-defence lanes, a fully
+animated human body.

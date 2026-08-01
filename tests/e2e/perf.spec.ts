@@ -3,15 +3,21 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   DATA_DIR,
+  HOME,
   PLACES,
   boot,
   driveTo,
   expectClean,
+  firstFood,
+  firstWater,
+  footholdsFor,
+  layLine,
   releaseAll,
   shot,
   state,
   tapInteract,
   waitForState,
+  walkTo,
   watch,
   writeJson,
 } from './driver.ts';
@@ -78,50 +84,44 @@ test.describe('performance', () => {
     expect(baseline).not.toBeNull();
 
     // Build two supply lines so there is real traffic during the capture.
-    await driveTo(page, PLACES.home.x + 20, PLACES.home.y, { timeout: 15_000 });
-    await driveTo(page, 600, 2010, { lay: true, timeout: 20_000 });
-    await driveTo(page, 600, 1760, { lay: true, timeout: 20_000 });
-    await driveTo(page, PLACES.dishCrumbs.x, PLACES.dishCrumbs.y, { lay: true, timeout: 25_000 });
-    await releaseAll(page);
-    await driveTo(page, PLACES.sinkDrip.x, PLACES.sinkDrip.y, { timeout: 25_000 });
-    await driveTo(page, 620, 1620, { lay: true, timeout: 20_000 });
-    await driveTo(page, PLACES.home.x + 20, PLACES.home.y, { lay: true, timeout: 30_000 });
-    await releaseAll(page);
-    await waitForState(page, (s) => s.stats.deliveries > 2, 60_000);
+    await layLine(page, { x: HOME.x + 20, y: HOME.y }, PLACES[firstFood.id]);
+    await layLine(page, PLACES[firstWater.id], { x: HOME.x + 20, y: HOME.y });
+    await waitForState(page, (s) => s.stats.deliveries > 2, 90_000);
 
     // ── Window A: ordinary active play. The scout keeps moving the whole time.
     await page.evaluate(() => window.__roach.markPerf('active-play'));
     for (let i = 0; i < 6; i++) {
-      await driveTo(page, 620, 1500, { timeout: 12_000 });
-      await driveTo(page, 900, 1900, { timeout: 12_000 });
-      await driveTo(page, 600, 2020, { timeout: 12_000 });
+      await walkTo(page, PLACES[firstWater.id], { timeout: 20_000 });
+      await walkTo(page, PLACES[firstFood.id], { timeout: 20_000 });
+      await walkTo(page, { x: HOME.x + 40, y: HOME.y }, { timeout: 20_000 });
     }
     await releaseAll(page);
     const active = await page.evaluate(() => window.__roach.endPerf());
     expect(active).not.toBeNull();
 
-    // ── Grow into night 2 and claim the brood chamber, so the peak window has a real colony in it.
-    await waitForState(page, (s) => s.night >= 2 && s.status === 'playing', 260_000);
-    await driveTo(page, 900, 1900, { timeout: 30_000 });
-    await driveTo(page, 1240, 1830, { timeout: 30_000 });
-    await driveTo(page, PLACES.crackIsland.x, PLACES.crackIsland.y, {
-      timeout: 30_000,
-      arrive: 55,
-    });
-    for (let i = 0; i < 6; i++) {
-      await tapInteract(page);
-      await page.waitForTimeout(400);
-      if ((await state(page)).nests.find((n) => n.id === 'crackIsland')?.claimed) break;
-      await page.waitForTimeout(5000);
+    // ── Grow into the second operation and claim a foothold, so the peak window has a real colony
+    // in it. The scenario is rebuilt around operations; the measurement below is unchanged, because
+    // the measurement design was the part that was right.
+    await waitForState(page, (s) => s.operation >= 2 && s.status === 'playing', 400_000).catch(
+      () => 0,
+    );
+    const nest = footholdsFor(2)[0];
+    if (nest) {
+      await walkTo(page, { x: nest.x, y: nest.y }, { timeout: 60_000 });
+      for (let i = 0; i < 6; i++) {
+        await tapInteract(page);
+        await page.waitForTimeout(400);
+        if ((await state(page)).nests.find((n) => n.id === nest.id)?.claimed) break;
+        await page.waitForTimeout(5000);
+      }
+      const secondFood = (await state(page)).resources.find(
+        (r) => r.kind === 'food' && !r.depleted && r.unlockOp <= 2,
+      );
+      if (secondFood && PLACES[secondFood.id]) {
+        await layLine(page, { x: nest.x, y: nest.y }, PLACES[secondFood.id]);
+      }
     }
-    await driveTo(page, PLACES.crackIsland.x, PLACES.crackIsland.y, {
-      timeout: 25_000,
-      arrive: 55,
-    });
-    await driveTo(page, 1600, 1830, { lay: true, timeout: 25_000 });
-    await driveTo(page, PLACES.islandDrop.x, PLACES.islandDrop.y, { lay: true, timeout: 25_000 });
-    await releaseAll(page);
-    await waitForState(page, (s) => s.colony.population >= 24, 220_000);
+    await waitForState(page, (s) => s.colony.population >= 18, 300_000).catch(() => 0);
 
     // ── Window B: peak. Push suspicion hard so patrols, traps and bait are all live at once, on top
     // of the largest colony this spec has had time to breed.
@@ -132,7 +132,7 @@ test.describe('performance', () => {
         await page.waitForTimeout(3000);
         continue;
       }
-      await driveTo(page, 2560, 920, { timeout: 22_000, arrive: 100 });
+      await driveTo(page, PLACES.brightest.x, PLACES.brightest.y, { timeout: 22_000, arrive: 100 });
       await page.waitForTimeout(2200);
     }
     await releaseAll(page);
@@ -140,8 +140,8 @@ test.describe('performance', () => {
     const pre = await state(page);
     await page.evaluate(() => window.__roach.markPerf('peak-load'));
     for (let i = 0; i < 5; i++) {
-      await driveTo(page, 1500, 1900, { timeout: 14_000 });
-      await driveTo(page, 900, 1600, { timeout: 14_000 });
+      await walkTo(page, PLACES.openFloor, { timeout: 20_000 });
+      await walkTo(page, { x: HOME.x + 60, y: HOME.y }, { timeout: 20_000 });
     }
     await releaseAll(page);
     const peak = await page.evaluate(() => window.__roach.endPerf());

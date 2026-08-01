@@ -71,7 +71,7 @@ export function updateOnboarding(world: World, dt: number): void {
     world.tutorial = '';
     return;
   }
-  if (world.night > 1) {
+  if (world.operation > 1) {
     ob.step = ONBOARDING_STEPS.length;
     world.tutorial = '';
     return;

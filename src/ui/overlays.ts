@@ -1,9 +1,10 @@
-import { WIN_FOOD, WIN_POPULATION, WIN_WATER } from '../sim/constants.ts';
+import { operationSpec } from '../sim/operations.ts';
 import { CAUSE_LABELS, tierName, topCause } from '../sim/suspicion.ts';
+import { ZONES } from '../sim/territory.ts';
 import type { World } from '../sim/world.ts';
 import { loadBestRun, type Settings } from './settings.ts';
 
-export type OverlayKind = 'none' | 'pause' | 'interlude' | 'win' | 'lose' | 'help';
+export type OverlayKind = 'none' | 'pause' | 'operation' | 'win' | 'lose' | 'help';
 
 export interface OverlayCallbacks {
   resume: () => void;
@@ -90,7 +91,7 @@ export class Overlays {
       `<div class="card">
         <h2>Paused</h2>
         <h1>Baseboard Empire</h1>
-        <p class="lede">Night ${world.night} · ${tierName(world.suspicion.tier)} · ${world.colony.population} roaches</p>
+        <p class="lede">${world.hud.operation} · ${tierName(world.suspicion.tier)} · ${world.colony.population} roaches</p>
         ${this.settingsHtml()}
         <h2 style="margin-top:22px">Controls</h2>
         <div class="keys">${CONTROLS.map(([k, d]) => `<div><kbd>${k}</kbd><span class="d">${d}</span></div>`).join('')}</div>
@@ -117,24 +118,35 @@ export class Overlays {
     );
   }
 
-  showInterlude(world: World): void {
+  /**
+   * The operation card.
+   *
+   * Replaces the old between-nights interlude. It fires when the player *finishes* something, so it
+   * is a reward beat rather than an interruption, and it names the next objective rather than the
+   * next stretch of clock.
+   */
+  showOperationCard(world: World): void {
+    const spec = operationSpec(world.operation);
     const c = world.colony;
     this.show(
-      'interlude',
+      'operation',
       `<div class="card">
-        <h2>Household reaction · after night ${world.interludeFrom}</h2>
-        <h1>${tierName(world.suspicion.tier)}</h1>
-        <p class="lede">${world.reactionNote}</p>
-        <p>${world.nextResponse}</p>
+        <h2>Operation ${spec.index}</h2>
+        <h1>${spec.title}</h1>
+        <p class="lede">${spec.brief}</p>
+        <ul class="criteria">
+          ${spec.gates.map((g: { label: string }) => `<li class="pending"><span class="mark">▸</span>${g.label}</li>`).join('')}
+        </ul>
+        <p>${world.hud.forecast}</p>
         ${statsHtml([
           ['Colony', `${c.population}`],
-          ['Food', `${Math.floor(c.food)}`],
-          ['Moisture', `${Math.floor(c.water)}`],
+          ['Food', `${Math.floor(c.food)}/${c.foodCap}`],
+          ['Moisture', `${Math.floor(c.water)}/${c.waterCap}`],
+          ['Adaptations', `${world.adaptations.taken.length}`],
           ['Deliveries', `${world.stats.deliveries}`],
           ['Lost', `${world.stats.workersLost}`],
-          ['Suspicion', `${Math.round(world.suspicion.value)}`],
         ])}
-        <div class="row"><button class="primary" data-act="continue">Begin night ${world.interludeFrom + 1}</button></div>
+        <div class="row"><button class="primary" data-act="continue">Get to work</button></div>
       </div>`,
     );
   }
@@ -150,32 +162,35 @@ export class Overlays {
         ? 'Colony collapsed'
         : cause === 'nestDestroyed'
           ? 'Nest destroyed'
-          : cause === 'notEstablished'
-            ? 'Not established'
-            : 'Exterminated';
+          : 'Exterminated';
+    const held = world.finalTally?.zones ?? [];
     const lede = won
-      ? 'Behind the baseboard, under the island, inside the pantry wall — the colony is self-sustaining. They will never get all of you now.'
+      ? `The can is empty and you are still here. ${held.length > 0 ? `You hold ${held.join(', ')}.` : ''} They will never get all of you now.`
       : cause === 'collapse'
         ? 'Nothing left to send out. The last of the brood died in the dark.'
         : cause === 'nestDestroyed'
           ? 'They found the home crack and emptied a can into it.'
-          : cause === 'notEstablished'
-            ? 'Dawn. You are still here — but not enough of you, and not dug in deep enough. By tonight they will have finished what they started.'
-            : 'The sweep finished. The kitchen is quiet.';
+          : 'The sweep finished, and it finished you. The kitchen is quiet.';
 
     const best = loadBestRun();
-    const crit = world.winCriteria;
     const tally = world.finalTally ?? {
       population: c.population,
       food: c.food,
       water: c.water,
-      functionsBuilt: world.nests.filter((n) => n.claimed && !n.home).length,
-      functionsTotal: world.nests.filter((n) => !n.home).length,
+      hatched: c.hatched,
+      lost: c.lost,
+      deliveries: world.stats.deliveries,
+      peakSuspicion: Math.round(world.suspicion.peak),
+      topCause: null,
+      runSeconds: world.stats.runSeconds,
+      operations: world.operation,
+      zones: [],
+      adaptations: world.adaptations.taken.length,
     };
     this.show(
       won ? 'win' : 'lose',
       `<div class="card ${won ? 'win' : 'lose'}">
-        <h2>${won ? 'Victory' : 'Run over'} · night ${world.night}</h2>
+        <h2>${won ? 'Victory' : 'Run over'} · operation ${tally.operations} of 4</h2>
         <h1>${title}</h1>
         <p class="lede">${lede}</p>
         ${
@@ -184,11 +199,11 @@ export class Overlays {
             : ''
         }
         <ul class="criteria">
-          ${critLine(crit.population, `${WIN_POPULATION} roaches`, `${tally.population}`)}
-          ${critLine(crit.food, `${WIN_FOOD} food banked`, `${Math.floor(tally.food)}`)}
-          ${critLine(crit.water, `${WIN_WATER} moisture banked`, `${Math.floor(tally.water)}`)}
-          ${critLine(crit.nests, `All ${tally.functionsTotal} nest functions built`, `${tally.functionsBuilt}/${tally.functionsTotal}`)}
-          ${critLine(crit.survived, 'Survived the final response', crit.survived ? 'yes' : 'no')}
+          ${ZONES.map((z: { id: string; name: string }) => {
+            const st = world.zones.find((s2) => s2.id === z.id);
+            const pct = Math.round((st?.hold ?? 0) * 100);
+            return critLine(pct >= 80, `Hold ${z.name}`, `${pct}%`);
+          }).join('')}
         </ul>
         ${statsHtml([
           ['Run time', formatTime(world.stats.runSeconds)],

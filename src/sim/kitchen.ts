@@ -1,4 +1,4 @@
-import type { LightSource, NightIndex, Solid } from './types.ts';
+import type { LightSource, NightIndex, Prop, Solid } from './types.ts';
 import { WORLD_H, WORLD_W } from './constants.ts';
 
 /**
@@ -9,44 +9,238 @@ import { WORLD_H, WORLD_W } from './constants.ts';
  */
 
 export const SOLIDS: readonly Solid[] = [
-  // Room shell.
-  { id: 'wallTop', x: 0, y: 0, w: WORLD_W, h: 56, mat: 'wall' },
-  { id: 'wallLeft', x: 0, y: 0, w: 56, h: WORLD_H, mat: 'wall' },
-  { id: 'wallRight', x: WORLD_W - 56, y: 0, w: 56, h: WORLD_H, mat: 'wall' },
-  { id: 'wallBottom', x: 0, y: WORLD_H - 56, w: WORLD_W, h: 56, mat: 'wall' },
+  // Room shell. The bottom wall is broken by a real doorway — the hallway light in this kitchen used
+  // to be motivated by an opening that did not exist.
+  { id: 'wallTop', x: 0, y: 0, w: WORLD_W, h: 56, mat: 'wall', role: 'wall' },
+  { id: 'wallLeft', x: 0, y: 0, w: 56, h: WORLD_H, mat: 'wall', role: 'wall' },
+  { id: 'wallRight', x: WORLD_W - 56, y: 0, w: 56, h: WORLD_H, mat: 'wall', role: 'wall' },
+  { id: 'wallBottomL', x: 0, y: WORLD_H - 56, w: 2880, h: 56, mat: 'wall', role: 'wall' },
+  {
+    id: 'wallBottomR',
+    x: 3320,
+    y: WORLD_H - 56,
+    w: WORLD_W - 3320,
+    h: 56,
+    mat: 'wall',
+    role: 'wall',
+  },
+  // Door jambs either side of the opening, so the gap reads as a doorway rather than a hole.
+  { id: 'jambL', x: 2836, y: WORLD_H - 96, w: 44, h: 96, mat: 'wall', role: 'wall' },
+  { id: 'jambR', x: 3320, y: WORLD_H - 96, w: 44, h: 96, mat: 'wall', role: 'wall' },
 
   // Top run: counter — stove — counter — fridge, with a dark 64-unit gap before the fridge.
-  { id: 'counterLeft', x: 56, y: 56, w: 1080, h: 470, mat: 'cabinet', label: 'counter' },
-  { id: 'stove', x: 1136, y: 56, w: 700, h: 500, mat: 'steel', label: 'stove' },
-  { id: 'counterRight', x: 1836, y: 56, w: 700, h: 470, mat: 'cabinet', label: 'counter' },
-  { id: 'fridge', x: 2600, y: 56, w: 944, h: 700, mat: 'steel', label: 'fridge' },
+  {
+    id: 'counterLeft',
+    x: 56,
+    y: 56,
+    w: 1080,
+    h: 470,
+    mat: 'cabinet',
+    role: 'counter',
+    facing: 'down',
+    label: 'counter',
+  },
+  {
+    id: 'stove',
+    x: 1136,
+    y: 56,
+    w: 700,
+    h: 500,
+    mat: 'steel',
+    role: 'stove',
+    facing: 'down',
+    label: 'stove',
+  },
+  {
+    id: 'counterRight',
+    x: 1836,
+    y: 56,
+    w: 700,
+    h: 470,
+    mat: 'cabinet',
+    role: 'counter',
+    facing: 'down',
+    label: 'counter',
+  },
+  {
+    id: 'fridge',
+    x: 2600,
+    y: 56,
+    w: 944,
+    h: 700,
+    mat: 'steel',
+    role: 'fridge',
+    facing: 'down',
+    label: 'fridge',
+  },
 
   // Left run: sink — dishwasher — (corridor) — pantry.
-  { id: 'sinkCabinet', x: 56, y: 900, w: 500, h: 640, mat: 'cabinet', label: 'sink' },
-  { id: 'dishwasher', x: 56, y: 1540, w: 500, h: 420, mat: 'steel', label: 'dishwasher' },
-  { id: 'pantry', x: 56, y: 2120, w: 700, h: 424, mat: 'cabinet', label: 'pantry' },
+  {
+    id: 'sinkCabinet',
+    x: 56,
+    y: 900,
+    w: 500,
+    h: 640,
+    mat: 'cabinet',
+    role: 'sink',
+    facing: 'right',
+    label: 'sink',
+  },
+  {
+    id: 'dishwasher',
+    x: 56,
+    y: 1540,
+    w: 500,
+    h: 420,
+    mat: 'steel',
+    role: 'dishwasher',
+    facing: 'right',
+    label: 'dishwasher',
+  },
+  {
+    id: 'pantry',
+    x: 56,
+    y: 2120,
+    w: 700,
+    h: 424,
+    mat: 'cabinet',
+    role: 'pantry',
+    facing: 'right',
+    label: 'pantry',
+  },
 
   // Centre island — the map's main obstacle and its most exposed perimeter.
-  { id: 'island', x: 1240, y: 1180, w: 1240, h: 560, mat: 'cabinet', label: 'island' },
+  {
+    id: 'island',
+    x: 1240,
+    y: 1180,
+    w: 1240,
+    h: 560,
+    mat: 'cabinet',
+    role: 'island',
+    facing: 'down',
+    label: 'island',
+  },
 
   // Right side: radiator, bin, table legs.
-  { id: 'radiator', x: 3400, y: 940, w: 144, h: 560, mat: 'metal', label: 'radiator' },
-  { id: 'trashBin', x: 2980, y: 2020, w: 400, h: 400, mat: 'plastic', label: 'bin' },
-  { id: 'tableLegA', x: 2700, y: 1300, w: 96, h: 96, mat: 'cabinet' },
-  { id: 'tableLegB', x: 3160, y: 1300, w: 96, h: 96, mat: 'cabinet' },
-  { id: 'tableLegC', x: 2700, y: 1760, w: 96, h: 96, mat: 'cabinet' },
-  { id: 'tableLegD', x: 3160, y: 1760, w: 96, h: 96, mat: 'cabinet' },
+  {
+    id: 'radiator',
+    x: 3400,
+    y: 940,
+    w: 144,
+    h: 560,
+    mat: 'metal',
+    role: 'radiator',
+    label: 'radiator',
+  },
+  {
+    id: 'trashBin',
+    x: 2980,
+    y: 2020,
+    w: 400,
+    h: 400,
+    mat: 'plastic',
+    role: 'bin',
+    facing: 'left',
+    label: 'bin',
+  },
+  { id: 'tableLegA', x: 2700, y: 1300, w: 96, h: 96, mat: 'cabinet', role: 'tableLeg' },
+  { id: 'tableLegB', x: 3160, y: 1300, w: 96, h: 96, mat: 'cabinet', role: 'tableLeg' },
+  { id: 'tableLegC', x: 2700, y: 1760, w: 96, h: 96, mat: 'cabinet', role: 'tableLeg' },
+  { id: 'tableLegD', x: 3160, y: 1760, w: 96, h: 96, mat: 'cabinet', role: 'tableLeg' },
 
   // Floor clutter: cover and landmarks in the exposed middle of the room, which is otherwise a
   // featureless plain at insect scale.
-  { id: 'chairLegA', x: 1520, y: 2136, w: 84, h: 84, mat: 'cabinet' },
-  { id: 'chairLegB', x: 1808, y: 2136, w: 84, h: 84, mat: 'cabinet' },
-  { id: 'chairLegC', x: 1520, y: 2404, w: 84, h: 84, mat: 'cabinet' },
-  { id: 'chairLegD', x: 1808, y: 2404, w: 84, h: 84, mat: 'cabinet' },
-  { id: 'boxPantry', x: 880, y: 1948, w: 268, h: 132, mat: 'plastic', label: 'box' },
-  { id: 'binLiner', x: 2760, y: 2320, w: 150, h: 108, mat: 'plastic' },
-  { id: 'pipeRun', x: 3400, y: 300, w: 144, h: 430, mat: 'metal', label: 'pipe' },
-  { id: 'stoolLeg', x: 2560, y: 620, w: 74, h: 74, mat: 'metal' },
+  { id: 'chairLegA', x: 1520, y: 2136, w: 84, h: 84, mat: 'cabinet', role: 'chairLeg' },
+  { id: 'chairLegB', x: 1808, y: 2136, w: 84, h: 84, mat: 'cabinet', role: 'chairLeg' },
+  { id: 'chairLegC', x: 1520, y: 2404, w: 84, h: 84, mat: 'cabinet', role: 'chairLeg' },
+  { id: 'chairLegD', x: 1808, y: 2404, w: 84, h: 84, mat: 'cabinet', role: 'chairLeg' },
+  { id: 'boxPantry', x: 880, y: 1948, w: 268, h: 132, mat: 'plastic', role: 'box', label: 'box' },
+  { id: 'binLiner', x: 2760, y: 2320, w: 150, h: 108, mat: 'plastic', role: 'box' },
+  { id: 'pipeRun', x: 3400, y: 300, w: 144, h: 430, mat: 'metal', role: 'pipe', label: 'pipe' },
+  { id: 'stoolLeg', x: 2560, y: 620, w: 74, h: 74, mat: 'metal', role: 'chairLeg' },
+];
+
+/**
+ * Scenery.
+ *
+ * Placed by hand against the fixtures above so every object sits where a real one would: the U-bend
+ * under the sink, the burners on the stove, the gasket down the fridge seam, the kibble beside the
+ * bowl. Nothing here collides — this layer exists to make the room legible and to give an insect
+ * something to be small next to.
+ */
+export const PROPS: readonly Prop[] = [
+  // ── Sink run ──────────────────────────────────────────────────────────────
+  { kind: 'pipeElbow', x: 600, y: 1150, w: 132, h: 210, rot: 0, lift: 34 },
+  { kind: 'drainGrate', x: 664, y: 1312, w: 96, h: 96, rot: 0 },
+  { kind: 'waterRing', x: 690, y: 1392, w: 190, h: 130, rot: 0.2 },
+  { kind: 'waterRing', x: 604, y: 1246, w: 130, h: 96, rot: -0.4 },
+  { kind: 'sponge', x: 736, y: 1188, w: 84, h: 58, rot: 0.28 },
+  { kind: 'bottle', x: 596, y: 1010, w: 60, h: 132, rot: 0, lift: 22 },
+  { kind: 'dishTowel', x: 690, y: 940, w: 176, h: 108, rot: -0.12 },
+  { kind: 'outlet', x: 250, y: 862, w: 88, h: 52, rot: 0 },
+
+  // ── Dishwasher ────────────────────────────────────────────────────────────
+  { kind: 'plate', x: 690, y: 1662, w: 128, h: 128, rot: 0 },
+  { kind: 'plate', x: 764, y: 1730, w: 112, h: 112, rot: 0.5 },
+  { kind: 'mug', x: 620, y: 1760, w: 74, h: 74, rot: 0.7 },
+  { kind: 'crumbCluster', x: 712, y: 1704, w: 150, h: 118, rot: 0 },
+  { kind: 'scuffMark', x: 640, y: 1878, w: 230, h: 96, rot: 0.06 },
+  { kind: 'baseboardGap', x: 604, y: 1568, w: 92, h: 46, rot: 0 },
+
+  // ── Pantry ────────────────────────────────────────────────────────────────
+  { kind: 'packet', x: 872, y: 2258, w: 152, h: 106, rot: -0.2 },
+  { kind: 'packet', x: 968, y: 2370, w: 128, h: 92, rot: 0.42 },
+  { kind: 'jar', x: 800, y: 2338, w: 84, h: 84, rot: 0 },
+  { kind: 'crumbCluster', x: 912, y: 2312, w: 168, h: 128, rot: 0.3 },
+  { kind: 'baseboardGap', x: 836, y: 2494, w: 92, h: 46, rot: 0 },
+  { kind: 'vent', x: 300, y: 2330, w: 200, h: 108, rot: 1.57 },
+
+  // ── Stove ─────────────────────────────────────────────────────────────────
+  { kind: 'burner', x: 1300, y: 620, w: 168, h: 168, rot: 0 },
+  { kind: 'burner', x: 1560, y: 620, w: 168, h: 168, rot: 0 },
+  { kind: 'burner', x: 1700, y: 618, w: 132, h: 132, rot: 0 },
+  { kind: 'ovenVent', x: 1486, y: 700, w: 300, h: 62, rot: 0 },
+  { kind: 'panHandle', x: 1620, y: 560, w: 210, h: 44, rot: -0.25, lift: 30 },
+  { kind: 'greaseSmear', x: 1608, y: 716, w: 260, h: 200, rot: 0 },
+  { kind: 'crumbCluster', x: 1470, y: 760, w: 130, h: 100, rot: 0.9 },
+  { kind: 'baseboardGap', x: 1980, y: 640, w: 92, h: 46, rot: 0 },
+
+  // ── Fridge ────────────────────────────────────────────────────────────────
+  { kind: 'fridgeGasket', x: 2604, y: 400, w: 40, h: 660, rot: 0 },
+  { kind: 'condenserGrille', x: 3100, y: 790, w: 340, h: 96, rot: 0 },
+  { kind: 'waterRing', x: 2556, y: 872, w: 200, h: 150, rot: 0 },
+  { kind: 'cableCoil', x: 2960, y: 830, w: 320, h: 150, rot: 0.1 },
+  { kind: 'outlet', x: 2860, y: 806, w: 88, h: 52, rot: 0 },
+  { kind: 'scuffMark', x: 2700, y: 900, w: 280, h: 120, rot: -0.1 },
+
+  // ── Island ────────────────────────────────────────────────────────────────
+  { kind: 'crumbCluster', x: 1872, y: 1948, w: 180, h: 130, rot: 0.15 },
+  { kind: 'greaseSmear', x: 1720, y: 1880, w: 210, h: 150, rot: 0.6 },
+  { kind: 'baseboardGap', x: 1362, y: 1796, w: 92, h: 46, rot: 0 },
+  { kind: 'scuffMark', x: 2100, y: 1830, w: 300, h: 110, rot: 0.03 },
+
+  // ── Bin corner and the doorway ────────────────────────────────────────────
+  { kind: 'binBag', x: 2900, y: 2400, w: 260, h: 190, rot: 0.1 },
+  { kind: 'binWheel', x: 3010, y: 2432, w: 76, h: 76, rot: 0 },
+  { kind: 'binWheel', x: 3350, y: 2432, w: 76, h: 76, rot: 0 },
+  { kind: 'crumbCluster', x: 2884, y: 2472, w: 200, h: 150, rot: 0.44 },
+  { kind: 'petBowl', x: 2700, y: 2216, w: 190, h: 190, rot: 0 },
+  { kind: 'petMat', x: 2700, y: 2216, w: 420, h: 300, rot: 0.05 },
+  { kind: 'kibble', x: 2820, y: 2280, w: 150, h: 110, rot: 0 },
+  { kind: 'kibble', x: 2610, y: 2140, w: 120, h: 90, rot: 0.8 },
+  { kind: 'slipper', x: 3160, y: 2540, w: 190, h: 92, rot: -0.35, lift: 16 },
+  { kind: 'sock', x: 3260, y: 2470, w: 140, h: 80, rot: 0.6 },
+  { kind: 'broomHead', x: 3430, y: 2260, w: 180, h: 120, rot: 0.15, lift: 20 },
+  { kind: 'baseboardGap', x: 3428, y: 2088, w: 92, h: 46, rot: 0 },
+
+  // ── The open middle: landmarks so the plain is navigable ──────────────────
+  { kind: 'scuffMark', x: 1500, y: 1980, w: 340, h: 130, rot: 0.02 },
+  { kind: 'cableCoil', x: 760, y: 760, w: 380, h: 190, rot: 0.4 },
+  { kind: 'vent', x: 2180, y: 640, w: 240, h: 126, rot: 0 },
+  { kind: 'crumbCluster', x: 2300, y: 1050, w: 120, h: 90, rot: 1.2 },
+  { kind: 'waterRing', x: 1200, y: 1500, w: 170, h: 130, rot: 0 },
+  { kind: 'scuffMark', x: 2400, y: 1600, w: 260, h: 100, rot: -0.2 },
 ];
 
 export type DecalKind = 'mat' | 'vent' | 'cable' | 'crack' | 'spill' | 'ring';
@@ -84,11 +278,16 @@ export const DECALS: readonly Decal[] = [
 
 /** Static light sources. The room light added by patrols is dynamic and lives in the sim. */
 export const LIGHTS: readonly LightSource[] = [
-  { id: 'underSink', x: 640, y: 1210, radius: 540, intensity: 0.5, warmth: 0.35 },
-  { id: 'ovenClock', x: 1486, y: 640, radius: 430, intensity: 0.48, warmth: 0.85 },
-  { id: 'fridgeSeam', x: 2570, y: 720, radius: 720, intensity: 0.86, warmth: 0.95 },
-  { id: 'hallway', x: 3340, y: 2560, radius: 940, intensity: 0.52, warmth: 0.8 },
-  { id: 'binGlow', x: 3180, y: 2440, radius: 330, intensity: 0.22, warmth: 0.6 },
+  // Every source now sits on the object that emits it. The old set had the under-sink glow 84 units
+  // outside the sink cabinet, the oven clock below the stove and the hallway light inside a solid
+  // wall — light with no visible cause reads as a rendering artefact, not as a room.
+  { id: 'ovenClock', x: 1486, y: 560, radius: 430, intensity: 0.5, warmth: 0.9 },
+  { id: 'fridgeSeam', x: 2624, y: 700, radius: 700, intensity: 0.82, warmth: 0.95 },
+  { id: 'dishwasherLamp', x: 560, y: 1750, radius: 300, intensity: 0.3, warmth: 0.2 },
+  // Through the doorway gap in the bottom wall, which now exists.
+  { id: 'hallway', x: 3100, y: 2588, radius: 920, intensity: 0.5, warmth: 0.78 },
+  { id: 'outletLed', x: 2860, y: 806, radius: 190, intensity: 0.22, warmth: 0.3 },
+  { id: 'binGlow', x: 3180, y: 2440, radius: 300, intensity: 0.18, warmth: 0.6 },
 ];
 
 export interface ResourceSpec {
@@ -97,48 +296,43 @@ export interface ResourceSpec {
   x: number;
   y: number;
   amount: number;
-  unlockNight: NightIndex;
+  unlockOp: 1 | 2 | 3 | 4;
   label: string;
 }
 
 export const RESOURCES: readonly ResourceSpec[] = [
-  // Night 1 — both within a short scout of the home crack, so the first delivery lands fast.
+  // Operation 1 — both within a short scout of the home crack, so the first delivery lands fast.
+  // Amounts are deliberately finite. The old nodes held 3 600 units against a whole-night draw of
+  // ~474 and regrew 30 % between nights, which made scarcity arithmetically impossible and meant a
+  // player never had to move a supply line once it worked.
   {
     id: 'dishCrumbs',
     kind: 'food',
     x: 712,
     y: 1704,
-    amount: 3600,
-    unlockNight: 1,
+    amount: 680,
+    unlockOp: 1,
     label: 'Dishwasher crumbs',
   },
-  {
-    id: 'sinkDrip',
-    kind: 'water',
-    x: 664,
-    y: 1312,
-    amount: 3900,
-    unlockNight: 1,
-    label: 'Sink drip',
-  },
+  { id: 'sinkDrip', kind: 'water', x: 664, y: 1312, amount: 640, unlockOp: 1, label: 'Sink drip' },
   {
     id: 'stoveGrease',
     kind: 'food',
     x: 1608,
     y: 716,
-    amount: 4200,
-    unlockNight: 1,
+    amount: 820,
+    unlockOp: 1,
     label: 'Stove grease',
   },
 
-  // Night 2 — the real decisions: value sits on exposed floor and inside the fridge light.
+  // Operation 2 — richer, and out where the household can see you working.
   {
     id: 'islandDrop',
     kind: 'food',
     x: 1872,
     y: 1948,
-    amount: 5100,
-    unlockNight: 2,
+    amount: 1150,
+    unlockOp: 2,
     label: 'Island spill',
   },
   {
@@ -146,8 +340,8 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'water',
     x: 2556,
     y: 872,
-    amount: 5700,
-    unlockNight: 2,
+    amount: 1250,
+    unlockOp: 2,
     label: 'Fridge condensation',
   },
   {
@@ -155,30 +349,22 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'food',
     x: 912,
     y: 2312,
-    amount: 5400,
-    unlockNight: 2,
+    amount: 1200,
+    unlockOp: 2,
     label: 'Pantry grain',
   },
 
-  // Night 3 — the biggest hauls, in the worst places.
+  // Operation 3 — the biggest hauls, in the worst places.
   {
     id: 'trashSpill',
     kind: 'food',
     x: 2884,
     y: 2472,
-    amount: 7200,
-    unlockNight: 3,
+    amount: 1900,
+    unlockOp: 3,
     label: 'Bin spill',
   },
-  {
-    id: 'petBowl',
-    kind: 'water',
-    x: 2700,
-    y: 2216,
-    amount: 5400,
-    unlockNight: 3,
-    label: 'Pet bowl',
-  },
+  { id: 'petBowl', kind: 'water', x: 2700, y: 2216, amount: 1700, unlockOp: 3, label: 'Pet bowl' },
 ];
 
 export interface NestSpec {
@@ -186,57 +372,94 @@ export interface NestSpec {
   x: number;
   y: number;
   home: boolean;
-  upgrade: 'brood' | 'cache' | 'escape' | null;
-  unlockNight: NightIndex;
+  unlockOp: 1 | 2 | 3 | 4;
   label: string;
   costFood: number;
   costWater: number;
+  fitFood: number;
+  fitWater: number;
 }
 
+/**
+ * Footholds.
+ *
+ * Six cracks spread so that no three of them sit in the same region — holding three regions of the
+ * kitchen means actually crossing the kitchen. Each is bought twice: claiming it takes the ground,
+ * fitting it out chooses what it does. That second spend is most of the reason a full larder is a
+ * decision again rather than a dead end.
+ */
 export const NESTS: readonly NestSpec[] = [
   {
     id: 'home',
     x: 168,
     y: 2042,
     home: true,
-    upgrade: null,
-    unlockNight: 1,
+    unlockOp: 1,
     label: 'Home crack',
     costFood: 0,
     costWater: 0,
+    fitFood: 0,
+    fitWater: 0,
+  },
+  {
+    id: 'crackSink',
+    x: 604,
+    y: 1568,
+    home: false,
+    unlockOp: 2,
+    label: 'Sink-run crack',
+    costFood: 30,
+    costWater: 20,
+    fitFood: 34,
+    fitWater: 22,
   },
   {
     id: 'crackIsland',
     x: 1362,
     y: 1796,
     home: false,
-    upgrade: 'brood',
-    unlockNight: 2,
-    label: 'Brood chamber',
-    costFood: 40,
-    costWater: 26,
+    unlockOp: 2,
+    label: 'Island crack',
+    costFood: 34,
+    costWater: 22,
+    fitFood: 38,
+    fitWater: 24,
   },
   {
     id: 'crackPantry',
     x: 836,
     y: 2494,
     home: false,
-    upgrade: 'cache',
-    unlockNight: 2,
-    label: 'Food cache',
-    costFood: 46,
-    costWater: 22,
+    unlockOp: 2,
+    label: 'Pantry crack',
+    costFood: 32,
+    costWater: 20,
+    fitFood: 36,
+    fitWater: 22,
   },
   {
-    id: 'crackWall',
-    x: 3488,
-    y: 1632,
+    id: 'crackStove',
+    x: 1980,
+    y: 640,
     home: false,
-    upgrade: 'escape',
-    unlockNight: 3,
-    label: 'Escape tunnel',
-    costFood: 54,
-    costWater: 34,
+    unlockOp: 3,
+    label: 'Stove-side crack',
+    costFood: 42,
+    costWater: 28,
+    fitFood: 44,
+    fitWater: 28,
+  },
+  {
+    id: 'crackBin',
+    x: 3428,
+    y: 2088,
+    home: false,
+    unlockOp: 3,
+    label: 'Bin-corner crack',
+    costFood: 46,
+    costWater: 30,
+    fitFood: 46,
+    fitWater: 30,
   },
 ];
 

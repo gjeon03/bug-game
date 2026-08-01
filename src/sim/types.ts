@@ -28,7 +28,89 @@ export interface Solid {
   h: number;
   /** Material family drives how the renderer draws it. */
   mat: 'cabinet' | 'steel' | 'wall' | 'plastic' | 'metal';
+  /**
+   * What this thing *is*. The renderer draws a fixture from its role — cabinet doors and a toe-kick,
+   * a fridge with a door seam and a handle, a stove with burners — instead of drawing every solid as
+   * the same tinted rectangle. The old build authored a `label` here and never rendered it, which is
+   * why a dishwasher and a pantry were separated by five values of grey.
+   */
+  role?: FixtureRole;
+  /** Which side of the solid faces the room, for door faces and toe-kicks. */
+  facing?: 'up' | 'down' | 'left' | 'right';
   label?: string;
+}
+
+export type FixtureRole =
+  | 'counter'
+  | 'sink'
+  | 'dishwasher'
+  | 'stove'
+  | 'fridge'
+  | 'pantry'
+  | 'island'
+  | 'bin'
+  | 'tableLeg'
+  | 'chairLeg'
+  | 'radiator'
+  | 'pipe'
+  | 'box'
+  | 'wall';
+
+/**
+ * Scenery.
+ *
+ * Non-colliding domestic objects in the 30–300 unit band — the band the measured audit found
+ * completely empty, which is why nothing in the room communicated insect scale. Every prop earns its
+ * place by doing at least one job: giving the eye a landmark, telling the player how big they are,
+ * marking a resource, motivating a light, or showing that somebody lives here.
+ */
+export type PropKind =
+  | 'pipeElbow'
+  | 'drainGrate'
+  | 'sponge'
+  | 'bottle'
+  | 'dishTowel'
+  | 'plate'
+  | 'mug'
+  | 'burner'
+  | 'panHandle'
+  | 'ovenVent'
+  | 'fridgeGasket'
+  | 'condenserGrille'
+  | 'packet'
+  | 'jar'
+  | 'binBag'
+  | 'binWheel'
+  | 'petBowl'
+  | 'petMat'
+  | 'kibble'
+  | 'slipper'
+  | 'sock'
+  | 'broomHead'
+  | 'outlet'
+  | 'vent'
+  | 'cableCoil'
+  | 'crumbCluster'
+  | 'greaseSmear'
+  | 'waterRing'
+  | 'scuffMark'
+  | 'baseboardGap';
+
+export interface Prop {
+  kind: PropKind;
+  x: number;
+  y: number;
+  /** Long axis in world units. */
+  w: number;
+  h: number;
+  rot: number;
+  /**
+   * Height above the floor, in world units. Drives the contact shadow and whether the prop is drawn
+   * as a foreground occluder that roaches pass *under*.
+   */
+  lift?: number;
+  /** Per-instance variation seed so identical kinds do not stamp identically. */
+  v?: number;
 }
 
 export interface LightSource {
@@ -49,8 +131,8 @@ export interface ResourceNode {
   /** Remaining units. */
   amount: number;
   initial: number;
-  /** Night from which the node is reachable/known. */
-  unlockNight: NightIndex;
+  /** Operation from which the node is reachable/known. */
+  unlockOp: 1 | 2 | 3 | 4;
   label: string;
   /** True once fully drained — drained nodes are visible evidence for the humans. */
   depleted: boolean;
@@ -68,13 +150,21 @@ export interface NestNode {
   /** Home nest is the colony hub and the thing that must not be destroyed. */
   home: boolean;
   claimed: boolean;
-  /** The function this crack provides once claimed. Home has none. */
-  upgrade: UpgradeKind | null;
-  unlockNight: NightIndex;
+  /**
+   * The function fitted into this crack, chosen by the player *after* claiming it. Claiming buys the
+   * ground; fitting it out buys the capability. Two spends per foothold is most of what turned a
+   * capped larder back into a decision.
+   */
+  fn: FootholdFunction | null;
+  /** Operation from which the crack can be claimed. */
+  unlockOp: 1 | 2 | 3 | 4;
   label: string;
   costFood: number;
   costWater: number;
-  /** 0..1 integrity; only meaningful for the home nest. */
+  /** Cost of fitting a function once claimed. */
+  fitFood: number;
+  fitWater: number;
+  /** 0..1 integrity. Spray damages it, moisture repairs it, and at 0 the home nest is lost. */
   integrity: number;
   /** Cosmetic growth level 0..3, driven by colony size. */
   growth: number;
@@ -265,7 +355,10 @@ export interface Colony {
   totalWater: number;
   hatched: number;
   lost: number;
-  upgrades: Record<UpgradeKind, boolean>;
+  /** Foothold functions currently installed, derived once per step in `recomputeLimits`. */
+  nurseries: number;
+  caches: number;
+  boltholes: number;
   /** Seconds spent with an empty larder — used for the loss explanation. */
   starving: number;
   thirsting: number;
@@ -303,7 +396,18 @@ export interface RunStats {
   idleSeconds: number;
   distanceTravelled: number;
   trailNodesLaid: number;
+  /** Household routines the colony actually took something out of. */
+  routinesExploited: number;
+  /** Operations finished. The run's real progress readout. */
+  operationsCompleted: number;
+  /** Foothold functions installed. */
+  functionsBuilt: number;
 }
+
+/** What a claimed crack can be fitted out as. One per foothold, chosen by the player. */
+export type FootholdFunction = 'nursery' | 'cache' | 'bolthole';
+
+export type RoutineEventKind = 'snack' | 'dishes' | 'trash';
 
 export type GameEvent =
   | { t: 'pickup'; x: number; y: number; kind: ResourceKind }
@@ -330,8 +434,21 @@ export type GameEvent =
   | { t: 'scoutRespawn'; x: number; y: number }
   | { t: 'workerDied'; x: number; y: number; cause: DeathCause }
   | { t: 'sprint'; x: number; y: number }
-  | { t: 'phase'; night: NightIndex }
-  | { t: 'interlude'; night: NightIndex }
+  | { t: 'operation'; index: 1 | 2 | 3 | 4 }
+  | { t: 'adaptOffer' }
+  | { t: 'adapt'; id: string; family: 'brood' | 'forage' | 'shadow' }
+  | { t: 'fitOut'; x: number; y: number; fn: FootholdFunction }
+  | { t: 'repair'; x: number; y: number }
+  | { t: 'routineWarn'; kind: RoutineEventKind; x: number; y: number }
+  | { t: 'routineStart'; kind: RoutineEventKind; x: number; y: number }
+  | { t: 'routineTaken'; kind: RoutineEventKind; x: number; y: number }
+  | { t: 'routineEnd'; kind: RoutineEventKind; x: number; y: number; took: number }
+  | { t: 'sweepWarn'; x: number; y: number }
+  | { t: 'sweepStart'; x: number; y: number }
+  | { t: 'sweepEnd'; x: number; y: number }
+  | { t: 'zoneHeld'; zone: string }
+  | { t: 'zoneLost'; zone: string }
+  | { t: 'finalResponse' }
   | { t: 'win' }
   | { t: 'lose'; cause: LoseCause }
   | { t: 'objective'; text: string };

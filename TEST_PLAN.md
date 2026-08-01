@@ -13,77 +13,66 @@ One command runs everything: `pnpm verify`.
 
 ## Unit / integration coverage (highest-risk logic)
 
-1. **Fixed step** — accumulator produces exactly N steps for a given elapsed time; clamps at 250 ms;
-   never exceeds 5 steps/frame; discarded time is counted.
-2. **Determinism** — two worlds with the same seed and the same scripted input produce byte-identical
-   state snapshots after 3 000 steps.
-3. **Pheromone** — node creation spacing, strength decay to expiry, reserve consumption/regeneration,
-   route cap enforcement, nest-link and resource-link detection, erase behaviour.
-4. **Worker acquisition** — a worker within range of a linked route enters `seeking`; follows toward the
-   resource end; picks up; returns toward the nest end; delivers; resource totals move by exactly the
-   carried amount.
-5. **Resource accounting** — no duplication or loss across pickup → carry → death-in-transit → deliver.
-6. **Colony** — upkeep drain, brood accumulation gated on food _and_ water, hatch at threshold,
-   population capacity, starvation/desiccation death ordering, nest integrity damage.
-7. **Upgrades** — claim cost, each of the three functions applies its documented effect exactly once.
-8. **Suspicion** — every cause contributes its documented weight; tier thresholds fire once and in
-   order; decay never reaches zero; the ledger attributes the largest cause correctly.
-9. **Escalation** — each tier requests the documented response family; responses are not double-spawned.
-10. **Win condition** — fires only when all five criteria hold at the end of Night 3.
-11. **Eradication** — each of the three loss causes fires independently and reports itself.
-12. **Restart** — `newRun()` produces a world deep-equal to a fresh one; no module-level mutable state
-    survives (asserted by running the equality check after a full 3-night simulated run).
-13. **Collision** — circle-vs-AABB push-out never places an entity inside a solid; sliding preserves
-    tangential speed; a 3 000-step random walk never escapes the kitchen bounds.
-14. **Spatial hash** — insertion/query correctness against a brute-force reference on random sets.
-15. **Base path** — the built `index.html` contains no absolute `/assets/...` reference.
+The suite is written against `REDESIGN_CONTRACT.md`. Where the old suite locked in the three-night
+structure, the win thresholds or literal map coordinates, it was rewritten — a test that freezes a
+design the evidence says is broken is a liability, not a safety net.
+
+| Area                     | What is asserted                                                                                                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Determinism              | 3 000 steps from one seed reproduce exactly, including `rng.snapshot()`. Kept verbatim.                                                                                      |
+| Restart equality         | A cold world snapshotted **before** a run is played is identical to a fresh one after it. (The old version compared two worlds both built afterwards, so it could not fail.) |
+| Collision                | Resolution out of every face of every entry in `SOLIDS`, derived symbolically from the map data                                                                              |
+| Pheromone                | Node spacing, reserve spend/regen, link detection in both lay directions, decay, traffic reinforcement, erase, route cap                                                     |
+| **Operations**           | Each operation advances only when its gates are satisfied, never on a clock; a waiting gate yields to an actionable one                                                      |
+| **Objective hierarchy**  | `resolveHud` always returns an objective; `hud.source` names the rule that produced it; blockers name the real reason                                                        |
+| **Capped-resource rule** | With food or moisture at cap, `cappedAdvice()` is non-null — a capped resource can never be a dead state                                                                     |
+| **Adaptations**          | Costs are charged, `world.traits` changes behaviour, taking one closes the milestone, the whole tree is not purchasable                                                      |
+| **Footholds**            | Claim then fit-out are separate spends; capacity and storage derive from what is built                                                                                       |
+| **Territory**            | Hold rises only with a live route _and_ bodies present; suppression reverses it; the win needs three at once                                                                 |
+| **Regional heat**        | Evidence deposits into the cell it happened in; `hottestCell` follows the player's traffic; heat never falls below its peak fraction                                         |
+| **Threat director**      | Budget and cooldown limits; no family twice in a row; tier promotion cannot advance twice inside `TIER_HOLD`                                                                 |
+| **Trap siting**          | A route with workers on it outscores an unused one — traps follow bodies, not geometry                                                                                       |
+| **Cleaning sweep**       | Trail node life falls along the swept path; workers are displaced, not killed                                                                                                |
+| **Routines**             | Generation, exploitation counting, and cleanup: no worker is left targeting a removed resource, and no dead route is left occupying a slot                                   |
+| **Worker quality**       | After a played run: no `stuckTime > 2 s`, no solid penetration, no sustained 3-body overlap, `carrying` iff `carryAmount > 0`                                                |
+| Colony                   | Hatching spends both reserves, will not breed into starvation, respects capacity and the worker pool                                                                         |
+| Outcome                  | Win requires three held regions **and** surviving the response; each loss cause is reachable and distinct                                                                    |
 
 ## Real-runtime gameplay states to capture
 
-Each row is captured as a screenshot in `artifacts/evidence/shots/` plus a state assertion.
-
-| #   | State                          | Assertion                                                       |
-| --- | ------------------------------ | --------------------------------------------------------------- |
-| 1   | initial load                   | canvas present, `__roach.ready`, 0 console errors               |
-| 2   | onboarding                     | first prompt visible, names movement                            |
-| 3   | first scout movement           | scout position changes from real key input                      |
-| 4   | first pheromone route          | `routes[0].nodes.length > 0`, reserve consumed                  |
-| 5   | first worker delivery          | food or water reserve increased, `deliver` event observed       |
-| 6   | safe-vs-dangerous route choice | two routes with measurably different exposure integrals         |
-| 7   | first nest upgrade             | an upgrade flag flips, nest visual state changes                |
-| 8   | first human patrol             | patrol active, room light raised, telegraph decal visible       |
-| 9   | trap / route denial            | trap present on a trafficked route, a worker is trapped         |
-| 10  | high suspicion                 | tier ≥ 3, HUD shows cause + next response                       |
-| 11  | peak population + effect load  | ≥ 60 roaches, hazards active, telemetry captured                |
-| 12  | scout damage / loss            | scout dies, respawns from the colony, population decremented    |
-| 13  | eradication failure            | outcome `lose` with a stated cause                              |
-| 14  | victory                        | outcome `win` with all five criteria met                        |
-| 15  | restart                        | new run playable within 2 s without reload                      |
-| 16  | 5 consecutive restarts         | no entity/particle/voice/listener growth; identical fresh state |
-| 17  | focus loss and return          | tab hidden 3 s does not advance the phase clock; audio suspends |
-| 18  | nested-path production build   | full run works under `/bug-game/`, 0 failed requests            |
+Cold load · first meaningful input · first delivery · first hatch · first adaptation offer · an
+adaptation taken · a foothold claimed · a foothold fitted out · each of the three household routines
+(incoming, active, aftermath) · a cleaning sweep erasing a trail · a trap placed on the player's own
+line · a re-route around it · worker congestion at a source · a region reaching hold · the
+extermination response · victory · each loss cause · restart · nested-path build · the deployed build.
 
 ## Playtest scenarios
 
-Driven through `__roach.input` (the real input layer) with deterministic seeds, plus headless
-equivalents in `tests/unit/balance.test.ts` that run the same shapes in milliseconds. Each writes a
-JSON record into `artifacts/evidence/` (`run-win.json`, `run-loss.json`, `run-reckless-mid.json`,
-`route-risk.json`, `escalation.json`, `scout-loss.json`, `restarts.json`).
+Driven in a real browser through the real input layer. The **guided bot**
+(`scripts/lib/bot.mjs`) plays using only what the HUD shows the player — `hud.source`, `hud.target`
+and the choice panels — so a completed run is also evidence that the guidance is sufficient to play
+the game without the README.
 
-| Scenario                  | Shape                                                                |
-| ------------------------- | -------------------------------------------------------------------- |
-| Cautious                  | routes hug cover only; expect low suspicion, slower growth           |
-| Aggressive                | shortest open-floor routes; expect fast growth, tier 3+ by Night 2   |
-| Deliberately poor         | long open-floor route across the room light; expect early escalation |
-| Trap avoidance            | play until traps deploy, then re-route around them                   |
-| Scout loss and recovery   | walk into a footfall, verify respawn and continued play              |
-| Deliberate eradication    | maximise evidence; verify a clean, attributed loss                   |
-| Successful complete run   | meet all win criteria and survive the final sweep                    |
-| Five consecutive restarts | no reload, alternating win/lose entry points                         |
+1. First-time player path, no documentation
+2. Cautious wall-hugging routing
+3. Aggressive open-floor routing with sprint
+4. Growth-focused adaptation path (brood)
+5. Concealment-focused adaptation path (shadow)
+6. Heavy-casualty recovery
+7. Worker-congestion stress
+8. Trap-driven rerouting
+9. Cleaning-driven route loss
+10. Final extermination survival
+11. Deliberate failure
+12. Complete victory
+13. Five consecutive restarts
+14. Focus loss and restoration
+15. Nested-path production build
+16. Deployed GitHub Pages build
 
-Measured per scenario: time to first movement, time to first delivery, time to first upgrade, run
-length, worker losses, top suspicion causes, idle time (fraction of seconds with no player input and
-no pending decision), failure attribution, restart time, and final colony state.
+Recorded per run: time to first input, first objective understood, first delivery, first growth
+choice; meaningful decisions per minute; longest decision-free plateau; seconds spent at capped
+resources; worker stuck and overlap events; frame-time tails; console errors.
 
 ## Performance capture
 

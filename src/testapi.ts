@@ -1,5 +1,6 @@
 import type { PerfWindowResult, Telemetry } from './core/telemetry.ts';
 import { WORKER_RADIUS } from './sim/constants.ts';
+import { hottestCell, knownCellCount, totalHeat } from './sim/heat.ts';
 import type { World } from './sim/world.ts';
 
 /**
@@ -16,10 +17,11 @@ export interface StateSnapshot {
   time: number;
   tick: number;
   status: string;
-  night: number;
-  nightTime: number;
-  nightLength: number;
+  operation: number;
+  operationTime: number;
+  operationsCompleted: number;
   finalResponse: boolean;
+  finalResponseTime: number;
   paused: boolean;
   overlay: string;
   scout: {
@@ -44,8 +46,33 @@ export interface StateSnapshot {
     lost: number;
     totalFood: number;
     totalWater: number;
-    upgrades: Record<string, boolean>;
+    nurseries: number;
+    caches: number;
+    boltholes: number;
   };
+  adaptations: { taken: string[]; offer: string[]; milestonesUsed: number };
+  zones: { id: string; hold: number; workers: number; routed: boolean; contested: boolean }[];
+  routines: {
+    kind: string;
+    phase: string;
+    timer: number;
+    exploited: boolean;
+    x: number;
+    y: number;
+  }[];
+  heat: { known: number; total: number; hottest: number };
+  hud: {
+    operation: string;
+    objective: string;
+    blocker: string | null;
+    nextUnlock: string;
+    forecast: string;
+    counterplay: string | null;
+    source: string;
+    checklist: { label: string; have: number; need: number; done: boolean }[];
+    target: { x: number; y: number; label: string } | null;
+  };
+  pendingFit: string | null;
   suspicion: { value: number; tier: number; peak: number; floor: number; lastCause: string | null };
   routes: {
     id: number;
@@ -56,8 +83,8 @@ export interface StateSnapshot {
     resourceId: string | null;
     nestId: string | null;
   }[];
-  nests: { id: string; claimed: boolean; upgrade: string | null; integrity: number }[];
-  resources: { id: string; kind: string; amount: number; depleted: boolean; unlockNight: number }[];
+  nests: { id: string; claimed: boolean; fn: string | null; integrity: number }[];
+  resources: { id: string; kind: string; amount: number; depleted: boolean; unlockOp: number }[];
   counts: {
     workers: number;
     workersOutbound: number;
@@ -65,6 +92,9 @@ export interface StateSnapshot {
     workersCarrying: number;
     workersPanicking: number;
     workersTrapped: number;
+    workersQueued: number;
+    sweeps: number;
+    routines: number;
     corpses: number;
     hazards: number;
     patrols: number;
@@ -81,6 +111,7 @@ export interface StateSnapshot {
   loseCause: string | null;
   winCriteria: Record<string, boolean>;
   reactionNote: string;
+  cardTime: number;
 }
 
 export interface TestApi {
@@ -169,6 +200,7 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
   let carrying = 0;
   let panicking = 0;
   let trapped = 0;
+  let queued = 0;
   let alive = 0;
   for (let i = 0; i < world.workers.length; i++) {
     const w = world.workers[i];
@@ -178,6 +210,7 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
     else if (w.state === 'inbound') inbound++;
     else if (w.state === 'panic') panicking++;
     else if (w.state === 'trapped') trapped++;
+    else if (w.state === 'queue') queued++;
     if (w.carrying) carrying++;
   }
 
@@ -186,10 +219,11 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
     time: world.time,
     tick: world.tick,
     status: world.status,
-    night: world.night,
-    nightTime: world.nightTime,
-    nightLength: world.nightLength,
+    operation: world.operation,
+    operationTime: world.operationTime,
+    operationsCompleted: world.stats.operationsCompleted,
     finalResponse: world.finalResponse,
+    finalResponseTime: world.finalResponseTime,
     paused,
     overlay,
     scout: {
@@ -214,8 +248,47 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
       lost: world.colony.lost,
       totalFood: world.colony.totalFood,
       totalWater: world.colony.totalWater,
-      upgrades: { ...world.colony.upgrades },
+      nurseries: world.colony.nurseries,
+      caches: world.colony.caches,
+      boltholes: world.colony.boltholes,
     },
+    adaptations: {
+      taken: [...world.adaptations.taken],
+      offer: [...world.adaptations.offer],
+      milestonesUsed: world.adaptations.milestonesUsed,
+    },
+    zones: world.zones.map((z) => ({
+      id: z.id,
+      hold: z.hold,
+      workers: z.workers,
+      routed: z.routed,
+      contested: z.contested,
+    })),
+    routines: world.routines.map((r) => ({
+      kind: r.kind,
+      phase: r.phase,
+      timer: r.timer,
+      exploited: r.exploited,
+      x: r.x,
+      y: r.y,
+    })),
+    heat: {
+      known: knownCellCount(world),
+      total: totalHeat(world),
+      hottest: hottestCell(world, () => false)?.heat ?? 0,
+    },
+    hud: {
+      operation: world.hud.operation,
+      objective: world.hud.objective,
+      blocker: world.hud.blocker,
+      nextUnlock: world.hud.nextUnlock,
+      forecast: world.hud.forecast,
+      counterplay: world.hud.counterplay,
+      source: world.hud.source,
+      checklist: world.hud.checklist.map((c) => ({ ...c })),
+      target: world.hud.target ? { ...world.hud.target } : null,
+    },
+    pendingFit: world.pendingFit,
     suspicion: {
       value: world.suspicion.value,
       tier: world.suspicion.tier,
@@ -235,7 +308,7 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
     nests: world.nests.map((n) => ({
       id: n.id,
       claimed: n.claimed,
-      upgrade: n.upgrade,
+      fn: n.fn,
       integrity: n.integrity,
     })),
     resources: world.resources.map((r) => ({
@@ -243,7 +316,7 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
       kind: r.kind,
       amount: r.amount,
       depleted: r.depleted,
-      unlockNight: r.unlockNight,
+      unlockOp: r.unlockOp,
     })),
     counts: {
       workers: alive,
@@ -252,6 +325,9 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
       workersCarrying: carrying,
       workersPanicking: panicking,
       workersTrapped: trapped,
+      workersQueued: queued,
+      sweeps: world.sweeps.length,
+      routines: world.routines.filter((r) => r.phase !== 'done').length,
       corpses: world.corpses.length,
       hazards: world.hazards.length,
       patrols: world.patrols.length,
@@ -268,6 +344,7 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
     loseCause: world.loseCause,
     winCriteria: { ...world.winCriteria } as unknown as Record<string, boolean>,
     reactionNote: world.reactionNote,
+    cardTime: world.cardTime,
   };
 }
 

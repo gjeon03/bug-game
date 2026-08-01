@@ -166,3 +166,86 @@ fighting strength until reserves are above the win thresholds.
 colony spent every surplus down to that floor while the win condition demanded 120 / 90 banked. The
 two goals competed forever and the win was unreachable by construction. The pause is surfaced to the
 player (`world.banking`) rather than being a silent rule.
+
+---
+
+## D9 — Four player-driven operations replace the three-night clock
+
+**Default in brief:** a player-driven four-operation infestation run, unless a better structure is proved.
+**Chosen:** the default, adopted essentially unchanged.
+
+**Evidence that forced it.** A measured run of the old build with **no player input after t = 10 s**
+satisfied two of the four win criteria by t ≈ 110 s and only failed at t = 788 s because population
+never reached 36. The clock, not the player, was the content:
+
+- mean gap between authored beats: **112 s** (contract budget: 3 s)
+- longest decision-free plateau in a real-browser cautious run: **463.9 s**
+- 13 of 14 threat spawns in a winning run were clock-driven
+
+Operations gate on achievement. Time still applies pressure through a per-operation soft limit that
+raises household patience when overrun, so dawdling costs pressure rather than ending the run.
+
+---
+
+## D10 — Regional evidence heat, added alongside the global tier
+
+**Default in brief:** the household should learn _where_ activity occurred, not only accumulate a number.
+**Chosen:** a 12 × 9 grid (`sim/heat.ts`) that every evidence source deposits into at the position it
+happened, plus the existing global tier, rate-limited.
+
+**Why not replace the scalar outright.** The tier answers "how severe may the response be" and the
+grid answers "where does it go". Keeping them separate meant the existing suspicion tests, the tier
+UI and the cause ledger all survived, while trap siting, cleaning and spray targeting became
+consequences of the player's own route geometry.
+
+**Measured defect this fixes.** `addSuspicion(world, cause, amount, x, y)` accepted a position and
+discarded it; `SuspicionState` had no positional field; continuous causes passed literal `0, 0`. Trap
+siting scored _trail node geometry_ and never read `route.traffic`, so a line six roaches were
+pounding scored identically to one nobody used.
+
+---
+
+## D11 — Spacing enforced positionally, not as a steering force
+
+**Default:** keep the existing separation force and tune it.
+**Chosen:** a Jacobi positional relaxation pass after integration, plus per-worker lane offsets.
+
+**Why a tune could not work.** The steering vector is re-normalised to the worker's target speed, so
+a separation force can only change heading — never spacing — and at the two moments spacing matters
+most it produced _exactly zero_ correction: harvesting (`speedMul = 0`) and queue-waiting
+(`speedMul = 0.12`). Meanwhile every worker steered to the same node on a single centreline, at a
+separation query radius of 17 units against a drawn body ≈ 21 units long. Overlap was structural.
+
+---
+
+## D12 — Caps are derived from what the player built
+
+**Default:** raise the caps.
+**Chosen:** low base caps (`FOOD_CAP 120`, `WATER_CAP 100`, `BASE_CAPACITY 13`) that only rise through
+claimed footholds, fitted functions and chosen adaptations.
+
+**Why.** The measured failure was not that the cap was too low: it was that the cap was a constant
+the player could not move, so reaching it was a dead end. A ceiling with a named, affordable thing
+attached to it is a decision. The invariant is enforced in `cappedAdvice()` and asserted by test: a
+capped resource must always name a spend, a cap-raiser, a reason to hold, or the real bottleneck.
+
+---
+
+## D13 — Three defects found by playing, not by reading
+
+Recorded because each was invisible to static analysis and to the unit suite, and each was fixed only
+after the guided bot reproduced it in a real browser.
+
+1. **Capacity deadlock.** `BASE_CAPACITY` 10 against operation 1's 12-roach gate, with the only
+   capacity raisers locked behind operation 2. The colony sat at 10/10 while the blocker told the
+   player to claim a foothold they could not yet claim. Fixed by making base capacity exceed the
+   first gate — and the general rule is now that an operation's gates must be satisfiable with what
+   that operation itself unlocks.
+2. **Unaffordable offers monopolised the objective.** An adaptation the player could not pay for held
+   the top of the objective hierarchy indefinitely; the shortage warning never got a turn and the
+   colony starved being told to spend food it did not have. An offer never expires, so an unaffordable
+   one now falls through the hierarchy and becomes a named blocker instead.
+3. **Temporary routes evicted permanent ones.** A route to a household spill stayed in the player's
+   concurrent-route budget after the spill was cleared away, so opportunistic routing silently
+   deleted the colony's own supply lines. Routine routes are now removed with their resource, the
+   player is told, and the route budget went from 5 to 6 to leave room for opportunism.
