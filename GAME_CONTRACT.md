@@ -60,6 +60,19 @@ humans noticed and what they will do next.
 | **Night 2 — Expand**    | ~270 s | Two new kitchen zones, the first crack claim, human patrol (feet + room light), sticky traps if evidence warrants, the short-dangerous vs long-safe route decision. |
 | **Night 3 — Infest**    | ~330 s | All three response families combined, bait, and a final extermination sweep aimed at the home nest.                                                                 |
 
+## Counterplay — what the player can actually do about a response
+
+Every household response has an answer, and each answer is a thing the player builds or a place they
+route around. This is what stops escalation from being a countdown.
+
+| Response                     | Counterplay                                                                                                                                                                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Footfall                     | Telegraphed for 1.15 s by a contracting decal in the shape of the sole; workers scatter on the telegraph, not on the impact.                                                                                                             |
+| Room light / flashlight cone | Cover. Cabinetry within 120 units suppresses most exposure, and a covered route generates almost no evidence.                                                                                                                            |
+| Sticky trap                  | Placed where _your_ traffic went, so re-routing removes it from play. Workers steer around armed hazards; the scout can be caught and struggles free.                                                                                    |
+| Bait                         | A slow denial zone, not an instant kill — a worker that blunders in has time to leave.                                                                                                                                                   |
+| Extermination spray          | **Claimed cracks are shelter.** A roach inside one cannot be reached by feet or spray, and panicking workers run for the nearest claimed crack — the Escape Tunnel reaching furthest. The home crack also repairs itself between passes. |
+
 ## Win condition
 
 At the end of Night 3 the colony must have **survived the final extermination sweep** while holding:

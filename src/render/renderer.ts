@@ -973,13 +973,15 @@ export class Renderer {
       }
 
       if (w.carrying) {
-        const cx = w.x - Math.cos(w.angle) * 8;
-        const cy = w.y - Math.sin(w.angle) * 8;
+        // Cargo rides the back, not the head, and is small enough that the roach's own silhouette
+        // still reads — a blob as wide as the thorax looked like an ootheca stuck to its face.
+        const cx = w.x - Math.cos(w.angle) * 11;
+        const cy = w.y - Math.sin(w.angle) * 11;
         const bob = Math.sin(w.gait * 2) * 1.2;
         if (w.carrying === 'food') {
           ctx.fillStyle = '#c9a468';
           ctx.beginPath();
-          ctx.ellipse(cx, cy + bob, 6.5, 5.2, w.angle, 0, TAU);
+          ctx.ellipse(cx, cy + bob, 5, 4, w.angle, 0, TAU);
           ctx.fill();
           ctx.fillStyle = 'rgba(255,228,180,0.5)';
           ctx.beginPath();
@@ -988,7 +990,7 @@ export class Renderer {
         } else {
           ctx.fillStyle = 'rgba(150,205,235,0.85)';
           ctx.beginPath();
-          ctx.ellipse(cx, cy + bob, 5.6, 5, 0, 0, TAU);
+          ctx.ellipse(cx, cy + bob, 4.4, 4, 0, 0, TAU);
           ctx.fill();
           ctx.fillStyle = 'rgba(240,252,255,0.8)';
           ctx.beginPath();
