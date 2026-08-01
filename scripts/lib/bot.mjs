@@ -117,14 +117,17 @@ export async function step(page, opts = {}) {
   const s = await state(page);
   if (s.status !== 'playing') return `end:${s.status}`;
 
-  // 1. A pending one-of-three choice. Answered by key, exactly as a player would.
-  if (s.adaptations.offer.length > 0) {
+  // 1. A pending one-of-three choice. Answered by key, exactly as a player would — and only when it
+  //    is affordable, which is what the choice panel tells them. An offer never expires, so a player
+  //    looking at a cost they cannot meet goes and earns it instead of pressing the key again.
+  const affordableOffers = s.adaptations.offers.filter((o) => o.affordable);
+  if (affordableOffers.length > 0) {
     const want = opts.family ?? 'brood';
-    let slot = s.adaptations.offer.findIndex((id) => id.startsWith(want));
-    if (slot < 0) slot = 0;
+    const preferred = affordableOffers.find((o) => o.family === want) ?? affordableOffers[0];
+    const slot = s.adaptations.offer.indexOf(preferred.id);
     await tap(page, `Digit${slot + 1}`);
     await page.waitForTimeout(250);
-    return `adapt:${s.adaptations.offer[slot]}`;
+    return `adapt:${preferred.id}`;
   }
   if (s.pendingFit) {
     // Prefer whatever the colony is short of: capacity first, then storage.

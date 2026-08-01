@@ -48,6 +48,15 @@ export interface OperationGate {
    * remove.
    */
   waiting?(world: World): boolean;
+  /**
+   * What the player is short of, when the gate is blocked purely by a price.
+   *
+   * Naming the blocker is not enough on its own: a player standing at a crack they cannot afford
+   * needs the objective to send them somewhere useful, not to keep telling them to press E. When
+   * this returns a shortfall the hierarchy rewrites the objective into "go and earn it" and points
+   * at the nearest source.
+   */
+  shortfall?(world: World): { kind: 'food' | 'water'; amount: number } | null;
 }
 
 export interface OperationSpec {
@@ -212,6 +221,15 @@ export const OPERATIONS: readonly OperationSpec[] = [
           return null;
         },
         target: (w) => nearestUnclaimedNest(w),
+        shortfall: (w) => {
+          const n = w.nests.find((x) => !x.claimed && !x.home && x.unlockOp <= w.operation);
+          if (!n) return null;
+          if (w.colony.food < n.costFood)
+            return { kind: 'food', amount: n.costFood - w.colony.food };
+          if (w.colony.water < n.costWater)
+            return { kind: 'water', amount: n.costWater - w.colony.water };
+          return null;
+        },
       },
     ],
   },
@@ -270,6 +288,14 @@ export const OPERATIONS: readonly OperationSpec[] = [
         target: (w) => {
           const n = w.nests.find((x) => x.claimed && !x.home && x.fn === null);
           return n ? { x: n.x, y: n.y, label: n.label } : nearestUnclaimedNest(w);
+        },
+        shortfall: (w) => {
+          const n = w.nests.find((x) => x.claimed && !x.home && x.fn === null);
+          if (!n) return null;
+          if (w.colony.food < n.fitFood) return { kind: 'food', amount: n.fitFood - w.colony.food };
+          if (w.colony.water < n.fitWater)
+            return { kind: 'water', amount: n.fitWater - w.colony.water };
+          return null;
         },
       },
       populationGate(26),
@@ -487,6 +513,18 @@ export function resolveHud(world: World): Hud {
     base.objective = world.threatAdvice;
     base.source = 'threat';
     return base;
+  }
+
+  // 4b. A gate blocked purely by a price sends the player to earn the price.
+  if (gate?.shortfall) {
+    const short = gate.shortfall(world);
+    if (short) {
+      const noun = short.kind === 'food' ? 'food' : 'moisture';
+      base.objective = `${Math.ceil(short.amount)} more ${noun} needed — get another ${noun} line running.`;
+      base.target = nearestResource(world, short.kind) ?? base.target;
+      base.source = `gate:${gate.id}:saving`;
+      return base;
+    }
   }
 
   // 5. A capped resource must always name a spend. This is the rule the old build broke.

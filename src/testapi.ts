@@ -1,4 +1,5 @@
 import type { PerfWindowResult, Telemetry } from './core/telemetry.ts';
+import { specById } from './sim/adaptations.ts';
 import { WORKER_RADIUS } from './sim/constants.ts';
 import { hottestCell, knownCellCount, totalHeat } from './sim/heat.ts';
 import type { World } from './sim/world.ts';
@@ -50,7 +51,20 @@ export interface StateSnapshot {
     caches: number;
     boltholes: number;
   };
-  adaptations: { taken: string[]; offer: string[]; milestonesUsed: number };
+  adaptations: {
+    taken: string[];
+    offer: string[];
+    milestonesUsed: number;
+    /** Exactly what the choice panel shows the player, including whether it is affordable. */
+    offers: {
+      id: string;
+      name: string;
+      family: string;
+      costFood: number;
+      costWater: number;
+      affordable: boolean;
+    }[];
+  };
   zones: { id: string; hold: number; workers: number; routed: boolean; contested: boolean }[];
   routines: {
     kind: string;
@@ -256,6 +270,20 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
       taken: [...world.adaptations.taken],
       offer: [...world.adaptations.offer],
       milestonesUsed: world.adaptations.milestonesUsed,
+      offers: world.adaptations.offer.flatMap((id) => {
+        const spec = specById(id);
+        if (!spec) return [];
+        return [
+          {
+            id: spec.id,
+            name: spec.name,
+            family: spec.family,
+            costFood: spec.costFood,
+            costWater: spec.costWater,
+            affordable: world.colony.food >= spec.costFood && world.colony.water >= spec.costWater,
+          },
+        ];
+      }),
     },
     zones: world.zones.map((z) => ({
       id: z.id,

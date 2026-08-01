@@ -5,14 +5,15 @@ kitchen. You play the lead scout. Your workers never take orders — they only r
 secrete with your own body, so **the only routes your colony can use are the routes you personally
 walked.**
 
-Every metre of open tile you route across is evidence. Evidence raises suspicion. Suspicion brings
-feet, then sticky traps, then the spray. Win by making the infestation self-sustaining before the
-household escalates to extermination.
+Every metre of open tile you route across is evidence — and the household remembers **where**. It
+cleans the corridors you use, puts traps on the lines your workers actually walk, and aims the spray
+at the region it has the most evidence about. Win by holding three regions of the kitchen at once and
+surviving what that provokes.
 
 **Play it: <https://gjeon03.github.io/bug-game/>**
 
 > Runs entirely in the browser. No server, no network requests, no asset files — every sprite,
-> texture and sound is generated procedurally at boot. ~42 kB gzipped.
+> texture, fixture and sound is generated procedurally at boot.
 
 ## Play
 
@@ -21,37 +22,34 @@ pnpm install
 pnpm dev          # http://127.0.0.1:5273/
 ```
 
-| Input                 | Action                                                     |
-| --------------------- | ---------------------------------------------------------- |
-| `W A S D` / arrows    | Move the scout                                             |
-| Hold `LMB` or `Space` | Lay a pheromone trail from the scout's body                |
-| Hold `RMB` or `X`     | Rub a trail out · **tap** to recall every worker           |
-| `E`                   | Inspect a resource · claim a crack · use the escape tunnel |
-| `Shift`               | Sprint — fast, loud, and it shows                          |
-| `Esc` / `P`           | Pause + settings                                           |
-| `R`                   | Restart                                                    |
+| Input                 | Action                                                                |
+| --------------------- | --------------------------------------------------------------------- |
+| `W A S D` / arrows    | Move the scout                                                        |
+| Hold `LMB` or `Space` | Lay a pheromone trail from the scout's body                           |
+| Hold `RMB` or `X`     | Rub a trail out · **tap** to recall every worker                      |
+| `E`                   | Inspect a source · claim a crack · fit out a foothold · repair a nest |
+| `1` `2` `3`           | Answer a choice: an adaptation, or what a foothold becomes            |
+| `Shift`               | Sprint — fast, loud, and it shows                                     |
+| `Esc` / `P`           | Pause + settings                                                      |
+| `R`                   | Restart                                                               |
 
 **The one rule that matters:** a route only works when one end sits on a claimed nest and the other
 on food or moisture. Both ends pulse warm when it is live.
 
 ## A run
 
-Three nights, about 13 minutes, separated by a card showing what the humans noticed.
+Four operations, about 15–18 minutes. An operation ends when you **achieve** it, not when a clock says
+so — but every operation has a soft limit, and running long makes the household restless.
 
-1. **Establish** — leave the crack, find the crumbs and the sink drip, run your first supply lines.
-2. **Expand** — claim the brood chamber under the island and the food cache in the pantry gap. Patrols
-   start. Traps go down wherever your traffic crossed open floor.
-3. **Infest** — claim the escape tunnel behind the radiator, then hold the kitchen through the final
-   extermination sweep.
+1. **Establish the nest** — get out of the wall, connect food and moisture to home, reach 12 roaches.
+2. **Infiltrate the routines** — the fridge opens, the tap runs, the bin lid goes up. Each is a
+   windfall on ground you would rather not be standing on. Exploit two, and claim your first crack.
+3. **Specialise the infestation** — nine adaptations in three families; you can afford about four.
+   Every one of them costs you something you will miss.
+4. **Claim the kitchen** — hold three regions at once, and survive the can.
 
-**Victory** needs 36 roaches, 120 food, 90 moisture, all three nest functions built, and survival of
-the last sweep. **Failure** is a collapsed colony, a destroyed home crack, or a completed
-extermination — each one tells you which of your own decisions cost you the most.
-
-Every response has an answer. Feet are telegraphed and workers scatter on the warning, not the
-impact. Traps go down where _your_ traffic went, so re-routing removes them. And a claimed crack is
-shelter: nothing the household owns can reach a roach that is inside the wall, which is what the
-Escape Tunnel is for and why claiming cracks is worth the evidence it costs.
+Territory is made of routes and bodies, so you cannot bank it the way you bank food. The last minute
+is the fight.
 
 ## Commands
 

@@ -111,6 +111,14 @@ export function updateColony(world: World, dt: number): void {
   // paying for its first adaptation could not hold, so the opening simply stopped growing. Scaling
   // with population keeps roughly a minute of upkeep in reserve at every size, which is what the
   // margin was always meant to mean.
+  // Two floors, and the second one matters more than it looks.
+  //
+  // The colony may never breed itself down into its own emergency reserve. Without the
+  // CRITICAL_RESERVE term the brood threshold sat *below* the shortage warning line, so a perfectly
+  // healthy growing colony spent down past the warning on every hatch and the objective read
+  // "Food is running low" for the entire opening — a permanent false alarm caused by the colony's
+  // own success. Measured in a real-browser run: food oscillated between 14 and 22 against a warning
+  // line of 26 for three minutes.
   const runway = c.population * 1.2;
   const foodNeeded = BROOD_FOOD_COST + Math.max(BROOD_RESERVE_MARGIN_FOOD, runway);
   const waterNeeded = BROOD_WATER_COST + Math.max(BROOD_RESERVE_MARGIN_WATER, runway * 0.7);

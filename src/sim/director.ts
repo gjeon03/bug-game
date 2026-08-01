@@ -370,16 +370,43 @@ export function evaluateRun(world: World): void {
   world.guide = world.hud.target;
 }
 
+/**
+ * A shortage is a *situation*, not a number.
+ *
+ * The old build declared a moisture emergency on the first simulation step of every run, because the
+ * starting stock happened to sit below a fixed fraction of the cap — the first thing a new player
+ * ever read was a lie. A level test alone is also wrong in the opposite direction: a healthy colony
+ * that breeds down to a third of its larder every few seconds is not running out of anything, but a
+ * level test flags it permanently, and a warning that is always on is not a warning.
+ *
+ * So: low **and** nothing coming in. Either there is no supply line for that reserve at all, or the
+ * reserve is effectively empty. Both are things the player can act on, which is the whole test.
+ */
 function updateShortage(world: World): void {
   const c = world.colony;
-  const foodLow = c.food < c.foodCap * CRITICAL_RESERVE;
-  const waterLow = c.water < c.waterCap * CRITICAL_RESERVE;
-  // A shortage is only a shortage once the colony is big enough for it to bite. The old build
-  // declared a moisture emergency on the first simulation step of every run, because the *starting*
-  // stock was below the critical fraction — the first thing a new player ever read was a lie.
   const meaningful = world.time > 25 && c.population > 6;
-  world.shortage = !meaningful ? null : foodLow && !waterLow ? 'food' : waterLow ? 'water' : null;
+  if (!meaningful) {
+    world.shortage = null;
+    return;
+  }
+  let foodLines = 0;
+  let waterLines = 0;
+  for (const r of world.routes) {
+    if (!r.linked || !r.resourceId) continue;
+    const res = world.resources.find((x) => x.id === r.resourceId);
+    if (!res) continue;
+    if (res.kind === 'food') foodLines++;
+    else waterLines++;
+  }
+  const foodBad =
+    (c.food < c.foodCap * CRITICAL_RESERVE && foodLines === 0) || c.food <= EMPTY_RESERVE;
+  const waterBad =
+    (c.water < c.waterCap * CRITICAL_RESERVE && waterLines === 0) || c.water <= EMPTY_RESERVE;
+  world.shortage = foodBad && !waterBad ? 'food' : waterBad ? 'water' : null;
 }
+
+/** Below this a reserve is empty enough to be an emergency whatever the supply picture says. */
+const EMPTY_RESERVE = 5;
 
 function checkLossConditions(world: World): void {
   const c = world.colony;

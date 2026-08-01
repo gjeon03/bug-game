@@ -96,3 +96,23 @@ pheromone route and a delivery.
   record, and every access is try/catch-guarded so blocked-storage contexts still boot.
 - Tab suspension is safe: the run auto-pauses while `document.hidden`, the fixed-step accumulator is
   flushed on return, and audio suspends and resumes with it.
+
+---
+
+## Verification performed for the redesign
+
+| Step                              | Command                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------------------- |
+| Clean install                     | `pnpm install --frozen-lockfile`                                                        |
+| Format / lint / types             | `pnpm format:check && pnpm lint && pnpm typecheck`                                      |
+| Unit + integration                | `pnpm test`                                                                             |
+| Production build                  | `pnpm build`                                                                            |
+| Subpath safety                    | `node scripts/check-subpath.mjs dist` — scans every emitted file for root-absolute refs |
+| Nested-path server                | `node scripts/serve-nested.mjs` → `http://127.0.0.1:4178/bug-game/`                     |
+| Browser E2E (nested path)         | `pnpm test:e2e`                                                                         |
+| Real-browser playtests + evidence | `node scripts/playtest.mjs --out artifacts/evidence/redesign-final`                     |
+| Deployed build                    | `pnpm verify:live` after the Pages workflow completes                                   |
+
+The E2E suite is served from `/bug-game/` rather than from the site root, so every gameplay spec is
+also a subpath test: an absolute asset URL fails the whole suite rather than one deploy-specific
+spec.
