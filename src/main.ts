@@ -55,6 +55,8 @@ const clock = new FixedClock();
 
 let world: World = createWorld(pickSeed());
 let paused = false;
+/** True while the tab is in the background: the run halts rather than playing on unseen. */
+let backgrounded = false;
 let lastTime = performance.now();
 let bestSaved = false;
 let skitterAcc = 0;
@@ -213,6 +215,7 @@ window.addEventListener('blur', () => {
 });
 
 document.addEventListener('visibilitychange', () => {
+  backgrounded = document.hidden;
   if (document.hidden) {
     audio.suspend();
     held.clear();
@@ -484,7 +487,8 @@ function frame(now: number): void {
     highContrast: settings.highContrast,
   };
 
-  const active = !paused && !(overlays.kind === 'pause' || overlays.kind === 'help');
+  const active =
+    !paused && !backgrounded && !(overlays.kind === 'pause' || overlays.kind === 'help');
   if (active) {
     const steps = clock.advance(dtReal);
     for (let i = 0; i < steps; i++) stepWorld(world, SIM_DT);

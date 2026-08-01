@@ -106,10 +106,25 @@ export async function driveTo(
 
         const tick = (): void => {
           const s = api.state();
+          const now = performance.now();
+
+          // A dead scout is a normal part of play: stop steering, wait for the colony to promote a
+          // replacement, then carry on from the nest. Only the overall timeout applies.
+          if (!s.scout.alive || s.status !== 'playing') {
+            stopSteering();
+            bestD = Infinity;
+            lastProgress = now;
+            if (now - t0 > args.timeout) {
+              resolve({ ok: false, x: s.scout.x, y: s.scout.y, elapsed: now - t0, stuck: true });
+              return;
+            }
+            requestAnimationFrame(tick);
+            return;
+          }
+
           const dx = args.x - s.scout.x;
           const dy = args.y - s.scout.y;
           const d = Math.hypot(dx, dy);
-          const now = performance.now();
 
           if (d <= args.arrive) {
             stopSteering();
@@ -121,7 +136,6 @@ export async function driveTo(
             resolve({ ok: false, x: s.scout.x, y: s.scout.y, elapsed: now - t0, stuck: true });
             return;
           }
-
           if (d < bestD - 4) {
             bestD = d;
             lastProgress = now;

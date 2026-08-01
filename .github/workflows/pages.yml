@@ -1,0 +1,94 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only one concurrent deployment; a queued run supersedes an older one but never cancels a run
+# that is already publishing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build and verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Production build
+        run: pnpm build
+
+      # `base: './'` means the bundle is path-agnostic; this asserts it, so a regression that bakes an
+      # absolute asset path can never reach the published site.
+      - name: Assert no absolute asset paths
+        run: |
+          if grep -qE '(src|href)="/[^"]' dist/index.html; then
+            echo "::error::dist/index.html contains an absolute asset path; it would 404 under a repository subpath."
+            grep -nE '(src|href)="/[^"]' dist/index.html
+            exit 1
+          fi
+          test -f dist/.nojekyll || { echo "::error::dist/.nojekyll missing"; exit 1; }
+          echo "Build is subpath-safe."
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # The E2E suite serves dist/ from a nested /bug-game/ path, so this is also the subpath check.
+      - name: Browser tests (nested path)
+        run: pnpm exec playwright test tests/e2e/gameplay.spec.ts tests/e2e/deploy.spec.ts tests/e2e/restart.spec.ts
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence
+          path: artifacts/evidence
+          if-no-files-found: warn
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

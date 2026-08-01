@@ -1,0 +1,18 @@
+{
+  "counts": {
+    "workers": 9,
+    "workersOutbound": 0,
+    "workersInbound": 0,
+    "workersCarrying": 0,
+    "workersPanicking": 0,
+    "workersTrapped": 0,
+    "corpses": 0,
+    "hazards": 0,
+    "patrols": 1,
+    "sprays": 0,
+    "footfalls": 1,
+    "pheromoneNodes": 0
+  },
+  "time": 104.766666666662,
+  "night": 1
+}

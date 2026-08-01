@@ -4,6 +4,8 @@ import type { NightIndex } from './types.ts';
 
 export const WORLD_W = 3600;
 export const WORLD_H = 2600;
+/** Thickness of the room shell. The playable interior is inset by this on every side. */
+export const WALL_THICKNESS = 56;
 /**
  * Anything within this distance of a solid edge counts as cover — roughly the depth of a toe-kick,
  * about four body lengths. Cabinetry is safety, and that is taught by the darkness, not by a tooltip.
@@ -46,7 +48,8 @@ export const LINK_RADIUS = 92;
 /** How far a worker can be from a trail node and still read it. */
 export const FOLLOW_RADIUS = 150;
 export const ERASE_RADIUS = 90;
-export const ERASE_RATE = 26;
+/** Life removed per second while erasing — a fresh node is gone in well under a second. */
+export const ERASE_RATE = 140;
 export const MAX_NODES_PER_ROUTE = 190;
 
 /* ── Workers ───────────────────────────────────────────────────────────────── */

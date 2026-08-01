@@ -359,28 +359,37 @@ export class Renderer {
       }
 
       if (r.kind === 'food') {
-        const n = 3 + Math.round(frac * 9);
+        // A scatter of irregular crumbs: many small, a few large, each with a contact shadow so it
+        // sits on the tile instead of floating over it.
+        const n = 8 + Math.round(frac * 22);
+        const spread = 26 + frac * 46;
         for (let k = 0; k < n; k++) {
-          const a = (k / n) * TAU + valueNoise2D(k, i, 7) * 2;
-          const rad = 8 + valueNoise2D(k, i + 40, 13) * 30 * (0.4 + frac);
+          const a = valueNoise2D(k, i, 7) * TAU;
+          const rad = Math.sqrt(valueNoise2D(k, i + 40, 13)) * spread;
           const cx = r.x + Math.cos(a) * rad;
-          const cy = r.y + Math.sin(a) * rad * 0.8;
-          const size = 3 + valueNoise2D(k, i + 90, 3) * 9 * (0.5 + frac * 0.7);
-          ctx.fillStyle = k % 3 === 0 ? '#c9a468' : '#a9834c';
+          const cy = r.y + Math.sin(a) * rad * 0.82;
+          const big = valueNoise2D(k, i + 61, 29);
+          const size = 1.6 + big * big * 8 * (0.55 + frac * 0.45);
+          const rot = valueNoise2D(k, i + 90, 3) * TAU;
+
+          ctx.fillStyle = 'rgba(0,0,0,0.4)';
           ctx.beginPath();
-          ctx.ellipse(cx, cy, size, size * 0.78, a, 0, TAU);
+          ctx.ellipse(cx + 1, cy + 1.4, size, size * 0.7, rot, 0, TAU);
           ctx.fill();
-          ctx.fillStyle = 'rgba(255,225,175,0.35)';
+
+          const shade = valueNoise2D(k, i + 17, 5);
+          ctx.fillStyle = shade > 0.66 ? '#c2a06a' : shade > 0.33 ? '#9d7a46' : '#78592f';
           ctx.beginPath();
-          ctx.ellipse(cx - size * 0.25, cy - size * 0.3, size * 0.42, size * 0.3, a, 0, TAU);
+          ctx.ellipse(cx, cy, size, size * 0.72, rot, 0, TAU);
           ctx.fill();
+          if (size > 3) {
+            ctx.fillStyle = 'rgba(255,232,190,0.32)';
+            ctx.beginPath();
+            ctx.ellipse(cx - size * 0.22, cy - size * 0.28, size * 0.4, size * 0.26, rot, 0, TAU);
+            ctx.fill();
+          }
           this.drawCalls += 2;
         }
-        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-        ctx.lineWidth = 1.4;
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, 34 * (0.55 + frac * 0.45), 0, TAU);
-        ctx.stroke();
       } else {
         const wob = Math.sin(t * 1.6 + i) * 0.05 + 1;
         const rx = (18 + frac * 26) * wob;
@@ -404,15 +413,6 @@ export class Renderer {
         ctx.arc(r.x, r.y, rx * 0.66, Math.PI * 1.05, Math.PI * 1.55);
         ctx.stroke();
         this.drawCalls += 3;
-      }
-
-      if (r.busy > 0) {
-        ctx.strokeStyle = rgba(PAL.warm, 0.25);
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, 44 + Math.sin(t * 5) * 3, 0, TAU);
-        ctx.stroke();
-        this.drawCalls++;
       }
     }
   }
@@ -551,14 +551,19 @@ export class Renderer {
         const n = nodes[j];
         if (n.x < b.x0 || n.x > b.x1 || n.y < b.y0 || n.y > b.y1) continue;
         const s = clamp01(n.life / NODE_LIFE);
-        const size = 11 + s * 9;
+        // Per-node jitter and size variation: scent, not a drawn line.
+        const jx = (valueNoise2D(n.i, route.id, 3) - 0.5) * 13;
+        const jy = (valueNoise2D(n.i, route.id + 77, 11) - 0.5) * 13;
+        const size = (8 + s * 8) * (0.65 + valueNoise2D(n.i, route.id + 5, 19) * 0.75);
+        const px = n.x + jx;
+        const py = n.y + jy;
         ctx.globalAlpha = baseAlpha * (0.3 + s * 0.7);
-        ctx.drawImage(glowCold, n.x - size, n.y - size, size * 2, size * 2);
+        ctx.drawImage(glowCold, px - size, py - size, size * 2, size * 2);
         this.drawCalls++;
         if (linked && j % 3 === 0) {
-          const ws = size * 0.55;
-          ctx.globalAlpha = 0.44 * s;
-          ctx.drawImage(glowWarm, n.x - ws, n.y - ws, ws * 2, ws * 2);
+          const ws = size * 0.5;
+          ctx.globalAlpha = 0.4 * s;
+          ctx.drawImage(glowWarm, px - ws, py - ws, ws * 2, ws * 2);
           this.drawCalls++;
         }
       }

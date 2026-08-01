@@ -4,7 +4,7 @@
       "/Users/jeongyeong-yeon/.asdf/installs/nodejs/23.5.0/bin/node",
       "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/node_modules/@playwright/test/cli.js",
       "test",
-      "tests/e2e/gameplay.spec.ts"
+      "tests/e2e/restart.spec.ts"
     ],
     "configFile": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/playwright.config.ts",
     "rootDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e",
@@ -73,25 +73,25 @@
   },
   "suites": [
     {
-      "title": "gameplay.spec.ts",
-      "file": "gameplay.spec.ts",
+      "title": "restart.spec.ts",
+      "file": "restart.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "core play",
-          "file": "gameplay.spec.ts",
-          "line": 24,
+          "title": "restart and lifecycle",
+          "file": "restart.spec.ts",
+          "line": 22,
           "column": 6,
           "specs": [
             {
-              "title": "01 loads clean and reaches a playable scout",
+              "title": "11 five consecutive restarts leak no state and stay playable",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 180000,
+                  "timeout": 420000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "",
@@ -101,12 +101,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1961,
+                      "duration": 36056,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-01T04:42:36.671Z",
+                      "startTime": "2026-08-01T05:10:52.661Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -114,18 +114,18 @@
                   "status": "expected"
                 }
               ],
-              "id": "a8475ef9564cfbc88065-40dacb8b466491415ae0",
-              "file": "gameplay.spec.ts",
+              "id": "62be28aa61e216d7fcc8-76809402866f48bee505",
+              "file": "restart.spec.ts",
               "line": 25,
               "column": 3
             },
             {
-              "title": "02 onboarding teaches movement, and movement responds to real input",
+              "title": "12 losing focus suspends the run instead of fast-forwarding it",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 180000,
+                  "timeout": 420000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "",
@@ -135,12 +135,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3054,
+                      "duration": 7931,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-01T04:42:38.853Z",
+                      "startTime": "2026-08-01T05:11:28.944Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -148,18 +148,18 @@
                   "status": "expected"
                 }
               ],
-              "id": "a8475ef9564cfbc88065-132a5c2ce0f5e6c2bc4b",
-              "file": "gameplay.spec.ts",
-              "line": 47,
+              "id": "62be28aa61e216d7fcc8-1c6f563668484987b7a2",
+              "file": "restart.spec.ts",
+              "line": 94,
               "column": 3
             },
             {
-              "title": "03 closes the loop: scout route → worker acquisition → delivery → colony growth",
+              "title": "13 pause stops the simulation and the settings survive a restart",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 180000,
+                  "timeout": 420000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "",
@@ -169,12 +169,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 34618,
+                      "duration": 4823,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-01T04:42:41.911Z",
+                      "startTime": "2026-08-01T05:11:36.879Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -182,77 +182,9 @@
                   "status": "expected"
                 }
               ],
-              "id": "a8475ef9564cfbc88065-d8ae6a51afd285817943",
-              "file": "gameplay.spec.ts",
-              "line": 67,
-              "column": 3
-            },
-            {
-              "title": "04 route geometry changes risk: a covered route and an open-floor route differ measurably",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 16923,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-01T04:43:16.532Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "a8475ef9564cfbc88065-4f056dd79438d4f5d188",
-              "file": "gameplay.spec.ts",
-              "line": 128,
-              "column": 3
-            },
-            {
-              "title": "05 inspect reports a resource and refuses an unaffordable claim with a reason",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 5085,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-01T04:43:33.463Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "a8475ef9564cfbc88065-0208bd3c28e5321e3a4a",
-              "file": "gameplay.spec.ts",
-              "line": 169,
+              "id": "62be28aa61e216d7fcc8-0fe713c8162095ca985d",
+              "file": "restart.spec.ts",
+              "line": 140,
               "column": 3
             }
           ]
@@ -262,9 +194,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-01T04:42:36.241Z",
-    "duration": 62409.994999999995,
-    "expected": 5,
+    "startTime": "2026-08-01T05:10:52.201Z",
+    "duration": 49588.464,
+    "expected": 3,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

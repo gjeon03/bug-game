@@ -2,6 +2,7 @@ export interface PerfWindowResult {
   label: string;
   frames: number;
   durationMs: number;
+  /** Presented frame interval (rAF timestamp delta) — the metric the budget is written against. */
   p50: number;
   p95: number;
   p99: number;
@@ -12,6 +13,11 @@ export interface PerfWindowResult {
   over50: number;
   over100: number;
   over50Pct: number;
+  /** Time spent inside the game's own frame callback: simulation + rendering CPU cost. */
+  cpuP50: number;
+  cpuP95: number;
+  cpuP99: number;
+  cpuWorst: number;
   peak: {
     roaches: number;
     workers: number;
@@ -56,21 +62,36 @@ export class Telemetry {
 
   private windowLabel: string | null = null;
   private windowSamples: number[] = [];
+  private windowCpu: number[] = [];
   private windowStart = 0;
   private windowPeak: Counters = { ...EMPTY_COUNTERS };
+  private lastRaf = -1;
 
   results: PerfWindowResult[] = [];
   counters: Counters = { ...EMPTY_COUNTERS };
   startup: Record<string, number> = {};
 
-  /** Records a rendered frame's total time in milliseconds. */
-  frame(ms: number, nowMs: number): void {
-    this.ring[this.ringHead] = ms;
+  /**
+   * Records one presented frame.
+   *
+   * `cpuMs` is the time spent inside the game's frame callback; `rafNow` is the browser's frame
+   * timestamp, whose delta is the actual presented frame interval. The budget is written against the
+   * interval, because that — not the callback cost — is what the player perceives as smoothness.
+   */
+  frame(cpuMs: number, rafNow: number): void {
+    const delta = this.lastRaf < 0 ? -1 : rafNow - this.lastRaf;
+    this.lastRaf = rafNow;
+    if (delta < 0) return;
+
+    this.ring[this.ringHead] = delta;
     this.ringHead = (this.ringHead + 1) % this.ring.length;
     if (this.ringLen < this.ring.length) this.ringLen++;
 
     if (this.windowLabel !== null) {
-      if (this.windowSamples.length < 20000) this.windowSamples.push(ms);
+      if (this.windowSamples.length < 20000) {
+        this.windowSamples.push(delta);
+        this.windowCpu.push(cpuMs);
+      }
       const c = this.counters;
       const p = this.windowPeak;
       if (c.roaches > p.roaches) p.roaches = c.roaches;
@@ -80,7 +101,6 @@ export class Telemetry {
       if (c.voices > p.voices) p.voices = c.voices;
       if (c.drawCalls > p.drawCalls) p.drawCalls = c.drawCalls;
       if (c.pheromoneNodes > p.pheromoneNodes) p.pheromoneNodes = c.pheromoneNodes;
-      void nowMs;
     }
   }
 
@@ -101,6 +121,7 @@ export class Telemetry {
   beginWindow(label: string, nowMs: number): void {
     this.windowLabel = label;
     this.windowSamples = [];
+    this.windowCpu = [];
     this.windowStart = nowMs;
     this.windowPeak = { ...EMPTY_COUNTERS };
   }
@@ -108,8 +129,11 @@ export class Telemetry {
   endWindow(nowMs: number): PerfWindowResult | null {
     if (this.windowLabel === null) return null;
     const samples = this.windowSamples.slice().sort((a, b) => a - b);
+    const cpu = this.windowCpu.slice().sort((a, b) => a - b);
     const n = samples.length;
     const pick = (q: number) => (n === 0 ? 0 : samples[Math.min(n - 1, Math.floor(n * q))]);
+    const pickCpu = (q: number) =>
+      cpu.length === 0 ? 0 : cpu[Math.min(cpu.length - 1, Math.floor(cpu.length * q))];
     const count = (limit: number) => samples.reduce((acc, v) => acc + (v > limit ? 1 : 0), 0);
     const over50 = count(50);
     const result: PerfWindowResult = {
@@ -126,11 +150,16 @@ export class Telemetry {
       over50,
       over100: count(100),
       over50Pct: n ? round3((over50 / n) * 100) : 0,
+      cpuP50: round2(pickCpu(0.5)),
+      cpuP95: round2(pickCpu(0.95)),
+      cpuP99: round2(pickCpu(0.99)),
+      cpuWorst: round2(cpu.length ? cpu[cpu.length - 1] : 0),
       peak: { ...this.windowPeak },
     };
     this.results.push(result);
     this.windowLabel = null;
     this.windowSamples = [];
+    this.windowCpu = [];
     return result;
   }
 
@@ -139,6 +168,8 @@ export class Telemetry {
     this.ringHead = 0;
     this.windowLabel = null;
     this.windowSamples = [];
+    this.windowCpu = [];
+    this.lastRaf = -1;
     this.results = [];
     this.counters = { ...EMPTY_COUNTERS };
   }

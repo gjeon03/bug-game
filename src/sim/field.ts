@@ -1,5 +1,5 @@
 import { clamp01, pointRectDist2 } from '../core/math.ts';
-import { COVER_RADIUS, WORLD_H, WORLD_W } from './constants.ts';
+import { COVER_RADIUS, WALL_THICKNESS, WORLD_H, WORLD_W } from './constants.ts';
 import { LIGHTS, SOLIDS } from './kitchen.ts';
 import type { Solid } from './types.ts';
 
@@ -22,6 +22,33 @@ export interface CollisionResult {
 
 const scratch: CollisionResult = { x: 0, y: 0, hit: false, nx: 0, ny: 0 };
 
+/**
+ * Pushes a point out of whichever solid contains it, preferring the shallowest exit that does not
+ * land inside another solid. Used as a second pass when the world-bounds clamp lands in furniture.
+ */
+function escapeSolids(px: number, py: number, r: number): [number, number] {
+  for (let i = 0; i < SOLIDS.length; i++) {
+    const s = SOLIDS[i];
+    const x0 = s.x;
+    const y0 = s.y;
+    const x1 = s.x + s.w;
+    const y1 = s.y + s.h;
+    if (px <= x0 || px >= x1 || py <= y0 || py >= y1) continue;
+    const options: [number, number, number][] = [
+      [px - x0, x0 - r, py],
+      [x1 - px, x1 + r, py],
+      [py - y0, px, y0 - r],
+      [y1 - py, px, y1 + r],
+    ];
+    options.sort((a, b) => a[0] - b[0]);
+    for (let k = 0; k < options.length; k++) {
+      if (!isInsideSolid(options[k][1], options[k][2])) return [options[k][1], options[k][2]];
+    }
+    return [options[0][1], options[0][2]];
+  }
+  return [px, py];
+}
+
 /** Pushes a circle out of every solid it overlaps, and out of the world bounds. Mutates + returns a shared result. */
 export function collideCircle(px: number, py: number, r: number): CollisionResult {
   let x = px;
@@ -39,29 +66,27 @@ export function collideCircle(px: number, py: number, r: number): CollisionResul
     if (x + r <= x0 || x - r >= x1 || y + r <= y0 || y - r >= y1) continue;
 
     if (x > x0 && x < x1 && y > y0 && y < y1) {
-      // Centre is inside: escape along the shallowest axis.
-      const dl = x - x0;
-      const dr = x1 - x;
-      const dt = y - y0;
-      const db = y1 - y;
-      const m = Math.min(dl, dr, dt, db);
-      if (m === dl) {
-        x = x0 - r;
-        nx = -1;
-        ny = 0;
-      } else if (m === dr) {
-        x = x1 + r;
-        nx = 1;
-        ny = 0;
-      } else if (m === dt) {
-        y = y0 - r;
-        nx = 0;
-        ny = -1;
-      } else {
-        y = y1 + r;
-        nx = 0;
-        ny = 1;
+      // Centre is inside. Escape along the shallowest axis that does not land inside *another*
+      // solid — cabinetry is flush against the walls in several places, so the naive shallowest-axis
+      // escape can push an entity straight into its neighbour.
+      const options: [number, number, number, number, number][] = [
+        [x - x0, x0 - r, y, -1, 0],
+        [x1 - x, x1 + r, y, 1, 0],
+        [y - y0, x, y0 - r, 0, -1],
+        [y1 - y, x, y1 + r, 0, 1],
+      ];
+      options.sort((a, b) => a[0] - b[0]);
+      let chosen = options[0];
+      for (let k = 0; k < options.length; k++) {
+        if (!isInsideSolid(options[k][1], options[k][2])) {
+          chosen = options[k];
+          break;
+        }
       }
+      x = chosen[1];
+      y = chosen[2];
+      nx = chosen[3];
+      ny = chosen[4];
       hit = true;
       continue;
     }
@@ -83,23 +108,40 @@ export function collideCircle(px: number, py: number, r: number): CollisionResul
     hit = true;
   }
 
-  if (x < r) {
-    x = r;
+  // Final clamp to the playable interior. This runs *after* solid resolution because the room shell
+  // is itself made of solids: escaping a wall along its shallow axis can land an entity outside the
+  // playfield, and clamping to the raw world rectangle would push it straight back into the wall.
+  const lo = WALL_THICKNESS + r;
+  let clamped = false;
+  if (x < lo) {
+    x = lo;
     hit = true;
+    clamped = true;
     nx = 1;
-  } else if (x > WORLD_W - r) {
-    x = WORLD_W - r;
+  } else if (x > WORLD_W - lo) {
+    x = WORLD_W - lo;
     hit = true;
+    clamped = true;
     nx = -1;
   }
-  if (y < r) {
-    y = r;
+  if (y < lo) {
+    y = lo;
     hit = true;
+    clamped = true;
     ny = 1;
-  } else if (y > WORLD_H - r) {
-    y = WORLD_H - r;
+  } else if (y > WORLD_H - lo) {
+    y = WORLD_H - lo;
     hit = true;
+    clamped = true;
     ny = -1;
+  }
+
+  // The band just inside the walls is not always free (the stove and the counters stand flush against
+  // the top wall), so a clamp can land inside furniture. One more resolution pass settles it.
+  if (clamped && isInsideSolid(x, y)) {
+    const again = escapeSolids(x, y, r);
+    x = again[0];
+    y = again[1];
   }
 
   scratch.x = x;

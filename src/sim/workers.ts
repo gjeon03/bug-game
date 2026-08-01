@@ -149,9 +149,14 @@ export function updateWorkers(world: World, dt: number): void {
 
         w.lostTime = 0;
         w.nodeIndex = idx;
-        // Traffic reinforces the trail it walks on, so a working supply line sustains itself.
-        const here = nodes[idx];
-        if (here.life < NODE_LIFE) here.life = Math.min(NODE_LIFE, here.life + NODE_REINFORCE * dt);
+        // Traffic reinforces the stretch of trail it walks on, so a working supply line sustains
+        // itself while an abandoned one evaporates.
+        for (let k = Math.max(0, idx - 2); k <= Math.min(nodes.length - 1, idx + 2); k++) {
+          const node = nodes[k];
+          if (node.life < NODE_LIFE) {
+            node.life = Math.min(NODE_LIFE, node.life + NODE_REINFORCE * dt);
+          }
+        }
         const sign =
           w.state === 'outbound' ? (route.resEnd === 1 ? 1 : -1) : route.nestEnd === 1 ? 1 : -1;
         w.dirSign = sign;
