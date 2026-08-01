@@ -7,15 +7,15 @@ its source. Do not edit by hand.
 
 | Metric | Budget | Measured | Source |
 | ------ | ------ | -------- | ------ |
-| Cold load to playable | < 8 s | 0.89 s | `startup.json` |
-| Procedural asset build | — | 142.6 ms | `startup.json → startup.atlasMs` |
+| Cold load to playable | < 8 s | 0.91 s | `startup.json` |
+| Procedural asset build | — | 145.5 ms | `startup.json → startup.atlasMs` |
 | First movement | ≤ 15 s | 0.4 s | `core-loop.json` |
 | First pheromone trail | — | 0.5 s | `core-loop.json` |
 | First worker delivery | ≤ 60 s | 15.5 s | `core-loop.json` |
 | First crack claimed | ≤ 5 min | 193.2 s | `run-win.json → stats.firstClaimAt` |
 | Winning run length | 12–15 min | 13.1 min | `run-win.json → stats.runSeconds` |
-| Idle seconds in the winning run | — | 600 s | `run-win.json → stats.idleSeconds` |
-| Restart to playable | ≤ 2 s | 0.23 s worst of 5 | `restarts.json` |
+| Idle seconds in the winning run | — | 598 s | `run-win.json → stats.idleSeconds` |
+| Restart to playable | ≤ 2 s | 0.25 s worst of 5 | `restarts.json` |
 
 ¹ Idle seconds count frames with no input from the **scripted bot**, which stands still between
 waypoints and does nothing at all while a night plays out. It is not a measure of how much a human
@@ -25,10 +25,10 @@ player would have to do.
 
 | Route | Mean exposure | Nodes | Source |
 | ----- | ------------- | ----- | ------ |
-| Cover-hugging | 0.063 | 25 | `route-risk.json` |
-| Straight across open tile | 0.130 | 63 | `route-risk.json` |
+| Cover-hugging | 0.073 | 26 | `route-risk.json` |
+| Straight across open tile | 0.132 | 64 | `route-risk.json` |
 
-Open-floor routing carries **2.07×** the exposure of the covered route to the same node.
+Open-floor routing carries **1.79×** the exposure of the covered route to the same node.
 
 ## Escalation and fairness
 
@@ -46,7 +46,7 @@ Open-floor routing carries **2.07×** the exposure of the covered route to the s
 
 | Run | Result | Colony | Suspicion peak | Source |
 | --- | ------ | ------ | -------------- | ------ |
-| Careful three-night run | **won** | 44 roaches, 319 food, 219 moisture | 100.0 | `run-win.json` |
+| Careful three-night run | **won** | 48 roaches, 318 food, 201 moisture | 100.0 | `run-win.json` |
 | Reckless run | **lost** (`collapse`) | 0 roaches | 100.0 | `run-loss.json` |
 
 Win criteria at the end of the winning run:
@@ -62,7 +62,7 @@ Colony at each night boundary:
 | Boundary | Time | Population | Food | Moisture | Source |
 | -------- | ---- | ---------- | ---- | -------- | ------ |
 | End of night 1 supply setup | 22 s | 7 | 71 | 28 | `run-win-night1.json` |
-| Night 2, both cracks claimed | 264 s | 26 | 145 | 138 | `run-win-night2.json` |
+| Night 2, both cracks claimed | 265 s | 29 | 156 | 142 | `run-win-night2.json` |
 
 ## Performance
 
@@ -70,13 +70,13 @@ Reference: 1600×900 @ dpr 1, 14 logical cores, headless Chromium.
 
 | Window | Frames | p50 | p95 | p99 | worst | >50 ms | >100 ms | CPU p95 | Peak roaches | Peak hazards | Peak particles | Draw calls |
 | ------ | ------ | --- | --- | --- | ----- | ------ | ------- | ------- | ------------ | ------------ | -------------- | ---------- |
-| idle-baseline | 164 | 25 | 33.4 | 33.9 | 34.8 | 0% | 0 | 0.8 | 7 | 0 | 0 | 124 |
-| active-play | 1564 | 25 | 26.7 | 33.4 | 34.8 | 0% | 0 | 1.3 | 12 | 0 | 76 | 304 |
-| peak-load | 1834 | 25.1 | 33.6 | 41.7 | 42.3 | 0% | 0 | 1.9 | 32 | 10 | 157 | 483 |
-| peak-load | 10803 | 25 | 33.4 | 34.5 | 49.8 | 0% | 0 | 1.6 | 46 | 8 | 167 | 424 |
+| idle-baseline | 161 | 25 | 33.2 | 33.5 | 34.1 | 0% | 0 | 0.9 | 7 | 0 | 0 | 124 |
+| active-play | 1550 | 25 | 25.9 | 33.3 | 34 | 0% | 0 | 1.3 | 12 | 0 | 86 | 308 |
+| peak-load | 1488 | 25.1 | 34.1 | 41.6 | 43.3 | 0% | 0 | 2 | 32 | 10 | 155 | 482 |
+| peak-load | 10601 | 25 | 33.4 | 35 | 83.4 | 0.009% | 0 | 1.6 | 53 | 8 | 154 | 402 |
 
-Fixed-clock health: 22180 steps, 0.033 s discarded, 1 overload frame(s).
-Bundle: 4 files, 132 kB on disk, 0 absolute asset references.
+Fixed-clock health: 21856 steps, 0.100 s discarded, 1 overload frame(s).
+Bundle: 4 files, 133 kB on disk, 0 absolute asset references.
 
 These windows are from the **headless** host, which presents on a fixed ~25 ms cadence of its own —
 see `perf/README.md` and `perf/perf-headed.json` for the same build measured in a real browser
@@ -88,24 +88,24 @@ window (p50 8.3 ms, p99 10.2 ms, zero frames over 50 ms).
 - Requests leaving the origin at runtime: **0**
 - Absolute asset references in `dist/index.html`: **0**
 - `.nojekyll` present: **true**
-- Files in `dist/`: .nojekyll, assets, index.html, assets/index-B2mJioXE.js, assets/index-ByQb7YUT.css
+- Files in `dist/`: .nojekyll, assets, index.html, assets/index-BKQwnPlJ.js, assets/index-ByQb7YUT.css
 
 ## Assets
 
 - Temporary assets: **0**
 - HUD icons rendered: 7
-- Peak audio voices during active play: 7 (cap 24)
+- Peak audio voices during active play: 6 (cap 24)
 - All sprites, textures, VFX and audio are generated procedurally at boot; see ASSET_MANIFEST.md.
 
 ## Restart integrity
 
 | # | Restart ms | Workers | Particles | Voices |
 | - | ---------- | ------- | --------- | ------ |
-| 1 | 227 | 6 | 1 | 0 |
-| 2 | 228 | 6 | 0 | 0 |
-| 3 | 229 | 6 | 0 | 0 |
-| 4 | 229 | 6 | 0 | 0 |
+| 1 | 253 | 6 | 1 | 0 |
+| 2 | 253 | 6 | 0 | 0 |
+| 3 | 227 | 6 | 1 | 0 |
+| 4 | 236 | 6 | 0 | 0 |
 | 5 | 227 | 6 | 0 | 0 |
 
-Game seconds advanced while the tab reported itself hidden for 4 s: **0.58 s**  (`focus-loss.json`).
+Game seconds advanced while the tab reported itself hidden for 4 s: **0.53 s**  (`focus-loss.json`).
 

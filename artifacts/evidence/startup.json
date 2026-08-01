@@ -1,9 +1,9 @@
 {
-  "loadMs": 959,
+  "loadMs": 907,
   "startup": {
-    "atlasMs": 139.5,
-    "rendererMs": 151.3,
-    "bootMs": 162,
-    "firstFrameMs": 195.2
+    "atlasMs": 145.5,
+    "rendererMs": 157,
+    "bootMs": 158.1,
+    "firstFrameMs": 200.9
   }
 }

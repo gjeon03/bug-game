@@ -1,7 +1,7 @@
 {
   "firstMoveAt": 0.41666666666666663,
   "firstTrailAt": 0.5166666666666666,
-  "firstDeliveryAt": 15.466666666667015,
+  "firstDeliveryAt": 15.450000000000347,
   "deliveries": 12,
   "population": 9,
   "hatched": 3,
@@ -19,7 +19,7 @@
       "id": 2,
       "nodes": 37,
       "linked": true,
-      "exposure": 0.06403246228149584,
+      "exposure": 0.06506764695465908,
       "traffic": 6,
       "resourceId": "sinkDrip",
       "nestId": "home"

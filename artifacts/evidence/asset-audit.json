@@ -1,7 +1,7 @@
 {
   "generatedFinal": {
     "version": "1.0.0",
-    "atlasBuildMs": 137.6,
+    "atlasBuildMs": 140.5,
     "roachAtlas": {
       "w": 1152,
       "h": 384
@@ -27,7 +27,7 @@
   },
   "temporaryAssets": [],
   "hudIcons": 7,
-  "peakAudioVoices": 7,
+  "peakAudioVoices": 6,
   "objective": "MOISTURE RUNNING OUT — run a trail to water now or the colony dies.",
   "note": "All sprites, textures, VFX and audio are generated procedurally at boot; see ASSET_MANIFEST.md."
 }
