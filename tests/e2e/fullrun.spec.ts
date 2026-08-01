@@ -32,53 +32,102 @@ import {
 
 const HOME_MOUTH = { x: HOME.x + 30, y: HOME.y };
 
-/** Keeps a food and a moisture line connected, the way a player maintains supply. */
 /**
- * Runs a line onto whatever the household has just spilled, if the HUD is pointing at one.
+ * The guided player.
  *
- * A spill is the largest single haul in the kitchen and it is on a timer. A player who ignores them
- * grows far more slowly — which is why the run that only maintained its two permanent lines finished
- * operation 2 and stalled there.
+ * It acts only on what the HUD is showing: `hud.source` says what kind of thing to do and
+ * `hud.target` says where. That makes each spec run a test of the guidance as much as of the game —
+ * if a run cannot be finished by following the objective line, the objective line is not good enough.
+ *
+ * It replaces a hand-written routine that maintained exactly one line per reserve and always pressed
+ * the first choice. That player was measured three times and starved three times: 33 roaches and no
+ * food, then 33 and no water, then 23 and no water. Every failure was the same mistake — a colony
+ * that outgrows its supply lines needs more supply lines, and the objective line says so while the
+ * hand-written player was not reading it.
  */
-async function chaseSpill(page: Page): Promise<boolean> {
+async function guidedStep(page: Page): Promise<string> {
   const s = await state(page);
-  if (!s.hud.source.startsWith('routine:') || !s.hud.target) return false;
-  const live = s.routines.find((r) => r.phase === 'active');
-  if (!live || live.exploited) return false;
-  await layLine(page, HOME_MOUTH, { x: s.hud.target.x, y: s.hud.target.y });
-  return true;
-}
+  if (s.status !== 'playing') return `end:${s.status}`;
 
-async function maintainLines(page: Page): Promise<void> {
-  if (await chaseSpill(page)) return;
-  const s = await state(page);
-  const live = (kind: string): boolean =>
-    s.routes.some((r) => {
+  // A one-of-three choice, answered by key. Spread across families rather than stacking one: three
+  // brood adaptations is capacity 73 on an economy that cannot feed it.
+  if (s.adaptations.offer.length > 0) {
+    const counts = [0, 0, 0];
+    for (const id of s.adaptations.taken) {
+      counts[id.startsWith('brood') ? 0 : id.startsWith('forage') ? 1 : 2]++;
+    }
+    let slot: 1 | 2 | 3 = 1;
+    let fewest = Infinity;
+    for (let i = 0; i < s.adaptations.offer.length; i++) {
+      const id = s.adaptations.offer[i];
+      const family = id.startsWith('brood') ? 0 : id.startsWith('forage') ? 1 : 2;
+      const affordable =
+        s.adaptations.offers[i] && s.adaptations.offers[i].costFood + 14 <= s.colony.food;
+      if (affordable && counts[family] < fewest) {
+        fewest = counts[family];
+        slot = (i + 1) as 1 | 2 | 3;
+      }
+    }
+    // An offer it cannot safely afford must NOT short-circuit the step. Returning here spun the
+    // loop with no wait and no action, burning all 120 iterations in seconds — the same mistake the
+    // game's own objective hierarchy had, where an unaffordable offer pinned the objective while the
+    // colony starved. An offer never expires: fall through and go earn it.
+    if (fewest !== Infinity) {
+      await chooseSlot(page, slot);
+      return 'adapt';
+    }
+  }
+  if (s.pendingFit) {
+    await chooseSlot(page, s.colony.population >= s.colony.capacity - 3 ? 1 : 2);
+    return 'fit';
+  }
+
+  const src = s.hud.source;
+  const target = s.hud.target;
+
+  // Stand somewhere and press E.
+  if (
+    src.startsWith('gate:foothold') ||
+    src.startsWith('gate:functions') ||
+    src.startsWith('capped:claim') ||
+    src.startsWith('capped:fit') ||
+    src.startsWith('capped:repair') ||
+    src.startsWith('gate:zones')
+  ) {
+    if (!target) return 'wait';
+    await driveTo(page, target.x, target.y, { timeout: 40_000, arrive: 50 });
+    await tapInteract(page);
+    await page.waitForTimeout(400);
+    const after = await state(page);
+    if (after.pendingFit) {
+      await chooseSlot(page, after.colony.population >= after.colony.capacity - 3 ? 1 : 2);
+    }
+    return `interact:${target.label}`;
+  }
+
+  // Run a line to whatever the objective is pointing at — unless it is already served, in which case
+  // a fresh lay would only evict one of the player's own working lines.
+  if (target) {
+    const served = s.routes.some((r) => {
       if (!r.linked || !r.resourceId) return false;
       const res = s.resources.find((x) => x.id === r.resourceId);
-      return !!res && res.kind === kind && !res.depleted && res.amount > 25;
+      return !!res && Math.hypot(res.x - target.x, res.y - target.y) < 120;
     });
-  if (!live('food')) {
-    const food = s.resources.find(
-      (r) => r.kind === 'food' && !r.depleted && r.unlockOp <= s.operation,
-    );
-    if (food) await layLine(page, HOME_MOUTH, PLACES[food.id] ?? { x: 0, y: 0 });
+    if (!served) {
+      await layLine(page, HOME_MOUTH, { x: target.x, y: target.y });
+      await page.waitForTimeout(1500);
+      return `line:${target.label}`;
+    }
   }
-  if (!live('water')) {
-    const water = s.resources.find(
-      (r) => r.kind === 'water' && !r.depleted && r.unlockOp <= s.operation,
-    );
-    if (water) await layLine(page, PLACES[water.id] ?? { x: 0, y: 0 }, HOME_MOUTH);
-  }
+
+  await driveTo(page, HOME_MOUTH.x, HOME_MOUTH.y, { timeout: 25_000 });
+  await page.waitForTimeout(4000);
+  return `hold:${src}`;
 }
 
-/** Takes any adaptation the milestone is offering — a free, permanent decision. */
-async function takeAdaptationIfOffered(page: Page): Promise<boolean> {
-  const s = await state(page);
-  if (s.adaptations.offer.length === 0) return false;
-  await chooseSlot(page, 1);
-  const after = await state(page);
-  return after.adaptations.taken.length > s.adaptations.taken.length;
+/** Kept for the sections that deliberately drive a specific line. */
+async function maintainLines(page: Page): Promise<void> {
+  await guidedStep(page);
 }
 
 test.describe('complete runs', () => {
@@ -116,7 +165,7 @@ test.describe('complete runs', () => {
       s = await state(page);
       if (s.operation >= 2 || s.status !== 'playing') break;
       await maintainLines(page);
-      await takeAdaptationIfOffered(page);
+      await guidedStep(page);
       await page.waitForTimeout(6000);
     }
     s = await state(page);
@@ -170,22 +219,10 @@ test.describe('complete runs', () => {
     await shot(page, '22-footholds');
 
     // ── Play on. Progress is entirely the player's; the household escalates on its own.
-    for (let i = 0; i < 70; i++) {
+    for (let i = 0; i < 120; i++) {
       s = await state(page);
       if (s.status !== 'playing' || s.operation >= 4) break;
-      await maintainLines(page);
-      await takeAdaptationIfOffered(page);
-      // Operation 3 wants foothold *functions*, not only claimed ground, so fit out whatever is
-      // owned and unfitted as soon as the larder can carry it.
-      const unfitted = s.nests.find((n) => n.claimed && !n.home && !n.fn);
-      if (unfitted && s.colony.food >= 60 && s.colony.water >= 40) {
-        await claimAt(page, unfitted.id);
-        await tapInteract(page);
-        await page.waitForTimeout(300);
-        if ((await state(page)).pendingFit === unfitted.id) await chooseSlot(page, 1);
-      }
-      await driveTo(page, HOME_MOUTH.x, HOME_MOUTH.y, { timeout: 25_000 });
-      await page.waitForTimeout(6000);
+      await guidedStep(page);
     }
 
     const end = await state(page);

@@ -1,0 +1,27 @@
+{
+  "counts": {
+    "workers": 4,
+    "workersOutbound": 0,
+    "workersInbound": 0,
+    "workersCarrying": 0,
+    "workersPanicking": 0,
+    "workersTrapped": 0,
+    "workersQueued": 0,
+    "sweeps": 1,
+    "routines": 0,
+    "corpses": 3,
+    "hazards": 2,
+    "patrols": 0,
+    "sprays": 0,
+    "footfalls": 0,
+    "pheromoneNodes": 16
+  },
+  "forecast": "Extermination — A roach was seen in the light, worst around the island. They are ready to exterminate.",
+  "counterplay": "A wipe erases scent, not roaches. Re-lay the line once the cloth passes.",
+  "nextResponse": "Next: the spray comes out and they go for the nest.",
+  "heat": {
+    "known": 4,
+    "total": 3.3719212864962174,
+    "hottest": 0.8666763305664062
+  }
+}

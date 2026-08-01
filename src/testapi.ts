@@ -106,7 +106,15 @@ export interface StateSnapshot {
     nestId: string | null;
   }[];
   nests: { id: string; home: boolean; claimed: boolean; fn: string | null; integrity: number }[];
-  resources: { id: string; kind: string; amount: number; depleted: boolean; unlockOp: number }[];
+  resources: {
+    id: string;
+    kind: string;
+    x: number;
+    y: number;
+    amount: number;
+    depleted: boolean;
+    unlockOp: number;
+  }[];
   counts: {
     workers: number;
     workersOutbound: number;
@@ -353,6 +361,8 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
     resources: world.resources.map((r) => ({
       id: r.id,
       kind: r.kind,
+      x: r.x,
+      y: r.y,
       amount: r.amount,
       depleted: r.depleted,
       unlockOp: r.unlockOp,

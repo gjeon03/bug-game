@@ -1,55 +1,61 @@
 {
-  "time": 113.74999999999483,
+  "time": 141.85000000000502,
   "operation": 2,
   "colony": {
-    "food": 30.916399999997275,
-    "water": 11.027975000000335,
-    "foodCap": 210,
-    "waterCap": 160,
-    "population": 22,
+    "food": 29.181199999995616,
+    "water": 24.29567499999945,
+    "foodCap": 300,
+    "waterCap": 220,
+    "population": 21,
     "capacity": 31,
-    "brood": 0,
+    "brood": 0.03113333333332835,
     "hatched": 12,
     "lost": 0,
-    "totalFood": 250.19999999999993,
-    "totalWater": 127.25,
+    "totalFood": 293.09999999999985,
+    "totalWater": 168.5,
     "nurseries": 0,
-    "caches": 1,
+    "caches": 2,
     "boltholes": 0
   },
   "nests": [
     {
       "id": "home",
+      "home": true,
       "claimed": true,
       "fn": null,
       "integrity": 1
     },
     {
       "id": "crackSink",
+      "home": false,
       "claimed": true,
-      "fn": null,
+      "fn": "cache",
       "integrity": 1
     },
     {
       "id": "crackIsland",
+      "home": false,
       "claimed": false,
       "fn": null,
       "integrity": 1
     },
     {
       "id": "crackPantry",
+      "home": false,
       "claimed": true,
       "fn": "cache",
       "integrity": 1
     },
     {
       "id": "crackStove",
+      "home": false,
       "claimed": false,
       "fn": null,
       "integrity": 1
     },
     {
       "id": "crackBin",
+      "home": false,
       "claimed": false,
       "fn": null,
       "integrity": 1
@@ -65,15 +71,15 @@
     "offers": []
   },
   "heat": {
-    "known": 1,
-    "total": 0.8579970548416895,
-    "hottest": 0.5313511490821838
+    "known": 3,
+    "total": 2.286989730575442,
+    "hottest": 0.9309920072555542
   },
   "suspicion": {
-    "value": 17.888632854643014,
-    "tier": 0,
-    "peak": 17.89119686176375,
-    "floor": 9.840158273970063,
+    "value": 37.05058730089551,
+    "tier": 1,
+    "peak": 38.12353596253814,
+    "floor": 20.967944779395978,
     "lastCause": "expansion"
   }
 }

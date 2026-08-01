@@ -1,0 +1,164 @@
+{
+  "status": "playing",
+  "loseCause": null,
+  "operation": 4,
+  "operationsCompleted": 3,
+  "colony": {
+    "food": 254.46819999999374,
+    "water": 214.2543750000022,
+    "foodCap": 300,
+    "waterCap": 220,
+    "population": 28,
+    "capacity": 31,
+    "brood": 0.5374000000001062,
+    "hatched": 20,
+    "lost": 1,
+    "totalFood": 658.5000000000002,
+    "totalWater": 436.89726249999717,
+    "nurseries": 0,
+    "caches": 2,
+    "boltholes": 0
+  },
+  "adaptations": {
+    "taken": [
+      "brood1",
+      "forage1",
+      "shadow1"
+    ],
+    "offer": [],
+    "milestonesUsed": 3,
+    "offers": []
+  },
+  "zones": [
+    {
+      "id": "sink",
+      "hold": 1,
+      "held": true,
+      "footholds": 1,
+      "workers": 10,
+      "routed": true,
+      "contested": false
+    },
+    {
+      "id": "dishwasher",
+      "hold": 1,
+      "held": true,
+      "footholds": 1,
+      "workers": 17,
+      "routed": true,
+      "contested": false
+    },
+    {
+      "id": "pantry",
+      "hold": 1,
+      "held": true,
+      "footholds": 1,
+      "workers": 0,
+      "routed": false,
+      "contested": false
+    },
+    {
+      "id": "stove",
+      "hold": 0,
+      "held": false,
+      "footholds": 0,
+      "workers": 0,
+      "routed": false,
+      "contested": false
+    },
+    {
+      "id": "fridge",
+      "hold": 0,
+      "held": false,
+      "footholds": 0,
+      "workers": 0,
+      "routed": false,
+      "contested": false
+    },
+    {
+      "id": "island",
+      "hold": 0,
+      "held": false,
+      "footholds": 0,
+      "workers": 0,
+      "routed": false,
+      "contested": false
+    },
+    {
+      "id": "trash",
+      "hold": 0,
+      "held": false,
+      "footholds": 0,
+      "workers": 0,
+      "routed": false,
+      "contested": false
+    },
+    {
+      "id": "doorway",
+      "hold": 0,
+      "held": false,
+      "footholds": 0,
+      "workers": 0,
+      "routed": false,
+      "contested": false
+    }
+  ],
+  "heat": {
+    "known": 2,
+    "total": 2.6518575730424345,
+    "hottest": 1
+  },
+  "suspicion": {
+    "value": 61.884822411709074,
+    "tier": 2,
+    "peak": 61.88648907837574,
+    "floor": 34.03756899310666,
+    "lastCause": "droppings"
+  },
+  "stats": {
+    "runSeconds": 259.5500000000926,
+    "firstMoveAt": 0.6833333333333338,
+    "firstTrailAt": 1.016666666666668,
+    "firstDeliveryAt": 16.216666666667027,
+    "firstClaimAt": 72.03333333333053,
+    "deliveries": 157,
+    "workersLost": 1,
+    "scoutDeaths": 1,
+    "trapsSprung": 0,
+    "peakPopulation": 28,
+    "idleSeconds": 158.63333333335171,
+    "distanceTravelled": 21098.249090495887,
+    "trailNodesLaid": 350,
+    "routinesExploited": 2,
+    "operationsCompleted": 3,
+    "functionsBuilt": 2
+  },
+  "peakPerf": {
+    "label": "active-play",
+    "frames": 9731,
+    "durationMs": 259350.79999999702,
+    "p50": 25,
+    "p95": 33.4,
+    "p99": 34.6,
+    "worst": 205.9,
+    "mean": 26.65,
+    "over16": 9673,
+    "over33": 1645,
+    "over50": 9,
+    "over100": 1,
+    "over50Pct": 0.092,
+    "cpuP50": 1.1,
+    "cpuP95": 1.5,
+    "cpuP99": 2.2,
+    "cpuWorst": 4.6,
+    "peak": {
+      "roaches": 29,
+      "workers": 28,
+      "hazards": 2,
+      "particles": 131,
+      "voices": 13,
+      "drawCalls": 385,
+      "pheromoneNodes": 260
+    }
+  }
+}

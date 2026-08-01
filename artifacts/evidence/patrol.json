@@ -6,13 +6,19 @@
     "workersCarrying": 0,
     "workersPanicking": 0,
     "workersTrapped": 0,
+    "workersQueued": 0,
+    "sweeps": 0,
+    "routines": 0,
     "corpses": 0,
     "hazards": 0,
     "patrols": 1,
     "sprays": 0,
     "footfalls": 1,
-    "pheromoneNodes": 0
+    "pheromoneNodes": 116
   },
-  "time": 104.74999999999534,
-  "night": 1
+  "time": 38.71666666666575,
+  "operation": 1,
+  "forecast": "Something's off — A roach was seen in the light, worst around the fridge. Expect a wipe-down where the traffic is.",
+  "counterplay": "Stay under cabinetry — a torch beam only finds roaches on open floor.",
+  "survivedTelegraph": true
 }

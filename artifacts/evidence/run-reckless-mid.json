@@ -1,40 +1,51 @@
 {
-  "time": 270.2500000000829,
-  "night": 2,
+  "time": 196.0166666667148,
+  "operation": 1,
   "suspicion": {
-    "value": 99.99833333333333,
+    "value": 98.98633333334288,
     "tier": 4,
     "peak": 100,
     "floor": 55.00000000000001,
-    "lastCause": "droppings"
+    "lastCause": "seen"
+  },
+  "heat": {
+    "known": 4,
+    "total": 3.3865868901339127,
+    "hottest": 0.8703427314758301
   },
   "counts": {
-    "workers": 0,
+    "workers": 4,
     "workersOutbound": 0,
     "workersInbound": 0,
     "workersCarrying": 0,
     "workersPanicking": 0,
     "workersTrapped": 0,
+    "workersQueued": 0,
+    "sweeps": 1,
+    "routines": 0,
     "corpses": 3,
-    "hazards": 6,
+    "hazards": 2,
     "patrols": 0,
-    "sprays": 2,
-    "footfalls": 1,
-    "pheromoneNodes": 70
+    "sprays": 0,
+    "footfalls": 0,
+    "pheromoneNodes": 16
   },
   "stats": {
-    "runSeconds": 270.2500000000829,
-    "firstMoveAt": 0.49999999999999994,
-    "firstTrailAt": 0.49999999999999994,
-    "firstDeliveryAt": 42.399999999998876,
+    "runSeconds": 196.0166666667148,
+    "firstMoveAt": 0.5166666666666666,
+    "firstTrailAt": 0.850000000000001,
+    "firstDeliveryAt": 16.183333333333696,
     "firstClaimAt": -1,
-    "deliveries": 39,
+    "deliveries": 42,
     "workersLost": 3,
-    "scoutDeaths": 8,
-    "trapsSprung": 1,
-    "peakPopulation": 9,
-    "idleSeconds": 0.6333333333333336,
-    "distanceTravelled": 46475.23055347057,
-    "trailNodesLaid": 70
+    "scoutDeaths": 4,
+    "trapsSprung": 0,
+    "peakPopulation": 11,
+    "idleSeconds": 0.9500000000000013,
+    "distanceTravelled": 35327.78206239814,
+    "trailNodesLaid": 25,
+    "routinesExploited": 0,
+    "operationsCompleted": 0,
+    "functionsBuilt": 0
   }
 }

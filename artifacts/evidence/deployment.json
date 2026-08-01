@@ -7,12 +7,12 @@
     "assets",
     "index.html",
     "assets/index-D604758x.css",
-    "assets/index-DfVSM_Ld.js"
+    "assets/index-Ktlm5Fiq.js"
   ],
   "nojekyll": true,
   "assetAudit": {
     "version": "1.0.0",
-    "atlasBuildMs": 139.6,
+    "atlasBuildMs": 137.8,
     "roachAtlas": {
       "w": 1152,
       "h": 640
@@ -39,6 +39,6 @@
   "requests": [
     "200 http://127.0.0.1:4178/bug-game/",
     "200 http://127.0.0.1:4178/bug-game/assets/index-D604758x.css",
-    "200 http://127.0.0.1:4178/bug-game/assets/index-DfVSM_Ld.js"
+    "200 http://127.0.0.1:4178/bug-game/assets/index-Ktlm5Fiq.js"
   ]
 }

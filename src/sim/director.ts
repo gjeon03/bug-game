@@ -223,9 +223,15 @@ function updatePressure(world: World, dt: number): void {
   const known = knownCellCount(world);
   // Nothing to act on: the household cannot invent a location it has never seen activity in.
   const hot = hottestCell(world, (i) => world.recentTargets.includes(i));
-  // The household acts only on ground it genuinely knows about. Acting at half the threshold meant
+  // The household acts only on ground it genuinely knows about — acting at half the threshold meant
   // it started swinging at corridors it had barely noticed, roughly every seventeen seconds.
-  if (!hot || hot.heat < HEAT_KNOWN) {
+  //
+  // Except once it is properly alarmed. A player who never routes anything but keeps being *seen*
+  // pushed suspicion to tier 2 and the household still had nowhere it was confident enough to act,
+  // so nothing ever came for them — measured: tier 2, five sightings, zero patrols, zero traps. At
+  // tier 2 and above they will act on the best ground they have, because by then they are looking.
+  const confident = tier >= 2 ? HEAT_KNOWN * 0.45 : HEAT_KNOWN;
+  if (!hot || hot.heat < confident) {
     world.threatCooldown = 6;
     return;
   }
@@ -289,7 +295,7 @@ function chooseAction(world: World, tier: number, known: number): ThreatAction |
   const options: ThreatAction[] = [];
   if (tier >= 0) options.push('patrol');
   if (tier >= 1 && known >= 1) options.push('sweep');
-  if (tier >= 1 && known >= 2) options.push('trap');
+  if (tier >= 2 || (tier >= 1 && known >= 2)) options.push('trap');
   if (tier >= 2) options.push('bait');
   // Spray is severe: it needs real evidence, and it needs the colony to have somewhere to hide, or
   // it is an unavoidable execution rather than a threat.
