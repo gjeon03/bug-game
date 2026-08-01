@@ -1,0 +1,75 @@
+{
+  "time": 265.00000000008765,
+  "colony": {
+    "food": 150.19946666666604,
+    "water": 143.45130000000125,
+    "foodCap": 320,
+    "waterCap": 220,
+    "population": 29,
+    "capacity": 44,
+    "brood": 0.31637499999995944,
+    "hatched": 19,
+    "lost": 0,
+    "totalFood": 400.9893333333889,
+    "totalWater": 266.5206000000361,
+    "upgrades": {
+      "brood": true,
+      "cache": true,
+      "escape": false
+    }
+  },
+  "suspicion": {
+    "value": 41.180833417370806,
+    "tier": 1,
+    "peak": 41.18250008403747,
+    "floor": 22.65037504622061,
+    "lastCause": "droppings"
+  },
+  "routes": [
+    {
+      "id": 1,
+      "nodes": 24,
+      "linked": true,
+      "exposure": 0.06889401002763514,
+      "traffic": 7,
+      "resourceId": "dishCrumbs",
+      "nestId": "home"
+    },
+    {
+      "id": 2,
+      "nodes": 37,
+      "linked": true,
+      "exposure": 0.09657273188480751,
+      "traffic": 7,
+      "resourceId": "sinkDrip",
+      "nestId": "home"
+    },
+    {
+      "id": 3,
+      "nodes": 20,
+      "linked": true,
+      "exposure": 0.23347168007650923,
+      "traffic": 5,
+      "resourceId": "islandDrop",
+      "nestId": "crackIsland"
+    },
+    {
+      "id": 4,
+      "nodes": 70,
+      "linked": true,
+      "exposure": 0.15870913407741596,
+      "traffic": 7,
+      "resourceId": "fridgeCondensation",
+      "nestId": "crackIsland"
+    },
+    {
+      "id": 5,
+      "nodes": 5,
+      "linked": true,
+      "exposure": 0.22407552484409532,
+      "traffic": 0,
+      "resourceId": "pantryGrain",
+      "nestId": "crackPantry"
+    }
+  ]
+}

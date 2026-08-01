@@ -1,0 +1,44 @@
+{
+  "url": "http://127.0.0.1:4178/bug-game/",
+  "externalRequests": [],
+  "absoluteAssetRefs": [],
+  "distFiles": [
+    ".nojekyll",
+    "assets",
+    "index.html",
+    "assets/index-ByQb7YUT.css",
+    "assets/index-C6aHnSBS.js"
+  ],
+  "nojekyll": true,
+  "assetAudit": {
+    "version": "1.0.0",
+    "atlasBuildMs": 137,
+    "roachAtlas": {
+      "w": 1152,
+      "h": 384
+    },
+    "floorTile": {
+      "w": 1280,
+      "h": 1280
+    },
+    "debris": {
+      "w": 1440,
+      "h": 1040
+    },
+    "materials": [
+      "cabinet",
+      "steel",
+      "wall",
+      "plastic",
+      "metal"
+    ],
+    "glowTints": 6,
+    "audioStarted": true,
+    "externalRequests": []
+  },
+  "requests": [
+    "200 http://127.0.0.1:4178/bug-game/",
+    "200 http://127.0.0.1:4178/bug-game/assets/index-ByQb7YUT.css",
+    "200 http://127.0.0.1:4178/bug-game/assets/index-C6aHnSBS.js"
+  ]
+}
