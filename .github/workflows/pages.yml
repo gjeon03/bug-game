@@ -23,9 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # No explicit version: the action reads `packageManager` from package.json, which is the single
+      # source of truth (pnpm@10.13.1). Specifying both can conflict.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10.13.1
 
       - uses: actions/setup-node@v4
         with:

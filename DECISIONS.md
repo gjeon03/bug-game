@@ -115,3 +115,50 @@ repository has **no remote** and the operating constraint for this session is th
 remote requires explicit user approval. Status and the exact single external action required are
 recorded in `DEPLOYMENT.md`. Nested-path correctness is proven locally in the meantime and is not
 claimed as a live deployment.
+
+---
+
+## D8 — Evidence is graded by exposure, not gated by a threshold
+
+**Original implementation:** a worker or trail node counted as "exposed" if it crossed a fixed
+exposure threshold, and each contributed a fixed amount per second.
+
+**Chosen:** each contributes in proportion to how far it sits _above_ a do-nothing baseline
+(`EVIDENCE_BASELINE`), capped per roach so one bright light cannot dominate.
+
+**Why, with the measurement:** an independent gameplay review measured that the threshold approach
+had no working setting. At 0.55 nothing on unlit floor ever counted — dark open tile reads exactly
+0.30 — so a deliberately terrible route ended a night with _lower_ suspicion (3.16) than a careful one
+(4.50). At 0.26 everything counted, because almost the whole floor is more than a toe-kick from
+cabinetry, so a passing patrol torch pushed every worker over at once and one patrol pass added ~80
+suspicion. Grading gives a continuous gradient — cover ≈ 0, dark open floor a trickle, lit open floor
+several times that — which is the shape the design always described and never implemented.
+
+Verified by `tests/unit/balance.test.ts`: same seed, same 140 s, same destination — a cover-hugging
+route peaks below 5, a route through the under-sink light peaks above 18.
+
+## D9 — Claimed cracks are shelter
+
+**Added:** a roach inside a claimed crack cannot be touched by a foot or by spray, and panicking
+workers run for the nearest claimed crack (the Escape Tunnel reaching furthest at 1100 units versus
+680).
+
+**Why:** the extermination response previously had no counterplay at all. The review measured a
+careful colony of 52 reduced to 6 by the final sweep, and separately found the Escape Tunnel "nearly
+inert" — its 700-unit panic radius contained no colony activity. Making cracks shelter turns a sweep
+into something the colony _reacts_ to, gives the third upgrade a real job, and pays back the evidence
+that claiming it cost. Measured effect on the same scripted run: losses through the final response
+fell from 69 to 17.
+
+This is also why the run can be won at all: surviving the final response is a win criterion, and
+before this there was no action that improved the odds of it.
+
+## D10 — Breeding pauses so the larder can fill
+
+**Added:** brood requires a population-scaled surplus, and stops entirely once the colony is at
+fighting strength until reserves are above the win thresholds.
+
+**Why:** brood previously ran whenever reserves cleared a flat floor of 22 food / 12 water, so the
+colony spent every surplus down to that floor while the win condition demanded 120 / 90 banked. The
+two goals competed forever and the win was unreachable by construction. The pause is surfaced to the
+player (`world.banking`) rather than being a silent rule.

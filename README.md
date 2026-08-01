@@ -46,6 +46,11 @@ Three nights, about 13 minutes, separated by a card showing what the humans noti
 the last sweep. **Failure** is a collapsed colony, a destroyed home crack, or a completed
 extermination — each one tells you which of your own decisions cost you the most.
 
+Every response has an answer. Feet are telegraphed and workers scatter on the warning, not the
+impact. Traps go down where _your_ traffic went, so re-routing removes them. And a claimed crack is
+shelter: nothing the household owns can reach a roach that is inside the wall, which is what the
+Escape Tunnel is for and why claiming cracks is worth the evidence it costs.
+
 ## Commands
 
 ```bash
@@ -73,7 +78,9 @@ src/
 
 `sim/` never imports from `render/`, `audio/` or `ui/`, and never touches `window`. That boundary is
 enforced by lint rules and is what lets the entire simulation run headless in Vitest and reproduce a
-run exactly from a seed.
+run exactly from a seed — including `tests/unit/balance.test.ts`, which plays a complete scripted
+three-night run in about a second and fails if the game stops being winnable, or if a covered route
+stops being measurably safer than one across open floor.
 
 ## Documentation
 
