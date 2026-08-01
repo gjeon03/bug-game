@@ -77,6 +77,15 @@ export interface WinCriteria {
   survived: boolean;
 }
 
+/** Colony numbers as they stood when the run was decided, so the debrief cannot contradict itself. */
+export interface FinalTally {
+  population: number;
+  food: number;
+  water: number;
+  functionsBuilt: number;
+  functionsTotal: number;
+}
+
 export interface World {
   readonly seed: number;
   rng: Rng;
@@ -142,6 +151,8 @@ export interface World {
 
   loseCause: LoseCause | null;
   winCriteria: WinCriteria;
+  /** Colony numbers frozen at the moment the final verdict was computed, for the end card. */
+  finalTally: FinalTally | null;
 
   workerHash: SpatialHash;
   /** Scratch counter used by the traffic suspicion term. */
@@ -415,6 +426,7 @@ export function createWorld(seed: number): World {
     reactionNote: '',
 
     loseCause: null,
+    finalTally: null,
     winCriteria: {
       population: false,
       food: false,

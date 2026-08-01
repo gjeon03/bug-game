@@ -1,6 +1,13 @@
 import { TAU, clamp01, lerp } from '../core/math.ts';
 import { valueNoise2D } from '../core/rng.ts';
-import { FOOT_KILL_RADIUS, FOOT_RADIUS, NODE_LIFE, WORLD_H, WORLD_W } from '../sim/constants.ts';
+import {
+  FOOT_KILL_RADIUS,
+  FOOT_RADIUS,
+  FOOT_TELEGRAPH_MAX,
+  NODE_LIFE,
+  WORLD_H,
+  WORLD_W,
+} from '../sim/constants.ts';
 import { DECALS, LIGHTS } from '../sim/kitchen.ts';
 import type { World } from '../sim/world.ts';
 import {
@@ -412,18 +419,29 @@ export class Renderer {
 
       // Remaining-amount gauge. Without it the only way to know a source was running dry was to walk
       // to it and press E, which made depletion the least visible thing in the game.
-      const gaugeR = 46 + frac * 12;
-      ctx.strokeStyle = 'rgba(6,10,15,0.55)';
-      ctx.lineWidth = 4.5;
-      ctx.beginPath();
-      ctx.arc(r.x, r.y, gaugeR, -Math.PI / 2, -Math.PI / 2 + TAU);
-      ctx.stroke();
-      ctx.strokeStyle =
-        frac < 0.2 ? rgba(PAL.danger, 0.8) : rgba(r.kind === 'food' ? PAL.amber : PAL.cold, 0.65);
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(r.x, r.y, gaugeR, -Math.PI / 2, -Math.PI / 2 + TAU * frac);
-      ctx.stroke();
+      // Drawn as a bar rather than a ring. The circle had become the game's universal verb — the
+      // scout outline, the objective marker, the route ends, the nest and the footfall telegraph
+      // were all concentric strokes discriminated only by radius, and adding a sixth stopped the
+      // vocabulary working. Food reads as discrete segments, moisture as one continuous fill, so
+      // the kind survives in greyscale instead of riding on hue alone.
+      const bw = 52;
+      const by = r.y + 46;
+      ctx.fillStyle = 'rgba(6,10,15,0.6)';
+      ctx.fillRect(r.x - bw / 2 - 1.5, by - 4, bw + 3, 8);
+      const fill =
+        frac < 0.2 ? rgba(PAL.danger, 0.9) : rgba(r.kind === 'food' ? PAL.amber : PAL.cold, 0.8);
+      ctx.fillStyle = fill;
+      if (r.kind === 'food') {
+        const segs = 6;
+        const sw = bw / segs;
+        for (let k = 0; k < segs; k++) {
+          const covered = clamp01(frac * segs - k);
+          if (covered <= 0) break;
+          ctx.fillRect(r.x - bw / 2 + k * sw, by - 2.5, (sw - 2) * covered, 5);
+        }
+      } else {
+        ctx.fillRect(r.x - bw / 2, by - 2.5, bw * frac, 5);
+      }
       this.drawCalls += 2;
 
       if (r.kind === 'food') {
@@ -749,19 +767,23 @@ export class Renderer {
         ctx.scale(settle, settle);
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.fillRect(-r + 5, -r * 0.78 + 7, r * 2, r * 1.56);
+        // Measured at L=120 against a scene mean of 40, the old cream card was the brightest thing
+        // in the world layer — brighter than the food it competes with and still the first thing the
+        // eye found behind a modal backdrop. A trap must read as a threat, not as the subject of the
+        // frame, so it sits just above the floor (L=41) instead of three times it.
         const grad = ctx.createLinearGradient(-r, -r, r, r);
-        grad.addColorStop(0, h.capacity > 0 ? '#d8c48a' : '#6b6250');
-        grad.addColorStop(0.5, h.capacity > 0 ? '#b9a066' : '#584f40');
-        grad.addColorStop(1, h.capacity > 0 ? '#8d7742' : '#3f382c');
+        grad.addColorStop(0, h.capacity > 0 ? '#7a6f4e' : '#544c39');
+        grad.addColorStop(0.5, h.capacity > 0 ? '#635a3d' : '#443d2e');
+        grad.addColorStop(1, h.capacity > 0 ? '#48412a' : '#332f26');
         ctx.fillStyle = grad;
         ctx.fillRect(-r, -r * 0.78, r * 2, r * 1.56);
         ctx.strokeStyle = 'rgba(0,0,0,0.6)';
         ctx.lineWidth = 2;
         ctx.strokeRect(-r, -r * 0.78, r * 2, r * 1.56);
         // Adhesive sheen.
-        ctx.fillStyle = `rgba(255,255,240,${0.1 + Math.sin(t * 2 + i) * 0.03})`;
+        ctx.fillStyle = `rgba(255,255,240,${0.055 + Math.sin(t * 2 + i) * 0.022})`;
         ctx.beginPath();
-        ctx.ellipse(-r * 0.2, -r * 0.2, r * 0.7, r * 0.34, -0.5, 0, TAU);
+        ctx.ellipse(-r * 0.2, -r * 0.24, r * 0.52, r * 0.24, -0.5, 0, TAU);
         ctx.fill();
         ctx.restore();
         this.drawCalls += 4;
@@ -771,8 +793,11 @@ export class Renderer {
           ctx.strokeStyle = rgba(PAL.danger, 0.35 + Math.sin(t * 9) * 0.2);
           ctx.lineWidth = 2;
           ctx.setLineDash([7, 7]);
+          // A rectangle, because the sticky area is a rectangle. A circle here both lied about the
+          // footprint and added to a screen that already had too many rings competing on radius.
+          const pad = 26 - p * 12;
           ctx.beginPath();
-          ctx.arc(h.x, h.y, r + 26 - p * 12, 0, TAU);
+          ctx.rect(h.x - r - pad, h.y - r * 0.78 - pad, (r + pad) * 2, (r * 0.78 + pad) * 2);
           ctx.stroke();
           ctx.setLineDash([]);
           this.drawCalls++;
@@ -866,7 +891,12 @@ export class Renderer {
 
         // The telegraph is the shape of the thing that is about to land, at the angle it will land
         // at: a circle around a boot-shaped threat told the player the wrong ground was lethal.
-        const ringR = FOOT_KILL_RADIUS + p * FOOT_RADIUS * 2.1;
+        // Clamped to the viewport. At the old 2.1x reach the warning opened at a 542x874 ellipse
+        // against a 1200x675 view, so for most of the telegraph the player saw two near-vertical
+        // dashed lines crossing the whole kitchen with no visible curvature — it read as arbitrary
+        // streaks rather than a shape closing on a point. It still contracts by 2.5x, which is the
+        // part that carries the meaning.
+        const ringR = FOOT_KILL_RADIUS + p * (FOOT_TELEGRAPH_MAX - FOOT_KILL_RADIUS);
         ctx.save();
         ctx.translate(f.x, f.y);
         ctx.rotate(0.22);

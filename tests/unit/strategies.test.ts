@@ -256,10 +256,10 @@ it('cautious play wins where aggressive and reckless routing do not', () => {
         [HOME.x + 20, HOME.y],
       ],
     );
-    while (w.status === 'playing') {
+    while (w.status === 'playing' || w.status === 'interlude') {
       driveTo(w, 2560, 920, { sprint: true, timeout: 26, arrive: 110 });
       idle(w, 6);
-      if (w.status !== 'playing') break;
+      if (w.status !== 'playing' && w.status !== 'interlude') break;
       driveTo(w, 1900, 2100, { sprint: true, timeout: 26, arrive: 110 });
       idle(w, 6);
     }

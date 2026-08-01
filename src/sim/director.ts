@@ -229,9 +229,27 @@ function checkLossConditions(world: World): void {
 function evaluateFinal(world: World): void {
   const c = world.colony;
   let nests = true;
+  let functionsBuilt = 0;
+  let functionsTotal = 0;
   for (let i = 0; i < world.nests.length; i++) {
-    if (!world.nests[i].claimed) nests = false;
+    const n = world.nests[i];
+    if (!n.claimed) nests = false;
+    // The home crack is where the colony already lives; only the three side cracks are functions
+    // the player has to go and build, so only those are worth counting back to them.
+    if (n.home) continue;
+    functionsTotal++;
+    if (n.claimed) functionsBuilt++;
   }
+  // Frozen here, at the instant the verdict is decided. The end card used to render live colony
+  // numbers next to a verdict computed earlier, so a late delivery could put "198" beside a red
+  // cross on a target of 120 — the card contradicting itself in the player's only debrief.
+  world.finalTally = {
+    population: c.population,
+    food: c.food,
+    water: c.water,
+    functionsBuilt,
+    functionsTotal,
+  };
   world.winCriteria = {
     population: c.population >= WIN_POPULATION,
     food: c.food >= WIN_FOOD,

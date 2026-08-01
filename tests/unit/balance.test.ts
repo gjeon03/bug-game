@@ -453,3 +453,167 @@ describe('the colony responds to the player, not just to the map', () => {
     expect(world.events.some((e) => e.t === 'routeLost')).toBe(true);
   });
 });
+
+describe('a failing reserve cannot conscript the whole colony', () => {
+  it('an unrecoverable shortage still leaves labour on the other line', () => {
+    const world = createWorld(7311);
+    route(
+      world,
+      [[HOME.x + 20, HOME.y]],
+      [
+        [600, 2010],
+        [600, 1760],
+        [P.dishCrumbs.x, P.dishCrumbs.y],
+      ],
+    );
+    route(
+      world,
+      [
+        [620, 1620],
+        [P.sinkDrip.x, P.sinkDrip.y],
+      ],
+      [
+        [620, 1620],
+        [600, 2010],
+        [HOME.x + 20, HOME.y],
+      ],
+    );
+    const waterRoute = world.routes.find((r) => r.resourceId === 'sinkDrip')!;
+    const foodRoute = world.routes.find((r) => r.resourceId === 'dishCrumbs')!;
+
+    // A reserve the colony cannot actually refill — the deliveries never move the needle. This is
+    // night 2 with water only reachable down a long, lit line: the player may rationally choose to
+    // run thin on moisture rather than march bodies through the fridge light, and the colony must
+    // not override that by pinning every worker on the most exposed route in the game.
+    world.colony.food = world.colony.foodCap * 0.95;
+    let worstShare = 0;
+    for (let t = 0; t < 120 / SIM_DT; t++) {
+      world.colony.water = world.colony.waterCap * 0.05;
+      stepWorld(world, SIM_DT);
+      const onWater = world.workers.filter((w) => w.alive && w.routeId === waterRoute.id).length;
+      const onFood = world.workers.filter((w) => w.alive && w.routeId === foodRoute.id).length;
+      if (onWater + onFood >= 4) worstShare = Math.max(worstShare, onWater / (onWater + onFood));
+    }
+
+    expect(
+      worstShare,
+      `a failing reserve took ${(worstShare * 100).toFixed(0)}% of all labour`,
+    ).toBeLessThanOrEqual(0.85);
+  });
+
+  it('the colony prefers the safer of two lines to the same resource', () => {
+    const world = createWorld(7311);
+    // Hug the cabinet run to the crumbs.
+    route(
+      world,
+      [[HOME.x + 20, HOME.y]],
+      [
+        [600, 2010],
+        [600, 1760],
+        [P.dishCrumbs.x, P.dishCrumbs.y],
+      ],
+    );
+    // A second line to the *same* crumbs, out across the open floor instead of along the units.
+    // Same endpoints, so distance is held constant and exposure is the only thing that differs.
+    route(
+      world,
+      [[HOME.x + 20, HOME.y]],
+      [
+        [820, 2050],
+        [1200, 2100],
+        [1200, 1750],
+        [P.dishCrumbs.x, P.dishCrumbs.y],
+      ],
+    );
+    const linked = world.routes.filter((r) => r.linked);
+    expect(linked.length).toBe(2);
+    const safe = linked.reduce((a, b) => (a.exposure <= b.exposure ? a : b));
+    const risky = linked.reduce((a, b) => (a.exposure > b.exposure ? a : b));
+    expect(risky.exposure, 'the two lines must actually differ in exposure').toBeGreaterThan(
+      safe.exposure * 1.3,
+    );
+
+    let onSafe = 0;
+    let onRisky = 0;
+    for (let t = 0; t < 60 / SIM_DT; t++) {
+      stepWorld(world, SIM_DT);
+      onSafe += world.workers.filter((w) => w.alive && w.routeId === safe.id).length;
+      onRisky += world.workers.filter((w) => w.alive && w.routeId === risky.id).length;
+    }
+
+    // Route geometry is the game's central currency; it should steer the colony's own labour, not
+    // only the evidence the household finds.
+    expect(
+      onSafe,
+      `exposure ${safe.exposure.toFixed(2)} drew ${onSafe} vs ${risky.exposure.toFixed(2)} drawing ${onRisky}`,
+    ).toBeGreaterThan(onRisky);
+  });
+});
+
+describe('a lay near an existing trail extends it only when it is the same line', () => {
+  it('three supply lines fanning out of the same crack stay three routes', () => {
+    const world = createWorld(4242);
+    const home = world.nests.find((n) => n.home)!;
+
+    // Three genuinely different directions out of one door. Every route anchored on a nest must
+    // start inside LINK_RADIUS to link at all, so their start points are unavoidably clustered —
+    // in practice within one node spacing of each other. Heading is the only thing that separates
+    // them, which is why proximity alone cannot be the rule.
+    const targets = [
+      { x: home.x + 420, y: home.y - 60 },
+      { x: home.x + 120, y: home.y - 430 },
+      { x: home.x + 130, y: home.y + 400 },
+    ];
+    const starts: { x: number; y: number }[] = [];
+    for (const t of targets) {
+      driveTo(world, home.x, home.y, { timeout: 25 });
+      starts.push({ x: world.scout.x, y: world.scout.y });
+      driveTo(world, t.x, t.y, { lay: true, timeout: 30 });
+      idle(world, 0.4);
+    }
+
+    let spread = 0;
+    for (let i = 0; i < starts.length; i++)
+      for (let j = i + 1; j < starts.length; j++)
+        spread = Math.max(spread, Math.hypot(starts[i].x - starts[j].x, starts[i].y - starts[j].y));
+
+    expect(
+      world.routes.length,
+      `three lines out of one crack (start points within ${spread.toFixed(0)}u) must stay separate`,
+    ).toBe(3);
+  });
+
+  it('resuming the same line where it ended extends it instead of allocating a new one', () => {
+    const world = createWorld(4242);
+    const home = world.nests.find((n) => n.home)!;
+    driveTo(world, home.x, home.y, { timeout: 25 });
+    driveTo(world, home.x + 260, home.y, { lay: true, timeout: 30 });
+    const after = world.routes.length;
+    const tail = world.routes[world.routes.length - 1].nodes.length;
+
+    // Let go of the key mid-line, then carry on in the same direction — one supply line, one route.
+    idle(world, 0.6);
+    driveTo(world, home.x + 520, home.y, { lay: true, timeout: 30 });
+
+    expect(world.routes.length, 'continuing the line must not allocate a second route').toBe(after);
+    expect(world.routes[world.routes.length - 1].nodes.length).toBeGreaterThan(tail);
+  });
+});
+
+describe('turning out of a trail end starts a new line', () => {
+  it('a short stub east does not swallow a line laid north from the same crack', () => {
+    const world = createWorld(4242);
+    const home = world.nests.find((n) => n.home)!;
+    driveTo(world, home.x, home.y, { timeout: 25 });
+    driveTo(world, home.x + 70, home.y, { lay: true, timeout: 20 });
+    expect(world.routes.length).toBe(1);
+
+    // Walk back onto that stub's end and head off at a right angle. This is a different supply
+    // line, not a continuation, and it merged into the stub before the heading gate existed.
+    idle(world, 0.5);
+    driveTo(world, home.x + 40, home.y, { timeout: 20 });
+    driveTo(world, home.x + 60, home.y - 400, { lay: true, timeout: 30 });
+
+    expect(world.routes.length, 'a right-angle turn is a new line, not an extension').toBe(2);
+  });
+});

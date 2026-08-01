@@ -226,6 +226,12 @@ test.describe('complete runs', () => {
       peakPerf: peak,
     });
 
+    // Wait for the card to actually be on screen before capturing. The run status flips inside the
+    // simulation a frame or more before the overlay renders, so capturing on the status change alone
+    // produced an "outcome" screenshot that was really the last frame of play — the evidence package
+    // claimed to show the payoff and did not.
+    await expect(page.locator('#overlay .card h1')).toBeVisible({ timeout: 15_000 });
+    await page.waitForTimeout(700);
     await shot(page, '25-outcome');
     expect(end.status).toBe('won');
     expect(end.winCriteria.population).toBe(true);
@@ -284,6 +290,8 @@ test.describe('complete runs', () => {
       stats: end.stats,
     });
 
+    await expect(page.locator('#overlay .card h1')).toBeVisible({ timeout: 15_000 });
+    await page.waitForTimeout(700);
     await shot(page, '26-eradicated');
     expect(end.status).toBe('lost');
     expect(end.loseCause).not.toBeNull();

@@ -1,5 +1,6 @@
 import { clamp01, dist2 } from '../core/math.ts';
 import {
+  ADOPT_MIN_ALIGN,
   ERASE_RADIUS,
   EVIDENCE_BASELINE,
   ERASE_RATE,
@@ -78,7 +79,7 @@ export function layTrail(world: World, x: number, y: number, heading: number): v
     // Starting a lay right where an existing trail ends *continues* that trail rather than opening a
     // new one. Without this, every touch-up of an existing route burned a slot, so the cap meant
     // "five key presses" instead of "five supply lines" and quietly evicted a line the player needed.
-    route = adoptNearbyRoute(world, x, y);
+    route = adoptNearbyRoute(world, x, y, heading);
     if (!route) route = newRoute(world);
     world.activeRouteId = route.id;
   }
@@ -120,18 +121,38 @@ export function layTrail(world: World, x: number, y: number, heading: number): v
   world.events.push({ t: 'trailLaid', x, y });
 }
 
-/** Finds a route whose most recent end the scout is standing on, so a lay extends it. */
-function adoptNearbyRoute(world: World, x: number, y: number): Route | null {
+/**
+ * Finds a route the scout is *continuing*, so a lay extends it instead of burning a slot.
+ *
+ * Proximity alone cannot decide this. Every route anchored on a nest has to start inside
+ * LINK_RADIUS to link at all, so several genuinely different supply lines out of the same crack
+ * are unavoidably clustered — measured at under one node spacing apart. A distance-only rule loose
+ * enough to catch a real re-lay would merge them, and the player could never build a second line
+ * from the same door. Heading is what separates them: continuing a line points the same way the
+ * line was already going; fanning a new line out of the same crack does not.
+ */
+function adoptNearbyRoute(world: World, x: number, y: number, heading: number): Route | null {
+  // Generous, because heading is doing the discriminating now: a lay stops laying up to a full
+  // node spacing before the scout stops walking, so a genuine resume starts ~2 spacings out.
   const reach = NODE_SPACING * 2.5;
+  const hx = Math.cos(heading);
+  const hy = Math.sin(heading);
   let best: Route | null = null;
-  let bestD = reach * reach;
+  let bestScore = -Infinity;
   for (let i = 0; i < world.routes.length; i++) {
     const r = world.routes[i];
     if (r.nodes.length === 0) continue;
     const tail = r.nodes[r.nodes.length - 1];
     const d = dist2(tail.x, tail.y, x, y);
-    if (d < bestD) {
-      bestD = d;
+    if (d > reach * reach) continue;
+    // Within ~60 degrees of the direction that trail was last heading.
+    const align = tail.dx * hx + tail.dy * hy;
+    if (align < ADOPT_MIN_ALIGN) continue;
+    // Re-laying is overwhelmingly about repairing a line whose source ran dry, or finishing one
+    // that never reached anything — prefer those over a healthy, linked line.
+    const score = align + (r.dry || !r.linked ? 1 : 0) - d / (reach * reach);
+    if (score > bestScore) {
+      bestScore = score;
       best = r;
     }
   }

@@ -160,6 +160,39 @@ export const NIGHT_SUSPICION_FLOOR: Record<NightIndex, number> = { 1: 0, 2: 10, 
  */
 export const CRITICAL_RESERVE = 0.22;
 
+/**
+ * Cosine of the widest turn that still counts as "continuing the same trail" when the player
+ * re-starts a lay on top of a trail end. cos(60 deg). Three supply lines out of one crack were
+ * measured starting within 19 units of each other, so distance cannot discriminate them; their
+ * headings differ by up to 180 degrees, so this can.
+ */
+export const ADOPT_MIN_ALIGN = 0.5;
+
+/**
+ * Ceiling on the share of hauling labour a single failing reserve may hold.
+ *
+ * Demand weighting is right when the reserve can recover — measured share glides 89 % -> 50 % over
+ * ~90 s as moisture refills. It is wrong when it cannot: with water reachable only down the long
+ * lit fridge line, 100 % of the colony pinned itself on the most exposed route in the game for a
+ * whole night, and food drained behind it. A player may rationally decide to run thin on one
+ * reserve rather than march bodies through the light; without this cap the colony overrules that
+ * decision and there is no way to express it. Starving slowly is recoverable; force-feeding the
+ * entire workforce into a patrol is not.
+ */
+export const LABOUR_SHARE_CAP = 0.75;
+
+/**
+ * How hard a route's mean exposure counts against it when workers choose a line. Exposure is the
+ * game's central currency, so when the player has laid both a safe line and a risky one to the
+ * same kind of resource, the colony should take the safe one — route geometry steering the
+ * colony's own labour, not only the evidence the household finds.
+ */
+export const EXPOSURE_AVERSION = 0.7;
+// Measured, not guessed. At 1.6 the aversion outweighed the traffic term, so workers crowded the
+// single safest line instead of spreading across the network and the careful strategy fell from 50
+// roaches to 35 — under the win threshold. 0.7 keeps the preference (verified in balance.test.ts)
+// while leaving traffic in charge of load balancing: 51 roaches, one response tier lower.
+
 export const WIN_POPULATION = 36;
 export const WIN_FOOD = 120;
 export const WIN_WATER = 90;
@@ -169,6 +202,12 @@ export const WIN_WATER = 90;
 export const FOOT_WARN_TIME = 1.15;
 export const FOOT_RADIUS = 150;
 export const FOOT_KILL_RADIUS = 122;
+/**
+ * Widest the footfall telegraph opens. Sized so the ellipse (semi-minor 0.62x) stays inside the
+ * 1200x675 view: the warning has to read as a shape contracting toward a point, and a shape larger
+ * than the screen cannot.
+ */
+export const FOOT_TELEGRAPH_MAX = 300;
 export const PATROL_STEP_INTERVAL = 1.45;
 export const TRAP_RADIUS = 62;
 export const TRAP_ARM_TIME = 2.2;

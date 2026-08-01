@@ -1,5 +1,7 @@
 import { clamp, clamp01, dist2 } from '../core/math.ts';
 import {
+  EXPOSURE_AVERSION,
+  LABOUR_SHARE_CAP,
   EVIDENCE_BASELINE,
   HARVEST_SLOTS,
   WORKER_EVIDENCE_CEILING,
@@ -459,6 +461,20 @@ function tryAcquireRoute(world: World, w: Worker): boolean {
   const foodFrac = c.foodCap > 0 ? c.food / c.foodCap : 1;
   const waterFrac = c.waterCap > 0 ? c.water / c.waterCap : 1;
 
+  // How the colony's hauling labour is split right now, so a reserve that cannot recover cannot
+  // keep conscripting workers forever.
+  let foodTraffic = 0;
+  let waterTraffic = 0;
+  for (let i = 0; i < world.routes.length; i++) {
+    const r = world.routes[i];
+    if (!r.linked || r.traffic <= 0) continue;
+    const res = findResource(world, r.resourceId);
+    if (!res) continue;
+    if (res.kind === 'food') foodTraffic += r.traffic;
+    else waterTraffic += r.traffic;
+  }
+  const hauling = foodTraffic + waterTraffic;
+
   let best: number = -1;
   let bestScore = Infinity;
   for (let i = 0; i < world.routes.length; i++) {
@@ -483,7 +499,11 @@ function tryAcquireRoute(world: World, w: Worker): boolean {
     const other = kind === 'food' ? waterFrac : foodFrac;
     let demand = clamp(frac / Math.max(other, 0.02), 0.45, 1.8);
     if (world.shortage === kind) demand *= 0.5;
-    const score = (d2 + r.traffic * 9000) * demand;
+    // ...but only up to a point. Past the cap the discount is withdrawn, so the other line starts
+    // winning workers again and a permanently failing reserve cannot take the whole colony.
+    const share = hauling > 0 ? (kind === 'food' ? foodTraffic : waterTraffic) / hauling : 0;
+    if (share >= LABOUR_SHARE_CAP) demand = Math.max(demand, 1);
+    const score = (d2 + r.traffic * 9000) * demand * (1 + r.exposure * EXPOSURE_AVERSION);
     if (score < bestScore) {
       bestScore = score;
       best = i;

@@ -165,6 +165,13 @@ export class Overlays {
 
     const best = loadBestRun();
     const crit = world.winCriteria;
+    const tally = world.finalTally ?? {
+      population: c.population,
+      food: c.food,
+      water: c.water,
+      functionsBuilt: world.nests.filter((n) => n.claimed && !n.home).length,
+      functionsTotal: world.nests.filter((n) => !n.home).length,
+    };
     this.show(
       won ? 'win' : 'lose',
       `<div class="card ${won ? 'win' : 'lose'}">
@@ -177,10 +184,10 @@ export class Overlays {
             : ''
         }
         <ul class="criteria">
-          ${critLine(crit.population, `${WIN_POPULATION} roaches`, `${c.population}`)}
-          ${critLine(crit.food, `${WIN_FOOD} food banked`, `${Math.floor(c.food)}`)}
-          ${critLine(crit.water, `${WIN_WATER} moisture banked`, `${Math.floor(c.water)}`)}
-          ${critLine(crit.nests, 'All three nest functions built', `${world.nests.filter((n) => n.claimed).length}/4`)}
+          ${critLine(crit.population, `${WIN_POPULATION} roaches`, `${tally.population}`)}
+          ${critLine(crit.food, `${WIN_FOOD} food banked`, `${Math.floor(tally.food)}`)}
+          ${critLine(crit.water, `${WIN_WATER} moisture banked`, `${Math.floor(tally.water)}`)}
+          ${critLine(crit.nests, `All ${tally.functionsTotal} nest functions built`, `${tally.functionsBuilt}/${tally.functionsTotal}`)}
           ${critLine(crit.survived, 'Survived the final response', crit.survived ? 'yes' : 'no')}
         </ul>
         ${statsHtml([
