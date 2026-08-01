@@ -120,7 +120,7 @@ export async function step(page, opts = {}) {
   // 1. A pending one-of-three choice. Answered by key, exactly as a player would — and only when it
   //    is affordable, which is what the choice panel tells them. An offer never expires, so a player
   //    looking at a cost they cannot meet goes and earns it instead of pressing the key again.
-    // Match the guidance: the HUD only recommends a purchase that leaves the colony able to keep
+  // Match the guidance: the HUD only recommends a purchase that leaves the colony able to keep
   // feeding itself, so the bot buys on the same terms a guided player would.
   const affordableOffers = s.adaptations.offers.filter(
     (o) => s.colony.food >= o.costFood + 14 && s.colony.water >= o.costWater + 10,

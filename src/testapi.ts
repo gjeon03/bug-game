@@ -65,7 +65,15 @@ export interface StateSnapshot {
       affordable: boolean;
     }[];
   };
-  zones: { id: string; hold: number; workers: number; routed: boolean; contested: boolean }[];
+  zones: {
+    id: string;
+    hold: number;
+    held: boolean;
+    footholds: number;
+    workers: number;
+    routed: boolean;
+    contested: boolean;
+  }[];
   routines: {
     kind: string;
     phase: string;
@@ -288,6 +296,8 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
     zones: world.zones.map((z) => ({
       id: z.id,
       hold: z.hold,
+      held: z.held,
+      footholds: z.footholds,
       workers: z.workers,
       routed: z.routed,
       contested: z.contested,

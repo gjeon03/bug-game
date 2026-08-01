@@ -225,6 +225,24 @@ export function holdTerritory(world: World, opts: PlayerOptions = COVERED): bool
   const next = nextZoneToHold(world);
   if (!next) return false;
   const zone = next.spec;
+  // Own the ground first: a claimed crack inside the region is standing presence that survives a
+  // panic, which is what the objective line tells the player in this operation.
+  const crack = world.nests.find(
+    (n) =>
+      !n.claimed &&
+      n.unlockOp <= world.operation &&
+      n.x >= zone.x &&
+      n.x <= zone.x + zone.w &&
+      n.y >= zone.y &&
+      n.y <= zone.y + zone.h,
+  );
+  if (crack) {
+    if (world.colony.food >= crack.costFood && world.colony.water >= crack.costWater) {
+      return claimNest(world, crack.id, opts);
+    }
+    // Cannot pay for it yet — go and earn it rather than milling about in the region.
+    return false;
+  }
   if (next.state.routed && next.state.workers > 0) return false;
   const inZone = world.resources.filter(
     (r) =>
@@ -250,9 +268,42 @@ export function holdTerritory(world: World, opts: PlayerOptions = COVERED): bool
  * a supply line is a thing you maintain. This is the smallest behaviour that counts as maintaining
  * one: when a reserve has no live source, go and connect another.
  */
+/**
+ * Spends a healthy larder on the things that raise its own ceilings.
+ *
+ * Claiming buys the ground, fitting it out buys the capability, and both are what the objective line
+ * tells a player to do when a reserve is full. A player that only hauls is not a competent player.
+ */
+export function spendSurplus(world: World, opts: PlayerOptions = COVERED): boolean {
+  const c = world.colony;
+  // Fit out what is already owned before buying more ground.
+  const unfitted = world.nests.find((n) => n.claimed && !n.home && n.fn === null);
+  if (unfitted && c.food >= unfitted.fitFood + 12 && c.water >= unfitted.fitWater + 8) {
+    const nurseries = world.nests.filter((n) => n.fn === 'nursery').length;
+    const caches = world.nests.filter((n) => n.fn === 'cache').length;
+    const fn: FootholdFunction =
+      c.population >= c.capacity - 3 || nurseries === 0
+        ? 'nursery'
+        : caches === 0
+          ? 'cache'
+          : 'bolthole';
+    return fitOut(world, unfitted.id, fn, opts);
+  }
+  const claimable = world.nests.find(
+    (n) =>
+      !n.claimed &&
+      n.unlockOp <= world.operation &&
+      c.food >= n.costFood + 12 &&
+      c.water >= n.costWater + 8,
+  );
+  if (claimable) return claimNest(world, claimable.id, opts);
+  return false;
+}
+
 export function maintainLines(world: World, opts: PlayerOptions = COVERED): void {
   if (chaseRoutine(world, opts)) return;
   if (holdTerritory(world, opts)) return;
+  if (spendSurplus(world, opts)) return;
   for (const kind of ['water', 'food'] as const) {
     if (world.status !== 'playing') return;
     if (linkedTo(world, kind) >= linesWanted(world)) continue;

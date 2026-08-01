@@ -64,3 +64,33 @@ export function rgba(hex: string, alpha: number): string {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
+
+/**
+ * Two extra worker colourings.
+ *
+ * A colony drawn from a single sprite reads as a chain of stamped decals however well the individual
+ * sprite is drawn — a critic counted nine roaches around the nest in identical poses and called them
+ * exactly that. Three bakes cost two extra atlas rows and nothing at runtime, and they are the
+ * cheapest possible way to make a crowd look like animals rather than like a pattern.
+ */
+export const WORKER_PAL_DARK: RoachPalette = {
+  bodyLo: '#2a1806',
+  bodyHi: '#5e3714',
+  shell: '#341d05',
+  shellHi: '#7b4a1c',
+  head: '#1e1105',
+  leg: '#160c04',
+  rim: '#0b0602',
+  spec: '#9a6c36',
+};
+
+export const WORKER_PAL_PALE: RoachPalette = {
+  bodyLo: '#4a2f14',
+  bodyHi: '#96613a',
+  shell: '#5b3a15',
+  shellHi: '#b87f45',
+  head: '#3a2410',
+  leg: '#2a1a0b',
+  rim: '#180e05',
+  spec: '#dcac6c',
+};

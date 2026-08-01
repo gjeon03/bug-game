@@ -65,7 +65,7 @@ const SAMPLER_INSTALL = `() => {
     if (s.adaptations.taken.length !== S.lastAdapts) { mark('adaptation', s.adaptations.taken.join(',')); S.lastAdapts = s.adaptations.taken.length; }
     const fits = s.nests.filter((n) => n.fn).length;
     if (fits !== S.lastFits) { mark('foothold', 'functions ' + fits); S.lastFits = fits; }
-    const held = s.zones.filter((z) => z.hold >= 0.8).length;
+    const held = s.zones.filter((z) => z.held).length;
     if (held !== S.lastHeld) { mark('territory', 'held ' + held); S.lastHeld = held; }
     const live = s.routines.find((r) => r.phase === 'incoming' || r.phase === 'active');
     const phase = live ? live.kind + ':' + live.phase : '';
@@ -236,7 +236,7 @@ async function playRun(page, { family, prefix, sprint = false, maxMinutes = 22 }
       food: Math.round(s.colony.food),
       water: Math.round(s.colony.water),
       adapts: s.adaptations.taken.length,
-      held: s.zones.filter((z) => z.hold >= 0.8).length,
+      held: s.zones.filter((z) => z.held).length,
     });
     if (s.stats.firstDeliveryAt >= 0)
       await once('firstDelivery', '03-first-delivery', s.stats.firstDeliveryAt);
@@ -303,7 +303,7 @@ async function scenarioRun(browser, { name, family, seed, sprint }) {
     runSeconds: +end.time.toFixed(1),
     finalColony: end.colony,
     adaptations: end.adaptations.taken,
-    zonesHeld: end.zones.filter((z) => z.hold >= 0.8).map((z) => z.id),
+    zonesHeld: end.zones.filter((z) => z.held).map((z) => z.id),
     zoneHold: end.zones.map((z) => ({ id: z.id, hold: +z.hold.toFixed(2) })),
     heat: end.heat,
     suspicion: end.suspicion,

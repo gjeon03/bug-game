@@ -41,6 +41,8 @@ interface Flash {
 }
 
 const ROACH_ROWS = { scout: 0, worker: 1, nymph: 2 } as const;
+/** Worker atlas rows, one per colouring. A worker's `variant` picks its row for life. */
+const WORKER_ROWS = [1, 3, 4] as const;
 /** Antennae are drawn procedurally for at most this many bodies per frame. */
 const ANTENNA_BUDGET = 30;
 
@@ -544,7 +546,7 @@ export class Renderer {
         ctx.fill();
         ctx.strokeStyle = 'rgba(150,178,204,0.35)';
         ctx.lineWidth = 3;
-        ctx.setLineDash([4, 7]);
+        ctx.setLineDash([]);
         ctx.beginPath();
         ctx.ellipse(n.x, n.y, R * 0.8, R * 0.6, 0, 0, TAU);
         ctx.stroke();
@@ -1078,7 +1080,7 @@ export class Renderer {
       if (!w.alive) continue;
       if (w.x < b.x0 || w.x > b.x1 || w.y < b.y0 || w.y > b.y1) continue;
       const nymph = w.nymphTime > 0;
-      const row = nymph ? ROACH_ROWS.nymph : ROACH_ROWS.worker;
+      const row = nymph ? ROACH_ROWS.nymph : WORKER_ROWS[w.variant % WORKER_ROWS.length];
       const frame = Math.floor(w.gait) % GAIT_FRAMES;
 
       // Contact shadow keeps the body attached to the floor.
@@ -1098,29 +1100,59 @@ export class Renderer {
       if (w.carrying) {
         // Cargo rides the back, not the head, and is small enough that the roach's own silhouette
         // still reads — a blob as wide as the thorax looked like an ootheca stuck to its face.
-        const cx = w.x - Math.cos(w.angle) * 11;
-        const cy = w.y - Math.sin(w.angle) * 11;
-        const bob = Math.sin(w.gait * 2) * 1.2;
+        // Cargo is carried *above* the body, and it is an object rather than a dot.
+        //
+        // The old version was a 5×4-unit ellipse — about a fifth of a body length, ~6 px on screen,
+        // and the moisture variant was cold blue on a cold blue trail over a cold blue floor. A
+        // critic counted six workers on a live line with no visible cargo on any of them. Cargo now
+        // has its own shadow, its own silhouette and a warm key so it separates from everything the
+        // floor palette owns.
+        const cx = w.x - Math.cos(w.angle) * 9;
+        const cy = w.y - Math.sin(w.angle) * 9;
+        const bob = Math.sin(w.gait * 2) * 1.3;
+        // A shadow cast onto the roach's own back is what makes the cargo read as held, not painted.
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.beginPath();
+        ctx.ellipse(cx + 1.5, cy + 2 + bob, 8, 6, w.angle, 0, TAU);
+        ctx.fill();
         if (w.carrying === 'food') {
-          ctx.fillStyle = '#c9a468';
+          // An irregular crumb, not a bead: four overlapping lobes with a lit top-left facet.
+          ctx.fillStyle = '#d8b070';
           ctx.beginPath();
-          ctx.ellipse(cx, cy + bob, 5, 4, w.angle, 0, TAU);
+          ctx.moveTo(cx - 8, cy + bob);
+          ctx.lineTo(cx - 3, cy - 7 + bob);
+          ctx.lineTo(cx + 6, cy - 4 + bob);
+          ctx.lineTo(cx + 8, cy + 3 + bob);
+          ctx.lineTo(cx + 1, cy + 7 + bob);
+          ctx.closePath();
           ctx.fill();
-          ctx.fillStyle = 'rgba(255,228,180,0.5)';
+          ctx.fillStyle = 'rgba(255,236,192,0.85)';
           ctx.beginPath();
-          ctx.ellipse(cx - 1.5, cy - 1.5 + bob, 2.6, 2, w.angle, 0, TAU);
+          ctx.moveTo(cx - 6, cy - 1 + bob);
+          ctx.lineTo(cx - 2, cy - 6 + bob);
+          ctx.lineTo(cx + 3, cy - 3 + bob);
+          ctx.closePath();
           ctx.fill();
+          ctx.strokeStyle = 'rgba(84,54,20,0.7)';
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
         } else {
-          ctx.fillStyle = 'rgba(150,205,235,0.85)';
+          // A droplet: heavier at the bottom, with a hard specular dot and a bright meniscus.
+          ctx.fillStyle = 'rgba(126,196,236,0.95)';
           ctx.beginPath();
-          ctx.ellipse(cx, cy + bob, 4.4, 4, 0, 0, TAU);
+          ctx.ellipse(cx, cy + 1 + bob, 7, 7.6, 0, 0, TAU);
           ctx.fill();
-          ctx.fillStyle = 'rgba(240,252,255,0.8)';
+          ctx.fillStyle = 'rgba(196,238,255,0.9)';
           ctx.beginPath();
-          ctx.arc(cx - 1.6, cy - 1.6 + bob, 1.5, 0, TAU);
+          ctx.ellipse(cx - 2, cy - 2 + bob, 2.8, 2.4, 0, 0, TAU);
           ctx.fill();
+          ctx.strokeStyle = 'rgba(226,248,255,0.85)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(cx, cy + 1 + bob, 7.2, Math.PI * 0.9, Math.PI * 1.8);
+          ctx.stroke();
         }
-        this.drawCalls += 2;
+        this.drawCalls += 3;
       }
     }
 
@@ -1144,14 +1176,29 @@ export class Renderer {
     ctx.fill();
     this.drawCalls++;
 
+    // A rim-light, not an outline. A closed traced ellipse around the player is a selection ring in
+    // every piece of software the player has ever used; a lit edge along one side is a light source.
     ctx.save();
     ctx.translate(s.x, s.y);
     ctx.rotate(s.angle);
-    ctx.strokeStyle = rgba(PAL.warm, 0.85);
-    ctx.lineWidth = 2.4;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = rgba(PAL.warm, s.spotted > 0.25 ? 0.35 : 0.6);
+    ctx.lineWidth = 3.2;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.ellipse(-1, 0, 16, 8.4, 0, 0, TAU);
+    ctx.ellipse(-1, 0, 15, 8, 0, Math.PI * 0.62, Math.PI * 1.52);
     ctx.stroke();
+    if (s.spotted > 0.25) {
+      // Being noticed lights the other edge in danger red, so "they can see me" is on the body
+      // itself rather than on a floating progress arc.
+      ctx.strokeStyle = rgba(PAL.danger, 0.3 + s.spotted * 0.6);
+      ctx.lineWidth = 3.4;
+      ctx.beginPath();
+      ctx.ellipse(-1, 0, 15, 8, 0, Math.PI * 1.56, Math.PI * 2.56);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+    ctx.globalCompositeOperation = 'source-over';
     ctx.restore();
     this.drawCalls++;
 
@@ -1172,16 +1219,6 @@ export class Renderer {
       );
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
-      this.drawCalls++;
-    }
-
-    if (s.spotted > 0.25) {
-      const r = 30 + s.spotted * 22;
-      ctx.strokeStyle = rgba(PAL.danger, 0.25 + s.spotted * 0.55);
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, r, -Math.PI / 2, -Math.PI / 2 + TAU * s.spotted);
-      ctx.stroke();
       this.drawCalls++;
     }
 

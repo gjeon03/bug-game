@@ -299,7 +299,7 @@ export function spawnWorker(
     w.panicTime = 0;
     w.gait = r.range(0, 6.28);
     w.variant = r.int(0, 3);
-    w.scale = r.range(0.9, 1.08);
+    w.scale = r.range(0.82, 1.16);
     w.exposure = 0;
     w.hazardId = -1;
     w.targetResource = null;

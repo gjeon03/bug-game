@@ -116,6 +116,18 @@ const nearestUnclaimedNest = (world: World) => {
   return best;
 };
 
+/** An unclaimed, currently-claimable crack inside this region, if there is one. */
+const crackIn = (world: World, zone: { x: number; y: number; w: number; h: number }) =>
+  world.nests.find(
+    (n) =>
+      !n.claimed &&
+      n.unlockOp <= world.operation &&
+      n.x >= zone.x &&
+      n.x <= zone.x + zone.w &&
+      n.y >= zone.y &&
+      n.y <= zone.y + zone.h,
+  ) ?? null;
+
 const claimedSatellites = (world: World): number =>
   world.nests.filter((n) => !n.home && n.claimed).length;
 
@@ -323,6 +335,13 @@ export const OPERATIONS: readonly OperationSpec[] = [
           const next = nextZoneToHold(w);
           if (!next) return 'Hold what you have.';
           const pct = Math.round(next.state.hold * 100);
+          // The strongest move in the final operation is to own a crack in the region: a claimed
+          // crack keeps holding it while the colony is sheltering inside. That is not discoverable
+          // from a hold percentage, so the objective says it outright.
+          const crack = crackIn(w, next.spec);
+          if (crack) {
+            return `Claim ${crack.label} — a crack you own holds ${next.spec.name} even while the colony is hiding.`;
+          }
           if (!next.state.routed)
             return `Run a trail through ${next.spec.name} — it holds at ${pct}%.`;
           if (next.state.workers === 0)
@@ -336,8 +355,22 @@ export const OPERATIONS: readonly OperationSpec[] = [
           }
           return null;
         },
+        shortfall: (w) => {
+          const next = nextZoneToHold(w);
+          const crack = next ? crackIn(w, next.spec) : null;
+          if (!crack) return null;
+          if (w.colony.food < crack.costFood) {
+            return { kind: 'food' as const, amount: crack.costFood - w.colony.food };
+          }
+          if (w.colony.water < crack.costWater) {
+            return { kind: 'water' as const, amount: crack.costWater - w.colony.water };
+          }
+          return null;
+        },
         target: (w) => {
           const next = nextZoneToHold(w);
+          const crack = next ? crackIn(w, next.spec) : null;
+          if (crack) return { x: crack.x, y: crack.y, label: crack.label };
           return next
             ? {
                 x: next.spec.x + next.spec.w / 2,

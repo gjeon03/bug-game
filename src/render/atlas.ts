@@ -1,6 +1,15 @@
 import { Rng, fbm2D } from '../core/rng.ts';
 import { TAU } from '../core/math.ts';
-import { NYMPH_PAL, PAL, SCOUT_PAL, WORKER_PAL, rgba, type RoachPalette } from './palette.ts';
+import {
+  NYMPH_PAL,
+  PAL,
+  SCOUT_PAL,
+  WORKER_PAL,
+  WORKER_PAL_DARK,
+  WORKER_PAL_PALE,
+  rgba,
+  type RoachPalette,
+} from './palette.ts';
 
 /**
  * Every sprite in the game, generated procedurally at boot.
@@ -249,11 +258,13 @@ function drawRoachBody(
 
 function buildRoachAtlas(): HTMLCanvasElement {
   const cols = GAIT_FRAMES + 1;
-  const rows = 3;
+  const rows = 5;
   const c = makeCanvas(cols * CELL, rows * CELL);
   const g = ctx2d(c);
-  const pals = [SCOUT_PAL, WORKER_PAL, NYMPH_PAL];
-  const lengths = [26, 20, 13].map((v) => v * ATLAS_SCALE);
+  // Rows 1, 3 and 4 are the same worker at three colourings and three body lengths, so a column of
+  // roaches is never the same animal repeated.
+  const pals = [SCOUT_PAL, WORKER_PAL, NYMPH_PAL, WORKER_PAL_DARK, WORKER_PAL_PALE];
+  const lengths = [26, 20, 13, 22, 18].map((v) => v * ATLAS_SCALE);
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {

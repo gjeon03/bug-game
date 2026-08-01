@@ -39,8 +39,21 @@ export const ZONES: readonly ZoneSpec[] = [
 
 export interface ZoneState {
   id: string;
-  /** 0..1. Three zones at or above HOLD_THRESHOLD simultaneously is the win. */
+  /** Claimed cracks inside the region — standing presence that a panic cannot remove. */
+  footholds: number;
+  /** 0..1. Rises with a live route and bodies present, falls when the household works the zone. */
   hold: number;
+  /**
+   * Whether the region currently counts as held.
+   *
+   * Deliberately hysteretic: a zone becomes held at {@link HOLD_THRESHOLD} and stops being held only
+   * below {@link HOLD_RELEASE}. Without the gap, a region dropped out of "held" the instant its
+   * staffing lapsed for a second, so holding three at once through a 62-second extermination was a
+   * knife-edge rather than a fight — measured: a run reached the finale with 45 roaches and four
+   * adaptations and still finished holding one region. You should have to be *pushed out* of a
+   * region, not merely distracted from it.
+   */
+  held: boolean;
   /** Live worker count inside the zone this step, for the HUD and for hold gain. */
   workers: number;
   /** Whether a linked route currently runs through the zone. */
@@ -49,8 +62,10 @@ export interface ZoneState {
   contested: boolean;
 }
 
-/** Hold at or above this counts as held. */
+/** Hold at or above this claims a region. */
 export const HOLD_THRESHOLD = 0.8;
+/** Hold below this loses it again. */
+export const HOLD_RELEASE = 0.5;
 /** How many zones must be held at once to complete the final operation. */
 export const ZONES_TO_WIN = 3;
 /**
@@ -65,13 +80,35 @@ export const ZONES_TO_WIN = 3;
 export const HOLD_GAIN = 0.028;
 /** Hold lost per second while nothing of the colony is present. */
 export const HOLD_DECAY = 0.022;
+/** Hold lost per second while a live line still runs through, but nobody is working it. */
+export const HOLD_IDLE_DECAY = 0.008;
 /** Extra hold lost per second while the household is actively working the zone. */
-export const HOLD_SUPPRESS = 0.13;
-/** Workers inside a zone needed for full hold gain. */
+export const HOLD_SUPPRESS = 0.06;
+/** Bodies inside a zone needed for full hold gain. */
 export const HOLD_FULL_STAFF = 6;
+/**
+ * How many bodies a claimed crack inside the region is worth.
+ *
+ * This is the link between operation 3 and operation 4. Without it, territory depended entirely on
+ * roaches standing in the open — so the moment the extermination started and the colony panicked
+ * into the walls, every region the player had taken evaporated, and a run that arrived at the finale
+ * with 45 roaches and four adaptations still finished holding one. A crack you own is a presence in
+ * that part of the kitchen whether or not anybody is currently standing outside it.
+ */
+export const FOOTHOLD_PRESENCE = 3;
+/** Share of the hold rate a region earns from presence alone, with no live line through it. */
+export const ROUTELESS_GAIN = 0.55;
 
 export function createZoneStates(): ZoneState[] {
-  return ZONES.map((z) => ({ id: z.id, hold: 0, workers: 0, routed: false, contested: false }));
+  return ZONES.map((z) => ({
+    id: z.id,
+    footholds: 0,
+    hold: 0,
+    held: false,
+    workers: 0,
+    routed: false,
+    contested: false,
+  }));
 }
 
 function inside(z: ZoneSpec, x: number, y: number): boolean {
@@ -87,8 +124,20 @@ export function updateTerritory(world: World, dt: number): void {
   const states = world.zones;
   for (let i = 0; i < states.length; i++) {
     states[i].workers = 0;
+    states[i].footholds = 0;
     states[i].routed = false;
     states[i].contested = false;
+  }
+
+  for (let i = 0; i < world.nests.length; i++) {
+    const n = world.nests[i];
+    if (!n.claimed) continue;
+    for (let z = 0; z < ZONES.length; z++) {
+      if (inside(ZONES[z], n.x, n.y)) {
+        states[z].footholds++;
+        break;
+      }
+    }
   }
 
   // Bodies present.
@@ -134,22 +183,30 @@ export function updateTerritory(world: World, dt: number): void {
 
   for (let i = 0; i < states.length; i++) {
     const st = states[i];
-    const staffed = Math.min(1, st.workers / HOLD_FULL_STAFF);
-    let delta = -HOLD_DECAY;
-    if (st.routed && st.workers > 0) delta = HOLD_GAIN * staffed;
+    // Territory is bodies and owned ground; a live line through the region makes it faster, but is
+    // not a precondition. Requiring one was measured doing the wrong thing: a region containing a
+    // claimed crack and nineteen working roaches lost hold at full rate for the seconds between the
+    // player finishing one supply line and starting the next, so hold thrashed between 0 and 1 all
+    // through the final operation and three regions were never held at the same moment.
+    const presence = st.workers + st.footholds * FOOTHOLD_PRESENCE;
+    const staffed = Math.min(1, presence / HOLD_FULL_STAFF);
+    let delta: number;
+    if (presence > 0) delta = HOLD_GAIN * staffed * (st.routed ? 1 : ROUTELESS_GAIN);
+    else delta = st.routed ? -HOLD_IDLE_DECAY : -HOLD_DECAY;
     if (st.contested) delta -= HOLD_SUPPRESS;
-    const before = st.hold;
     st.hold = clamp01(st.hold + delta * dt);
-    if (before < HOLD_THRESHOLD && st.hold >= HOLD_THRESHOLD) {
+    if (!st.held && st.hold >= HOLD_THRESHOLD) {
+      st.held = true;
       world.events.push({ t: 'zoneHeld', zone: st.id });
-    } else if (before >= HOLD_THRESHOLD && st.hold < HOLD_THRESHOLD) {
+    } else if (st.held && st.hold < HOLD_RELEASE) {
+      st.held = false;
       world.events.push({ t: 'zoneLost', zone: st.id });
     }
   }
 }
 
 export function heldZones(world: World): ZoneState[] {
-  return world.zones.filter((z) => z.hold >= HOLD_THRESHOLD);
+  return world.zones.filter((z) => z.held);
 }
 
 /** The zone closest to being held that is not held yet — what the HUD should point at. */
@@ -157,7 +214,7 @@ export function nextZoneToHold(world: World): { spec: ZoneSpec; state: ZoneState
   let best: { spec: ZoneSpec; state: ZoneState } | null = null;
   for (let i = 0; i < world.zones.length; i++) {
     const st = world.zones[i];
-    if (st.hold >= HOLD_THRESHOLD) continue;
+    if (st.held) continue;
     if (!best || st.hold > best.state.hold) best = { spec: ZONES[i], state: st };
   }
   return best;

@@ -666,7 +666,15 @@ function drawProp(g: CanvasRenderingContext2D, p: Prop): void {
         const r = hw * (0.95 + noise(p, i + 5) * 0.45);
         g.fillStyle = 'rgba(150,200,232,0.5)';
         g.beginPath();
-        g.ellipse(Math.cos(a) * r, Math.sin(a) * r * 0.7, 4 + noise(p, i) * 3, 3 + noise(p, i + 1) * 2, a, 0, TAU);
+        g.ellipse(
+          Math.cos(a) * r,
+          Math.sin(a) * r * 0.7,
+          4 + noise(p, i) * 3,
+          3 + noise(p, i + 1) * 2,
+          a,
+          0,
+          TAU,
+        );
         g.fill();
         g.fillStyle = 'rgba(226,246,255,0.55)';
         g.beginPath();

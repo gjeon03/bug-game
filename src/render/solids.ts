@@ -440,6 +440,43 @@ function drawFixture(
         g.lineTo(x + sw - 40, y + sh - 6);
       }
       g.stroke();
+      if (role === 'island') {
+        // An island is a worktop with an overhang, not a wall cabinet: a bright counter lip all the
+        // way round, a deeper shadow under the overhang, and two stool feet tucked beneath it. Three
+        // fixtures shared this draw path and the island came out of it as an anonymous black slab.
+        g.fillStyle = 'rgba(214,232,250,0.16)';
+        g.fillRect(x - 10, y - 8, sw + 20, 14);
+        g.fillStyle = 'rgba(0,0,0,0.42)';
+        g.fillRect(x - 10, y + sh - 6, sw + 20, 22);
+        g.strokeStyle = 'rgba(214,232,250,0.22)';
+        g.lineWidth = 4;
+        g.strokeRect(x - 8, y - 6, sw + 16, sh + 14);
+        // A chopping board and a bowl left on the top — the island is where things get put down.
+        g.fillStyle = 'rgba(150,116,72,0.5)';
+        rr(g, x + sw * 0.14, y + sh * 0.3, 210, 140, 12);
+        g.fill();
+        g.strokeStyle = 'rgba(90,66,36,0.6)';
+        g.lineWidth = 4;
+        g.stroke();
+        g.fillStyle = 'rgba(196,212,228,0.4)';
+        g.beginPath();
+        g.ellipse(x + sw * 0.62, y + sh * 0.44, 78, 62, 0, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = 'rgba(20,28,36,0.6)';
+        g.beginPath();
+        g.ellipse(x + sw * 0.62, y + sh * 0.44, 58, 44, 0, 0, Math.PI * 2);
+        g.fill();
+      }
+      if (role === 'counter') {
+        // A drawer bank at one end: the horizontal rhythm that separates a counter run from a
+        // full-height pantry at a glance.
+        const bank = Math.min(sw * 0.34, 340);
+        for (let i = 0; i < 3; i++) {
+          const dy = y + 30 + i * ((sh - 90) / 3);
+          panel(g, x + 20, dy, bank, (sh - 100) / 3 - 8);
+          handleBar(g, x + 20 + bank * 0.3, dy + (sh - 100) / 6 - 6, bank * 0.4, 11);
+        }
+      }
       if (role === 'pantry') {
         // A shelf edge visible through a gapped door — the pantry's tell.
         g.fillStyle = 'rgba(0,0,0,0.6)';

@@ -60,8 +60,11 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       # The E2E suite serves dist/ from a nested /bug-game/ path, so this is also the subpath check.
+      # The whole suite, not a subset. An independent verifier found CI was running 3 of 7 specs, so
+      # the performance gate, the full-run gate and the threat gate were never enforced on any
+      # machine but a developer's.
       - name: Browser tests (nested path)
-        run: pnpm exec playwright test tests/e2e/gameplay.spec.ts tests/e2e/deploy.spec.ts tests/e2e/restart.spec.ts
+        run: pnpm test:e2e
 
       - name: Upload evidence
         if: always()

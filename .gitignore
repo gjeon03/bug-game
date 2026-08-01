@@ -8,3 +8,6 @@ test-results/
 artifacts/tmp/
 .playwright-mcp/
 .claude/worktrees/
+
+# Scratch harnesses. Kept out of the repo so they cannot break format/lint/CI.
+scripts/tmp/
