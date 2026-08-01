@@ -221,7 +221,9 @@ export function chaseRoutine(world: World, opts: PlayerOptions = COVERED): boole
  * spent the player's attention on this.
  */
 export function holdTerritory(world: World, opts: PlayerOptions = COVERED): boolean {
-  if (world.operation < 4 || heldZones(world).length >= ZONES_TO_WIN) return false;
+  // Keep pushing past the minimum. The household breaks regions during the response, so a colony
+  // that stops at exactly three is one bad cloud from losing the run — a fourth is insurance.
+  if (world.operation < 4 || heldZones(world).length >= ZONES_TO_WIN + 1) return false;
   const next = nextZoneToHold(world);
   if (!next) return false;
   const zone = next.spec;

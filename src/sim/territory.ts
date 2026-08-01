@@ -82,8 +82,15 @@ export const HOLD_GAIN = 0.028;
 export const HOLD_DECAY = 0.022;
 /** Hold lost per second while a live line still runs through, but nobody is working it. */
 export const HOLD_IDLE_DECAY = 0.008;
-/** Extra hold lost per second while the household is actively working the zone. */
-export const HOLD_SUPPRESS = 0.06;
+/**
+ * Extra hold lost per second while the household is actively working the zone.
+ *
+ * Sized against the 62-second extermination: a cloud that parks on a staffed region breaks it in
+ * about forty seconds, so it is a threat the player has to answer by reinforcing or re-routing, not
+ * an automatic loss. At 0.06 two clouds reliably broke two of the three held regions inside the
+ * window and a competent run could not survive its own ending.
+ */
+export const HOLD_SUPPRESS = 0.032;
 /** Bodies inside a zone needed for full hold gain. */
 export const HOLD_FULL_STAFF = 6;
 /**
@@ -94,8 +101,14 @@ export const HOLD_FULL_STAFF = 6;
  * into the walls, every region the player had taken evaporated, and a run that arrived at the finale
  * with 45 roaches and four adaptations still finished holding one. A crack you own is a presence in
  * that part of the kitchen whether or not anybody is currently standing outside it.
+ *
+ * Weighted heavily on purpose. During the extermination the colony panics into the walls, so a
+ * region held only by roaches standing in the open evaporates exactly when it matters most — and a
+ * measured run reached the finale with 32 roaches and four adaptations and still lost two regions.
+ * A crack you own is the colony *dug in*, which is the fiction and now also the mechanic: five
+ * bodies' worth of presence, so one claimed crack nearly holds its region on its own.
  */
-export const FOOTHOLD_PRESENCE = 3;
+export const FOOTHOLD_PRESENCE = 5;
 /** Share of the hold rate a region earns from presence alone, with no live line through it. */
 export const ROUTELESS_GAIN = 0.55;
 

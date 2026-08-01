@@ -23,7 +23,7 @@ export const HEAT_CELLS = HEAT_COLS * HEAT_ROWS;
 /** A cell at or above this reads as "the household knows about this place". */
 export const HEAT_KNOWN = 0.42;
 /** Per-second decay of live heat toward the cell's own floor. */
-export const HEAT_DECAY = 0.021;
+export const HEAT_DECAY = 0.005;
 /**
  * Evidence is not erasable. A cell never falls below this fraction of the worst it ever was, so a
  * corridor the player hammered stays a known corridor for the rest of the run even after they stop

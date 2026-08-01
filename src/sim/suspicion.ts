@@ -23,8 +23,8 @@ const HEAT_PER_EVIDENCE = 0.05;
  * indefinitely. The first version was eight times hotter and saturated every cell the colony touched
  * within seconds, so the director never stopped acting.
  */
-const TRAIL_HEAT_RATE = 0.006;
-const WORKER_HEAT_RATE = 0.01;
+const TRAIL_HEAT_RATE = 0.016;
+const WORKER_HEAT_RATE = 0.02;
 /** Seconds a tier must hold before the household is allowed to escalate again. */
 export const TIER_HOLD = 25;
 

@@ -56,7 +56,7 @@ const ROUTINE_FIRST = 46;
 const BUDGET_RATE = 0.055;
 const BUDGET_MAX = 3;
 /** Minimum seconds between any two director actions, so pressure arrives in readable beats. */
-const ACTION_COOLDOWN = 17;
+const ACTION_COOLDOWN = 26;
 
 export function updateDirector(world: World, dt: number): void {
   if (world.status === 'won' || world.status === 'lost') return;
@@ -210,7 +210,9 @@ function updatePressure(world: World, dt: number): void {
   const known = knownCellCount(world);
   // Nothing to act on: the household cannot invent a location it has never seen activity in.
   const hot = hottestCell(world, (i) => world.recentTargets.includes(i));
-  if (!hot || hot.heat < HEAT_KNOWN * 0.5) {
+  // The household acts only on ground it genuinely knows about. Acting at half the threshold meant
+  // it started swinging at corridors it had barely noticed, roughly every seventeen seconds.
+  if (!hot || hot.heat < HEAT_KNOWN) {
     world.threatCooldown = 6;
     return;
   }

@@ -345,6 +345,9 @@ export const OPERATIONS: readonly OperationSpec[] = [
         action: (w) => {
           const next = nextZoneToHold(w);
           if (!next) return 'Hold what you have.';
+          if (w.finalResponse && heldZones(w).length >= ZONES_TO_WIN) {
+            return `Hold. They will break a region if they can — a fourth is insurance.`;
+          }
           const pct = Math.round(next.state.hold * 100);
           // The strongest move in the final operation is to own a crack in the region: a claimed
           // crack keeps holding it while the colony is sheltering inside. That is not discoverable
