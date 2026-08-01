@@ -164,28 +164,42 @@ export class Hud {
         this.last.suspClass = cls;
       }
     }
-    this.set(
+    this.setHtml(
       'cause',
-      susp.lastCause ? `Latest: ${CAUSE_LABELS[susp.lastCause]}` : 'No evidence yet.',
+      susp.lastCause
+        ? `<span class="rowicon">◂</span><span>${CAUSE_LABELS[susp.lastCause]}</span>`
+        : `<span class="rowicon">◂</span><span>No evidence yet.</span>`,
     );
-    this.set('next', world.nextResponse);
+    this.setHtml(
+      'next',
+      `<span class="rowicon">▸</span><span>${world.nextResponse.replace(/^Next: /, '')}</span>`,
+    );
 
     this.set('objective', world.objective);
 
-    this.toggle('tutorial', world.tutorial.length > 0);
-    if (world.tutorial.length > 0) this.setHtml('tutorial', world.tutorial);
-
-    this.toggle('toast', world.hint.length > 0);
-    if (world.hint.length > 0) this.setHtml('toast', world.hint);
-
+    // ── Bottom-centre arbitration. Four independently-mounted pills used to stack, twice saying the
+    // same thing about the same crumbs, against a contract that specifies one line. Priority is:
+    // transient feedback (a toast the player just caused) > contextual prompt > onboarding.
     const target = interactTarget(world);
-    if (target && world.status === 'playing') {
+    const showToast = world.hint.length > 0;
+    const showPrompt = !!target && world.status === 'playing';
+    const showTutorial = world.tutorial.length > 0 && !showToast && !showPrompt;
+
+    this.toggle('tutorial', showTutorial);
+    if (showTutorial) this.setHtml('tutorial', world.tutorial);
+
+    this.toggle('toast', showToast);
+    if (showToast) this.setHtml('toast', world.hint);
+
+    if (showPrompt && target) {
       const label =
         target.kind === 'nest'
           ? `<kbd>E</kbd> Claim ${target.label} — ${target.costFood} food, ${target.costWater} moisture`
           : target.kind === 'escape'
             ? `<kbd>E</kbd> ${target.label}`
-            : `<kbd>E</kbd> Inspect ${target.label}`;
+            : target.kind === 'sealed'
+              ? `<kbd>E</kbd> ${target.label}`
+              : `<kbd>E</kbd> Inspect ${target.label}`;
       this.setHtml('prompt', label);
       this.toggle('prompt', true);
       this.el.prompt?.classList.toggle('blocked', !target.affordable);

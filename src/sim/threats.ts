@@ -1,5 +1,6 @@
 import { dist2 } from '../core/math.ts';
 import {
+  BAIT_DPS,
   BAIT_RADIUS,
   FOOT_KILL_RADIUS,
   FOOT_RADIUS,
@@ -159,6 +160,10 @@ export function spawnSpray(world: World, index: number): void {
 export function stomp(world: World, x: number, y: number): void {
   world.footfalls.push({ x, y, warn: FOOT_WARN_TIME, warnTotal: FOOT_WARN_TIME, done: false });
   world.events.push({ t: 'footWarn', x, y });
+  // Scatter on the telegraph, not on the impact. Roaches that only reacted after the foot landed
+  // meant a patrol crossing a busy supply line deleted twenty workers in a few seconds, with the
+  // warning serving the player and nobody else.
+  panicWorkers(world, x, y, FOOT_RADIUS * 1.5);
 }
 
 function advanceAlongPath(
@@ -304,7 +309,7 @@ export function updateThreats(world: World, dt: number): void {
           w.panicTime = 1.4;
           w.angle = Math.atan2(w.y - h.y, w.x - h.x);
         }
-        if (h.age > 0 && world.rng.next() < dt * 0.5) killWorker(world, w, 'bait');
+        if (h.age > 0 && world.rng.next() < dt * BAIT_DPS) killWorker(world, w, 'bait');
       }
       if (scout.alive && dist2(scout.x, scout.y, h.x, h.y) < r2) {
         scout.spotted = Math.min(1, scout.spotted + dt * 0.3);
@@ -331,12 +336,19 @@ export function updateThreats(world: World, dt: number): void {
       const w = world.workers[j];
       if (!w.alive) continue;
       const d2 = dist2(w.x, w.y, s.x, s.y);
-      if (d2 > r2) continue;
-      if (w.state !== 'panic' && w.state !== 'trapped') {
+      // Scatter well before the cloud arrives, so the colony has time to reach a crack.
+      if (
+        d2 < (s.radius + 380) * (s.radius + 380) &&
+        w.state !== 'panic' &&
+        w.state !== 'trapped'
+      ) {
         w.state = 'panic';
         w.panicTime = 2.6;
         w.angle = Math.atan2(w.y - s.y, w.x - s.x);
       }
+      if (d2 > r2) continue;
+      // A roach sitting in a claimed crack is inside the wall and out of reach of the spray.
+      if (sheltered(world, w.x, w.y)) continue;
       if (world.rng.next() < dt * SPRAY_DPS * lethality) killWorker(world, w, 'spray');
     }
 
@@ -355,6 +367,15 @@ export function updateThreats(world: World, dt: number): void {
   }
 }
 
+/** True when the point is inside a claimed crack, where nothing the household owns can reach. */
+function sheltered(world: World, x: number, y: number): boolean {
+  for (let i = 0; i < world.nests.length; i++) {
+    const n = world.nests[i];
+    if (n.claimed && dist2(x, y, n.x, n.y) < 95 * 95) return true;
+  }
+  return false;
+}
+
 function impact(world: World, x: number, y: number): void {
   world.events.push({ t: 'footHit', x, y });
   const kill2 = FOOT_KILL_RADIUS * FOOT_KILL_RADIUS;
@@ -364,6 +385,7 @@ function impact(world: World, x: number, y: number): void {
     const w = world.workers[i];
     if (!w.alive) continue;
     if (dist2(w.x, w.y, x, y) > kill2) continue;
+    if (sheltered(world, w.x, w.y)) continue;
     killWorker(world, w, 'foot');
     killed++;
   }
@@ -377,11 +399,13 @@ function impact(world: World, x: number, y: number): void {
   panicWorkers(world, x, y, FOOT_RADIUS * 2.4);
 
   // Stepping on something is how a human finds out for certain.
-  if (killed > 0) addSuspicion(world, 'seen', 3.4, x, y);
+  if (killed > 0) addSuspicion(world, 'seen', 1, x, y);
 }
 
 /** Called on a tier rising edge. Each family arrives once per tier, never double-spawned. */
 export function requestResponse(world: World, tier: number): void {
+  // Belt and braces: even a mis-wired caller cannot stack responses without bound.
+  if (world.patrols.length >= 3 || world.sprays.length >= 3) return;
   switch (tier) {
     case 1:
       if (world.patrols.length === 0) spawnPatrol(world, world.night, world.tick % 2);

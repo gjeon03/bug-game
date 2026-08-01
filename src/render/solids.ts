@@ -86,7 +86,7 @@ export function bakeSolids(atlas: Atlas, seed: number): BakedSolid[] {
     g.fillStyle = form;
     g.fillRect(x, y, sw, sh);
 
-    if (solid.mat === 'steel' || solid.mat === 'metal') {
+    if ((solid.mat === 'steel' || solid.mat === 'metal') && Math.min(sw, sh) >= 200) {
       // Anisotropic highlight band — the appliance read.
       const band = g.createLinearGradient(0, y, 0, y + sh);
       band.addColorStop(0, 'rgba(255,255,255,0)');
@@ -99,15 +99,20 @@ export function bakeSolids(atlas: Atlas, seed: number): BakedSolid[] {
 
     // ── Thickness: a bright top lip and a deep bottom shadow. The lip is the strongest single cue
     // that these are solid volumes standing on the floor.
-    g.fillStyle = 'rgba(206,228,252,0.42)';
-    g.fillRect(x, y - 2, sw, 4);
-    g.fillStyle = 'rgba(206,228,252,0.16)';
-    g.fillRect(x, y, 3, sh);
-    const crown = g.createLinearGradient(0, y, 0, y + 30);
-    crown.addColorStop(0, 'rgba(190,216,246,0.16)');
+    // Scale the lip with the object: a 4 px bright edge that reads as "thickness" on a 1200-unit
+    // counter run reads as a pane of backlit glass on an 84-unit chair leg.
+    const small = Math.min(sw, sh) < 200;
+    const lipAlpha = small ? 0.2 : 0.42;
+    const crownDepth = small ? Math.min(10, sh * 0.16) : 30;
+    g.fillStyle = `rgba(206,228,252,${lipAlpha})`;
+    g.fillRect(x, y - (small ? 1 : 2), sw, small ? 2 : 4);
+    g.fillStyle = `rgba(206,228,252,${lipAlpha * 0.38})`;
+    g.fillRect(x, y, small ? 2 : 3, sh);
+    const crown = g.createLinearGradient(0, y, 0, y + crownDepth);
+    crown.addColorStop(0, `rgba(190,216,246,${small ? 0.08 : 0.16})`);
     crown.addColorStop(1, 'rgba(190,216,246,0)');
     g.fillStyle = crown;
-    g.fillRect(x, y, sw, 30);
+    g.fillRect(x, y, sw, crownDepth);
 
     const lip = g.createLinearGradient(0, y + sh - 26, 0, y + sh);
     lip.addColorStop(0, 'rgba(0,0,0,0)');

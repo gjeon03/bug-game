@@ -8,7 +8,9 @@ See `DECISIONS.md` for why Phaser was not adopted.
 ```
 main.ts ─ boot, canvas + DPR, RAF loop, focus handling, wiring
    │
-   ├── core/      pure, DOM-free, deterministic helpers (rng, clock, math, spatial, events, telemetry, storage)
+   ├── core/      deterministic helpers (rng, clock, math, spatial, telemetry). `storage.ts` is the
+   │              one deliberate exception: it touches `window.localStorage`, guarded, and is excluded
+   │              from the DOM-free lint fence for that reason.
    ├── sim/       ALL authoritative game state. DOM-free. Deterministic given (seed, input log).
    ├── render/    reads sim, never writes it. Canvas2D + procedural atlases + lighting + VFX.
    ├── audio/     reads sim events, never writes. WebAudio synthesis only.
@@ -36,9 +38,15 @@ That is what makes the simulation unit-testable in Node and deterministic under 
 
 ## Events and interfaces
 
-A tiny typed bus (`core/events.ts`). The sim **pushes** `GameEvent`s into `world.events` each tick
-(a plain array, drained by presentation each frame). This keeps the sim pure while letting audio/VFX
+There is no event-bus module. The sim **pushes** `GameEvent`s onto `world.events`, a plain array
+drained by presentation once per rendered frame. That keeps the sim pure while letting audio and VFX
 react frame-accurately.
+
+**`world.events` is for presentation only.** Because it is drained per _frame_ and the sim runs up to
+five _steps_ per frame, anything gameplay-critical must not be read back out of it — a threat-tier
+request that did was re-processed on every subsequent step and spawned a hundred patrols from one
+threshold crossing. Gameplay hand-offs between systems use dedicated one-shot slots on the world
+(`pendingTier`, `pendingStomp`) that the consumer clears.
 
 ```ts
 type GameEvent =
@@ -86,7 +94,7 @@ gameplay numbers.
 7  colony.update           upkeep, brood, capacity, nest integrity
 8  threats.update          patrol splines, foot telegraph→impact, traps, spray clouds
 9  exposure.update         per-entity light/sight/cover sampling (budgeted, round-robin)
-10 suspicion.update        integrate causes, tier transitions, escalation requests
+10 suspicion.update        integrate graded evidence, tier transitions, set `pendingTier`
 11 director.evaluate       win/lose evaluation, phase transition
 12 events flushed to presentation
 ```
@@ -101,6 +109,10 @@ No navmesh, no A\*. Deliberate:
 - **Collision**: the kitchen is authored as axis-aligned solids. Entities are circles; resolution is
   minimum-translation-vector push-out with slide, giving the "comfortable near walls" feel and zero
   sticky corners.
+- **Labour distribution**: an idle worker with no live route within 520 units retargets to the nest
+  anchoring the least-served route after five seconds. Without this, a colony that hatches everything
+  in its brood chamber strands its whole workforce there — a defect found by playing a full run, and
+  now covered by a regression test.
 - **Worker path following**: workers sample the pheromone field through a uniform **spatial hash**
   (`core/spatial.ts`, 96-unit cells). A worker steers toward the nearest trail node whose _progress
   index_ is ahead of its own along the desired direction (outbound = toward resource end, returning =

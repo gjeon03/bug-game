@@ -25,12 +25,22 @@ const canvas = document.getElementById('game') as HTMLCanvasElement;
 const hudRoot = document.getElementById('hud') as HTMLElement;
 const overlayRoot = document.getElementById('overlay') as HTMLElement;
 
+/**
+ * Captured runtime errors, exposed through the test seam. Bounded: a per-frame exception would
+ * otherwise grow this without limit, and it is the only collection in the codebase that was not
+ * capped.
+ */
+const MAX_CAPTURED_ERRORS = 100;
 const errors: string[] = [];
+function captureError(message: string): void {
+  if (errors.length >= MAX_CAPTURED_ERRORS) errors.shift();
+  errors.push(message);
+}
 window.addEventListener('error', (e) => {
-  errors.push(`${e.message} @ ${e.filename}:${e.lineno}`);
+  captureError(`${e.message} @ ${e.filename}:${e.lineno}`);
 });
 window.addEventListener('unhandledrejection', (e) => {
-  errors.push(`unhandled rejection: ${String(e.reason)}`);
+  captureError(`unhandled rejection: ${String(e.reason)}`);
 });
 
 const t0 = performance.now();
@@ -99,6 +109,7 @@ function startRun(seed?: number): void {
   world.onboarding.seenBefore = settings.seenOnboarding;
   particles.clear();
   clock.reset();
+  errors.length = 0;
   outcomeTime = -1;
   celebrateAcc = 0;
   renderer.setOutcome(null, 0);

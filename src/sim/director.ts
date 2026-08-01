@@ -1,4 +1,8 @@
 import {
+  BROOD_FOOD_COST,
+  BROOD_RESERVE_MARGIN_FOOD,
+  BROOD_RESERVE_MARGIN_WATER,
+  BROOD_WATER_COST,
   CRITICAL_RESERVE,
   INTERLUDE_LENGTH,
   NIGHT_LENGTH,
@@ -108,7 +112,6 @@ export function updateDirector(world: World, dt: number): void {
     world.finalResponse = true;
     world.finalResponseTime = 0;
     spawnSpray(world, 2);
-    spawnSpray(world, 0);
     spawnPatrol(world, 3, 4);
     world.events.push({ t: 'objective', text: 'FINAL RESPONSE — survive the sweep.' });
   }
@@ -135,12 +138,12 @@ export function evaluateRun(world: World): void {
   updateObjective(world);
 }
 
-/** Reacts to the tier rising edges produced by `updateSuspicion`. */
+/** Consumes the single pending tier rising edge produced by `updateSuspicion`, exactly once. */
 export function handleEscalation(world: World): void {
-  for (let i = 0; i < world.events.length; i++) {
-    const e = world.events[i];
-    if (e.t === 'tier') requestResponse(world, e.tier);
-  }
+  if (world.pendingTier < 0) return;
+  const tier = world.pendingTier;
+  world.pendingTier = -1;
+  requestResponse(world, tier);
 }
 
 function beginInterlude(world: World): void {
@@ -171,8 +174,15 @@ function startNight(world: World, night: NightIndex): void {
   // completely were noticed and cleaned up, and stay gone — which is the cost of over-harvesting.
   for (let i = 0; i < world.resources.length; i++) {
     const r = world.resources[i];
-    if (r.depleted) continue;
-    r.amount = Math.min(r.initial, r.amount + r.initial * NIGHT_RESOURCE_REGROWTH);
+    // Even a source you stripped bare comes back — less of it, and the fact that it was noticed is
+    // already permanently in the suspicion ledger. Permanent loss turned a pacing hiccup into an
+    // unrecoverable run, which is not a decision the player ever got to make.
+    const regrowth = r.depleted ? NIGHT_RESOURCE_REGROWTH * 0.6 : NIGHT_RESOURCE_REGROWTH;
+    r.amount = Math.min(r.initial, r.amount + r.initial * regrowth);
+    if (r.amount > 0.5) {
+      r.depleted = false;
+      r.depletedReported = false;
+    }
   }
 
   world.events.push({ t: 'phase', night });
@@ -196,9 +206,24 @@ function checkLossConditions(world: World): void {
     lose(world, 'nestDestroyed');
     return;
   }
-  if (world.colony.population <= 0 && !world.scout.alive) {
-    lose(world, 'collapse');
+  const c = world.colony;
+  if (c.population > 0) {
+    c.emptyTime = 0;
+    return;
   }
+  if (!world.scout.alive) {
+    lose(world, 'collapse');
+    return;
+  }
+  // A lone scout is not a colony. If there is enough in the larder to hatch a replacement the run
+  // continues; if there is not, nothing the player can do will ever bring one back, and leaving them
+  // walking around a dead kitchen is a soft-lock, not a game.
+  const canRebreed =
+    c.food >= BROOD_FOOD_COST + BROOD_RESERVE_MARGIN_FOOD &&
+    c.water >= BROOD_WATER_COST + BROOD_RESERVE_MARGIN_WATER;
+  c.emptyTime += 1 / 60;
+  if (!canRebreed && c.emptyTime > 4) lose(world, 'collapse');
+  else if (c.emptyTime > 45) lose(world, 'collapse');
 }
 
 function evaluateFinal(world: World): void {
@@ -306,6 +331,12 @@ function updateObjective(world: World): void {
     return;
   }
   world.shortage = null;
+
+  const dry = world.routes.find((r) => r.dry);
+  if (dry && !linked) {
+    world.objective = 'Every supply line has run dry — scout a new source and lay a fresh trail.';
+    return;
+  }
 
   if (!linked) {
     world.objective = 'Link the nest to food or moisture with a pheromone trail.';

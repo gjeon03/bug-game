@@ -114,7 +114,7 @@ selection, idle/clicker progression, tower defence lanes.
 | Total run                        | 12–15 min        |
 | Restart to playable              | ≤ 2 s, no reload |
 | Peak living roaches              | 90 (hard cap)    |
-| Concurrent pheromone routes      | 4                |
+| Concurrent pheromone routes      | 5                |
 | Simultaneous hazards             | ≤ 12             |
 
 ## Technical budgets

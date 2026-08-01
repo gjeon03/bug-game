@@ -320,17 +320,31 @@ body {
   }
 }
 
+/* Past evidence and future threat are distinguished by a leading glyph and weight as well as by
+   colour, and the rows are laid out so a wrapped line cannot leave an orphan word. */
 #suspicion .cause,
 #suspicion .next {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 6px;
   font-size: 11px;
+  line-height: 1.35;
   color: var(--text-dim);
-  margin-top: 5px;
-  max-width: 260px;
-  text-align: right;
+  margin-top: 6px;
+  width: 252px;
+  text-align: left;
+  text-wrap: balance;
+}
+
+#suspicion .rowicon {
+  font-size: 10px;
+  line-height: 1.5;
+  opacity: 0.8;
 }
 
 #suspicion .next {
-  color: #d9b48a;
+  color: #e0bb92;
+  font-weight: 600;
 }
 
 /* ── Objective / prompts ────────────────────────────────────────────────── */

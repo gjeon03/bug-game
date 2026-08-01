@@ -1,6 +1,8 @@
 import { clamp01 } from '../core/math.ts';
 import {
   NIGHT_SUSPICION_FLOOR,
+  TRAFFIC_EVIDENCE_CAP,
+  TRAIL_EVIDENCE_CAP,
   SUSPICION_DECAY,
   SUSPICION_MAX,
   SUSPICION_PEAK_FLOOR,
@@ -58,8 +60,14 @@ export function addSuspicion(
   s.value = Math.min(SUSPICION_MAX, s.value + amount);
   s.causes[cause] += amount;
   if (s.value > s.peak) s.peak = s.value;
-  // Only surface a new "last cause" for contributions the player can actually perceive.
-  if (amount >= 0.05) {
+
+  // Continuous causes contribute far less than 0.05 in a single 1/60 s step, so a per-call
+  // threshold made "Heavy traffic across open floor" and "Trails left on bare tile" unreachable
+  // strings — exactly the two labels that exist to explain route choice. Accumulate instead, and
+  // surface a cause once it has actually added up to something.
+  s.accum[cause] += amount;
+  if (s.accum[cause] >= 0.9) {
+    s.accum[cause] = 0;
     s.lastCause = cause;
     s.lastCauseTime = world.time;
   }
@@ -74,7 +82,7 @@ export function updateSuspicion(world: World, dt: number): void {
     addSuspicion(
       world,
       'traffic',
-      SUSPICION_WEIGHTS.traffic * Math.min(world.exposedWorkers, 24) * dt,
+      SUSPICION_WEIGHTS.traffic * Math.min(world.exposedWorkers, TRAFFIC_EVIDENCE_CAP) * dt,
       0,
       0,
     );
@@ -83,7 +91,7 @@ export function updateSuspicion(world: World, dt: number): void {
     addSuspicion(
       world,
       'droppings',
-      SUSPICION_WEIGHTS.droppings * Math.min(world.exposedTrail / 12, 4) * dt,
+      SUSPICION_WEIGHTS.droppings * Math.min(world.exposedTrail, TRAIL_EVIDENCE_CAP) * dt,
       0,
       0,
     );
@@ -98,7 +106,7 @@ export function updateSuspicion(world: World, dt: number): void {
     if (world.corpses[i].cover < 0.35) openCorpses++;
   }
   if (openCorpses > 0) {
-    addSuspicion(world, 'corpse', SUSPICION_WEIGHTS.corpse * Math.min(openCorpses, 10) * dt, 0, 0);
+    addSuspicion(world, 'corpse', SUSPICION_WEIGHTS.corpse * Math.min(openCorpses, 5) * dt, 0, 0);
   }
 
   // ── Drained food is evidence the humans notice on their own.
@@ -122,7 +130,14 @@ export function updateSuspicion(world: World, dt: number): void {
     if (s.value >= TIER_THRESHOLDS[i]) tier = i + 1;
   }
   if (tier !== s.tier) {
-    if (tier > s.tier) world.events.push({ t: 'tier', tier });
+    if (tier > s.tier) {
+      world.events.push({ t: 'tier', tier });
+      // The escalation request rides a dedicated one-shot slot, NOT the event array. `world.events`
+      // is drained by presentation once per rendered frame, not once per simulation step, so a tier
+      // event sitting in it was re-read on every subsequent step — which spawned a hundred patrols
+      // and dozens of spray clouds from a single threshold crossing.
+      world.pendingTier = tier;
+    }
     s.tier = tier;
   }
   if (tier > s.reachedTier) s.reachedTier = tier;

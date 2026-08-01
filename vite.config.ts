@@ -9,7 +9,9 @@ export default defineConfig({
   build: {
     target: 'es2022',
     assetsDir: 'assets',
-    sourcemap: true,
+    // The published payload is three files. A 456 kB sourcemap was 76 % of it and is not something a
+    // static game site needs to ship; `pnpm dev` keeps full sourcemaps for development.
+    sourcemap: false,
     reportCompressedSize: true,
   },
   server: {

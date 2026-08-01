@@ -10,6 +10,7 @@ import {
   BROOD_WATER_COST,
   CACHE_FOOD_BONUS,
   CAPACITY_PER_NEST,
+  NEST_REPAIR_RATE,
   CACHE_WATER_BONUS,
   FOOD_CAP,
   STARVE_DEATH_INTERVAL,
@@ -18,6 +19,9 @@ import {
   UPKEEP_FOOD,
   UPKEEP_WATER,
   WATER_CAP,
+  WIN_FOOD,
+  WIN_POPULATION,
+  WIN_WATER,
   WORKER_CAP,
 } from './constants.ts';
 import { addSuspicion } from './suspicion.ts';
@@ -74,12 +78,20 @@ export function updateColony(world: World, dt: number): void {
     c.thirsting = Math.max(0, c.thirsting - dt * 0.5);
   }
 
-  // ── Brood. Needs food AND water, so a food-only strategy stalls, and it never spends the colony
-  // into starvation: growth comes out of surplus only.
+  // ── Brood. Needs food AND water, so a food-only strategy stalls; it never spends the colony into
+  // starvation; and a colony that has already reached fighting strength stops breeding so the larder
+  // can actually fill. Without that last rule breeding and banking compete forever and the win
+  // thresholds are unreachable by construction.
+  const bankingFirst =
+    c.population >= WIN_POPULATION && (c.food < WIN_FOOD + 15 || c.water < WIN_WATER + 15);
+  world.banking = bankingFirst;
+  const foodNeeded = BROOD_FOOD_COST + BROOD_RESERVE_MARGIN_FOOD + c.population * 0.8;
+  const waterNeeded = BROOD_WATER_COST + BROOD_RESERVE_MARGIN_WATER + c.population * 0.5;
   if (
+    !bankingFirst &&
     c.population < c.capacity &&
-    c.food >= BROOD_FOOD_COST + BROOD_RESERVE_MARGIN_FOOD &&
-    c.water >= BROOD_WATER_COST + BROOD_RESERVE_MARGIN_WATER &&
+    c.food >= foodNeeded &&
+    c.water >= waterNeeded &&
     world.status === 'playing'
   ) {
     c.brood += BROOD_RATE * (c.upgrades.brood ? BROOD_CHAMBER_MULT : 1) * dt;
@@ -88,7 +100,7 @@ export function updateColony(world: World, dt: number): void {
       c.food -= BROOD_FOOD_COST;
       c.water -= BROOD_WATER_COST;
       const nest = broodNest(world);
-      const w = spawnWorker(world, nest.x, nest.y, true);
+      const w = spawnWorker(world, nest.x, nest.y, true, nest.id);
       if (w) {
         c.hatched++;
         world.events.push({ t: 'hatch', x: nest.x, y: nest.y });
@@ -98,8 +110,17 @@ export function updateColony(world: World, dt: number): void {
     c.brood = Math.max(0, c.brood - dt * 0.05);
   }
 
-  // ── Cosmetic nest growth level, so the hub visibly thickens as the colony grows.
+  // ── The home crack heals between sweeps. Without this, integrity was a one-way ratchet with no
+  // counterplay whatsoever: surviving a spray pass still guaranteed eventual destruction.
   const home = homeNest(world);
+  const sprayNear = world.sprays.some(
+    (s) => dist2(s.x, s.y, home.x, home.y) < (s.radius + 220) * (s.radius + 220),
+  );
+  if (!sprayNear && home.integrity > 0 && home.integrity < 1) {
+    home.integrity = Math.min(1, home.integrity + NEST_REPAIR_RATE * dt);
+  }
+
+  // ── Cosmetic nest growth level, so the hub visibly thickens as the colony grows.
   home.growth = c.population >= 34 ? 3 : c.population >= 22 ? 2 : c.population >= 12 ? 1 : 0;
   for (let i = 0; i < world.nests.length; i++) {
     if (world.nests[i].claimed) world.nests[i].age += dt;
@@ -277,5 +298,5 @@ export function doInteract(world: World): void {
   addSuspicion(world, 'expansion', SUSPICION_WEIGHTS.expansion, nest.x, nest.y);
 
   // A new chamber immediately seeds a couple of bodies so the reward is visible, not just numeric.
-  for (let i = 0; i < 2; i++) spawnWorker(world, nest.x, nest.y, true);
+  for (let i = 0; i < 2; i++) spawnWorker(world, nest.x, nest.y, true, nest.id);
 }

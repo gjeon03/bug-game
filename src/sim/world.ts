@@ -127,6 +127,8 @@ export interface World {
   guide: { x: number; y: number; label: string } | null;
   /** Set while a reserve is critically low, so the HUD can escalate the matching meter. */
   shortage: 'food' | 'water' | null;
+  /** True while the colony has stopped breeding in order to bank reserves for the win condition. */
+  banking: boolean;
   /** Current onboarding prompt, empty once the sequence is complete. */
   tutorial: string;
   /** Transient feedback toast (inspect results, refused claims). */
@@ -150,6 +152,8 @@ export interface World {
   pheromoneNodeCount: number;
   /** Set by the exposure system when the scout is spotted; consumed by the threat director. */
   pendingStomp: { x: number; y: number } | null;
+  /** One-shot escalation request: the tier just crossed, or -1. Consumed by the director. */
+  pendingTier: number;
   /** One flag per entry in the director's authored beat table. Sized lazily on first update. */
   beatFired: boolean[];
 }
@@ -183,7 +187,13 @@ function makeWorker(): Worker {
   };
 }
 
-export function spawnWorker(world: World, x: number, y: number, asNymph: boolean): Worker | null {
+export function spawnWorker(
+  world: World,
+  x: number,
+  y: number,
+  asNymph: boolean,
+  nestId: string | null = null,
+): Worker | null {
   const pool = world.workers;
   for (let i = 0; i < pool.length; i++) {
     const w = pool[i];
@@ -211,7 +221,9 @@ export function spawnWorker(world: World, x: number, y: number, asNymph: boolean
     w.exposure = 0;
     w.hazardId = -1;
     w.targetResource = null;
-    w.targetNest = null;
+    // A roach born in the brood chamber lives in the brood chamber; without this the whole colony
+    // walked back to the home crack and left the chamber's own supply lines unstaffed.
+    w.targetNest = nestId;
     w.nymphTime = asNymph ? 6 : 0;
     return w;
   }
@@ -323,6 +335,7 @@ export function createWorld(seed: number): World {
       upgrades: { brood: false, cache: false, escape: false },
       starving: 0,
       thirsting: 0,
+      emptyTime: 0,
     },
 
     suspicion: {
@@ -331,6 +344,16 @@ export function createWorld(seed: number): World {
       floor: 0,
       tier: 0,
       causes: {
+        seen: 0,
+        corpse: 0,
+        traffic: 0,
+        depleted: 0,
+        trap: 0,
+        expansion: 0,
+        noise: 0,
+        droppings: 0,
+      },
+      accum: {
         seen: 0,
         corpse: 0,
         traffic: 0,
@@ -383,6 +406,7 @@ export function createWorld(seed: number): World {
     objective: 'Leave the crack and find something to eat.',
     guide: null,
     shortage: null,
+    banking: false,
     tutorial: '',
     hint: '',
     hintKey: '',
@@ -404,6 +428,7 @@ export function createWorld(seed: number): World {
     exposedTrail: 0,
     pheromoneNodeCount: 0,
     pendingStomp: null,
+    pendingTier: -1,
     beatFired: [],
   };
 

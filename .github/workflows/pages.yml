@@ -50,17 +50,11 @@ jobs:
       - name: Production build
         run: pnpm build
 
-      # `base: './'` means the bundle is path-agnostic; this asserts it, so a regression that bakes an
-      # absolute asset path can never reach the published site.
-      - name: Assert no absolute asset paths
-        run: |
-          if grep -qE '(src|href)="/[^"]' dist/index.html; then
-            echo "::error::dist/index.html contains an absolute asset path; it would 404 under a repository subpath."
-            grep -nE '(src|href)="/[^"]' dist/index.html
-            exit 1
-          fi
-          test -f dist/.nojekyll || { echo "::error::dist/.nojekyll missing"; exit 1; }
-          echo "Build is subpath-safe."
+      # The published bundle must contain no root-absolute reference of any kind, in any file — an
+      # absolute url() in the CSS or an absolute fetch() in the JS would 404 under a repository
+      # subpath just as surely as one in the HTML, and only the HTML used to be scanned.
+      - name: Assert the build is subpath-safe
+        run: node scripts/check-subpath.mjs dist
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium

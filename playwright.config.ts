@@ -31,7 +31,9 @@ export default defineConfig({
   webServer: {
     command: `node scripts/serve-nested.mjs ${PORT} ${PREFIX} dist`,
     url: `http://127.0.0.1:${PORT}${PREFIX}`,
-    reuseExistingServer: true,
+    // Never reuse a server that might be pointing at a stale or foreign dist/ — the specs exist to
+    // validate *this* build. `pnpm test:e2e` rebuilds before invoking Playwright.
+    reuseExistingServer: false,
     timeout: 30_000,
     stdout: 'ignore',
     stderr: 'pipe',

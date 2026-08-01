@@ -1,6 +1,8 @@
 import { clamp01, dist2 } from '../core/math.ts';
 import {
-  EXPOSURE_DANGER,
+  EVIDENCE_BASELINE,
+  HARVEST_SLOTS,
+  WORKER_EVIDENCE_CEILING,
   NODE_LIFE,
   NODE_REINFORCE,
   NYMPH_TIME,
@@ -61,7 +63,8 @@ export function updateWorkers(world: World, dt: number): void {
   let exposed = 0;
   let alive = 0;
 
-  // Recomputed from scratch: a worker killed or panicked mid-harvest used to leak this counter.
+  // Harvest slots are recomputed from the live state every step, so a worker that dies, panics or
+  // is trapped mid-harvest cannot leak one.
   for (let i = 0; i < world.resources.length; i++) world.resources[i].busy = 0;
   for (let i = 0; i < workers.length; i++) {
     const w = workers[i];
@@ -204,9 +207,15 @@ export function updateWorkers(world: World, dt: number): void {
           if (w.state === 'outbound') {
             const res = findResource(world, route.resourceId);
             if (res && !res.depleted) {
-              w.state = 'harvest';
-              w.timer = WORKER_HARVEST_TIME;
-              w.targetResource = res.id;
+              if (res.busy < HARVEST_SLOTS) {
+                w.state = 'harvest';
+                w.timer = WORKER_HARVEST_TIME;
+                w.targetResource = res.id;
+              } else {
+                // The node is crowded: wait your turn. A visible queue at a crumb pile is the
+                // readable version of "this source cannot feed the whole colony".
+                speedMul = 0.12;
+              }
             } else {
               w.state = 'inbound';
             }
@@ -246,18 +255,34 @@ export function updateWorkers(world: World, dt: number): void {
       case 'panic': {
         w.panicTime -= dt;
         speedMul = 1.5;
+        // Bolt for the nearest claimed crack. This is the colony's counterplay to a sweep: the
+        // roaches pour into the walls and wait it out, which is both what real ones do and the
+        // reason claiming cracks is worth the evidence it costs. The escape tunnel reaches furthest.
         const esc = world.nests.find((n) => n.claimed && n.upgrade === 'escape');
-        if (esc && dist2(w.x, w.y, esc.x, esc.y) < 700 * 700) {
-          const d = Math.max(1, Math.hypot(esc.x - w.x, esc.y - w.y));
-          dirX = (esc.x - w.x) / d;
-          dirY = (esc.y - w.y) / d;
-          if (d < 44) {
-            // Escape tunnel: panicked workers survive and reappear at home.
-            w.x = home.x + world.rng.signed() * 26;
-            w.y = home.y + world.rng.signed() * 26;
+        let refuge: { x: number; y: number } | null = null;
+        let bestD2 = Infinity;
+        for (let k = 0; k < world.nests.length; k++) {
+          const n = world.nests[k];
+          if (!n.claimed) continue;
+          const reach = n === esc ? 1100 : 680;
+          const d2n = dist2(w.x, w.y, n.x, n.y);
+          if (d2n < reach * reach && d2n < bestD2) {
+            bestD2 = d2n;
+            refuge = n;
+          }
+        }
+        if (refuge) {
+          const d = Math.max(1, Math.hypot(refuge.x - w.x, refuge.y - w.y));
+          dirX = (refuge.x - w.x) / d;
+          dirY = (refuge.y - w.y) / d;
+          w.panicTime = Math.max(w.panicTime, 0.35);
+          if (d < 46) {
+            w.x = refuge.x + world.rng.signed() * 26;
+            w.y = refuge.y + world.rng.signed() * 26;
             w.state = 'idle';
             w.panicTime = 0;
             w.routeId = -1;
+            w.targetNest = null;
             break;
           }
         } else {
@@ -288,6 +313,26 @@ export function updateWorkers(world: World, dt: number): void {
 
       default:
         break;
+    }
+
+    // ── Hazard avoidance. Workers give armed traps and bait a wide berth, so a hazard on a route
+    // costs throughput and the occasional unlucky roach rather than deleting the workforce. The
+    // player's counterplay is re-routing; without avoidance there was no time to notice, let alone
+    // re-route.
+    if (w.state !== 'harvest') {
+      for (let h = 0; h < world.hazards.length; h++) {
+        const hz = world.hazards[h];
+        if (!hz.armed || hz.capacity <= 0) continue;
+        const avoid = hz.radius * 1.9;
+        const dx = w.x - hz.x;
+        const dy = w.y - hz.y;
+        const d2h = dx * dx + dy * dy;
+        if (d2h > avoid * avoid || d2h < 0.001) continue;
+        const dh = Math.sqrt(d2h);
+        const push = (1 - dh / avoid) * 2.4;
+        dirX += (dx / dh) * push;
+        dirY += (dy / dh) * push;
+      }
     }
 
     // ── Separation keeps the column readable instead of a blob.
@@ -340,7 +385,11 @@ export function updateWorkers(world: World, dt: number): void {
     if ((world.tick + i) % 6 === 0) {
       w.exposure = exposureAt(world, w.x, w.y);
     }
-    if (w.exposure > EXPOSURE_DANGER) exposed++;
+    // Graded, not binary: how far above the do-nothing baseline this roach is standing, capped so a
+    // passing torch cannot dominate a term that is supposed to describe the player's route choices.
+    if (w.exposure > EVIDENCE_BASELINE) {
+      exposed += Math.min(w.exposure - EVIDENCE_BASELINE, WORKER_EVIDENCE_CEILING);
+    }
   }
 
   world.colony.population = alive;
@@ -409,7 +458,10 @@ function tryAcquireRoute(world: World, w: Worker): boolean {
     const nestIdx = r.nestEnd === 1 ? r.nodes.length - 1 : 0;
     const n = r.nodes[nestIdx];
     const d2 = dist2(w.x, w.y, n.x, n.y);
-    if (d2 > ACQUIRE_RADIUS * ACQUIRE_RADIUS) continue;
+    // A route anchored on the nest this worker lives at is always acceptable, however far the
+    // worker has wandered; otherwise a satellite nest's own routes were unusable by its own brood.
+    const ownNest = r.nestId !== null && r.nestId === w.targetNest;
+    if (!ownNest && d2 > ACQUIRE_RADIUS * ACQUIRE_RADIUS) continue;
     // Prefer near, lightly used routes so traffic self-balances across the network.
     const score = d2 + r.traffic * 9000;
     if (score < bestScore) {

@@ -32,7 +32,7 @@ export const SCOUT_INVULN_TIME = 1.6;
 /* ── Pheromone ─────────────────────────────────────────────────────────────── */
 
 export const NODE_SPACING = 26;
-export const NODE_LIFE = 95;
+export const NODE_LIFE = 130;
 /**
  * Worker traffic refreshes the nodes it walks over. A route in use sustains itself; a route nobody
  * uses evaporates. That is how real trail pheromone behaves, and it removes the busywork of
@@ -66,9 +66,14 @@ export const WORKER_SPEED_MAX = 148;
 export const WORKER_CARRY_FOOD = 6;
 export const WORKER_CARRY_WATER = 5;
 export const WORKER_HARVEST_TIME = 0.85;
+/**
+ * Concurrent harvesters per resource node. This is what turns "more workers" into "I need more
+ * routes" instead of "I strip every crumb pile in forty seconds".
+ */
+export const HARVEST_SLOTS = 4;
 export const WORKER_SEPARATION = 17;
 export const WORKER_LOOKAHEAD = 4;
-export const WORKER_PANIC_TIME = 3.2;
+export const WORKER_PANIC_TIME = 1.8;
 export const NYMPH_TIME = 6;
 
 /* ── Colony ────────────────────────────────────────────────────────────────── */
@@ -99,33 +104,40 @@ export const UPKEEP_WATER = 0.009;
 export const STARVE_DEATH_INTERVAL = 5.5;
 /** No colony member starves during the opening minute; the tutorial has to be survivable. */
 export const STARVE_GRACE = 55;
-export const NEST_INTEGRITY_DRAIN = 0.055;
+export const NEST_INTEGRITY_DRAIN = 0.032;
+/** The colony patches the crack back up once the spray moves off it. */
+export const NEST_REPAIR_RATE = 0.03;
 
 /* ── Suspicion ─────────────────────────────────────────────────────────────── */
 
 export const SUSPICION_MAX = 100;
-export const SUSPICION_DECAY = 0.36;
+export const SUSPICION_DECAY = 0.1;
 /** Suspicion can never fall below this fraction of its own peak — evidence is not erasable. */
 export const SUSPICION_PEAK_FLOOR = 0.55;
 export const TIER_THRESHOLDS = [25, 50, 70, 90] as const;
 
 export const SUSPICION_WEIGHTS = {
   /** Per sighting of a roach in bright light while a patrol is looking. */
-  seen: 6,
+  seen: 3.5,
   /** Per second, per corpse lying in the open. */
-  corpse: 0.11,
+  corpse: 0.02,
   /** Per second, scaled by the number of workers on exposed floor. */
-  traffic: 0.05,
+  traffic: 0.035,
   /** One-shot when a food node is fully drained. */
-  depleted: 4.5,
-  /** One-shot when a trap catches something. */
-  trap: 5,
+  depleted: 3,
+  /**
+   * One-shot when a trap catches something. Deliberately small: the household already knows by the
+   * time traps are down, and a large value made traps self-amplifying — catches pushed suspicion up,
+   * which deployed more traps, which caught more. A feedback loop the player cannot break is not a
+   * difficulty curve.
+   */
+  trap: 1.5,
   /** One-shot per crack claimed — a bigger nest is a more obvious nest. */
   expansion: 7,
   /** Per second of sprinting on exposed floor. */
   noise: 0.6,
   /** Per second, scaled by pheromone trail length on exposed floor. */
-  droppings: 0.055,
+  droppings: 0.11,
 } as const;
 
 /* ── Nights ────────────────────────────────────────────────────────────────── */
@@ -154,17 +166,37 @@ export const FOOT_KILL_RADIUS = 122;
 export const PATROL_STEP_INTERVAL = 1.45;
 export const TRAP_RADIUS = 62;
 export const TRAP_ARM_TIME = 2.2;
-export const TRAP_CAPACITY = 4;
+export const TRAP_CAPACITY = 3;
 export const TRAP_STRUGGLE_TIME = 4.4;
 export const BAIT_RADIUS = 74;
+/** Probability per second that a roach standing in bait dies. Low enough to leave time to flee. */
+export const BAIT_DPS = 0.12;
 export const SPRAY_RADIUS = 210;
 /** Probability per second that a roach inside a fully ramped spray cloud dies. */
-export const SPRAY_DPS = 1.15;
+export const SPRAY_DPS = 0.8;
 export const MAX_HAZARDS = 12;
 
 /* ── Exposure ──────────────────────────────────────────────────────────────── */
 
 /** Exposure above this starts filling the "spotted" meter. */
 export const EXPOSURE_DANGER = 0.55;
+/**
+ * Baseline exposure that generates no evidence at all. Evidence is graded by how far *above* this a
+ * worker or a trail node sits, rather than by a binary threshold: a binary test either ignored
+ * everything (at 0.55, nothing on unlit floor ever counted) or counted everything (at 0.26, unlit
+ * open tile reads 0.30, so every roach outside a toe-kick maxed the meter). Grading makes the
+ * difference between "across the dark middle" and "through the fridge light" a real gradient.
+ */
+export const EVIDENCE_BASELINE = 0.24;
+/** Caps on the graded sums, so a huge colony cannot run the meter away on its own. */
+export const TRAFFIC_EVIDENCE_CAP = 5;
+export const TRAIL_EVIDENCE_CAP = 6;
+/**
+ * Ceiling on any single roach's contribution to the traffic term. Without it, a patrol sweeping its
+ * torch across the colony multiplied every worker's contribution five-fold and a single patrol pass
+ * added ~80 suspicion — the household reacting to its own torch rather than to the player's routes.
+ * Being caught in a beam is meant to fire the one-shot `seen` cause, not to inflate traffic.
+ */
+export const WORKER_EVIDENCE_CEILING = 0.3;
 export const SPOT_FILL_RATE = 0.62;
 export const SPOT_DECAY_RATE = 0.5;

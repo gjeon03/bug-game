@@ -65,8 +65,10 @@ Each row is captured as a screenshot in `artifacts/evidence/shots/` plus a state
 
 ## Playtest scenarios
 
-Driven through `__roach.input` (the real input layer) with deterministic seeds; each writes a JSON
-record to `artifacts/evidence/playtests/`.
+Driven through `__roach.input` (the real input layer) with deterministic seeds, plus headless
+equivalents in `tests/unit/balance.test.ts` that run the same shapes in milliseconds. Each writes a
+JSON record into `artifacts/evidence/` (`run-win.json`, `run-loss.json`, `run-reckless-mid.json`,
+`route-risk.json`, `escalation.json`, `scout-loss.json`, `restarts.json`).
 
 | Scenario                  | Shape                                                                |
 | ------------------------- | -------------------------------------------------------------------- |

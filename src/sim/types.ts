@@ -100,8 +100,11 @@ export interface Route {
   /** Id of the nest node this route serves, when linked. */
   nestId: string | null;
   linked: boolean;
+  /** True when both ends are anchored but the resource end has been drained dry. */
+  dry: boolean;
   /** Rising edge tracker so the link chime fires once. */
   wasLinked: boolean;
+  wasDry: boolean;
   /** Mean exposure of the route's nodes — this is what makes an open-floor route expensive. */
   exposure: number;
   /** Workers currently assigned. */
@@ -238,6 +241,8 @@ export interface Colony {
   /** Seconds spent with an empty larder — used for the loss explanation. */
   starving: number;
   thirsting: number;
+  /** Seconds the colony has had zero living workers. */
+  emptyTime: number;
 }
 
 export interface SuspicionState {
@@ -247,6 +252,8 @@ export interface SuspicionState {
   tier: number;
   /** Total contribution per cause, for the "what raised suspicion" ledger. */
   causes: Record<SuspicionCause, number>;
+  /** Per-cause accumulator, so a slow continuous cause can eventually surface in the HUD. */
+  accum: Record<SuspicionCause, number>;
   /** Most recent cause, for the HUD ticker. */
   lastCause: SuspicionCause | null;
   lastCauseTime: number;
@@ -277,6 +284,7 @@ export type GameEvent =
   | { t: 'trailAcquired'; x: number; y: number }
   | { t: 'routeLinked'; x: number; y: number }
   | { t: 'routeLost'; x: number; y: number }
+  | { t: 'routeDry'; x: number; y: number; resource: string }
   | { t: 'claim'; x: number; y: number; node: string }
   | { t: 'upgrade'; x: number; y: number; kind: UpgradeKind }
   | { t: 'hatch'; x: number; y: number }

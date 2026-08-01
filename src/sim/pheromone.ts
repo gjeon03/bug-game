@@ -1,6 +1,7 @@
 import { clamp01, dist2 } from '../core/math.ts';
 import {
   ERASE_RADIUS,
+  EVIDENCE_BASELINE,
   ERASE_RATE,
   FOLLOW_RADIUS,
   LINK_RADIUS,
@@ -33,7 +34,9 @@ function newRoute(world: World): Route {
     resourceId: null,
     nestId: null,
     linked: false,
+    dry: false,
     wasLinked: false,
+    wasDry: false,
     exposure: 0,
     traffic: 0,
     age: 0,
@@ -183,7 +186,11 @@ export function updatePheromone(world: World, dt: number): void {
     route.age += dt;
     const nodes = route.nodes;
 
-    for (let j = 0; j < nodes.length; j++) nodes[j].life -= dt;
+    // A live supply line is maintained by the colony itself and decays at less than half rate; an
+    // unlinked trail evaporates at full rate. Without this, a patrol scattering the workforce for a
+    // few seconds was enough to lose every route the player had built.
+    const decay = dt * (route.linked ? 0.4 : 1);
+    for (let j = 0; j < nodes.length; j++) nodes[j].life -= decay;
     compactRoute(route);
 
     if (route.nodes.length === 0) {
@@ -227,7 +234,17 @@ export function updatePheromone(world: World, dt: number): void {
       route.nestId = nestB;
     }
 
-    const linked = route.nestEnd >= 0 && route.resEnd >= 0 && route.nodes.length >= 3;
+    // A route whose source has been stripped bare is *not* linked — no worker can use it — but it
+    // stays on screen, flagged dry, so the player can see which supply ran out instead of watching a
+    // line silently stop working while the HUD still counts it.
+    const anchored = route.nestEnd >= 0 && route.resEnd >= 0 && route.nodes.length >= 3;
+    const res = route.resourceId === null ? null : findResourceById(world, route.resourceId);
+    route.dry = anchored && !!res && res.depleted;
+    if (route.dry && !route.wasDry && res) {
+      world.events.push({ t: 'routeDry', x: res.x, y: res.y, resource: res.label });
+    }
+    route.wasDry = route.dry;
+    const linked = anchored && !route.dry;
     if (linked && !route.wasLinked) {
       world.events.push({ t: 'routeLinked', x: b.x, y: b.y });
     } else if (!linked && route.wasLinked) {
@@ -243,7 +260,8 @@ export function updatePheromone(world: World, dt: number): void {
 
     if (linked) {
       for (let j = 0; j < route.nodes.length; j++) {
-        if (route.nodes[j].exposure > 0.28) exposedTrail++;
+        const e = route.nodes[j].exposure;
+        if (e > EVIDENCE_BASELINE) exposedTrail += e - EVIDENCE_BASELINE;
       }
     }
 
@@ -259,6 +277,13 @@ export function updatePheromone(world: World, dt: number): void {
 
   world.exposedTrail = exposedTrail;
   world.pheromoneNodeCount = totalNodes;
+}
+
+function findResourceById(world: World, id: string) {
+  for (let i = 0; i < world.resources.length; i++) {
+    if (world.resources[i].id === id) return world.resources[i];
+  }
+  return null;
 }
 
 function nearestNest(world: World, x: number, y: number): string | null {
@@ -283,7 +308,9 @@ function nearestResource(world: World, x: number, y: number): string | null {
   let bestD = r2;
   for (let i = 0; i < world.resources.length; i++) {
     const r = world.resources[i];
-    if (r.depleted || r.unlockNight > world.night) continue;
+    // A drained node still anchors its route: the line stays on screen so the player can see which
+    // supply ran dry, instead of the whole route silently vanishing along with its workforce.
+    if (r.unlockNight > world.night) continue;
     const d = dist2(r.x, r.y, x, y);
     if (d < bestD) {
       bestD = d;

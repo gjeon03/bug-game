@@ -500,6 +500,8 @@ describe('labour distribution', () => {
 
     // Without redistribution the labour force stays stranded and nothing is ever hauled.
     expect(world.stats.deliveries).toBeGreaterThan(deliveriesBefore);
-    expect(world.workers.filter((w) => w.alive && w.targetNest === 'home').length).toBeGreaterThan(0);
+    expect(world.workers.filter((w) => w.alive && w.targetNest === 'home').length).toBeGreaterThan(
+      0,
+    );
   });
 });

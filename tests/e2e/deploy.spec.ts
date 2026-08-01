@@ -7,6 +7,8 @@ import {
   boot,
   driveTo,
   expectClean,
+  press,
+  release,
   releaseAll,
   shot,
   state,
@@ -113,10 +115,15 @@ test.describe('static deployment', () => {
     // "Core interactions are not silent": sample the mixer while the scout is actually moving and
     // laying pheromone, and require that voices were genuinely scheduled.
     const voiceSamples: number[] = [];
-    await driveTo(page, PLACES.sinkDrip.x, PLACES.sinkDrip.y, { timeout: 200 });
-    for (let i = 0; i < 30; i++) {
+    await press(page, ['up', 'lay']);
+    for (let i = 0; i < 24; i++) {
       voiceSamples.push((await page.evaluate(() => window.__roach.telemetry())).audioVoices);
       await page.waitForTimeout(120);
+      // Bounce so the scout keeps skittering instead of pinning itself against cabinetry.
+      if (i === 11) {
+        await release(page, ['up']);
+        await press(page, ['down']);
+      }
     }
     await releaseAll(page);
     const peakVoices = Math.max(...voiceSamples);

@@ -151,7 +151,7 @@ export class Renderer {
     this.drawSolids(b);
     this.drawResources(world, t, b);
     this.drawNests(world, t);
-    this.drawPheromone(world, particles, b, dt);
+    this.drawPheromone(world, particles, b, dt, t);
     this.drawHazards(world, t, b);
     this.drawCorpses(world, b);
     this.drawBodies(world, t, b);
@@ -259,20 +259,31 @@ export class Renderer {
           ctx.strokeStyle = 'rgba(200,220,245,0.22)';
           ctx.lineWidth = 3;
           ctx.strokeRect(-hw, -hh, d.w, d.h);
-          ctx.fillStyle = 'rgba(160,190,215,0.16)';
           const slats = 7;
+          const pitch = (d.h - 16) / slats;
           for (let k = 0; k < slats; k++) {
-            ctx.fillRect(
-              -hw + 8,
-              -hh + 8 + k * ((d.h - 16) / slats),
-              d.w - 16,
-              (d.h - 16) / slats - 5,
-            );
+            const y = -hh + 8 + k * pitch;
+            // Void first, then the angled slat face, then its lit leading edge — a flat grey bar
+            // repeated seven times reads as a loading placeholder, not as a grille.
+            ctx.fillStyle = 'rgba(2,4,7,0.9)';
+            ctx.fillRect(-hw + 8, y, d.w - 16, pitch - 2);
+            ctx.fillStyle = 'rgba(120,146,170,0.28)';
+            ctx.fillRect(-hw + 8, y, d.w - 16, pitch - 5);
+            ctx.fillStyle = 'rgba(210,232,255,0.34)';
+            ctx.fillRect(-hw + 8, y, d.w - 16, 1.6);
           }
           this.drawCalls += 3;
           break;
         }
         case 'cable': {
+          // Contact shadow under the cable, offset down-right like every other solid.
+          ctx.strokeStyle = 'rgba(2,4,7,0.55)';
+          ctx.lineWidth = 17;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-hw + 4, -hh * 0.3 + 6);
+          ctx.bezierCurveTo(-hw * 0.3 + 4, hh + 6, hw * 0.3 + 4, -hh + 6, hw + 4, hh * 0.2 + 6);
+          ctx.stroke();
           ctx.strokeStyle = 'rgba(6,9,13,0.85)';
           ctx.lineWidth = 13;
           ctx.lineCap = 'round';
@@ -332,17 +343,31 @@ export class Renderer {
           break;
         }
         default: {
-          ctx.strokeStyle = 'rgba(10,15,20,0.55)';
-          ctx.lineWidth = 9;
+          // An appliance ring: a shallow dish left on the floor. It needs a contact shadow or it
+          // reads as a bare debug circle floating over the tile.
+          const dish = ctx.createRadialGradient(0, 0, hw * 0.2, 0, 0, hw);
+          dish.addColorStop(0, 'rgba(10,16,22,0.35)');
+          dish.addColorStop(1, 'rgba(10,16,22,0)');
+          ctx.fillStyle = dish;
+          ctx.beginPath();
+          ctx.ellipse(0, 2, hw, hh * 0.86, 0, 0, TAU);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(4,7,11,0.7)';
+          ctx.lineWidth = 10;
+          ctx.beginPath();
+          ctx.ellipse(2, 4, hw, hh * 0.86, 0, 0, TAU);
+          ctx.stroke();
+          ctx.strokeStyle = 'rgba(90,112,134,0.5)';
+          ctx.lineWidth = 8;
           ctx.beginPath();
           ctx.ellipse(0, 0, hw, hh * 0.86, 0, 0, TAU);
           ctx.stroke();
-          ctx.strokeStyle = `rgba(180,210,235,${0.1 + Math.sin(t * 0.7 + i) * 0.02})`;
-          ctx.lineWidth = 2.4;
+          ctx.strokeStyle = `rgba(196,222,248,${0.16 + Math.sin(t * 0.7 + i) * 0.02})`;
+          ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.ellipse(0, -3, hw, hh * 0.86, 0, 0, TAU);
+          ctx.ellipse(0, -2.5, hw, hh * 0.86, 0, 0, TAU);
           ctx.stroke();
-          this.drawCalls += 2;
+          this.drawCalls += 4;
           break;
         }
       }
@@ -588,6 +613,7 @@ export class Renderer {
     particles: Particles,
     b: { x0: number; y0: number; x1: number; y1: number },
     dt: number,
+    t: number,
   ): void {
     const ctx = this.ctx;
     const glowCold = this.atlas.glows[TINT.cold];
@@ -656,12 +682,32 @@ export class Renderer {
       for (let e = 0; e < 2; e++) {
         const n = ends[e];
         if (n.x < b.x0 || n.x > b.x1 || n.y < b.y0 || n.y > b.y1) continue;
-        const on = route.linked;
-        ctx.strokeStyle = on ? rgba(PAL.warm, 0.55) : rgba(PAL.cold, 0.3);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, on ? 24 : 18, 0, TAU);
-        ctx.stroke();
+        if (route.linked) {
+          const pulse = 0.45 + Math.sin(t * 3 + route.id) * 0.2;
+          ctx.strokeStyle = rgba(PAL.warm, pulse);
+          ctx.lineWidth = 2.6;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 24 + Math.sin(t * 3 + route.id) * 2.5, 0, TAU);
+          ctx.stroke();
+        } else if (route.dry) {
+          // Anchored but the source is stripped bare: a broken ring, so "dry" is not mistaken for
+          // "unlinked" or for "working".
+          ctx.strokeStyle = rgba(PAL.danger, 0.5);
+          ctx.lineWidth = 2.4;
+          ctx.setLineDash([5, 12]);
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 22, 0, TAU);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        } else {
+          ctx.strokeStyle = rgba(PAL.cold, 0.32);
+          ctx.lineWidth = 2;
+          ctx.setLineDash([7, 9]);
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 18, 0, TAU);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
         this.drawCalls++;
       }
     }
@@ -802,22 +848,29 @@ export class Renderer {
         ctx.fill();
         this.drawCalls++;
 
+        // The telegraph is the shape of the thing that is about to land, at the angle it will land
+        // at: a circle around a boot-shaped threat told the player the wrong ground was lethal.
         const ringR = FOOT_KILL_RADIUS + p * FOOT_RADIUS * 2.1;
+        ctx.save();
+        ctx.translate(f.x, f.y);
+        ctx.rotate(0.22);
         ctx.strokeStyle = rgba(PAL.danger, 0.35 + (1 - p) * 0.55);
         ctx.lineWidth = 2 + (1 - p) * 3;
         ctx.setLineDash([13, 10]);
         ctx.lineDashOffset = t * -40;
         ctx.beginPath();
-        ctx.arc(f.x, f.y, ringR, 0, TAU);
+        ctx.ellipse(0, 0, ringR * 0.62, ringR, 0, 0, TAU);
         ctx.stroke();
         ctx.setLineDash([]);
         this.drawCalls++;
 
-        ctx.strokeStyle = rgba(PAL.danger, 0.25);
-        ctx.lineWidth = 1.5;
+        // The inner outline is the actual kill footprint, solid so it reads as the hard edge.
+        ctx.strokeStyle = rgba(PAL.danger, 0.4);
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(f.x, f.y, FOOT_KILL_RADIUS, 0, TAU);
+        ctx.ellipse(0, 0, FOOT_KILL_RADIUS * 0.62, FOOT_KILL_RADIUS, 0, 0, TAU);
         ctx.stroke();
+        ctx.restore();
         this.drawCalls++;
       }
 
@@ -949,18 +1002,32 @@ export class Renderer {
     // ── Scout last, and always with its rim-light, so it is never lost in a crowd.
     const s = world.scout;
     if (!s.alive) return;
-    const glow = this.atlas.glows[TINT.cold];
+    // A cold additive halo on a cold floor is invisible — measured ΔE near zero. The scout instead
+    // gets a warm ground pool the floor palette does not own, plus a hard traced outline, so "which
+    // one am I" is answered before anything else in the frame.
+    const glow = this.atlas.glows[TINT.warm];
     ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = 0.34 + Math.sin(t * 2.6) * 0.05;
-    ctx.drawImage(glow, s.x - 34, s.y - 34, 68, 68);
+    ctx.globalAlpha = 0.3 + Math.sin(t * 2.6) * 0.05;
+    ctx.drawImage(glow, s.x - 40, s.y - 40, 80, 80);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
     this.drawCalls++;
 
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.beginPath();
-    ctx.ellipse(s.x + 2, s.y + 4, 15, 8, s.angle, 0, TAU);
+    ctx.ellipse(s.x + 2, s.y + 4, 16, 9, s.angle, 0, TAU);
     ctx.fill();
+    this.drawCalls++;
+
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(s.angle);
+    ctx.strokeStyle = rgba(PAL.warm, 0.85);
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.ellipse(-1, 0, 16, 8.4, 0, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
     this.drawCalls++;
 
     const frame = Math.floor(s.gait) % GAIT_FRAMES;
@@ -1060,7 +1127,9 @@ export class Renderer {
     lc.setTransform(1, 0, 0, 1, 0, 0);
     // Ambient darkness. Low enough for macro-noir, high enough that a hazard on bare tile is
     // legible without the room light — tuned against captures, not guessed.
-    const base = settings.highContrast ? 214 : 172;
+    // Low enough that additive warm light has somewhere to go. At 172 every light clipped to white
+    // and the whole kitchen measured a single blue hue with a 22-point luminance range.
+    const base = settings.highContrast ? 194 : 146;
     // Victory turns the kitchen lights on over the colony; defeat drains it toward cold ash.
     const win = this.outcome === 'won' ? clamp01(this.outcomeTime / 2.2) : 0;
     const loss = this.outcome === 'lost' ? clamp01(this.outcomeTime / 1.6) : 0;
@@ -1130,10 +1199,10 @@ export class Renderer {
     for (let i = 0; i < world.nests.length; i++) {
       const n = world.nests[i];
       if (!n.claimed) continue;
-      const rr = n.home ? 340 : 240;
+      const rr = n.home ? 250 : 190;
       const grad = lc.createRadialGradient(n.x, n.y, 1, n.x, n.y, rr);
-      grad.addColorStop(0, 'rgba(210,152,86,0.62)');
-      grad.addColorStop(0.5, 'rgba(180,130,74,0.24)');
+      grad.addColorStop(0, 'rgba(214,150,78,0.5)');
+      grad.addColorStop(0.45, 'rgba(178,124,66,0.18)');
       grad.addColorStop(1, 'rgba(0,0,0,0)');
       lc.fillStyle = grad;
       lc.beginPath();
