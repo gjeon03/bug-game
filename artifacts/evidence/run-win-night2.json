@@ -1,17 +1,17 @@
 {
-  "time": 263.11666666675603,
+  "time": 263.90000000008865,
   "colony": {
-    "food": 145.1509333333341,
-    "water": 132.65455000000458,
+    "food": 145.20400000000012,
+    "water": 138.30385000000197,
     "foodCap": 320,
     "waterCap": 220,
-    "population": 29,
+    "population": 26,
     "capacity": 44,
-    "brood": 0.01712499999996016,
+    "brood": 0.14574999999996016,
     "hatched": 19,
-    "lost": 0,
-    "totalFood": 395.12480000006235,
-    "totalWater": 255.26485000003632,
+    "lost": 3,
+    "totalFood": 394.51653333338675,
+    "totalWater": 260.54215000004325,
     "upgrades": {
       "brood": true,
       "cache": true,
@@ -19,10 +19,10 @@
     }
   },
   "suspicion": {
-    "value": 41.99028034776229,
+    "value": 39.64200917065695,
     "tier": 1,
-    "peak": 41.99194701442895,
-    "floor": 23.095570857935925,
+    "peak": 39.64367583732361,
+    "floor": 21.804021710527987,
     "lastCause": "droppings"
   },
   "routes": [
@@ -30,7 +30,7 @@
       "id": 1,
       "nodes": 24,
       "linked": true,
-      "exposure": 0.06820067713125151,
+      "exposure": 0.07052124084205429,
       "traffic": 6,
       "resourceId": "dishCrumbs",
       "nestId": "home"
@@ -39,8 +39,8 @@
       "id": 2,
       "nodes": 37,
       "linked": true,
-      "exposure": 0.0950443391052652,
-      "traffic": 8,
+      "exposure": 0.09398184963903344,
+      "traffic": 5,
       "resourceId": "sinkDrip",
       "nestId": "home"
     },
@@ -48,8 +48,8 @@
       "id": 3,
       "nodes": 20,
       "linked": true,
-      "exposure": 0.2345434423070467,
-      "traffic": 5,
+      "exposure": 0.23353925760099656,
+      "traffic": 6,
       "resourceId": "islandDrop",
       "nestId": "crackIsland"
     },
@@ -57,8 +57,8 @@
       "id": 4,
       "nodes": 71,
       "linked": true,
-      "exposure": 0.1784780631986391,
-      "traffic": 7,
+      "exposure": 0.17561189071147784,
+      "traffic": 6,
       "resourceId": "fridgeCondensation",
       "nestId": "crackIsland"
     },
@@ -66,7 +66,7 @@
       "id": 5,
       "nodes": 6,
       "linked": true,
-      "exposure": 0.23290489934569958,
+      "exposure": 0.22218736269718406,
       "traffic": 0,
       "resourceId": "pantryGrain",
       "nestId": "crackPantry"
