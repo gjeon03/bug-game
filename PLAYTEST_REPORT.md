@@ -12,7 +12,7 @@ showed.
 | Evidence                                                   | File                               |
 | ---------------------------------------------------------- | ---------------------------------- |
 | Generated run figures, frame times, bundle, deployment     | `artifacts/evidence/summary.md`    |
-| Fourteen-seed sweep of a complete competent run            | `artifacts/evidence/seed-sweep.md` |
+| Forty-four-seed sweep of a complete competent run          | `artifacts/evidence/seed-sweep.md` |
 | Cautious vs aggressive vs deliberately poor routing        | `artifacts/evidence/strategies.md` |
 | Independent critiques and what was done about each finding | `artifacts/evidence/critique/`     |
 | Captured gameplay states                                   | `artifacts/evidence/shots/`        |
@@ -29,7 +29,7 @@ showed.
 | Deliberate eradication                                     | `fullrun.spec.ts` 10                       | Ends `lost` with a named cause and the single largest contributing evidence source.                                                                                                      |
 | Successful complete run                                    | `fullrun.spec.ts` 09, `balance.test.ts`    | Ends `won` with all five criteria met.                                                                                                                                                   |
 | Five consecutive restarts, no reload                       | `restart.spec.ts` 11                       | No entity, particle, voice or suspicion leakage.                                                                                                                                         |
-| Fourteen seeds, same competent strategy                    | `seed-sweep.md`, `seeds.test.ts`           | 12 win. Both losses fall short on population alone after claiming everything — never a collapse, never a destroyed nest.                                                                 |
+| Forty-four seeds, same competent strategy                  | `seed-sweep.md`, `seeds.test.ts`           | 39 win (88.6 %). All five losses fall short on population alone after claiming everything — zero collapses, zero destroyed nests.                                                        |
 
 ## The claim the design rests on, measured
 
@@ -47,8 +47,8 @@ that stops being true.
 ## Difficulty shape
 
 Population is the binding win criterion: food and moisture clear their thresholds in every competent
-run, while final population ranges 25–51 against a threshold of 36 (median 45). A competent run
-therefore usually wins and sometimes falls just short — and when it falls short, it is because bodies
+run, while final population ranges 25–52 against a threshold of 36 across 44 seeds, of which 39 win.
+A competent run therefore usually wins and sometimes falls just short — and when it falls short, it is because bodies
 were lost to patrols and traps, not because a system failed silently.
 
 ## Observations, and the changes they caused

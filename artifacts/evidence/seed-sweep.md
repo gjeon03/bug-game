@@ -41,7 +41,29 @@ but it may never be wiped out.
 household short of the extermination tier, and `tests/unit/strategies.test.ts` shows what happens to
 routing that does not.
 
-## What the two losses cost
+## A wider sweep: 30 more seeds
+
+Thirty further seeds (`1000 + 137k`), same strategy, run headless:
+
+**27 won, 3 lost.** All three losses were *not established* with all three cracks claimed and final
+populations of 27, 34 and 34 against the threshold of 36. Population range across the thirty: 27–52.
+Suspicion peaks: 54–73, i.e. tier 2 to tier 3 — never the extermination tier.
+
+## Combined picture — 44 seeds
+
+| | Count |
+| --- | --- |
+| Runs | 44 |
+| Won | **39 (88.6 %)** |
+| Lost — *not established* (fell short on population) | 5 |
+| Lost — colony collapsed | **0** |
+| Lost — nest destroyed | **0** |
+| Runs that failed to claim all three cracks | **0** |
+
+A competent strategy wins about nine times in ten, and when it does not, it is because the colony was
+too small at dawn — never because a system failed silently, never because it was wiped out.
+
+## What the losses cost
 
 The variance is bodies, not resources: patrol footfalls and traps landing on a busy stretch of trail.
 A player watching that happen has counterplay — recall, re-route, or claim the escape tunnel sooner —
