@@ -226,7 +226,15 @@ function checkLossConditions(world: World): void {
   else if (c.emptyTime > 45) lose(world, 'collapse');
 }
 
-function evaluateFinal(world: World): void {
+/**
+ * Scores the run against the win conditions and freezes the numbers behind that verdict.
+ *
+ * Called from every path that ends a run, not just the successful one. The end card is the player's
+ * only debrief, and it used to be assembled from two different moments — a verdict computed at one
+ * instant beside colony numbers read live at another — so a colony that collapsed in night 2 with a
+ * full larder was shown "120 food banked" with a red cross next to the number 199.
+ */
+function tallyRun(world: World): void {
   const c = world.colony;
   let nests = true;
   let functionsBuilt = 0;
@@ -240,9 +248,6 @@ function evaluateFinal(world: World): void {
     functionsTotal++;
     if (n.claimed) functionsBuilt++;
   }
-  // Frozen here, at the instant the verdict is decided. The end card used to render live colony
-  // numbers next to a verdict computed earlier, so a late delivery could put "198" beside a red
-  // cross on a target of 120 — the card contradicting itself in the player's only debrief.
   world.finalTally = {
     population: c.population,
     food: c.food,
@@ -255,8 +260,16 @@ function evaluateFinal(world: World): void {
     food: c.food >= WIN_FOOD,
     water: c.water >= WIN_WATER,
     nests,
-    survived: world.scout.alive || c.population > 0,
+    // A run that ended in night 2 did not survive the final response — it never met one. Reporting
+    // "yes" against a criterion the player never faced tells them they cleared a bar that was never
+    // put in front of them.
+    survived: world.finalResponse && (world.scout.alive || c.population > 0),
   };
+}
+
+function evaluateFinal(world: World): void {
+  const c = world.colony;
+  tallyRun(world);
   const all =
     world.winCriteria.population &&
     world.winCriteria.food &&
@@ -275,6 +288,7 @@ function evaluateFinal(world: World): void {
 
 function lose(world: World, cause: LoseCause): void {
   if (world.status === 'lost' || world.status === 'won') return;
+  tallyRun(world);
   world.status = 'lost';
   world.loseCause = cause;
   world.events.push({ t: 'lose', cause });

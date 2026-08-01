@@ -29,12 +29,15 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: `node scripts/serve-nested.mjs ${PORT} ${PREFIX} dist`,
+    // The build is part of the server command, not of the npm script. Leaving it to the script meant
+    // a bare `playwright test` silently validated whatever `dist/` happened to be lying around — and
+    // it did: a run after a simulation fix reported green against the binary from before the fix.
+    // `reuseExistingServer: false` protects against a stale server; only this protects against a
+    // stale build.
+    command: `npx vite build && node scripts/serve-nested.mjs ${PORT} ${PREFIX} dist`,
     url: `http://127.0.0.1:${PORT}${PREFIX}`,
-    // Never reuse a server that might be pointing at a stale or foreign dist/ — the specs exist to
-    // validate *this* build. `pnpm test:e2e` rebuilds before invoking Playwright.
     reuseExistingServer: false,
-    timeout: 30_000,
+    timeout: 120_000,
     stdout: 'ignore',
     stderr: 'pipe',
   },

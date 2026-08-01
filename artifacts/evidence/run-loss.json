@@ -3,22 +3,22 @@
   "loseCause": "collapse",
   "winCriteria": {
     "population": false,
-    "food": false,
+    "food": true,
     "water": false,
     "nests": false,
-    "survived": false
+    "survived": true
   },
   "colony": {
-    "food": 198.58960000000178,
-    "water": 3.154949999998781,
+    "food": 199.6242666666542,
+    "water": 2.4539999999990876,
     "foodCap": 200,
     "waterCap": 160,
     "population": 0,
     "capacity": 14,
     "brood": 0,
     "hatched": 4,
-    "lost": 3,
-    "totalFood": 210.98079999999663,
+    "lost": 1,
+    "totalFood": 213.26159999997515,
     "totalWater": 0,
     "upgrades": {
       "brood": false,
@@ -27,25 +27,25 @@
     }
   },
   "suspicion": {
-    "value": 99.99833333333333,
+    "value": 99.99082008240501,
     "tier": 4,
     "peak": 100,
     "floor": 55.00000000000001,
     "lastCause": "droppings"
   },
   "stats": {
-    "runSeconds": 268.0833333334182,
+    "runSeconds": 355.11666666667236,
     "firstMoveAt": 0.4833333333333333,
     "firstTrailAt": 0.4833333333333333,
-    "firstDeliveryAt": 42.44999999999887,
+    "firstDeliveryAt": 41.899999999998904,
     "firstClaimAt": -1,
-    "deliveries": 38,
-    "workersLost": 3,
-    "scoutDeaths": 8,
-    "trapsSprung": 1,
+    "deliveries": 40,
+    "workersLost": 1,
+    "scoutDeaths": 9,
+    "trapsSprung": 3,
     "peakPopulation": 9,
     "idleSeconds": 0.6166666666666669,
-    "distanceTravelled": 46554.78539173635,
-    "trailNodesLaid": 70
+    "distanceTravelled": 59165.81310698329,
+    "trailNodesLaid": 68
   }
 }

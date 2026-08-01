@@ -1,9 +1,9 @@
 {
   "suspicion": {
-    "value": 56.76074470973999,
+    "value": 56.735311191064525,
     "tier": 2,
-    "peak": 56.90347413000286,
-    "floor": 31.296910771501576,
+    "peak": 56.87596008578578,
+    "floor": 31.28177804718218,
     "lastCause": "seen"
   },
   "counts": {
@@ -17,7 +17,7 @@
     "hazards": 2,
     "patrols": 1,
     "sprays": 0,
-    "footfalls": 1,
+    "footfalls": 2,
     "pheromoneNodes": 0
   },
   "nextResponse": "Next: sticky traps go down on your busiest floor routes.",

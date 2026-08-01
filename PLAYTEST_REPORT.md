@@ -91,3 +91,42 @@ dispositions are recorded separately in `artifacts/evidence/critique/disposition
 13. **Escaping a wall could push an entity into flush cabinetry.** Collision now picks the shallowest
     exit that does not land inside another solid.
 14. **A hidden tab kept playing.** The run auto-pauses while `document.hidden`.
+15. **A repair to route re-laying merged distinct supply lines.** Letting a lay that starts on a trail
+    end _extend_ that trail was right — the route cap meant "five key presses" rather than "five supply
+    lines" without it — but keying on distance alone was not. Lines out of the same crack must start
+    within `LINK_RADIUS` to link at all, so distance cannot tell them apart. Adoption now also requires
+    the lay to be heading within 60 degrees of the trail's terminal tangent. Found by an independent
+    critic reading the change, before it ever hurt a run.
+16. **A failing reserve conscripted the whole colony.** Biasing labour toward the reserve that is
+    running out makes the shortage warning actionable — but only when the reserve can recover. With
+    water reachable only down the long, lit fridge line, every worker pinned itself on the most exposed
+    route in the game for a whole night, and food drained behind it. Labour is now capped at 75 % on any
+    one reserve: a colony that starves slowly is recoverable, one that force-feeds its entire workforce
+    into a patrol is not.
+17. **Worker route choice ignored exposure entirely** while exposure was the game's central currency.
+    It now counts, so laying a safe line and a risky line to the same source is a decision the colony
+    respects. The weight came from measurement: strong aversion made workers crowd one line and cost the
+    careful strategy its win.
+18. **The end card could contradict itself.** Only a successful run was ever scored against the win
+    conditions, so a colony that collapsed in night 2 with a full larder was shown a default verdict
+    beside live numbers: "120 food banked" with a red cross next to 199. Every ending now scores itself
+    and freezes the numbers behind that score — which also makes the loss card say something useful,
+    since a failed population line beside a passed food line tells the player they died of thirst.
+19. **A bare `playwright test` validated a stale `dist/`.** The rebuild lived in an npm script rather
+    than in the Playwright server command, so a run invoked directly reported green against the binary
+    from before the fix under test. Found by checking a regenerated capture rather than the test result.
+
+## Known issues
+
+Recorded rather than hidden. None block play; all are reproducible.
+
+1. **Scout replacement bypasses the loss statistics.** Promoting a worker to scout costs a body, and
+   the population reflects that, but the death is not counted in `workersLost`.
+2. **Residual downtime late in night 1.** Partly mitigated by making locked cracks worth scouting
+   early; a player who sets up supply quickly can still be idle for a stretch before night 2 opens.
+3. **The floor tile repeats every 640 world units.** Wider than the viewport at play zoom, but a very
+   wide window can show it.
+4. **Overlapping workers have no depth cue against each other.** Six roaches on a nest read as one
+   tangle of legs rather than six countable animals — no rim or contact shadow between bodies. Raised
+   by the visual critic, who first attributed it to a value-contrast inversion and then retracted that
+   on re-measurement.

@@ -617,3 +617,32 @@ describe('turning out of a trail end starts a new line', () => {
     expect(world.routes.length, 'a right-angle turn is a new line, not an extension').toBe(2);
   });
 });
+
+describe('the debrief cannot contradict itself', () => {
+  it('a colony that collapses with a full larder is told it had the food', () => {
+    const world = createWorld(4242);
+    // Bank plenty of food, then take the colony away. This is the night-2 collapse the end card
+    // used to describe as "120 food banked" with a red cross beside the number 199.
+    world.colony.food = WIN_FOOD + 79;
+    for (const w of world.workers) w.alive = false;
+    world.colony.population = 0;
+    world.scout.alive = false;
+    idle(world, 2);
+
+    expect(world.status).toBe('lost');
+    expect(
+      world.finalTally,
+      'the numbers behind the verdict must be frozen with it',
+    ).not.toBeNull();
+    const tally = world.finalTally!;
+    expect(tally.food).toBeGreaterThanOrEqual(WIN_FOOD);
+    expect(
+      world.winCriteria.food,
+      `card would show ${Math.floor(tally.food)} against a target of ${WIN_FOOD}`,
+    ).toBe(true);
+    expect(world.winCriteria.population).toBe(false);
+    // The count and its label come from the same number, so "all 3" can never be scored out of 4.
+    expect(tally.functionsTotal).toBe(world.nests.filter((n) => !n.home).length);
+    expect(tally.functionsBuilt).toBeLessThanOrEqual(tally.functionsTotal);
+  });
+});

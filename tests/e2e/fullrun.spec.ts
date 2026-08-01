@@ -254,7 +254,14 @@ test.describe('complete runs', () => {
 
     for (let i = 0; i < 40; i++) {
       const s = await state(page);
-      if (s.status !== 'playing') break;
+      // An interlude is a pause between nights, not the end of the run. Breaking on it stopped the
+      // parade at the first night boundary, so the bot went quiet exactly when it was supposed to be
+      // being reckless and the run never reached the evidence levels the test is about.
+      if (s.status === 'won' || s.status === 'lost') break;
+      if (s.status === 'interlude') {
+        await page.waitForTimeout(2000);
+        continue;
+      }
       if (s.suspicion.tier >= 4 && s.night >= 3) break;
       if (!s.scout.alive) {
         await page.waitForTimeout(3200);
@@ -265,6 +272,7 @@ test.describe('complete runs', () => {
       await page.waitForTimeout(2200);
       const s2 = await state(page);
       if (s2.status !== 'playing' || !s2.scout.alive) continue;
+
       await driveTo(page, 1900, 2100, { sprint: true, timeout: 26_000, arrive: 110 });
     }
 

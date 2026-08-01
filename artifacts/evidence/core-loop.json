@@ -11,7 +11,7 @@
       "nodes": 24,
       "linked": true,
       "exposure": 0.10140004673661851,
-      "traffic": 1,
+      "traffic": 2,
       "resourceId": "dishCrumbs",
       "nestId": "home"
     },
@@ -19,8 +19,8 @@
       "id": 2,
       "nodes": 37,
       "linked": true,
-      "exposure": 0.06405658994534069,
-      "traffic": 7,
+      "exposure": 0.06677218214626224,
+      "traffic": 6,
       "resourceId": "sinkDrip",
       "nestId": "home"
     }
