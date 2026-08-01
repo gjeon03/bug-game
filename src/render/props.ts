@@ -554,8 +554,8 @@ function drawProp(g: CanvasRenderingContext2D, p: Prop): void {
     }
 
     case 'cableCoil': {
-      g.strokeStyle = 'rgba(12,14,18,0.85)';
-      g.lineWidth = 13;
+      g.strokeStyle = 'rgba(18,20,26,0.62)';
+      g.lineWidth = 11;
       g.lineCap = 'round';
       g.beginPath();
       g.moveTo(-hw, hh * 0.3);
@@ -621,34 +621,56 @@ function drawProp(g: CanvasRenderingContext2D, p: Prop): void {
     }
 
     case 'waterRing': {
-      g.strokeStyle = 'rgba(150,200,235,0.30)';
+      // A puddle, not a ring.
+      //
+      // The first version drew concentric strokes, which at the gameplay camera read as exactly the
+      // selection-outline vocabulary the redesign exists to remove. Water is a filled shape with an
+      // irregular edge, a bright meniscus on the lit side and a few loose droplets — none of which
+      // can be mistaken for a marker.
+      const pts = 14;
+      g.beginPath();
+      for (let i = 0; i <= pts; i++) {
+        const a = (i / pts) * TAU;
+        const wob = 0.78 + noise(p, i) * 0.34;
+        const px = Math.cos(a) * hw * wob;
+        const py = Math.sin(a) * hh * wob;
+        if (i === 0) g.moveTo(px, py);
+        else g.lineTo(px, py);
+      }
+      g.closePath();
+      const body = g.createLinearGradient(-hw, -hh, hw, hh);
+      body.addColorStop(0, 'rgba(96,150,186,0.42)');
+      body.addColorStop(0.55, 'rgba(58,104,138,0.30)');
+      body.addColorStop(1, 'rgba(40,74,102,0.22)');
+      g.fillStyle = body;
+      g.fill();
+      // Meniscus: a bright arc on the upper-left edge only, which is what makes a flat shape read
+      // as a liquid with surface tension.
+      g.save();
+      g.clip();
+      g.strokeStyle = 'rgba(206,238,255,0.5)';
       g.lineWidth = 5;
       g.beginPath();
-      g.ellipse(0, 0, hw * 0.9, hh * 0.9, 0, 0, TAU);
+      g.ellipse(0, 0, hw * 0.92, hh * 0.92, 0, Math.PI * 0.85, Math.PI * 1.75);
       g.stroke();
-      g.strokeStyle = 'rgba(190,225,250,0.18)';
-      g.lineWidth = 3;
-      g.beginPath();
-      g.ellipse(0, 0, hw * 0.62, hh * 0.6, 0, 0, TAU);
-      g.stroke();
-      const grad = g.createRadialGradient(0, 0, 1, 0, 0, hw);
-      grad.addColorStop(0, 'rgba(140,190,225,0.14)');
-      grad.addColorStop(1, 'rgba(140,190,225,0)');
-      g.fillStyle = grad;
-      g.beginPath();
-      g.ellipse(0, 0, hw, hh, 0, 0, TAU);
-      g.fill();
-      // Individual droplets, which are what actually give the scale away.
-      for (let i = 0; i < 6; i++) {
-        g.fillStyle = 'rgba(190,230,255,0.4)';
+      // A single soft highlight where the room light lands.
+      const hi = g.createRadialGradient(-hw * 0.3, -hh * 0.3, 1, -hw * 0.3, -hh * 0.3, hw * 0.6);
+      hi.addColorStop(0, 'rgba(226,246,255,0.30)');
+      hi.addColorStop(1, 'rgba(226,246,255,0)');
+      g.fillStyle = hi;
+      g.fillRect(-hw, -hh, w, h);
+      g.restore();
+      // Detached droplets: the scale cue.
+      for (let i = 0; i < 7; i++) {
+        const a = noise(p, i + 2) * TAU;
+        const r = hw * (0.95 + noise(p, i + 5) * 0.45);
+        g.fillStyle = 'rgba(150,200,232,0.5)';
         g.beginPath();
-        g.arc(
-          (noise(p, i) - 0.5) * w,
-          (noise(p, i + 8) - 0.5) * h,
-          3 + noise(p, i + 3) * 3,
-          0,
-          TAU,
-        );
+        g.ellipse(Math.cos(a) * r, Math.sin(a) * r * 0.7, 4 + noise(p, i) * 3, 3 + noise(p, i + 1) * 2, a, 0, TAU);
+        g.fill();
+        g.fillStyle = 'rgba(226,246,255,0.55)';
+        g.beginPath();
+        g.arc(Math.cos(a) * r - 1.4, Math.sin(a) * r * 0.7 - 1.4, 1.4, 0, TAU);
         g.fill();
       }
       break;

@@ -173,8 +173,8 @@ export const PROPS: readonly Prop[] = [
   // ── Sink run ──────────────────────────────────────────────────────────────
   { kind: 'pipeElbow', x: 600, y: 1150, w: 132, h: 210, rot: 0, lift: 34 },
   { kind: 'drainGrate', x: 664, y: 1312, w: 96, h: 96, rot: 0 },
-  { kind: 'waterRing', x: 690, y: 1392, w: 190, h: 130, rot: 0.2 },
-  { kind: 'waterRing', x: 604, y: 1246, w: 130, h: 96, rot: -0.4 },
+  { kind: 'waterRing', x: 690, y: 1392, w: 118, h: 82, rot: 0.2 },
+  { kind: 'waterRing', x: 604, y: 1246, w: 84, h: 62, rot: -0.4 },
   { kind: 'sponge', x: 736, y: 1188, w: 84, h: 58, rot: 0.28 },
   { kind: 'bottle', x: 596, y: 1010, w: 60, h: 132, rot: 0, lift: 22 },
   { kind: 'dishTowel', x: 690, y: 940, w: 176, h: 108, rot: -0.12 },
@@ -209,8 +209,8 @@ export const PROPS: readonly Prop[] = [
   // ── Fridge ────────────────────────────────────────────────────────────────
   { kind: 'fridgeGasket', x: 2604, y: 400, w: 40, h: 660, rot: 0 },
   { kind: 'condenserGrille', x: 3100, y: 790, w: 340, h: 96, rot: 0 },
-  { kind: 'waterRing', x: 2556, y: 872, w: 200, h: 150, rot: 0 },
-  { kind: 'cableCoil', x: 2960, y: 830, w: 320, h: 150, rot: 0.1 },
+  { kind: 'waterRing', x: 2556, y: 872, w: 132, h: 96, rot: 0 },
+  { kind: 'cableCoil', x: 2960, y: 830, w: 240, h: 110, rot: 0.1 },
   { kind: 'outlet', x: 2860, y: 806, w: 88, h: 52, rot: 0 },
   { kind: 'scuffMark', x: 2700, y: 900, w: 280, h: 120, rot: -0.1 },
 
@@ -236,10 +236,10 @@ export const PROPS: readonly Prop[] = [
 
   // ── The open middle: landmarks so the plain is navigable ──────────────────
   { kind: 'scuffMark', x: 1500, y: 1980, w: 340, h: 130, rot: 0.02 },
-  { kind: 'cableCoil', x: 760, y: 760, w: 380, h: 190, rot: 0.4 },
+  { kind: 'cableCoil', x: 760, y: 760, w: 280, h: 140, rot: 0.4 },
   { kind: 'vent', x: 2180, y: 640, w: 240, h: 126, rot: 0 },
   { kind: 'crumbCluster', x: 2300, y: 1050, w: 120, h: 90, rot: 1.2 },
-  { kind: 'waterRing', x: 1200, y: 1500, w: 170, h: 130, rot: 0 },
+  { kind: 'waterRing', x: 1200, y: 1500, w: 104, h: 78, rot: 0 },
   { kind: 'scuffMark', x: 2400, y: 1600, w: 260, h: 100, rot: -0.2 },
 ];
 

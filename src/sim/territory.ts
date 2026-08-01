@@ -53,14 +53,22 @@ export interface ZoneState {
 export const HOLD_THRESHOLD = 0.8;
 /** How many zones must be held at once to complete the final operation. */
 export const ZONES_TO_WIN = 3;
-/** Hold gained per second at full staffing. */
-export const HOLD_GAIN = 0.055;
+/**
+ * Hold gained per second at full staffing.
+ *
+ * Tuned from play: at 0.055 with four workers a region locked in fifteen seconds, so the two regions
+ * around the home crack were held before the player had done anything deliberate about territory and
+ * the final operation's gate was satisfied on arrival. At 0.028 with six, holding three regions at
+ * once demands roughly eighteen roaches spread across three parts of the kitchen with a live line
+ * into each — which is the logistical problem the operation is supposed to be.
+ */
+export const HOLD_GAIN = 0.028;
 /** Hold lost per second while nothing of the colony is present. */
-export const HOLD_DECAY = 0.016;
+export const HOLD_DECAY = 0.022;
 /** Extra hold lost per second while the household is actively working the zone. */
-export const HOLD_SUPPRESS = 0.12;
+export const HOLD_SUPPRESS = 0.13;
 /** Workers inside a zone needed for full hold gain. */
-export const HOLD_FULL_STAFF = 4;
+export const HOLD_FULL_STAFF = 6;
 
 export function createZoneStates(): ZoneState[] {
   return ZONES.map((z) => ({ id: z.id, hold: 0, workers: 0, routed: false, contested: false }));

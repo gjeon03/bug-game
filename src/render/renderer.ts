@@ -585,14 +585,21 @@ export class Renderer {
       this.drawCalls++;
 
       if (!n.claimed) {
-        const pulse = 0.4 + Math.sin(t * 2.4) * 0.28;
-        ctx.strokeStyle = rgba(PAL.cold, pulse);
-        ctx.lineWidth = 2;
-        ctx.setLineDash([9, 9]);
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, R + 20, 0, TAU);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        // A claimable crack is marked by two chevrons pressing in on it — the shape of prising a gap
+        // open — rather than by yet another dashed ring.
+        const pulse = 0.34 + Math.sin(t * 2.4) * 0.22;
+        const gap = R + 16 + Math.sin(t * 2.4) * 3;
+        ctx.strokeStyle = rgba(PAL.cold, pulse + 0.2);
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        for (const dir of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(n.x + dir * (gap + 13), n.y - 15);
+          ctx.lineTo(n.x + dir * gap, n.y);
+          ctx.lineTo(n.x + dir * (gap + 13), n.y + 15);
+          ctx.stroke();
+        }
+        ctx.lineCap = 'butt';
         this.drawCalls++;
         continue;
       }
@@ -1365,14 +1372,25 @@ export class Renderer {
     const onScreen = sx > margin && sx < w - margin && sy > margin && sy < h - margin;
 
     if (onScreen) {
-      const pulse = 0.4 + Math.sin(this.lastT * 2.6) * 0.2;
-      ctx.strokeStyle = rgba(PAL.warm, pulse * 0.7);
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 8]);
-      ctx.beginPath();
-      ctx.arc(sx, sy, 46 + Math.sin(this.lastT * 2.6) * 4, 0, TAU);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      // Four corner brackets that breathe inward, not a dashed circle. The circle was the game's
+      // most overloaded shape and every ring in the frame read as editor chrome; a bracket reticle
+      // is unmistakably "look here" and shares no vocabulary with anything else on screen.
+      const breathe = Math.sin(this.lastT * 2.6);
+      const r = 44 + breathe * 5;
+      const arm = 15;
+      ctx.strokeStyle = rgba(PAL.warm, 0.52 + breathe * 0.16);
+      ctx.lineWidth = 2.6;
+      ctx.lineCap = 'round';
+      for (let q = 0; q < 4; q++) {
+        const ox = q === 0 || q === 3 ? -1 : 1;
+        const oy = q < 2 ? -1 : 1;
+        ctx.beginPath();
+        ctx.moveTo(sx + ox * r, sy + oy * r - oy * arm);
+        ctx.lineTo(sx + ox * r, sy + oy * r);
+        ctx.lineTo(sx + ox * r - ox * arm, sy + oy * r);
+        ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
       this.drawCalls++;
       return;
     }
