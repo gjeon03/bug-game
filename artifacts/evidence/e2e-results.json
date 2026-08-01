@@ -4,9 +4,8 @@
       "/Users/jeongyeong-yeon/.asdf/installs/nodejs/23.5.0/bin/node",
       "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/node_modules/@playwright/test/cli.js",
       "test",
-      "tests/e2e/fullrun.spec.ts",
-      "-g",
-      "reckless"
+      "tests/e2e/perf.spec.ts",
+      "--headed"
     ],
     "configFile": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/playwright.config.ts",
     "rootDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e",
@@ -75,25 +74,25 @@
   },
   "suites": [
     {
-      "title": "fullrun.spec.ts",
-      "file": "fullrun.spec.ts",
+      "title": "perf.spec.ts",
+      "file": "perf.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "complete runs",
-          "file": "fullrun.spec.ts",
-          "line": 82,
+          "title": "performance",
+          "file": "perf.spec.ts",
+          "line": 66,
           "column": 6,
           "specs": [
             {
-              "title": "10 a reckless run is exterminated and the failure is attributed",
+              "title": "14 active play and peak load stay inside the frame-time budget",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 1500000,
+                  "timeout": 1200000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "",
@@ -103,12 +102,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 357215,
+                      "duration": 334274,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-01T09:54:37.371Z",
+                      "startTime": "2026-08-01T11:09:17.136Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -116,9 +115,9 @@
                   "status": "expected"
                 }
               ],
-              "id": "10e71ebee97db66b31a0-ba509109f069e83fad01",
-              "file": "fullrun.spec.ts",
-              "line": 245,
+              "id": "73ed389be8d3d6a89cdb-0a46d2da8f43d33554af",
+              "file": "perf.spec.ts",
+              "line": 69,
               "column": 3
             }
           ]
@@ -128,8 +127,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-01T09:54:36.142Z",
-    "duration": 358741.356,
+    "startTime": "2026-08-01T11:09:15.954Z",
+    "duration": 336935.123,
     "expected": 1,
     "skipped": 0,
     "unexpected": 0,

@@ -189,8 +189,13 @@ test.describe('performance', () => {
       expect(win, 'a capture window is missing').not.toBeNull();
       expect(win!.frames, `${win!.label} captured too few frames`).toBeGreaterThan(200);
 
-      // The game's own cost, always.
+      // The game's own cost, always — including the single worst frame in the window. This is the
+      // assertion that carries the real claim: whatever the host does, the game never spent longer
+      // than the budget inside its own frame callback.
       expect(win!.cpuP99, `${win!.label} frame-callback CPU p99`).toBeLessThanOrEqual(
+        CPU_BUDGET_MS,
+      );
+      expect(win!.cpuWorst, `${win!.label} worst frame-callback CPU`).toBeLessThanOrEqual(
         CPU_BUDGET_MS,
       );
 
@@ -202,7 +207,16 @@ test.describe('performance', () => {
 
       // Long frames are never acceptable, in any environment.
       expect(win!.over50Pct, `${win!.label} frames over 50 ms`).toBeLessThan(BUDGET.over50Pct);
-      expect(win!.over100, `${win!.label} frames over 100 ms`).toBe(0);
+      // A long *presented interval* is not always the game's doing; a long *frame callback* always
+      // is, and the assertion above has already ruled that out. On a host that can present at 60 Hz
+      // the strict zero still applies. On the headless host it does not: measured across five runs,
+      // two showed a single interval over 100 ms whose frame-callback CPU was 4.0 and 7.7 ms — the
+      // page was ready and the compositor was not. The obvious suspect, garbage collection from our
+      // own allocations, was tested and falsified: the JS heap sits flat at 11.35 MB through 16 s of
+      // active play, 0 MB/s allocated and no collection drops at all. See perf/README.md.
+      expect(win!.over100, `${win!.label} frames over 100 ms`).toBeLessThanOrEqual(
+        hostCanPresentFast ? 0 : 1,
+      );
 
       // And where the host can actually present at 60 Hz, the absolute budget applies too.
       if (hostCanPresentFast) {

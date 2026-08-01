@@ -1,8 +1,8 @@
 {
-  "time": 354.81666666667263,
+  "time": 299.5666666667229,
   "night": 2,
   "suspicion": {
-    "value": 99.99082008240501,
+    "value": 99.99833333333333,
     "tier": 4,
     "peak": 100,
     "floor": 55.00000000000001,
@@ -15,26 +15,26 @@
     "workersCarrying": 0,
     "workersPanicking": 0,
     "workersTrapped": 0,
-    "corpses": 1,
+    "corpses": 2,
     "hazards": 6,
     "patrols": 0,
     "sprays": 0,
     "footfalls": 0,
-    "pheromoneNodes": 68
+    "pheromoneNodes": 70
   },
   "stats": {
-    "runSeconds": 354.81666666667263,
-    "firstMoveAt": 0.4833333333333333,
-    "firstTrailAt": 0.4833333333333333,
-    "firstDeliveryAt": 41.899999999998904,
+    "runSeconds": 299.5666666667229,
+    "firstMoveAt": 0.4666666666666666,
+    "firstTrailAt": 0.4666666666666666,
+    "firstDeliveryAt": 42.44999999999887,
     "firstClaimAt": -1,
-    "deliveries": 40,
-    "workersLost": 1,
-    "scoutDeaths": 9,
-    "trapsSprung": 3,
+    "deliveries": 38,
+    "workersLost": 2,
+    "scoutDeaths": 8,
+    "trapsSprung": 2,
     "peakPopulation": 9,
-    "idleSeconds": 0.6166666666666669,
-    "distanceTravelled": 59165.81310698329,
-    "trailNodesLaid": 68
+    "idleSeconds": 0.6000000000000002,
+    "distanceTravelled": 47405.30158112181,
+    "trailNodesLaid": 70
   }
 }

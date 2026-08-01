@@ -47,3 +47,36 @@ own **idle baseline** clears 60 Hz, and always enforces:
 
 That is a stricter test of the *game* than the raw number was, because it is immune to the host's
 cadence.
+
+## The >100 ms intervals in the headless windows
+
+**Symptom.** Two of five headless runs recorded exactly one presented frame interval over 100 ms
+(117 ms in a `peak-load` window, 200 ms in an `active-play` window). The other three runs recorded a
+worst interval of 34–43 ms.
+
+**Hypothesis.** Garbage collection, triggered by the game's own per-frame allocations, is stalling
+the main thread. This is falsifiable: if it were true the JS heap would visibly saw-tooth during
+play.
+
+**Measurement.** `performance.memory.usedJSHeapSize` sampled twice a second through 16 s of active
+play with the scout moving and workers hauling:
+
+```
+{ "seconds": 15.9, "startMB": 11.35, "endMB": 11.35, "peakMB": 11.35,
+  "allocRateMBps": 0, "gcDrops": 0 }
+```
+
+Flat. Zero allocation, zero collections. **The hypothesis is false** — the pauses are not ours.
+
+**Corroborating evidence.** On both stalled frames the game's own frame-callback CPU was inside
+budget: 4.0 ms and 7.7 ms against an 8 ms budget. The page did its work and was not presented. The
+stalls also landed in different windows across runs, which is not what a load-dependent cost looks
+like, and the same build measured in a real browser window records **zero** frames over 50 ms.
+
+**What changed.** The gate asserted `over100 === 0` on presented intervals in every environment,
+which made it a measurement of the host rather than of the game. It now asserts the game's worst
+single frame-callback CPU unconditionally — the claim that actually matters — keeps the strict zero
+wherever the host can present at 60 Hz, and tolerates one isolated stall on a host that presents on
+its own cadence. Nothing about the game's measured cost was relaxed; a budget that was measuring the
+wrong thing was pointed at the right one.
+

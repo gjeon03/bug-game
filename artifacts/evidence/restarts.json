@@ -1,7 +1,7 @@
 [
   {
     "restart": 1,
-    "restartMs": 228,
+    "restartMs": 226,
     "workers": 6,
     "particles": 1,
     "voices": 0,
@@ -10,7 +10,7 @@
   },
   {
     "restart": 2,
-    "restartMs": 226,
+    "restartMs": 227,
     "workers": 6,
     "particles": 0,
     "voices": 0,
@@ -21,14 +21,14 @@
     "restart": 3,
     "restartMs": 227,
     "workers": 6,
-    "particles": 0,
-    "voices": 1,
+    "particles": 1,
+    "voices": 0,
     "drawCalls": 125,
     "listeners": 238
   },
   {
     "restart": 4,
-    "restartMs": 228,
+    "restartMs": 227,
     "workers": 6,
     "particles": 0,
     "voices": 0,
