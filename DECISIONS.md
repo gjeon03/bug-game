@@ -108,13 +108,17 @@ verified by serving the real `dist/` under a synthetic `/bug-game/` prefix in E2
 
 ---
 
-## D7 — Deployment prepared but not pushed without explicit approval
+## D7 — Deployment held until explicitly approved, then carried out
 
-`gh` is authenticated (`repo`, `workflow` scopes) and a Pages workflow is committed, but this
-repository has **no remote** and the operating constraint for this session is that pushing/creating a
-remote requires explicit user approval. Status and the exact single external action required are
-recorded in `DEPLOYMENT.md`. Nested-path correctness is proven locally in the meantime and is not
-claimed as a live deployment.
+Creating a public repository and pushing are outward-facing and hard to reverse, so both were held
+until the repository owner approved them explicitly, even though `gh` was already authenticated with
+the necessary scopes. Until that point `DEPLOYMENT.md` stated plainly that the project was **not**
+deployed and named the single external action required.
+
+Approval was given, and the deployment was then carried out and verified against the public URL
+rather than assumed: <https://gjeon03.github.io/bug-game/> is loaded, played to a worker delivery, and
+checked for stray network requests by `scripts/verify-live.mjs`, whose output is committed as
+`artifacts/evidence/deployment-live.json`.
 
 ---
 

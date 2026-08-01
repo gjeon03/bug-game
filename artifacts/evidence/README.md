@@ -25,6 +25,9 @@ no extra reviewable detail.
 | `focus-loss.json` | `restart.spec.ts` 12 | Game seconds advanced while the tab reported itself hidden |
 | `perf/perf.json` | `perf.spec.ts` 14 | Reference environment, frame-time percentiles, counters, bundle size |
 | `deployment.json` | `deploy.spec.ts` 16 | Every request made at runtime, absolute-path scan, dist contents |
+| `deployment-live.json` | `scripts/verify-live.mjs` | The **deployed** Pages URL loaded, played to a delivery, and checked for stray requests |
+| `seed-sweep.md`, `strategies.md` | headless probes promoted to `seeds.test.ts` / `strategies.test.ts` | Robustness across 44 seeds, and the three playtest strategies |
+| `perf/perf-headed.json`, `perf/README.md` | `perf.spec.ts --headed` | The same build measured in a real browser window, and why that differs from headless |
 | `asset-audit.json` | `deploy.spec.ts` 17 | Generated-asset audit and peak audio voice count |
 | `e2e-results.json` | Playwright | Machine-readable pass/fail for the whole browser suite |
 | `before-after/` | kept by hand from a failing run | The state that motivated a fix, retained so the fix can be compared |

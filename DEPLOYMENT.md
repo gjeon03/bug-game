@@ -56,46 +56,36 @@ touching underscore-prefixed paths.
 
 ## Verification status
 
-| Check                                                        | Status                                                                   |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| Production build succeeds                                    | ✅ verified locally — see `artifacts/evidence/perf/perf.json` → `bundle` |
-| `dist/index.html` contains zero absolute asset paths         | ✅ asserted in `tests/e2e/deploy.spec.ts` and in CI                      |
-| Game boots from `/bug-game/`                                 | ✅ the entire E2E suite runs only from that path                         |
-| Game **plays** from `/bug-game/` (route → worker → delivery) | ✅ `deploy.spec.ts` spec 15                                              |
-| Hard refresh of the nested entry point does not 404          | ✅ `deploy.spec.ts` spec 15                                              |
-| Zero requests leave the origin at runtime                    | ✅ `deploy.spec.ts` spec 16 → `artifacts/evidence/deployment.json`       |
-| `.nojekyll` present in the build output                      | ✅ `deploy.spec.ts` spec 16                                              |
-| Deployed to the live Pages URL                               | ⛔ **blocked — see below**                                               |
+**Live at <https://gjeon03.github.io/bug-game/>** — deployed by the workflow, then loaded and _played_
+by `scripts/verify-live.mjs` against the public URL. The full record is
+`artifacts/evidence/deployment-live.json`.
 
-## Genuine external blocker: no remote, and pushing needs your approval
+| Check                                                                | Status                                                        |
+| -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Production build succeeds                                            | ✅ locally and on the GitHub runner                           |
+| Clean install with the documented package manager                    | ✅ `pnpm install --frozen-lockfile` in CI                     |
+| Format, lint, typecheck, unit tests                                  | ✅ all green in CI before the build step                      |
+| `dist/` contains zero root-absolute references, in any file          | ✅ `scripts/check-subpath.mjs` over every emitted HTML/CSS/JS |
+| `.nojekyll` present in the build output                              | ✅ asserted by the same script                                |
+| Browser tests against `dist/` on a nested path                       | ✅ CI runs gameplay + deployment + restart specs              |
+| Deployed URL returns 200                                             | ✅ `deployment-live.json → httpStatus: 200`                   |
+| Hard refresh of the published entry point does not 404               | ✅ `reloadStatus: 200`                                        |
+| The deployed build **plays** — route, workers, deliveries            | ✅ 1 linked route, **5 deliveries**, first at 14.95 s         |
+| Zero requests leave the origin at runtime                            | ✅ `externalRequests: []`                                     |
+| Zero failed requests, console errors or page errors on the live site | ✅ all three empty                                            |
+| Cold load on the live site                                           | ✅ 1.95 s                                                     |
 
-This repository has **no git remote**:
+Captures from the live site: `artifacts/evidence/shots/30-live-boot.png`, `31-live-route.png`,
+`32-live-delivery.png`.
 
-```
-$ git remote -v
-(no output)
-$ gh repo view
-no git remotes found
-```
-
-`gh` is authenticated and does have the scopes required (`gh auth status` reports account `gjeon03`
-with `repo` and `workflow`), so creating the repository and pushing is technically possible from
-here. It has not been done because creating a public repository and pushing are outward-facing,
-hard-to-reverse actions that require explicit approval.
-
-**The single external action required** — run these three commands (or approve them being run):
+## Re-verifying a deployment
 
 ```bash
-gh repo create bug-game --public --source=. --remote=origin --push
-gh api -X POST repos/:owner/bug-game/pages -f build_type=workflow   # or set Settings → Pages → Source: GitHub Actions
-gh run watch                                                        # then open the deployed URL
+node scripts/verify-live.mjs      # loads the public URL, plays it, writes deployment-live.json
 ```
 
-The published URL will be `https://gjeon03.github.io/bug-game/`.
-
-Until that happens, **this project is not deployed**, and nothing in this repository claims it is.
-What _is_ proven is that the production build works correctly from a nested repository subpath,
-verified by the whole browser test suite running exclusively against `http://127.0.0.1:4178/bug-game/`.
+It fails loudly if the site 404s, if a request leaves the origin, or if the game cannot complete a
+pheromone route and a delivery.
 
 ## Runtime guarantees
 

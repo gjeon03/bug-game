@@ -9,8 +9,10 @@ Every metre of open tile you route across is evidence. Evidence raises suspicion
 feet, then sticky traps, then the spray. Win by making the infestation self-sustaining before the
 household escalates to extermination.
 
+**Play it: <https://gjeon03.github.io/bug-game/>**
+
 > Runs entirely in the browser. No server, no network requests, no asset files — every sprite,
-> texture and sound is generated procedurally at boot.
+> texture and sound is generated procedurally at boot. ~42 kB gzipped.
 
 ## Play
 
@@ -59,7 +61,8 @@ pnpm build          # typecheck + production build → dist/
 pnpm serve:nested   # serve dist/ under /bug-game/ (GitHub Pages subpath simulation)
 pnpm test           # unit + integration tests (headless, DOM-free)
 pnpm test:e2e       # real-browser gameplay tests against the nested production build
-pnpm verify         # format + lint + typecheck + unit + build + e2e
+pnpm verify         # format + lint + typecheck + unit + build + e2e + evidence
+pnpm verify:live    # load the deployed URL, play it, and record what happened
 ```
 
 ## How it is built
