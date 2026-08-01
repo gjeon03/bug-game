@@ -1,12 +1,12 @@
 {
   "url": "https://gjeon03.github.io/bug-game/",
-  "verifiedAt": "2026-08-01T08:12:11.482Z",
+  "verifiedAt": "2026-08-01T11:51:37.199Z",
   "httpStatus": 200,
   "reloadStatus": 200,
-  "loadMs": 2059,
+  "loadMs": 2079,
   "requests": [
     "https://gjeon03.github.io/bug-game/",
-    "https://gjeon03.github.io/bug-game/assets/index-B2mJioXE.js",
+    "https://gjeon03.github.io/bug-game/assets/index-BKQwnPlJ.js",
     "https://gjeon03.github.io/bug-game/assets/index-ByQb7YUT.css"
   ],
   "externalRequests": [],
@@ -19,7 +19,7 @@
         "id": 1,
         "nodes": 24,
         "linked": true,
-        "exposure": 0.06687195175619877,
+        "exposure": 0.06799495538336882,
         "traffic": 6,
         "resourceId": "dishCrumbs",
         "nestId": "home"
@@ -27,13 +27,13 @@
     ],
     "deliveries": 5,
     "population": 7,
-    "food": 66.28693333333149,
-    "firstDeliveryAt": 15.016666666666993
+    "food": 66.29439999999823,
+    "firstDeliveryAt": 14.950000000000323
   },
   "startup": {
-    "atlasMs": 118.8,
-    "rendererMs": 134.3,
-    "bootMs": 149.8,
-    "firstFrameMs": 184.3
+    "atlasMs": 154.7,
+    "rendererMs": 170.1,
+    "bootMs": 172.7,
+    "firstFrameMs": 221.1
   }
 }
