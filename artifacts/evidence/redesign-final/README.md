@@ -15,7 +15,8 @@ node scripts/playtest.mjs --out artifacts/evidence/redesign-final
 
 | Path                     | What it is                                                                                       |
 | ------------------------ | ------------------------------------------------------------------------------------------------ |
-| `playtest.json`          | Every scenario's timings, telemetry, probe aggregates and full decision transcript                |
+| `guided-run/`            | A complete real-browser run: the full decision transcript plus a capture at every operation and at the ending. This is the primary pacing evidence. |
+| `playtest.json`          | Scenario records from `scripts/playtest.mjs`. **Incomplete in this pass** — see `PLAYTEST_REPORT.md` §4d for what finished and what did not. |
 | `shots/`                 | Milestone captures per scenario: cold load, first move, first delivery, adaptation offer, first adaptation, household routine, cleaning sweep, compromised route, foothold fitted, extermination, outcome, plus a capture at each operation transition |
 | `visual-sweep/`          | A tour of every named fixture at the real gameplay camera, modals dismissed                       |
 | `critique/`              | The three independent critiques (visual, gameplay+UX, technical) and their dispositions           |

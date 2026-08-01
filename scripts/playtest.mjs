@@ -110,6 +110,11 @@ const SAMPLER_INSTALL = `() => {
       }
     }
 
+    // The pair scan is O(n^2) against a 90-worker cap — 8 100 distance tests. At the sampler's
+    // 10 Hz that is 81 000 a second inside the page, which measurably slowed the game it was
+    // supposed to be observing. Every fifth tick is 2 Hz, still four samples inside the 0.75 s
+    // overlap threshold.
+    if (S.samples % 5 !== 0) return;
     const pairs = [];
     for (let i = 0; i < ws.length; i++) {
       for (let j = i + 1; j < ws.length; j++) {
@@ -210,7 +215,7 @@ const readProbe = (page) =>
   page.evaluate((src) => new Function(`return (${src})()`)(), SAMPLER_READ);
 
 /** Plays a full guided run, capturing a screenshot at each new milestone. */
-async function playRun(page, { family, prefix, sprint = false, maxMinutes = 22 }) {
+async function playRun(page, { family, prefix, sprint = false, maxMinutes = 14 }) {
   const marks = {};
   const t0 = Date.now();
   let lastOp = 1;

@@ -92,6 +92,21 @@ export async function driveTo(
       new Promise<DriveResult>((resolve) => {
         const api = window.__roach;
         const t0 = performance.now();
+        let settled = false;
+        const finish = (r: DriveResult): void => {
+          if (settled) return;
+          settled = true;
+          resolve(r);
+        };
+        // rAF is the steering clock, but a browser that decides this page is not visible throttles
+        // or stops rAF entirely — and a `page.evaluate` promise that never settles cannot be
+        // interrupted by Playwright's own test timeout, so the run hangs past it rather than
+        // failing. This watchdog is on a timer, which is not throttled to a stop, and guarantees the
+        // promise settles.
+        const watchdog = setTimeout(() => {
+          const s = api.state();
+          finish({ ok: false, x: s.scout.x, y: s.scout.y, elapsed: args.timeout, stuck: true });
+        }, args.timeout + 2_000);
         let lastProgress = t0;
         let bestD = Infinity;
         let unstickUntil = 0;
@@ -107,6 +122,7 @@ export async function driveTo(
         };
 
         const tick = (): void => {
+          if (settled) return;
           const s = api.state();
           const now = performance.now();
 
@@ -117,7 +133,8 @@ export async function driveTo(
             bestD = Infinity;
             lastProgress = now;
             if (now - t0 > args.timeout) {
-              resolve({ ok: false, x: s.scout.x, y: s.scout.y, elapsed: now - t0, stuck: true });
+              clearTimeout(watchdog);
+              finish({ ok: false, x: s.scout.x, y: s.scout.y, elapsed: now - t0, stuck: true });
               return;
             }
             requestAnimationFrame(tick);
@@ -130,12 +147,14 @@ export async function driveTo(
 
           if (d <= args.arrive) {
             stopSteering();
-            resolve({ ok: true, x: s.scout.x, y: s.scout.y, elapsed: now - t0, stuck: false });
+            clearTimeout(watchdog);
+            finish({ ok: true, x: s.scout.x, y: s.scout.y, elapsed: now - t0, stuck: false });
             return;
           }
           if (now - t0 > args.timeout) {
             stopSteering();
-            resolve({ ok: false, x: s.scout.x, y: s.scout.y, elapsed: now - t0, stuck: true });
+            clearTimeout(watchdog);
+            finish({ ok: false, x: s.scout.x, y: s.scout.y, elapsed: now - t0, stuck: true });
             return;
           }
           if (d < bestD - 4) {

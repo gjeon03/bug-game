@@ -1,51 +1,51 @@
 {
   "covered": {
     "id": 1,
-    "nodes": 26,
+    "nodes": 25,
     "linked": true,
-    "exposure": 0.07330557505493726,
-    "traffic": 5,
+    "exposure": 0.15922443824346377,
+    "traffic": 7,
     "resourceId": "dishCrumbs",
     "nestId": "home"
   },
   "open": {
     "id": 2,
-    "nodes": 64,
+    "nodes": 169,
     "linked": true,
-    "exposure": 0.13157597541411667,
-    "traffic": 1,
+    "exposure": 0.22006041179664568,
+    "traffic": 2,
     "resourceId": "dishCrumbs",
     "nestId": "home"
   },
   "allRoutes": [
     {
       "id": 1,
-      "nodes": 26,
+      "nodes": 25,
       "linked": true,
-      "exposure": 0.07330557505493726,
-      "traffic": 5,
+      "exposure": 0.15922443824346377,
+      "traffic": 7,
       "resourceId": "dishCrumbs",
       "nestId": "home"
     },
     {
       "id": 2,
-      "nodes": 64,
+      "nodes": 169,
       "linked": true,
-      "exposure": 0.13157597541411667,
-      "traffic": 1,
+      "exposure": 0.22006041179664568,
+      "traffic": 2,
       "resourceId": "dishCrumbs",
       "nestId": "home"
     }
   ],
   "scout": {
-    "x": 735.8034082516585,
-    "y": 1697.1191240421813,
+    "x": 721.6357767758717,
+    "y": 1667.443011395221,
     "alive": true,
     "stamina": 100,
-    "exposure": 0.303251951865239,
+    "exposure": 0.34680852134769674,
     "spotted": 0,
     "trapped": false,
     "laying": false
   },
-  "reserve": 80.76666666666992
+  "reserve": 49.3866666666726
 }

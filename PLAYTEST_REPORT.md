@@ -1,132 +1,178 @@
 # PLAYTEST_REPORT — Baseboard Empire
 
-Every number in this document either appears in a file the test suite produced, or is asserted by a
-test that fails if it stops being true. Nothing here is typed by hand from memory.
+Everything here is measured. Where a number is quoted, the artefact that holds it is named. Where
+something was not measured, it says so.
 
-**Where the numbers live.** Measured run figures — pacing, frame times, deployment, restart integrity
-— are regenerated into `artifacts/evidence/summary.md` by `node scripts/report.mjs`, which reads the
-JSON the tests wrote and prints "not present" rather than inventing a value when a record is missing.
-Read that file for the current pass; this document explains what the scenarios were and what they
-showed.
+- **Before:** `artifacts/evidence/redesign-baseline/` — see its `PROVENANCE.md`; there are two
+  capture passes and they are not interchangeable.
+- **After:** `artifacts/evidence/redesign-final/`
+- **Independent critiques and what was done about each finding:**
+  `artifacts/evidence/redesign-final/critique/`, dispositions in `dispositions.md`
 
-| Evidence                                                   | File                               |
-| ---------------------------------------------------------- | ---------------------------------- |
-| Generated run figures, frame times, bundle, deployment     | `artifacts/evidence/summary.md`    |
-| Forty-four-seed sweep of a complete competent run          | `artifacts/evidence/seed-sweep.md` |
-| Cautious vs aggressive vs deliberately poor routing        | `artifacts/evidence/strategies.md` |
-| Independent critiques and what was done about each finding | `artifacts/evidence/critique/`     |
-| Captured gameplay states                                   | `artifacts/evidence/shots/`        |
+---
 
-## Scenarios and what they showed
+## 1. How the runs were played
 
-| Scenario                                                   | Where it runs                              | Result                                                                                                                                                                                   |
-| ---------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Cautious, cover-hugging routes                             | `strategies.test.ts`, `fullrun.spec.ts` 09 | **Wins.** Suspicion peaks at tier 2 ("infestation suspected"); trail evidence 43.                                                                                                        |
-| Aggressive, shortest lines across open floor               | `strategies.test.ts`                       | **Loses.** Grows _faster_ — clears food and moisture comfortably — and still loses, because trail evidence of 330 carries the household to tier 4, where spray is aimed into the cracks. |
-| Deliberately poor, through the under-sink light, sprinting | `strategies.test.ts`                       | **Colony collapses at t = 232 s**, inside night 2.                                                                                                                                       |
-| Trap avoidance / route denial                              | `threats.spec.ts` 06                       | Traps deploy against the ground the player's own traffic crossed; workers steer around armed hazards.                                                                                    |
-| Scout lost and recovered                                   | `threats.spec.ts` 08, `sim.test.ts`        | The colony promotes a replacement; play continues.                                                                                                                                       |
-| Deliberate eradication                                     | `fullrun.spec.ts` 10                       | Ends `lost` with a named cause and the single largest contributing evidence source.                                                                                                      |
-| Successful complete run                                    | `fullrun.spec.ts` 09, `balance.test.ts`    | Ends `won` with all five criteria met.                                                                                                                                                   |
-| Five consecutive restarts, no reload                       | `restart.spec.ts` 11                       | No entity, particle, voice or suspicion leakage.                                                                                                                                         |
-| Forty-four seeds, same competent strategy                  | `seed-sweep.md`, `seeds.test.ts`           | 39 win (88.6 %). All five losses fall short on population alone after claiming everything — zero collapses, zero destroyed nests.                                                        |
+Real-browser runs are driven by the **guided bot** (`scripts/lib/bot.mjs`) through the real input
+layer. It acts only on what the HUD shows a player: `hud.source` decides what kind of thing to do,
+`hud.target` decides where, and the one-of-three panels are answered by key. It never reads a private
+field and never writes state.
 
-## The claim the design rests on, measured
+That makes a completed run evidence about two things at once — that the game can be finished, and
+that the guidance is sufficient to finish it without reading anything.
 
-Three runs, one seed, one map, differing only in **where the player walked**:
+A second, independent player exists headlessly. `tests/unit/play.ts` plays by _intent_: keep both
+reserves supplied, take the growth decisions as they are offered, spend a full larder on the things
+that raise its ceilings, push lines into the region the objective names, ride out the response.
+`tests/unit/winnable.test.ts` uses it to win the game on three seeds. Neither player is given
+resources, speed or state a human could not produce.
 
-|                        | trail evidence | tier reached | outcome              |
-| ---------------------- | -------------- | ------------ | -------------------- |
-| cover-hugging          | 43             | 2            | won                  |
-| across the open middle | 330            | 4            | lost                 |
-| through the light      | 138            | 4            | collapsed in night 2 |
+---
 
-An eightfold spread in evidence produced entirely by route geometry. `strategies.test.ts` fails if
-that stops being true.
+## 2. The comparison that matters
 
-## Difficulty shape
+| Measure                                      | Baseline                                                                           | Redesign                                               |
+| -------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Longest decision-free plateau, competent run | **463.9 s**                                                                        | see §4                                                 |
+| Seconds spent at the food cap                | **427 s** of a 731 s run                                                           | see §4                                                 |
+| Outcome of a competent cautious run          | **lost** (`notEstablished`)                                                        | see §4                                                 |
+| First objective the player reads             | `MOISTURE RUNNING OUT — run a trail to water now or the colony dies.` at t = 0.8 s | `Walk to <source> — then bring the scent home.`        |
+| Threat spawns attributable to the player     | **1 of 14** in a winning run                                                       | every response is aimed by the regional heat grid      |
+| Player-facing sinks for food                 | 1 (claim a crack, 140 food once per run)                                           | brood · 9 adaptations · 5 foothold claims · 5 fit-outs |
+| Tests that win the game by _playing_ it      | **0**                                                                              | 3 seeds (`winnable.test.ts`)                           |
 
-Population is the binding win criterion: food and moisture clear their thresholds in every competent
-run, while final population ranges 25–52 against a threshold of 36 across 44 seeds, of which 39 win.
-A competent run therefore usually wins and sometimes falls just short — and when it falls short, it is because bodies
-were lost to patrols and traps, not because a system failed silently.
+The baseline row for the plateau is the single most important number in this document: the contract's
+gate is 45 seconds and the shipped game was at **ten times** it.
 
-## Observations, and the changes they caused
+---
 
-These are the defects real play exposed. Findings raised by the independent critique passes and their
-dispositions are recorded separately in `artifacts/evidence/critique/dispositions.md`.
+## 3. Scenarios
 
-1. **A tier crossing spawned a hundred patrols.** `world.events` is drained once per rendered _frame_
-   but the simulation runs up to five _steps_ per frame, so an escalation request read back out of it
-   was re-processed every step. One threshold crossing produced 107 patrols and 28 spray clouds.
-   Gameplay hand-offs now use dedicated one-shot slots on the world.
-2. **Resource nodes stripped bare in ~60 s of a 178 s night, permanently.** Node sizes raised, drained
-   sources partly recover each night, and a route whose source runs dry is now explicitly _dry_ rather
-   than silently unlinked.
-3. **Workers hatched in the brood chamber could never reach routes anchored at the home crack** — a
-   flat 420-unit acquisition filter against a 1219-unit gap stranded the entire workforce. Roaches now
-   belong to the nest they hatched in, own-nest routes are always acceptable, and an idle worker with
-   nothing in range redistributes.
-4. **Route exposure had no mechanical consequence.** Every continuous evidence term was capped below
-   the decay rate, so a deliberately awful route ended a night with _lower_ suspicion than a careful
-   one. Evidence is now graded by how far above a baseline a roach or trail node sits.
-5. **A moisture shortage killed a 35-roach colony with no warning.** Below 12 % of capacity the
-   objective line, the meter and the objective bearing all point at the failing reserve.
-6. **Population 0 with the scout alive was a playable, unrecoverable, undeclared state.** Now a
-   colony that cannot hatch a replacement ends the run.
-7. **Breeding could not be throttled and ate the win condition** — the colony spent every surplus down
-   to a flat floor while the win demanded far more banked. Brood now pauses to bank.
-8. **Extermination had no counterplay.** Claimed cracks are now shelter, and the home crack repairs
-   between passes — but a spray sent by the extermination tier is aimed _into_ the cracks, so reaching
-   that tier still costs the run.
-9. **A surviving colony of 38 was told it had been "exterminated".** Falling short now reports itself
-   as _not established_, with its own end card.
-10. **Wall-hugging was mechanically worthless** (squared cover falloff), **open floor carried almost no
-    evidence in the dark**, and **the colony ate itself before the first delivery**. All three
-    corrected; the first is measured at 0.066 vs 0.129 mean route exposure for the same destination.
-11. **The scout was visually indistinguishable from a worker** — a cold rim light on a cold floor. It
-    now carries a warm ground pool and a traced outline in a hue the floor palette does not own.
-12. **The kitchen was a single blue hue with a 22-point luminance range** because the ambient multiply
-    was so high that additive warm light clipped to white. Ambient lowered; warm pools survive.
-13. **Escaping a wall could push an entity into flush cabinetry.** Collision now picks the shallowest
-    exit that does not land inside another solid.
-14. **A hidden tab kept playing.** The run auto-pauses while `document.hidden`.
-15. **A repair to route re-laying merged distinct supply lines.** Letting a lay that starts on a trail
-    end _extend_ that trail was right — the route cap meant "five key presses" rather than "five supply
-    lines" without it — but keying on distance alone was not. Lines out of the same crack must start
-    within `LINK_RADIUS` to link at all, so distance cannot tell them apart. Adoption now also requires
-    the lay to be heading within 60 degrees of the trail's terminal tangent. Found by an independent
-    critic reading the change, before it ever hurt a run.
-16. **A failing reserve conscripted the whole colony.** Biasing labour toward the reserve that is
-    running out makes the shortage warning actionable — but only when the reserve can recover. With
-    water reachable only down the long, lit fridge line, every worker pinned itself on the most exposed
-    route in the game for a whole night, and food drained behind it. Labour is now capped at 75 % on any
-    one reserve: a colony that starves slowly is recoverable, one that force-feeds its entire workforce
-    into a patrol is not.
-17. **Worker route choice ignored exposure entirely** while exposure was the game's central currency.
-    It now counts, so laying a safe line and a risky line to the same source is a decision the colony
-    respects. The weight came from measurement: strong aversion made workers crowd one line and cost the
-    careful strategy its win.
-18. **The end card could contradict itself.** Only a successful run was ever scored against the win
-    conditions, so a colony that collapsed in night 2 with a full larder was shown a default verdict
-    beside live numbers: "120 food banked" with a red cross next to 199. Every ending now scores itself
-    and freezes the numbers behind that score — which also makes the loss card say something useful,
-    since a failed population line beside a passed food line tells the player they died of thirst.
-19. **A bare `playwright test` validated a stale `dist/`.** The rebuild lived in an npm script rather
-    than in the Playwright server command, so a run invoked directly reported green against the binary
-    from before the fix under test. Found by checking a regenerated capture rather than the test result.
+Real-browser, production build, served from `/bug-game/`. Regenerate with:
 
-## Known issues
+```bash
+pnpm build && node scripts/serve-nested.mjs &
+node scripts/playtest.mjs --out artifacts/evidence/redesign-final
+```
 
-Recorded rather than hidden. None block play; all are reproducible.
+| Scenario     | What it exercises                                                              |
+| ------------ | ------------------------------------------------------------------------------ |
+| `growth`     | Brood-family adaptation path, covered routing, full run to an outcome          |
+| `shadow`     | Concealment-family path on a different seed — a measurably different run       |
+| `aggressive` | Forage family, sprinting, straight lines across open floor                     |
+| `recovery`   | A grown colony marched repeatedly across the most exposed ground, then rebuilt |
+| `idle`       | Deliberate failure: never route anything, and see what the game says           |
+| `restarts`   | Five consecutive restarts, checking every carrier of state                     |
+| `focus`      | Tab hidden for six seconds, then restored                                      |
 
-1. **Scout replacement bypasses the loss statistics.** Promoting a worker to scout costs a body, and
-   the population reflects that, but the death is not counted in `workersLost`.
-2. **Residual downtime late in night 1.** Partly mitigated by making locked cracks worth scouting
-   early; a player who sets up supply quickly can still be idle for a stretch before night 2 opens.
-3. **The floor tile repeats every 640 world units.** Wider than the viewport at play zoom, but a very
-   wide window can show it.
-4. **Overlapping workers have no depth cue against each other.** Six roaches on a nest read as one
-   tangle of legs rather than six countable animals — no rim or contact shadow between bodies. Raised
-   by the visual critic, who first attributed it to a value-contrast inversion and then retracted that
-   on re-measurement.
+Headless coverage sits alongside it: 131 unit/integration tests, including a full run played to a win
+on three seeds, the capped-resource invariant, the objective hierarchy, regional heat, the threat
+budget, worker stuck/overlap limits and restart equality.
+
+---
+
+## 4. Measured results
+
+### 4a. A complete real-browser run
+
+`artifacts/evidence/redesign-final/guided-run/transcript.json` — the guided bot playing the shipped
+build at `/bug-game/`, start to finish, with screenshots at each operation. Metrics are computed from
+the transcript, not typed by hand.
+
+| Measure                                               | Value                                       | Gate                   | Baseline                      |
+| ----------------------------------------------------- | ------------------------------------------- | ---------------------- | ----------------------------- |
+| First meaningful input                                | **0.43 s**                                  | ≤ 10 s                 | 0.43 s                        |
+| First trail laid                                      | **3.7 s**                                   | —                      | —                             |
+| **First delivery**                                    | **19.3 s**                                  | ≤ 45 s                 | not reached in the first pass |
+| Operation 1 → 2                                       | **65 s**                                    | —                      | (no operations)               |
+| Operation 2 → 3                                       | **254 s**                                   | —                      | —                             |
+| Operation 3 → 4                                       | **386 s**                                   | —                      | —                             |
+| **Longest interval with no change of objective rule** | **39.1 s** (at t = 221 s)                   | ≤ 45 s                 | **463.9 s**                   |
+| Distinct objective rules exercised in one run         | **12**                                      | —                      | 2                             |
+| Samples at or near the food cap                       | **3 of 101 (3 %)**                          | no dead state at a cap | **427 s of 731 s (58 %)**     |
+| Deliveries                                            | 241                                         | —                      | —                             |
+| Roaches hatched / lost                                | 25 / 19                                     | —                      | —                             |
+| Household routines exploited                          | 2                                           | —                      | (feature did not exist)       |
+| Foothold functions built                              | 2                                           | —                      | (feature did not exist)       |
+| Adaptations taken                                     | 4 (`brood1`, `forage1`, `brood2`, `brood3`) | ≥ 3 in a full run      | (3 mandatory upgrades)        |
+| Regional heat: cells the household came to know       | 1, hottest 0.45                             | > 0                    | (no regional evidence)        |
+| Peak alert                                            | tier 3 of 4                                 | —                      | tier 4, pinned                |
+| **Console errors**                                    | **0**                                       | 0                      | 0                             |
+
+The plateau row is the one to read. The contract's gate is 45 seconds; the shipped game measured
+463.9 s and the redesign measures 39.1 s — and the reason is visible in the row beneath it: twelve
+different rules produced the objective during that run, where the old build had two.
+
+> This particular run ended `exterminated` at 448 s. It was captured before the final balance pass
+> (foothold presence, suppression rate, heat calibration). The winnability regression below is the
+> post-fix evidence, and it is the one that gates the build.
+
+### 4b. Winnability, post-fix
+
+`tests/unit/winnable.test.ts`, three seeds, an intent-driven player that never writes a colony value:
+
+```
+✓ seed 20260801: a competent run takes the kitchen and survives
+✓ seed 4242:     a competent run takes the kitchen and survives
+✓ seed 31337:    a competent run takes the kitchen and survives
+```
+
+Each asserts more than the verdict: operation 4 reached, the extermination actually fired, at least
+three regions in the final tally, at least three adaptations taken and at least two foothold
+functions built. Before this test existed, **no test in the repository had ever won the game by
+playing it** — every `won` assertion wrote the win condition into the world first. The first run of
+it found the territory defect that made the ending unreachable.
+
+### 4c. Verification commands
+
+| Command                                                | Result                                                                                 |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `pnpm format:check`                                    | pass                                                                                   |
+| `pnpm lint`                                            | pass                                                                                   |
+| `pnpm typecheck`                                       | pass                                                                                   |
+| `pnpm test`                                            | **131 passed** in ~11 s                                                                |
+| `pnpm build`                                           | pass — `dist/assets/index-*.js` 191.9 kB raw, **63.0 kB gzip** (budget 150 kB)         |
+| `node scripts/check-subpath.mjs dist`                  | `4 file(s) checked; build is subpath-safe.`                                            |
+| `pnpm exec playwright test tests/e2e/gameplay.spec.ts` | **5 passed** (1.3 min)                                                                 |
+| `pnpm exec playwright test tests/e2e/deploy.spec.ts`   | **3 passed** — nested subpath, zero requests leaving the origin, no placeholder assets |
+
+### 4d. What was not completed in this pass
+
+Stated plainly rather than implied.
+
+- **The seven-scenario `playtest.mjs` package did not finish.** Its per-run screenshots and the
+  guided-run transcript above are real and come from the shipped build, but `playtest.json` is not a
+  complete seven-scenario record. Two causes were found and fixed along the way — an in-page steering
+  loop that could hang when the browser throttled `requestAnimationFrame` (now watchdogged in both
+  `tests/e2e/driver.ts` and `scripts/lib/bot.mjs`), and an O(n²) overlap scan running at 10 Hz inside
+  the page (now 2 Hz) — but the full package was not re-run to completion afterwards.
+- **`perf.spec.ts`, `threats.spec.ts`, `restart.spec.ts` and `fullrun.spec.ts` were not observed
+  green locally.** They are long by design (a full playthrough runs in real time) and every local
+  attempt was made on a machine that was also running other captures. They run in CI on every push,
+  and the deploy job is gated on them.
+- **Frame-time tails were therefore not captured for this build.** No p50/p95/p99 figure is claimed.
+
+---
+
+## 5. Known issues
+
+Recorded rather than hidden. Each is either a critic finding that was not fixed, or a limit on what
+the evidence proves.
+
+1. **No outer time limit on a run.** A colony that never reaches three held regions keeps playing
+   instead of being resolved. Every measured competent run ends, and household patience makes
+   stalling expensive, but there is no hard stop. (Gameplay critic D4, partially fixed: the ending is
+   now reachable and was measured on three seeds; the unbounded case remains.)
+2. **No persistent per-zone hold readout.** The objective names the region it is pointing at and its
+   percentage, and the end card shows the top four, but there is no always-on panel. (D17.)
+3. **Two of six light sources have no drawn emitter** — `dishwasherLamp` and `binGlow` sit just
+   outside their fixtures. (Visual critic #14.)
+4. **Antennae are budgeted off past 30 on-screen roaches**, which is inside the range a late colony
+   reaches. (Visual critic #15.)
+5. **The absolute frame budget is asserted conditionally on a fast host.** A headless CI box cannot
+   prove a desktop frame budget, so the suite falls back to a CPU-time budget there. This is a stated
+   limit, not a claim. (Technical verifier D4.)
+6. **Several restart and deploy assertions restate a hard cap and cannot fail.** Noise rather than
+   false green — the load-bearing assertions in those specs are real. (Technical verifier D5–D9.)
+7. **Audio was verified by code inspection and by the voice-pool counters, not by listening.** No
+   automated check hears the mix.

@@ -10,12 +10,17 @@
  */
 
 /** In-page steering loop. Serialised into the browser so steering is frame-accurate. */
-export const DRIVE = `(a) => new Promise((res) => {
+export const DRIVE = `(a) => new Promise((res0) => {
   const api = window.__roach; const t0 = performance.now();
-  let best = Infinity, lp = t0, uu = 0, ud = 'up';
+  let best = Infinity, lp = t0, uu = 0, ud = 'up', settled = false;
+  // rAF is the steering clock; a page the browser decides is not visible has it throttled or
+  // stopped, and an evaluate promise that never settles hangs the harness rather than failing it.
+  const res = (v) => { if (settled) return; settled = true; clearTimeout(wd); res0(v); };
+  const wd = setTimeout(() => res({ ok: false, ended: false, starved: true }), a.timeout + 2000);
   const stop = () => { for (const k of ['left','right','up','down']) api.input.release(k);
     if (!a.lay) api.input.release('lay'); if (!a.sprint) api.input.release('sprint'); };
   const tick = () => {
+    if (settled) return;
     const s = api.state(); const now = performance.now();
     if (s.status !== 'playing') { stop(); res({ ok:false, ended:true }); return; }
     if (!s.scout.alive) { stop(); best = Infinity; lp = now;

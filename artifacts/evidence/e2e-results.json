@@ -3,10 +3,7 @@
     "argv": [
       "/Users/jeongyeong-yeon/.asdf/installs/nodejs/23.5.0/bin/node",
       "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/node_modules/@playwright/test/cli.js",
-      "test",
-      "tests/e2e/gameplay.spec.ts",
-      "-g",
-      "01 loads clean"
+      "test"
     ],
     "configFile": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/playwright.config.ts",
     "rootDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e",
@@ -77,8 +74,8 @@
     }
   ],
   "stats": {
-    "startTime": "2026-08-01T14:13:39.169Z",
-    "duration": 7.574999999999989,
+    "startTime": "2026-08-01T15:44:13.085Z",
+    "duration": 262.431,
     "expected": 0,
     "skipped": 0,
     "unexpected": 0,
