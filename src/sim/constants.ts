@@ -152,7 +152,13 @@ export const NIGHT_SUSPICION_FLOOR: Record<NightIndex, number> = { 1: 0, 2: 10, 
 /* ── Win / lose ────────────────────────────────────────────────────────────── */
 
 /** Reserve fraction below which the HUD and the objective start shouting about a shortage. */
-export const CRITICAL_RESERVE = 0.12;
+/**
+ * Reserve fraction below which the HUD, the objective and the colony's own labour all switch to the
+ * failing resource. Raised from 0.12 after measurement: at 12 % the warning arrived ~67 s before the
+ * first death while the remedy — walk to a distant source, lay a trail, wait a round trip — takes
+ * 65–80 s. A warning you cannot act on in time is not a warning.
+ */
+export const CRITICAL_RESERVE = 0.22;
 
 export const WIN_POPULATION = 36;
 export const WIN_FOOD = 120;

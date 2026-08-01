@@ -63,6 +63,15 @@ Suspicion peaks: 54–73, i.e. tier 2 to tier 3 — never the extermination tier
 A competent strategy wins about nine times in ten, and when it does not, it is because the colony was
 too small at dawn — never because a system failed silently, never because it was wiped out.
 
+## Re-measured after demand-weighted labour
+
+A later change made worker route acquisition biased toward whichever reserve is running low (an
+independent gameplay review pointed out that the shortage warning told the player about a problem
+they had no lever to act on). Twelve seeds re-run afterwards: **11 won**, and the two seeds that had
+previously fallen short both now win comfortably — 31337 went 34 → 50 and 424242 went 25 → 47.
+Suspicion peaks were unchanged at 56–82. Seed 3 moved the other way, 40 → 26: the variance is real and
+it did not go away, but the colony is materially healthier and the failure mode is unchanged.
+
 ## What the losses cost
 
 The variance is bodies, not resources: patrol footfalls and traps landing on a busy stretch of trail.

@@ -42,10 +42,18 @@ function newRoute(world: World): Route {
     age: 0,
   };
   world.routes.push(route);
-  // Retire the oldest route rather than refusing input: the player should never feel blocked.
+  // Retire the oldest route rather than refusing input: the player should never feel blocked. But
+  // say so — an eviction that deletes the colony's only water line in silence is the worst kind of
+  // failure this game can produce.
   while (world.routes.length > MAX_ROUTES) {
     const victim = world.routes.shift();
-    if (victim) releaseWorkers(world, victim.id);
+    if (!victim) break;
+    releaseWorkers(world, victim.id);
+    const last = victim.nodes[victim.nodes.length - 1];
+    world.events.push({ t: 'routeLost', x: last?.x ?? 0, y: last?.y ?? 0 });
+    world.hint = `Only ${MAX_ROUTES} trails at once — the oldest one dissolved.`;
+    world.hintKey = 'evicted';
+    world.hintTime = 5;
   }
   return route;
 }
@@ -67,7 +75,11 @@ export function layTrail(world: World, x: number, y: number, heading: number): v
 
   let route = world.activeRouteId >= 0 ? getRoute(world, world.activeRouteId) : null;
   if (!route) {
-    route = newRoute(world);
+    // Starting a lay right where an existing trail ends *continues* that trail rather than opening a
+    // new one. Without this, every touch-up of an existing route burned a slot, so the cap meant
+    // "five key presses" instead of "five supply lines" and quietly evicted a line the player needed.
+    route = adoptNearbyRoute(world, x, y);
+    if (!route) route = newRoute(world);
     world.activeRouteId = route.id;
   }
 
@@ -106,6 +118,24 @@ export function layTrail(world: World, x: number, y: number, heading: number): v
   world.stats.trailNodesLaid++;
   if (world.stats.firstTrailAt < 0) world.stats.firstTrailAt = world.time;
   world.events.push({ t: 'trailLaid', x, y });
+}
+
+/** Finds a route whose most recent end the scout is standing on, so a lay extends it. */
+function adoptNearbyRoute(world: World, x: number, y: number): Route | null {
+  const reach = NODE_SPACING * 2.5;
+  let best: Route | null = null;
+  let bestD = reach * reach;
+  for (let i = 0; i < world.routes.length; i++) {
+    const r = world.routes[i];
+    if (r.nodes.length === 0) continue;
+    const tail = r.nodes[r.nodes.length - 1];
+    const d = dist2(tail.x, tail.y, x, y);
+    if (d < bestD) {
+      bestD = d;
+      best = r;
+    }
+  }
+  return best;
 }
 
 export function getRoute(world: World, id: number): Route | null {

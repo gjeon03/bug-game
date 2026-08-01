@@ -294,7 +294,7 @@ function updateGuide(world: World): void {
       const d = (r.x - world.scout.x) ** 2 + (r.y - world.scout.y) ** 2;
       if (d < bestD) {
         bestD = d;
-        best = { x: r.x, y: r.y, label: r.label };
+        best = { x: r.x, y: r.y, label: `${r.label} · ${Math.ceil(r.amount)} left` };
       }
     }
     if (best) {

@@ -410,6 +410,22 @@ export class Renderer {
         continue;
       }
 
+      // Remaining-amount gauge. Without it the only way to know a source was running dry was to walk
+      // to it and press E, which made depletion the least visible thing in the game.
+      const gaugeR = 46 + frac * 12;
+      ctx.strokeStyle = 'rgba(6,10,15,0.55)';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, gaugeR, -Math.PI / 2, -Math.PI / 2 + TAU);
+      ctx.stroke();
+      ctx.strokeStyle =
+        frac < 0.2 ? rgba(PAL.danger, 0.8) : rgba(r.kind === 'food' ? PAL.amber : PAL.cold, 0.65);
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, gaugeR, -Math.PI / 2, -Math.PI / 2 + TAU * frac);
+      ctx.stroke();
+      this.drawCalls += 2;
+
       if (r.kind === 'food') {
         // A scatter of irregular crumbs: many small, a few large, each with a contact shadow so it
         // sits on the tile instead of floating over it.

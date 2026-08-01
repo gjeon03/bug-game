@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { SIM_DT } from '../../src/core/clock.ts';
-import { NIGHT_LENGTH, WIN_FOOD, WIN_POPULATION, WIN_WATER } from '../../src/sim/constants.ts';
+import {
+  MAX_ROUTES,
+  NIGHT_LENGTH,
+  WIN_FOOD,
+  WIN_POPULATION,
+  WIN_WATER,
+} from '../../src/sim/constants.ts';
 import { NESTS, RESOURCES } from '../../src/sim/kitchen.ts';
 import { stepWorld } from '../../src/sim/sim.ts';
 import { createWorld, type World } from '../../src/sim/world.ts';
@@ -351,5 +357,99 @@ describe('a competently played run is winnable', () => {
     expect(c.population).toBeGreaterThanOrEqual(WIN_POPULATION);
     expect(c.food).toBeGreaterThanOrEqual(WIN_FOOD);
     expect(c.water).toBeGreaterThanOrEqual(WIN_WATER);
+  });
+});
+
+describe('the colony responds to the player, not just to the map', () => {
+  it('labour shifts onto whichever reserve is running out', () => {
+    const world = createWorld(7311);
+    // Two lines out of the home crack, one food and one water, both equally convenient.
+    route(
+      world,
+      [[HOME.x + 20, HOME.y]],
+      [
+        [600, 2010],
+        [600, 1760],
+        [P.dishCrumbs.x, P.dishCrumbs.y],
+      ],
+    );
+    route(
+      world,
+      [
+        [620, 1620],
+        [P.sinkDrip.x, P.sinkDrip.y],
+      ],
+      [
+        [620, 1620],
+        [600, 2010],
+        [HOME.x + 20, HOME.y],
+      ],
+    );
+    expect(world.routes.filter((r) => r.linked).length).toBe(2);
+
+    const foodRoute = world.routes.find((r) => r.resourceId === 'dishCrumbs')!;
+    const waterRoute = world.routes.find((r) => r.resourceId === 'sinkDrip')!;
+
+    // Starve the colony of moisture while food is plentiful, then let it re-plan.
+    world.colony.food = world.colony.foodCap * 0.95;
+    world.colony.water = world.colony.waterCap * 0.05;
+
+    let warned = false;
+    let waterShare = 0;
+    let foodShare = 0;
+    for (let t = 0; t < 40 / SIM_DT; t++) {
+      stepWorld(world, SIM_DT);
+      if (world.shortage === 'water') warned = true;
+      waterShare += world.workers.filter((w) => w.alive && w.routeId === waterRoute.id).length;
+      foodShare += world.workers.filter((w) => w.alive && w.routeId === foodRoute.id).length;
+    }
+
+    // The HUD warned...
+    expect(warned, 'the shortage must be signalled').toBe(true);
+    // ...and the colony itself redeployed, which is what makes the warning actionable.
+    expect(
+      waterShare,
+      `expected labour to favour the failing reserve: water=${waterShare} food=${foodShare}`,
+    ).toBeGreaterThan(foodShare);
+  });
+
+  it('re-laying from where a trail ends extends it instead of burning a route slot', () => {
+    const world = createWorld(7312);
+    route(
+      world,
+      [[HOME.x + 20, HOME.y]],
+      [
+        [600, 2010],
+        [600, 1760],
+      ],
+    );
+    expect(world.routes.length).toBe(1);
+    const id = world.routes[0].id;
+    const before = world.routes[0].nodes.length;
+
+    // Release, then start laying again from the same spot — the natural "touch up my trail" action.
+    idle(world, 1);
+    driveTo(world, P.dishCrumbs.x, P.dishCrumbs.y, { lay: true, timeout: 25, arrive: 50 });
+    world.input.lay = false;
+    idle(world, 0.2);
+
+    expect(world.routes.length, 'a touch-up must not allocate a second route').toBe(1);
+    expect(world.routes[0].id).toBe(id);
+    expect(world.routes[0].nodes.length).toBeGreaterThan(before);
+    expect(world.routes[0].linked).toBe(true);
+  });
+
+  it('evicting the oldest trail is announced rather than silent', () => {
+    const world = createWorld(7313);
+    // Lay MAX_ROUTES + 1 clearly separate trails.
+    for (let i = 0; i <= MAX_ROUTES; i++) {
+      driveTo(world, 900 + i * 260, 2300, { timeout: 25, arrive: 45 });
+      driveTo(world, 900 + i * 260, 2150, { lay: true, timeout: 20, arrive: 45 });
+      world.input.lay = false;
+      idle(world, 0.3);
+    }
+    expect(world.routes.length).toBeLessThanOrEqual(MAX_ROUTES);
+    expect(world.hint, 'the player must be told a trail was dissolved').toContain('dissolved');
+    expect(world.events.some((e) => e.t === 'routeLost')).toBe(true);
   });
 });

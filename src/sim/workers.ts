@@ -1,4 +1,4 @@
-import { clamp01, dist2 } from '../core/math.ts';
+import { clamp, clamp01, dist2 } from '../core/math.ts';
 import {
   EVIDENCE_BASELINE,
   HARVEST_SLOTS,
@@ -429,15 +429,20 @@ function deliver(world: World, w: Worker, x: number, y: number): void {
  */
 function redistribute(world: World, w: Worker): void {
   let best: string | null = null;
-  let bestTraffic = Infinity;
+  let bestScore = Infinity;
   for (let i = 0; i < world.routes.length; i++) {
     const r = world.routes[i];
     if (!r.linked || r.nestId === null) continue;
     const res = findResource(world, r.resourceId);
     if (!res || res.depleted) continue;
-    if (r.nestId === w.targetNest) continue;
-    if (r.traffic < bestTraffic) {
-      bestTraffic = r.traffic;
+    // The worker's *current* nest stays a candidate: a route that briefly went out of range is
+    // often still the right answer, and excluding it bounced workers back and forth.
+    // `traffic` only counts workers with a route assigned, so everyone in transit reads as zero and
+    // a whole stranded group would pick the same target in the same frame. A small per-worker jitter
+    // spreads them instead of stampeding.
+    const score = r.traffic + world.rng.next() * 1.5;
+    if (score < bestScore) {
+      bestScore = score;
       best = r.nestId;
     }
   }
@@ -449,6 +454,10 @@ function tryAcquireRoute(world: World, w: Worker): boolean {
   if (world.routes.length === 0) return false;
   // Cheap gate: only look a few times a second, staggered per worker.
   if ((world.tick + w.variant * 7) % 18 !== 0) return w.routeId >= 0;
+
+  const c = world.colony;
+  const foodFrac = c.foodCap > 0 ? c.food / c.foodCap : 1;
+  const waterFrac = c.waterCap > 0 ? c.water / c.waterCap : 1;
 
   let best: number = -1;
   let bestScore = Infinity;
@@ -464,8 +473,17 @@ function tryAcquireRoute(world: World, w: Worker): boolean {
     // worker has wandered; otherwise a satellite nest's own routes were unusable by its own brood.
     const ownNest = r.nestId !== null && r.nestId === w.targetNest;
     if (!ownNest && d2 > ACQUIRE_RADIUS * ACQUIRE_RADIUS) continue;
-    // Prefer near, lightly used routes so traffic self-balances across the network.
-    const score = d2 + r.traffic * 9000;
+    // Prefer near, lightly used routes so traffic self-balances across the network, then bias the
+    // whole thing toward whichever reserve is running low. Without this the colony split its labour
+    // evenly regardless of need and could starve of one resource while capped on the other — and the
+    // shortage warning was information the player had no way to act on. Now the warning arrives with
+    // roaches visibly redeploying onto the failing line.
+    const kind = res.kind;
+    const frac = kind === 'food' ? foodFrac : waterFrac;
+    const other = kind === 'food' ? waterFrac : foodFrac;
+    let demand = clamp(frac / Math.max(other, 0.02), 0.45, 1.8);
+    if (world.shortage === kind) demand *= 0.5;
+    const score = (d2 + r.traffic * 9000) * demand;
     if (score < bestScore) {
       bestScore = score;
       best = i;
