@@ -245,3 +245,17 @@ It was drawn as one additive glow blob per node with per-node jitter and per-nod
 evenly spaced chain of glowing circles, which is precisely what a debug visualiser looks like. It is
 now a single three-pass stroke per route (bloom, body, core) with a travelling dash for flow, and its
 colour carries its state so the player never has to count anything.
+
+### Deviation on record: the scent ribbon is a stroke, not a dot field
+
+The shape-language section above says the pheromone must be "dotted, granular, non-solid — never a
+hard line". That rule produced the shipped defect: an evenly spaced chain of glowing circles that
+every player and every critic read as a debug visualiser.
+
+The ribbon replaces it and keeps what the rule was protecting. It is soft-edged rather than hard —
+three passes (a wide bloom, a body, a bright core) over one quadratic path — it carries its state in
+colour rather than in shape, and a travelling dash gives it direction. It is a secretion with a
+gradient, not a drawn line, and it is the one element the independent visual critic named as
+unambiguously solved.
+
+Where this file and this note disagree, this note is what ships.
