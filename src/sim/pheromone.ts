@@ -241,7 +241,14 @@ export function updatePheromone(world: World, dt: number): void {
     // unlinked trail evaporates at full rate. Without this, a patrol scattering the workforce for a
     // few seconds was enough to lose every route the player had built.
     const decay = dt * (route.linked ? 0.4 : 1);
-    for (let j = 0; j < nodes.length; j++) nodes[j].life -= decay;
+    // `shadow1` — Wall-hugging scent. A node laid under cabinetry lasts longer, which is the whole
+    // point of paying for it. This effect existed in the trait struct and was read nowhere, so the
+    // adaptation was a pure downside: 22 food for a 12 % hauling penalty.
+    const coveredLife = world.traits.coveredTrailLifeMult;
+    for (let j = 0; j < nodes.length; j++) {
+      const n = nodes[j];
+      n.life -= n.exposure <= EVIDENCE_BASELINE ? decay / coveredLife : decay;
+    }
     compactRoute(route);
 
     if (route.nodes.length === 0) {
@@ -310,9 +317,11 @@ export function updatePheromone(world: World, dt: number): void {
     route.exposure = route.nodes.length ? expSum / route.nodes.length : 0;
 
     if (linked) {
+      // `shadow1` also makes a covered line quieter, so the same geometry leaves less evidence.
+      const covered = route.exposure <= EVIDENCE_BASELINE ? world.traits.coveredEvidenceMult : 1;
       for (let j = 0; j < route.nodes.length; j++) {
         const e = route.nodes[j].exposure;
-        if (e > EVIDENCE_BASELINE) exposedTrail += e - EVIDENCE_BASELINE;
+        if (e > EVIDENCE_BASELINE) exposedTrail += (e - EVIDENCE_BASELINE) * covered;
       }
     }
 

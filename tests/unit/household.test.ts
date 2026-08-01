@@ -360,9 +360,13 @@ describe('household routines', () => {
     const world = createWorld(2032);
     const dishes = ROUTINE_SPECS.find((s) => s.kind === 'dishes')!;
     const routine = startRoutine(world, dishes.kind)!;
-    stepUntil(world, () => routine.phase === 'active', 12);
-    expect(world.sweeps.length, 'the wipe follows the tap').toBeGreaterThan(0);
-    expect(routine.denyRadius).toBeGreaterThan(0);
+    stepUntil(world, () => routine.phase === 'active', 20);
+    expect(routine.denyRadius, 'the standing water is there immediately').toBeGreaterThan(0);
+    // The wipe deliberately arrives in the *second half* of the window. Firing it the instant the
+    // spill opened sabotaged the only routine anchor the colony could physically reach in time.
+    expect(world.sweeps.length, 'the cloth does not arrive with the water').toBe(0);
+    stepUntil(world, () => world.sweeps.length > 0, 60);
+    expect(world.sweeps.length, 'but it does arrive').toBeGreaterThan(0);
   });
 });
 

@@ -19,7 +19,7 @@ import {
 import { tierName, topCause, CAUSE_LABELS } from './suspicion.ts';
 import { deployBait, deployTraps, spawnPatrol, spawnSpray, sweepRegion } from './threats.ts';
 import { heldZones, updateTerritory, ZONES_TO_WIN, zoneName } from './territory.ts';
-import type { LoseCause } from './types.ts';
+import type { DeathCause, LoseCause } from './types.ts';
 import { homeNest, type World } from './world.ts';
 
 /**
@@ -34,10 +34,23 @@ import { homeNest, type World } from './world.ts';
  * decide *how impatient* the household is.
  */
 
+/** Shows a counterplay hint for a while, then lets it expire. */
+function setCounterplay(world: World, text: string, seconds = 34): void {
+  world.counterplay = text;
+  world.counterplayTime = seconds;
+}
+
 /** Household patience. Overrunning an operation's soft time adds pressure, never a game over. */
 const IMPATIENCE_RATE = 0.06;
 /** Seconds between household routines, before impatience. */
-const ROUTINE_INTERVAL = 52;
+/**
+ * Seconds between household routines.
+ *
+ * Long enough that a routine is an event rather than the weather: at 52 s against windows that had
+ * to be lengthened so the far anchors were reachable at all, a routine was incoming-or-active about
+ * two thirds of the time and the objective line became a spill countdown.
+ */
+const ROUTINE_INTERVAL = 74;
 const ROUTINE_FIRST = 46;
 /** Threat budget refill per second. A busy household still cannot stack everything at once. */
 const BUDGET_RATE = 0.055;
@@ -180,6 +193,11 @@ function updatePressure(world: World, dt: number): void {
   // time still applies pressure without being the content.
   if (overrun(world) > 0) world.suspicion.value += IMPATIENCE_RATE * dt;
 
+  // Counterplay advice is about a live threat. It used to be assigned and never cleared, so the HUD
+  // kept advising an answer to something that had left the map minutes earlier.
+  world.counterplayTime = Math.max(0, world.counterplayTime - dt);
+  if (world.counterplayTime <= 0) world.counterplay = null;
+
   updateForecast(world);
 
   if (world.finalResponse) {
@@ -207,7 +225,10 @@ function updatePressure(world: World, dt: number): void {
     case 'patrol':
       spawnPatrol(world, hot.x, hot.y);
       world.threatBudget -= 1;
-      world.counterplay = 'Stay under cabinetry — a torch beam only finds roaches on open floor.';
+      setCounterplay(
+        world,
+        'Stay under cabinetry — a torch beam only finds roaches on open floor.',
+      );
       break;
     case 'sweep':
       sweepRegion(world, hot.x, hot.y);
@@ -224,12 +245,15 @@ function updatePressure(world: World, dt: number): void {
     case 'bait':
       deployBait(world, 1, hot.x, hot.y);
       world.threatBudget -= 1;
-      world.counterplay = 'Bait is slow. A roach that walks in has time to walk out.';
+      setCounterplay(world, 'Bait is slow. A roach that walks in has time to walk out.');
       break;
     case 'spray':
       spawnSpray(world, hot.x, hot.y, false);
       world.threatBudget -= 2;
-      world.counterplay = 'Get everyone into a claimed crack. Spray cannot reach inside the walls.';
+      setCounterplay(
+        world,
+        'Get everyone into a claimed crack. Spray cannot reach inside the walls.',
+      );
       break;
   }
   world.recentTargets.push(hot.index);
@@ -270,7 +294,7 @@ function beginFinalResponse(world: World): void {
   world.finalResponse = true;
   world.finalResponseTime = 0;
   world.events.push({ t: 'finalResponse' });
-  world.counterplay = 'Claimed cracks are shelter. Everything outside one is exposed.';
+  setCounterplay(world, 'Claimed cracks are shelter. Everything outside one is exposed.', 90);
 }
 
 /**
@@ -468,11 +492,22 @@ function tallyRun(world: World): void {
     deliveries: world.stats.deliveries,
     peakSuspicion: Math.round(world.suspicion.peak),
     topCause: topCause(world)?.cause ?? null,
+    topDeath: topDeathCause(world),
     runSeconds: world.time,
     operations: world.operation,
     zones: heldZones(world).map((z) => zoneName(z.id)),
     adaptations: world.adaptations.taken.length,
   };
+}
+
+/** What actually killed the most roaches this run, and how many. */
+export function topDeathCause(world: World): { cause: DeathCause; count: number } | null {
+  let best: { cause: DeathCause; count: number } | null = null;
+  for (const key of Object.keys(world.deathCauses) as DeathCause[]) {
+    const count = world.deathCauses[key] ?? 0;
+    if (count > 0 && (!best || count > best.count)) best = { cause: key, count };
+  }
+  return best;
 }
 
 /** Progress readout for the HUD and end card. */

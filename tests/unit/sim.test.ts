@@ -22,7 +22,7 @@ import { FINAL_RESPONSE_LENGTH } from '../../src/sim/operations.ts';
 import { eraseTrail, recallWorkers } from '../../src/sim/pheromone.ts';
 import { stepWorld } from '../../src/sim/sim.ts';
 import { addSuspicion, TIER_HOLD, topCause } from '../../src/sim/suspicion.ts';
-import { HOLD_THRESHOLD, ZONES_TO_WIN } from '../../src/sim/territory.ts';
+import { HOLD_THRESHOLD, zoneAt, ZONES_TO_WIN } from '../../src/sim/territory.ts';
 import { deployTraps, spawnPatrol, stomp } from '../../src/sim/threats.ts';
 import { createWorld, spawnWorker, type World } from '../../src/sim/world.ts';
 import {
@@ -436,7 +436,17 @@ describe('outcomes', () => {
     world.operation = 4;
     world.finalResponse = true;
     world.finalResponseTime = FINAL_RESPONSE_LENGTH + 0.1;
-    for (let i = 0; i < ZONES_TO_WIN; i++) world.zones[i].hold = 1;
+    // Regions away from the home crack: the one containing home does not count toward the win.
+    const home = world.nests.find((n) => n.home)!;
+    const homeZone = zoneAt(home.x, home.y)?.id;
+    let granted = 0;
+    for (const z of world.zones) {
+      if (granted >= ZONES_TO_WIN) break;
+      if (z.id === homeZone) continue;
+      z.hold = 1;
+      z.held = true;
+      granted++;
+    }
 
     stepWorld(world, SIM_DT);
     expect(world.status).toBe('won');

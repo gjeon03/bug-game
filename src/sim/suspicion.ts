@@ -8,41 +8,54 @@ import {
   SUSPICION_WEIGHTS,
   TIER_THRESHOLDS,
 } from './constants.ts';
+import { EVIDENCE_BASELINE } from './constants.ts';
 import { depositHeat } from './heat.ts';
 import type { SuspicionCause } from './types.ts';
 
 /** How much regional heat one point of evidence deposits. */
 const HEAT_PER_EVIDENCE = 0.05;
+/** Heat per second per unit of above-baseline exposure, for a trail node and for a worker. */
+/*
+ * Calibrated, not guessed. A cell decays at HEAT_DECAY = 0.021/s toward its own floor, and the
+ * household starts acting on a cell at HEAT_KNOWN = 0.42. A route crossing a cell contributes about
+ * three sampled nodes; at 0.3 of above-baseline exposure each, these rates take a hammered open
+ * corridor from cold to "known" in roughly a minute and leave a covered one below the threshold
+ * indefinitely. The first version was eight times hotter and saturated every cell the colony touched
+ * within seconds, so the director never stopped acting.
+ */
+const TRAIL_HEAT_RATE = 0.006;
+const WORKER_HEAT_RATE = 0.01;
 /** Seconds a tier must hold before the household is allowed to escalate again. */
 export const TIER_HOLD = 25;
 
-/** Spreads the traffic term across the places the exposed workers are actually standing. */
-function depositWorkerHeat(world: World, total: number): void {
-  let exposed = 0;
+/** Deposits traffic evidence under each exposed worker, scaled by how exposed that worker is. */
+function depositWorkerHeat(world: World, dt: number): void {
   for (let i = 0; i < world.workers.length; i++) {
     const w = world.workers[i];
-    if (w.alive && w.exposure > 0.24) exposed++;
-  }
-  if (exposed === 0) return;
-  const per = (total * HEAT_PER_EVIDENCE * 5) / exposed;
-  for (let i = 0; i < world.workers.length; i++) {
-    const w = world.workers[i];
-    if (w.alive && w.exposure > 0.24) depositHeat(world, w.x, w.y, per);
+    if (!w.alive || w.exposure <= EVIDENCE_BASELINE) continue;
+    depositHeat(world, w.x, w.y, (w.exposure - EVIDENCE_BASELINE) * WORKER_HEAT_RATE * dt);
   }
 }
 
-/** Spreads the trail term across the exposed stretches of the player's own routes. */
-function depositTrailHeat(world: World, total: number): void {
-  let count = 0;
+/**
+ * Deposits trail evidence at each exposed node, scaled by how exposed *that node* is.
+ *
+ * The first version divided one per-second budget across however many exposed nodes there were,
+ * which inverted the whole point of the grid: a short covered line concentrated its small budget
+ * into one cell and lit it up, while a long line dragged through the fridge light spread a larger
+ * budget so thinly that no cell ever crossed the "known" threshold. Measured on one seed: covered
+ * peak 1.000, through-the-light peak 0.017 — the careful player was the one getting scoured.
+ *
+ * Per-node and unnormalised is the honest model: every metre of open floor you route across is its
+ * own piece of evidence, in its own place.
+ */
+function depositTrailHeat(world: World, dt: number): void {
   for (const r of world.routes) {
-    for (let i = 0; i < r.nodes.length; i += 4) if (r.nodes[i].exposure > 0.24) count++;
-  }
-  if (count === 0) return;
-  const per = (total * HEAT_PER_EVIDENCE * 5) / count;
-  for (const r of world.routes) {
+    if (!r.linked) continue;
     for (let i = 0; i < r.nodes.length; i += 4) {
       const n = r.nodes[i];
-      if (n.exposure > 0.24) depositHeat(world, n.x, n.y, per);
+      if (n.exposure <= EVIDENCE_BASELINE) continue;
+      depositHeat(world, n.x, n.y, (n.exposure - EVIDENCE_BASELINE) * TRAIL_HEAT_RATE * dt);
     }
   }
 }
@@ -126,14 +139,17 @@ export function updateSuspicion(world: World, dt: number): void {
       world.traits.trafficEvidenceMult *
       dt;
     addSuspicion(world, 'traffic', total, 0, 0);
-    depositWorkerHeat(world, total);
   }
   if (world.exposedTrail > 0) {
     const total =
       SUSPICION_WEIGHTS.droppings * Math.min(world.exposedTrail, TRAIL_EVIDENCE_CAP) * dt;
     addSuspicion(world, 'droppings', total, 0, 0);
-    depositTrailHeat(world, total);
   }
+  // Regional heat is deposited every step, independently of the global evidence caps, so a colony
+  // large enough to saturate the traffic cap still tells the household *where* it is working.
+  depositWorkerHeat(world, dt);
+  depositTrailHeat(world, dt);
+
   const scout = world.scout;
   if (scout.alive && scout.sprinting && scout.exposure > 0.35) {
     addSuspicion(world, 'noise', SUSPICION_WEIGHTS.noise * dt, scout.x, scout.y);

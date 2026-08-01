@@ -39,6 +39,8 @@ export interface Routine {
   light: number;
   /** Radius of the denial area (soap, wiped floor) while active. */
   denyRadius: number;
+  /** Seconds into the active phase at which the cleaning pass starts, or 0 once it has. */
+  sweepAt: number;
 }
 
 export interface RoutineSpec {
@@ -74,8 +76,15 @@ export const ROUTINE_SPECS: readonly RoutineSpec[] = [
       'Fresh crumbs, under a flood of warm light. Take what you can before the door shuts.',
     x: 2530,
     y: 1020,
-    incoming: 7,
-    active: 34,
+    // The window has to contain the walk.
+    //
+    // Measured by an independent critic: this anchor is 2 574 units from the home crack — 11.8 s
+    // each way at scout speed — against a 34 s window, and laying the trail back is the slower half
+    // of the trip. Seven of eight scripted runs died inside operation 2 without ever exploiting a
+    // routine, and one attempt spent 35 s of a 34 s window. A timed opportunity the player cannot
+    // physically reach is not a decision.
+    incoming: 13,
+    active: 46,
     aftermath: 12,
     resourceKind: 'food',
     amount: 260,
@@ -91,8 +100,8 @@ export const ROUTINE_SPECS: readonly RoutineSpec[] = [
       'Standing water is free moisture — but the wiped floor kills scent where it passes.',
     x: 660,
     y: 1520,
-    incoming: 6,
-    active: 38,
+    incoming: 11,
+    active: 44,
     aftermath: 14,
     resourceKind: 'water',
     amount: 220,
@@ -107,8 +116,8 @@ export const ROUTINE_SPECS: readonly RoutineSpec[] = [
     counterplay: 'The richest food in the kitchen, on the most exposed tile in the kitchen.',
     x: 2980,
     y: 2300,
-    incoming: 6,
-    active: 30,
+    incoming: 13,
+    active: 44,
     aftermath: 12,
     resourceKind: 'food',
     amount: 320,
@@ -140,6 +149,7 @@ export function startRoutine(world: World, kind: RoutineKind): Routine | null {
     exploited: false,
     light: 0,
     denyRadius: 0,
+    sweepAt: 0,
   };
   world.routines.push(r);
   world.events.push({ t: 'routineWarn', kind, x: r.x, y: r.y });
@@ -228,14 +238,20 @@ export function updateRoutines(world: World, dt: number): void {
         r.timer = r.phaseLength;
         r.light = spec.light;
         r.denyRadius = spec.denyRadius;
+        r.sweepAt = r.phaseLength * 0.55;
         spawnRoutineResource(world, r);
-        if (r.kind === 'dishes') startSweep(world, r);
         world.events.push({ t: 'routineStart', kind: r.kind, x: r.x, y: r.y });
       }
       continue;
     }
 
     if (r.phase === 'active') {
+      // The wipe comes *after* the player has had a chance at the spill, not at the instant it
+      // opens. Firing it on arrival sabotaged the only routine that was reachable at all.
+      if (r.kind === 'dishes' && r.sweepAt > 0 && r.timer <= r.phaseLength - r.sweepAt) {
+        r.sweepAt = 0;
+        startSweep(world, r);
+      }
       const node = r.resourceId
         ? world.resources.find((res) => res.id === r.resourceId)
         : undefined;

@@ -301,6 +301,8 @@ export function spendSurplus(world: World, opts: PlayerOptions = COVERED): boole
 }
 
 export function maintainLines(world: World, opts: PlayerOptions = COVERED): void {
+  // A live spill is the best throughput in the kitchen and it is on a timer, so it comes first — but
+  // only while it is still untaken, which is exactly when the objective hierarchy promotes it too.
   if (chaseRoutine(world, opts)) return;
   if (holdTerritory(world, opts)) return;
   if (spendSurplus(world, opts)) return;

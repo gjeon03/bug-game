@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ZONES_TO_WIN } from '../../src/sim/territory.ts';
+import { zoneAt, ZONES_TO_WIN } from '../../src/sim/territory.ts';
 import { SIM_DT } from '../../src/core/clock.ts';
 import {
   ADAPTATIONS,
@@ -201,7 +201,17 @@ describe('operations advance on achievement, never on a clock', () => {
     expect(world.status).toBe('playing');
 
     // Holding the third region is what brings the can out.
-    for (const z of world.zones.slice(0, ZONES_TO_WIN)) z.hold = 0.95;
+    // The region the home crack sits in does not count toward taking the kitchen, so grant the
+    // hold on regions away from home — exactly what `heldZones` counts.
+    const homeZone = zoneAt(world.nests.find((n) => n.home)!.x, world.nests.find((n) => n.home)!.y);
+    let granted = 0;
+    for (const z of world.zones) {
+      if (granted >= ZONES_TO_WIN) break;
+      if (z.id === homeZone?.id) continue;
+      z.hold = 0.95;
+      z.held = true;
+      granted++;
+    }
     stepWorld(world, SIM_DT);
     expect(world.finalResponse, 'taking the kitchen summons the response').toBe(true);
     expect(world.events.some((e) => e.t === 'finalResponse')).toBe(true);

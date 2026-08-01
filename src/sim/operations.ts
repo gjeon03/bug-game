@@ -116,6 +116,12 @@ const nearestUnclaimedNest = (world: World) => {
   return best;
 };
 
+/** Region names are authored lower-case ("the sink run"); this starts a sentence with one. */
+/** Onboarding step index at which the lay key has been shown. */
+const LAY_TAUGHT_STEP = 2;
+
+const sentence = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
+
 /** An unclaimed, currently-claimable crack inside this region, if there is one. */
 const crackIn = (world: World, zone: { x: number; y: number; w: number; h: number }) =>
   world.nests.find(
@@ -142,7 +148,12 @@ const supplyGate = (kind: 'food' | 'water', need: number): OperationGate => ({
     const target = nearestResource(w, kind);
     const noun = kind === 'food' ? 'food' : 'moisture';
     if (!target) return `Find a ${noun} source — scout away from the crack.`;
-    return `Walk to ${target.label}, then walk home holding the lay key to leave a trail.`;
+    // The tutorial names the lay key at ~11 s. Until it has, the objective describes the *action*
+    // rather than a key the player has not been shown, so the primary instruction is never
+    // unexecutable.
+    return w.onboarding.step >= LAY_TAUGHT_STEP
+      ? `Walk to ${target.label}, then walk home holding the lay key to leave a trail.`
+      : `Walk to ${target.label} — then bring the scent home.`;
   },
   blocker: (w) => {
     if (w.routes.length >= MAX_ROUTES && linkedRoutes(w, kind) < need) {
@@ -345,13 +356,13 @@ export const OPERATIONS: readonly OperationSpec[] = [
           if (!next.state.routed)
             return `Run a trail through ${next.spec.name} — it holds at ${pct}%.`;
           if (next.state.workers === 0)
-            return `${next.spec.name} has a trail but nobody on it (${pct}%).`;
+            return `${sentence(next.spec.name)} has a trail but nobody on it (${pct}%).`;
           return `Keep roaches working ${next.spec.name} — ${pct}% held.`;
         },
         blocker: (w) => {
           const next = nextZoneToHold(w);
           if (next?.state.contested) {
-            return `${next.spec.name} is being worked by the household — hold is falling while they are there.`;
+            return `${sentence(next.spec.name)} is being worked by the household — hold is falling while they are there.`;
           }
           return null;
         },
@@ -488,6 +499,19 @@ export function resolveHud(world: World): Hud {
     source: gate ? `gate:${gate.id}` : 'operation:complete',
   };
 
+  // 0. The extermination outranks everything.
+  //
+  //    It did not, and the result was the game telling the player to chase crumbs during its own
+  //    climax: a routine is incoming-or-active about two thirds of the time, and routines sat above
+  //    threat advice in this list. Captured in the shipped evidence — forecast "EXTERMINATION — 1s",
+  //    objective "Washing up in 5s".
+  if (world.finalResponse) {
+    base.objective =
+      world.threatAdvice ?? 'Get the colony into claimed cracks and hold the regions you have.';
+    base.source = 'final';
+    return base;
+  }
+
   // 1. A pending adaptation the player can actually afford. This is a permanent decision with no
   //    downside to taking it now, so nothing outranks it.
   //
@@ -517,7 +541,12 @@ export function resolveHud(world: World): Hud {
   //    chasing a spill instead is how a run starves in the middle of a windfall.
   const routine = activeRoutine(world);
   const needsSupply = gate !== null && gate.id.endsWith('Line');
-  if (routine && !needsSupply) {
+  // A routine outranks the operation only while it is still an *opportunity*. Once the colony is
+  // already taking it, the countdown is a status readout, not a decision — and leaving it at the top
+  // of the hierarchy made the objective line a spill timer for 58 % of a measured run.
+  const routineWorthChasing =
+    routine !== null && (routine.phase === 'incoming' || !routine.exploited);
+  if (routine && routineWorthChasing && !needsSupply) {
     const rs = specFor(routine.kind);
     if (routine.phase === 'incoming') {
       base.objective = `${rs.title} in ${Math.ceil(routine.timer)}s — ${rs.counterplay}`;
@@ -533,7 +562,8 @@ export function resolveHud(world: World): Hud {
     return base;
   }
 
-  // 3. A shortage the player can still act on.
+  // 3. A shortage the player can still act on — unless a spill of exactly that kind is open right
+  //    now, in which case the spill *is* the answer and priority 2 already said so.
   if (world.shortage) {
     const kind = world.shortage;
     const noun = kind === 'food' ? 'Food' : 'Moisture';
@@ -642,23 +672,36 @@ export function cappedAdvice(
       target: { x: damaged.x, y: damaged.y, label: damaged.label },
     };
   }
-  // Nothing to buy: name the actual bottleneck instead.
-  if (c.population >= c.capacity) {
+  // Nothing affordable is left. From here the answer must be something the player can *do* — this
+  // function had two branches that named an action it had already ruled out one line earlier.
+  const buildable = world.nests.some(
+    (n) => (!n.claimed && n.unlockOp <= world.operation) || (n.claimed && !n.home && n.fn === null),
+  );
+  if (c.population >= c.capacity && buildable) {
+    const n = world.nests.find(
+      (x) =>
+        (!x.claimed && x.unlockOp <= world.operation) || (x.claimed && !x.home && x.fn === null),
+    );
+    const need = n
+      ? n.claimed
+        ? `${n.fitFood} food and ${n.fitWater} moisture`
+        : `${n.costFood} food and ${n.costWater} moisture`
+      : '';
     return {
-      text: `${noun} full and the nest is full at ${c.capacity}. Capacity is the bottleneck — claim or fit out a foothold.`,
+      text: `${noun} full and the nest is full at ${c.capacity}. Capacity is the bottleneck — ${n?.label} needs ${need}.`,
       source: 'capped:capacity',
-      target: null,
+      target: n ? { x: n.x, y: n.y, label: n.label } : null,
     };
   }
   const next = MILESTONE_POPULATION[world.adaptations.milestonesUsed];
-  if (next) {
+  if (next && c.population < next) {
     return {
       text: `${noun} full — the reserve is the point: at ${next} roaches you unlock a choice you will need it for.`,
       source: 'capped:milestone',
       target: null,
     };
   }
-  const zone = nextZoneToHold(world);
+  const zone = world.operation >= 4 ? nextZoneToHold(world) : null;
   if (zone) {
     return {
       text: `${noun} full. Reserves are no longer the bottleneck — territory is. Push a line into ${zone.spec.name}.`,

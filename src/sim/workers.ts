@@ -58,6 +58,10 @@ export function killWorker(world: World, w: Worker, cause: DeathCause): void {
     reported: false,
   });
   if (world.corpses.length > 40) world.corpses.shift();
+  world.deathCauses[cause] = (world.deathCauses[cause] ?? 0) + 1;
+  // `brood2` — Ootheca cluster. Losses are replaced at double rate for a while after a casualty.
+  // The surge timer was read by the colony and written by nobody.
+  if (world.adaptations.taken.includes('brood2')) world.adaptations.surgeTime = 20;
   world.events.push({ t: 'workerDied', x: w.x, y: w.y, cause });
 }
 
@@ -313,7 +317,10 @@ export function updateWorkers(world: World, dt: number): void {
             const bonus = world.traits.carryMult;
             const take = Math.min(res.amount, want * bonus);
             if (take > 0) {
-              res.amount -= take;
+              // `forage1`/`forage2` — the stated downside. Bigger mouthfuls strip a source faster
+              // than they feed the colony, which is what makes the family a trade rather than a
+              // straight upgrade. The multiplier was in the trait struct and read nowhere.
+              res.amount -= take * world.traits.depletionMult;
               res.disturbance = clamp01(res.disturbance + 0.12);
               w.carrying = res.kind;
               w.carryAmount = take;
@@ -767,8 +774,15 @@ function tryAcquireRoute(world: World, w: Worker): boolean {
 }
 
 /** Scatters nearby workers away from a threat. Used by footfalls, traps and spray. */
+/**
+ * Scatters workers near a point.
+ *
+ * `shadow2` — Alarm pheromone widens the radius that reacts, which is what "react 0.5 s sooner"
+ * means for a threat travelling at a few hundred units a second. The trait was previously written
+ * and never read, so the adaptation cost 44 food for its downside alone.
+ */
 export function panicWorkers(world: World, x: number, y: number, radius: number): void {
-  const r2 = radius * radius;
+  const r2 = (radius + world.traits.panicLead * 260) ** 2;
   for (let i = 0; i < world.workers.length; i++) {
     const w = world.workers[i];
     if (!w.alive || w.state === 'trapped') continue;

@@ -233,7 +233,7 @@ export class Hud {
     const list = h.checklist
       .map(
         (item) =>
-          `<li class="${item.done ? 'done' : ''}">${item.label}<span>${Math.min(item.have, item.need)}/${item.need}</span></li>`,
+          `<li class="${item.done ? 'done' : ''}">${item.label}<span>${Math.floor(Math.min(item.have, item.need) * 10) / 10}/${item.need}</span></li>`,
       )
       .join('');
     this.setHtml('checklist', list);

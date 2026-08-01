@@ -2,6 +2,17 @@ import { specById } from '../sim/adaptations.ts';
 import { operationSpec } from '../sim/operations.ts';
 import { CAUSE_LABELS, tierName, topCause } from '../sim/suspicion.ts';
 import { ZONES } from '../sim/territory.ts';
+import type { DeathCause } from '../sim/types.ts';
+
+/** Plain-language cause of death for the debrief. */
+const DEATH_LABELS: Record<DeathCause, string> = {
+  foot: 'crushed underfoot',
+  trap: 'caught on sticky traps',
+  spray: 'killed by spray',
+  bait: 'poisoned by bait',
+  starve: 'starved — the larder ran dry',
+  thirst: 'died of thirst — no moisture reached them',
+};
 import type { World } from '../sim/world.ts';
 import { loadBestRun, type Settings } from './settings.ts';
 
@@ -183,6 +194,7 @@ export class Overlays {
       deliveries: world.stats.deliveries,
       peakSuspicion: Math.round(world.suspicion.peak),
       topCause: null,
+      topDeath: null,
       runSeconds: world.stats.runSeconds,
       operations: world.operation,
       zones: [],
@@ -195,8 +207,16 @@ export class Overlays {
         <h1>${title}</h1>
         <p class="lede">${lede}</p>
         ${
-          !won && top
-            ? `<p><strong>Biggest contributing factor:</strong> ${CAUSE_LABELS[top.cause]} (${Math.round(top.amount)} suspicion).</p>`
+          !won
+            ? `<p>${
+                tally.topDeath
+                  ? `<strong>What killed them:</strong> ${DEATH_LABELS[tally.topDeath.cause as DeathCause] ?? tally.topDeath.cause} — ${tally.topDeath.count} roach${tally.topDeath.count === 1 ? '' : 'es'}.`
+                  : '<strong>What killed them:</strong> nothing reached them — the colony simply ran out.'
+              }${
+                top
+                  ? ` <strong>Biggest evidence source:</strong> ${CAUSE_LABELS[top.cause]} (${Math.round(top.amount)} suspicion).`
+                  : ''
+              }</p>`
             : ''
         }
         <ul class="criteria">

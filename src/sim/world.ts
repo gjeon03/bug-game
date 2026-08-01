@@ -34,6 +34,7 @@ import type {
   Hazard,
   InputState,
   Intent,
+  DeathCause,
   LoseCause,
   NestNode,
   Patrol,
@@ -96,6 +97,8 @@ export interface FinalTally {
   deliveries: number;
   peakSuspicion: number;
   topCause: string | null;
+  /** What actually killed the most roaches. */
+  topDeath: { cause: string; count: number } | null;
   runSeconds: number;
   /** How far through the four operations the run got. */
   operations: number;
@@ -156,6 +159,16 @@ export interface World {
   forecast: string;
   /** Counterplay hint for whatever the household is doing, once the player has met it. */
   counterplay: string | null;
+  /** Seconds the counterplay hint has left before it expires. */
+  counterplayTime: number;
+  /**
+   * How many roaches each cause of death has taken.
+   *
+   * The end card used to attribute *every* loss to the largest suspicion cause, so a colony that
+   * died of thirst with a nearly full larder was told its problem was "Trails left on bare tile".
+   * A death has a cause; the debrief should use it.
+   */
+  deathCauses: Partial<Record<DeathCause, number>>;
   /** Foothold awaiting a fit-out choice from the player, or null. */
   pendingFit: string | null;
 
@@ -388,6 +401,8 @@ export function createWorld(seed: number): World {
     threatAdvice: null,
     forecast: 'Nobody has noticed anything yet.',
     counterplay: null,
+    counterplayTime: 0,
+    deathCauses: {},
     pendingFit: null,
     finalResponse: false,
     finalResponseTime: 0,

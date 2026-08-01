@@ -205,16 +205,28 @@ export function updateTerritory(world: World, dt: number): void {
   }
 }
 
+/**
+ * Regions that count toward taking the kitchen.
+ *
+ * The region containing the home crack is excluded. Operation 1's mandatory opening route runs from
+ * the home crack to the first food source and both sit inside the same region, so that region was
+ * being "held" 35 seconds into the tutorial — a third of the win condition satisfied before
+ * territory had been mentioned. Claiming the kitchen means ground beyond your own doorstep.
+ */
 export function heldZones(world: World): ZoneState[] {
-  return world.zones.filter((z) => z.held);
+  const home = world.nests.find((n) => n.home);
+  const homeZone = home ? zoneAt(home.x, home.y)?.id : undefined;
+  return world.zones.filter((z) => z.held && z.id !== homeZone);
 }
 
 /** The zone closest to being held that is not held yet — what the HUD should point at. */
 export function nextZoneToHold(world: World): { spec: ZoneSpec; state: ZoneState } | null {
   let best: { spec: ZoneSpec; state: ZoneState } | null = null;
+  const home = world.nests.find((n) => n.home);
+  const homeZone = home ? zoneAt(home.x, home.y)?.id : undefined;
   for (let i = 0; i < world.zones.length; i++) {
     const st = world.zones[i];
-    if (st.held) continue;
+    if (st.held || st.id === homeZone) continue;
     if (!best || st.hold > best.state.hold) best = { spec: ZONES[i], state: st };
   }
   return best;
