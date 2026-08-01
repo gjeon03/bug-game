@@ -492,11 +492,14 @@ kbd {
 
 /* ── One-of-three choice ────────────────────────────────────────────────── */
 
+/* Parked in the lower third, not across the middle of the play field.
+   Centred, the card sat directly over the player and the action during the exact moment the player
+   most needs to see both — a critic caught it covering the scout in four captured frames. */
 .choice {
   position: absolute;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 132px;
+  transform: translateX(-50%);
   pointer-events: none;
   text-align: center;
   animation: fadeUp 0.24s ease-out;

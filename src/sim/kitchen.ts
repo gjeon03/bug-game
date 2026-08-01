@@ -31,6 +31,7 @@ export const SOLIDS: readonly Solid[] = [
   // Top run: counter — stove — counter — fridge, with a dark 64-unit gap before the fridge.
   {
     id: 'counterLeft',
+    tone: 1.0,
     x: 56,
     y: 56,
     w: 1080,
@@ -42,6 +43,7 @@ export const SOLIDS: readonly Solid[] = [
   },
   {
     id: 'stove',
+    tone: 1.16,
     x: 1136,
     y: 56,
     w: 700,
@@ -53,6 +55,7 @@ export const SOLIDS: readonly Solid[] = [
   },
   {
     id: 'counterRight',
+    tone: 1.0,
     x: 1836,
     y: 56,
     w: 700,
@@ -64,6 +67,7 @@ export const SOLIDS: readonly Solid[] = [
   },
   {
     id: 'fridge',
+    tone: 1.0,
     x: 2600,
     y: 56,
     w: 944,
@@ -77,6 +81,7 @@ export const SOLIDS: readonly Solid[] = [
   // Left run: sink — dishwasher — (corridor) — pantry.
   {
     id: 'sinkCabinet',
+    tone: 0.82,
     x: 56,
     y: 900,
     w: 500,
@@ -88,6 +93,7 @@ export const SOLIDS: readonly Solid[] = [
   },
   {
     id: 'dishwasher',
+    tone: 0.84,
     x: 56,
     y: 1540,
     w: 500,
@@ -99,6 +105,7 @@ export const SOLIDS: readonly Solid[] = [
   },
   {
     id: 'pantry',
+    tone: 1.26,
     x: 56,
     y: 2120,
     w: 700,
@@ -112,6 +119,7 @@ export const SOLIDS: readonly Solid[] = [
   // Centre island — the map's main obstacle and its most exposed perimeter.
   {
     id: 'island',
+    tone: 1.5,
     x: 1240,
     y: 1180,
     w: 1240,
@@ -135,6 +143,7 @@ export const SOLIDS: readonly Solid[] = [
   },
   {
     id: 'trashBin',
+    tone: 1.2,
     x: 2980,
     y: 2020,
     w: 400,

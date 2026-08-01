@@ -6,16 +6,16 @@
     ".nojekyll",
     "assets",
     "index.html",
-    "assets/index-BKQwnPlJ.js",
-    "assets/index-ByQb7YUT.css"
+    "assets/index-CIJyk9QO.css",
+    "assets/index-D1qEcvNm.js"
   ],
   "nojekyll": true,
   "assetAudit": {
     "version": "1.0.0",
-    "atlasBuildMs": 138.9,
+    "atlasBuildMs": 138.4,
     "roachAtlas": {
       "w": 1152,
-      "h": 384
+      "h": 640
     },
     "floorTile": {
       "w": 1280,
@@ -38,7 +38,7 @@
   },
   "requests": [
     "200 http://127.0.0.1:4178/bug-game/",
-    "200 http://127.0.0.1:4178/bug-game/assets/index-ByQb7YUT.css",
-    "200 http://127.0.0.1:4178/bug-game/assets/index-BKQwnPlJ.js"
+    "200 http://127.0.0.1:4178/bug-game/assets/index-CIJyk9QO.css",
+    "200 http://127.0.0.1:4178/bug-game/assets/index-D1qEcvNm.js"
   ]
 }

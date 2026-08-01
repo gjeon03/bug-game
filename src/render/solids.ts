@@ -66,7 +66,7 @@ export function bakeSolids(atlas: Atlas, seed: number): BakedSolid[] {
             : solid.mat === 'metal'
               ? '#4a545c'
               : '#1c252e';
-    g.fillStyle = base;
+    g.fillStyle = solid.tone ? shade(base, solid.tone) : base;
     g.fillRect(x, y, sw, sh);
 
     const mat = atlas.materials[solid.mat] ?? atlas.materials.cabinet;
@@ -186,7 +186,6 @@ export function bakeSolids(atlas: Atlas, seed: number): BakedSolid[] {
  */
 
 const STEEL_HI = 'rgba(214,232,250,0.30)';
-const STEEL_LO = 'rgba(0,0,0,0.50)';
 
 function rr(
   g: CanvasRenderingContext2D,
@@ -289,21 +288,64 @@ function drawFixture(
     }
 
     case 'dishwasher': {
-      // Control strip along the top, a full-width handle, and a door with a faint glass reflection.
+      // A dishwasher is a door with a *window* and a rack behind it. The first version was a control
+      // strip, two dots and a bar — a critic said it "could be any appliance", and they were right.
       g.fillStyle = 'rgba(6,10,14,0.7)';
       g.fillRect(x + 12, y + 14, sw - 24, 40);
       for (let i = 0; i < 5; i++) {
-        g.fillStyle = i === 1 ? 'rgba(150,220,255,0.75)' : 'rgba(190,210,230,0.30)';
+        g.fillStyle = i === 1 ? 'rgba(150,220,255,0.8)' : 'rgba(190,210,230,0.34)';
         g.beginPath();
         g.arc(x + 46 + i * 46, y + 34, 7, 0, Math.PI * 2);
         g.fill();
       }
       handleBar(g, x + 14, y + 72, sw - 28, 20);
-      g.fillStyle = 'rgba(190,220,250,0.05)';
-      g.fillRect(x + 18, y + 108, sw - 36, sh - 150);
-      g.strokeStyle = STEEL_LO;
-      g.lineWidth = 3;
-      g.strokeRect(x + 18, y + 108, sw - 36, sh - 150);
+      // Porthole: dark glass with a wire rack and two plate edges behind it.
+      const wx = x + 34;
+      const wy = y + 118;
+      const ww = sw - 68;
+      const wh = sh - 178;
+      g.fillStyle = 'rgba(8,14,20,0.85)';
+      rr(g, wx, wy, ww, wh, 22);
+      g.fill();
+      g.save();
+      rr(g, wx, wy, ww, wh, 22);
+      g.clip();
+      g.strokeStyle = 'rgba(178,200,222,0.34)';
+      g.lineWidth = 4;
+      for (let i = 1; i < 6; i++) {
+        const gy = wy + (wh / 6) * i;
+        g.beginPath();
+        g.moveTo(wx, gy);
+        g.lineTo(wx + ww, gy);
+        g.stroke();
+      }
+      g.strokeStyle = 'rgba(206,224,242,0.5)';
+      g.lineWidth = 7;
+      for (let i = 0; i < 3; i++) {
+        g.beginPath();
+        g.arc(
+          wx + ww * (0.28 + i * 0.22),
+          wy + wh * 0.55,
+          wh * 0.3,
+          Math.PI * 1.15,
+          Math.PI * 1.85,
+        );
+        g.stroke();
+      }
+      // Condensation on the inside of the glass.
+      g.fillStyle = 'rgba(190,222,248,0.12)';
+      for (let i = 0; i < 26; i++) {
+        const a = ((i * 97) % 100) / 100;
+        const b = ((i * 61) % 100) / 100;
+        g.beginPath();
+        g.arc(wx + a * ww, wy + b * wh, 3 + (i % 3), 0, Math.PI * 2);
+        g.fill();
+      }
+      g.restore();
+      g.strokeStyle = 'rgba(214,232,250,0.30)';
+      g.lineWidth = 5;
+      rr(g, wx, wy, ww, wh, 22);
+      g.stroke();
       break;
     }
 
@@ -579,4 +621,11 @@ function drawFixture(
       break;
   }
   void rng;
+}
+
+/** Scales a hex colour's channels, clamped. Used to pull same-material fixtures apart in value. */
+function shade(hex: string, mul: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v: number): number => Math.max(0, Math.min(255, Math.round(v * mul)));
+  return `rgb(${c((n >> 16) & 255)},${c((n >> 8) & 255)},${c(n & 255)})`;
 }

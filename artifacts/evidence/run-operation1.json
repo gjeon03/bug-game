@@ -1,0 +1,73 @@
+{
+  "time": 23.983333333333253,
+  "colony": {
+    "food": 63.463733333330765,
+    "water": 24.573349999999397,
+    "foodCap": 120,
+    "waterCap": 100,
+    "population": 8,
+    "capacity": 13,
+    "brood": 0.15849999999996492,
+    "hatched": 2,
+    "lost": 0,
+    "totalFood": 36,
+    "totalWater": 0,
+    "nurseries": 0,
+    "caches": 0,
+    "boltholes": 0
+  },
+  "routes": [
+    {
+      "id": 1,
+      "nodes": 25,
+      "linked": true,
+      "exposure": 0.16303561539920441,
+      "traffic": 7,
+      "resourceId": "dishCrumbs",
+      "nestId": "home"
+    },
+    {
+      "id": 2,
+      "nodes": 37,
+      "linked": true,
+      "exposure": 0.06976956526994922,
+      "traffic": 0,
+      "resourceId": "sinkDrip",
+      "nestId": "home"
+    }
+  ],
+  "hud": {
+    "operation": "Operation 1 — Establish the nest",
+    "objective": "Keep both reserves flowing — the colony grows on food and moisture together.",
+    "blocker": null,
+    "nextUnlock": "The household starts its night routines — and those are opportunities.",
+    "forecast": "Unnoticed — Trails left on bare tile. They have not worked out where yet.",
+    "counterplay": null,
+    "source": "gate:pop12",
+    "checklist": [
+      {
+        "label": "1 food line",
+        "have": 1,
+        "need": 1,
+        "done": true
+      },
+      {
+        "label": "A moisture line",
+        "have": 1,
+        "need": 1,
+        "done": true
+      },
+      {
+        "label": "12 roaches",
+        "have": 8,
+        "need": 12,
+        "done": false
+      }
+    ],
+    "target": {
+      "x": 664,
+      "y": 1312,
+      "label": "Sink drip"
+    }
+  }
+}

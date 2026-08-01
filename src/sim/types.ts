@@ -37,6 +37,14 @@ export interface Solid {
   role?: FixtureRole;
   /** Which side of the solid faces the room, for door faces and toe-kicks. */
   facing?: 'up' | 'down' | 'left' | 'right';
+  /**
+   * Per-fixture value multiplier applied on top of the material base.
+   *
+   * Material families separate well (R = 20…74), but five fixtures share `cabinet` and three share
+   * `steel`, so a critic could name only four of nine fixtures from the art. This pulls same-material
+   * fixtures apart in value so a pantry is not a counter is not an island before any detail is drawn.
+   */
+  tone?: number;
   label?: string;
 }
 
