@@ -53,7 +53,10 @@ test.describe('restart and lifecycle', () => {
       expect(fresh.operation).toBe(1);
       expect(fresh.operationTime).toBeLessThan(6);
       expect(fresh.adaptations.taken).toEqual([]);
-      expect(fresh.zones.every((z) => z.hold === 0)).toBe(true);
+      // Not `=== 0`: the home crack is a foothold, so its region begins accruing hold on the first
+      // simulated frame of *any* run, cold or restarted. The invariant that matters is that nothing
+      // was carried over — no region is held, and none is anywhere near held.
+      expect(fresh.zones.every((z) => !z.held && z.hold < 0.05)).toBe(true);
       expect(fresh.heat.total).toBe(0);
       expect(fresh.routes.length).toBe(0);
       expect(fresh.counts.corpses).toBe(0);

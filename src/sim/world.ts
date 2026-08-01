@@ -137,6 +137,10 @@ export interface World {
   /** Adaptation choices taken, offered and their derived effects. */
   adaptations: AdaptationState;
   traits: Traits;
+  /** Accumulator for the batched territory evaluation. */
+  territoryAcc: number;
+  /** Accumulator for the batched regional-heat deposits. */
+  heatAcc: number;
   /** Seconds until the next household routine may begin. */
   routineTimer: number;
   /** Last routine kind fired, so the same one never runs twice in a row. */
@@ -279,6 +283,8 @@ function makeWorker(): Worker {
     markX: 0,
     markY: 0,
     markIndex: -1,
+    blockedNx: 0,
+    blockedNy: 0,
   };
 }
 
@@ -328,6 +334,8 @@ export function spawnWorker(
     w.markX = w.x;
     w.markY = w.y;
     w.markIndex = -1;
+    w.blockedNx = 0;
+    w.blockedNy = 0;
     return w;
   }
   return null;
@@ -390,6 +398,8 @@ export function createWorld(seed: number): World {
     sweepWiping: 0,
     adaptations: createAdaptationState(),
     traits: baseTraits(),
+    territoryAcc: 0,
+    heatAcc: 0,
     routineTimer: 46,
     lastRoutine: null,
     recentTargets: [],

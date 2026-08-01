@@ -33,7 +33,24 @@ import {
 const HOME_MOUTH = { x: HOME.x + 30, y: HOME.y };
 
 /** Keeps a food and a moisture line connected, the way a player maintains supply. */
+/**
+ * Runs a line onto whatever the household has just spilled, if the HUD is pointing at one.
+ *
+ * A spill is the largest single haul in the kitchen and it is on a timer. A player who ignores them
+ * grows far more slowly — which is why the run that only maintained its two permanent lines finished
+ * operation 2 and stalled there.
+ */
+async function chaseSpill(page: Page): Promise<boolean> {
+  const s = await state(page);
+  if (!s.hud.source.startsWith('routine:') || !s.hud.target) return false;
+  const live = s.routines.find((r) => r.phase === 'active');
+  if (!live || live.exploited) return false;
+  await layLine(page, HOME_MOUTH, { x: s.hud.target.x, y: s.hud.target.y });
+  return true;
+}
+
 async function maintainLines(page: Page): Promise<void> {
+  if (await chaseSpill(page)) return;
   const s = await state(page);
   const live = (kind: string): boolean =>
     s.routes.some((r) => {
@@ -153,13 +170,22 @@ test.describe('complete runs', () => {
     await shot(page, '22-footholds');
 
     // ── Play on. Progress is entirely the player's; the household escalates on its own.
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 70; i++) {
       s = await state(page);
       if (s.status !== 'playing' || s.operation >= 4) break;
       await maintainLines(page);
       await takeAdaptationIfOffered(page);
+      // Operation 3 wants foothold *functions*, not only claimed ground, so fit out whatever is
+      // owned and unfitted as soon as the larder can carry it.
+      const unfitted = s.nests.find((n) => n.claimed && !n.home && !n.fn);
+      if (unfitted && s.colony.food >= 60 && s.colony.water >= 40) {
+        await claimAt(page, unfitted.id);
+        await tapInteract(page);
+        await page.waitForTimeout(300);
+        if ((await state(page)).pendingFit === unfitted.id) await chooseSlot(page, 1);
+      }
       await driveTo(page, HOME_MOUTH.x, HOME_MOUTH.y, { timeout: 25_000 });
-      await page.waitForTimeout(7000);
+      await page.waitForTimeout(6000);
     }
 
     const end = await state(page);

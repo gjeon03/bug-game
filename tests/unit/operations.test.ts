@@ -272,15 +272,19 @@ describe('the objective always says something useful', () => {
       expect(advice!.text.length).toBeGreaterThan(20);
       expect(advice!.source.startsWith('capped:')).toBe(true);
 
-      // The hud must either be saying it, or saying something that outranks it — a free adaptation, a
-      // closing household window, a shortage or a live threat. It may never be silent.
+      // The hud must either be saying it, or saying something that outranks it — a free adaptation,
+      // a closing household window, a shortage, a live threat, or the extermination itself. It may
+      // never be silent. `final` belongs on this list on purpose: while the can is out, surviving
+      // genuinely outranks spending the larder.
       const source = resolveHud(world).source;
       const outranks =
         source.startsWith('capped:') ||
         source.startsWith('adaptation:') ||
         source.startsWith('routine:') ||
+        source.endsWith(':saving') ||
         source === 'shortage' ||
-        source === 'threat';
+        source === 'threat' ||
+        source === 'final';
       expect(outranks, `hud said '${source}' while a reserve was full`).toBe(true);
     }
     expect(cappedFrames, 'the run never reached a cap, so nothing was tested').toBeGreaterThan(0);

@@ -261,6 +261,9 @@ export interface Worker {
   markX: number;
   markY: number;
   markIndex: number;
+  /** Surface normal of the last thing this worker walked into, for wall-following recovery. */
+  blockedNx: number;
+  blockedNy: number;
 }
 
 export interface Corpse {

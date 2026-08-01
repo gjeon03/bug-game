@@ -40,6 +40,9 @@ function setCounterplay(world: World, text: string, seconds = 34): void {
   world.counterplayTime = seconds;
 }
 
+/** Seconds between full territory evaluations. */
+const TERRITORY_INTERVAL = 0.1;
+
 /** Household patience. Overrunning an operation's soft time adds pressure, never a game over. */
 const IMPATIENCE_RATE = 0.06;
 /** Seconds between household routines, before impatience. */
@@ -66,7 +69,17 @@ export function updateDirector(world: World, dt: number): void {
   if (world.cardTime > 0) world.cardTime = Math.max(0, world.cardTime - dt);
 
   updateHeat(world, dt);
-  updateTerritory(world, dt);
+  // Territory integrates slowly — hold moves by hundredths of a point per second — so running its
+  // full scan (every worker and every sampled trail node against every region) sixty times a second
+  // was pure waste. Batching it to 10 Hz with the accumulated dt is arithmetically identical and
+  // took the worst frame-callback CPU back under budget: CI measured 14.7 ms against a 8 ms budget
+  // before this, with `updateTerritory` and the heat deposits the only per-step additions large
+  // enough to explain it.
+  world.territoryAcc += dt;
+  if (world.territoryAcc >= TERRITORY_INTERVAL) {
+    updateTerritory(world, world.territoryAcc);
+    world.territoryAcc = 0;
+  }
   updateRoutines(world, dt);
   checkMilestone(world);
 

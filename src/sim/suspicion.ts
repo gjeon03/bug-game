@@ -14,6 +14,8 @@ import type { SuspicionCause } from './types.ts';
 
 /** How much regional heat one point of evidence deposits. */
 const HEAT_PER_EVIDENCE = 0.05;
+/** Per point of `seen` evidence. Two sightings in one place is enough to make it known ground. */
+const SIGHTING_HEAT = 0.075;
 /** Heat per second per unit of above-baseline exposure, for a trail node and for a worker. */
 /*
  * Calibrated, not guessed. A cell decays at HEAT_DECAY = 0.021/s toward its own floor, and the
@@ -23,6 +25,8 @@ const HEAT_PER_EVIDENCE = 0.05;
  * indefinitely. The first version was eight times hotter and saturated every cell the colony touched
  * within seconds, so the director never stopped acting.
  */
+/** Seconds between regional-heat deposit passes. */
+const HEAT_INTERVAL = 0.1;
 const TRAIL_HEAT_RATE = 0.016;
 const WORKER_HEAT_RATE = 0.02;
 /** Seconds a tier must hold before the household is allowed to escalate again. */
@@ -122,7 +126,14 @@ export function addSuspicion(
   }
   // Evidence has a place now. The old signature took x,y and dropped them on the floor, which is
   // why the household could never aim anything at what the player actually did.
-  if (x > 0 || y > 0) depositHeat(world, x, y, amount * HEAT_PER_EVIDENCE);
+  //
+  // A *sighting* is weighted far above the rest, because it is categorically better evidence: they
+  // did not infer a roach from crumbs, they watched one cross the floor right there. Without this,
+  // a player who only ever exposed themselves — no routes, no workers on open ground — drove
+  // suspicion to tier 2 while leaving the household nothing to aim at, and no response ever came.
+  if (x > 0 || y > 0) {
+    depositHeat(world, x, y, amount * (cause === 'seen' ? SIGHTING_HEAT : HEAT_PER_EVIDENCE));
+  }
   world.events.push({ t: 'suspicion', delta: amount, cause, x, y });
 }
 
@@ -145,10 +156,16 @@ export function updateSuspicion(world: World, dt: number): void {
       SUSPICION_WEIGHTS.droppings * Math.min(world.exposedTrail, TRAIL_EVIDENCE_CAP) * dt;
     addSuspicion(world, 'droppings', total, 0, 0);
   }
-  // Regional heat is deposited every step, independently of the global evidence caps, so a colony
-  // large enough to saturate the traffic cap still tells the household *where* it is working.
-  depositWorkerHeat(world, dt);
-  depositTrailHeat(world, dt);
+  // Regional heat is deposited independently of the global evidence caps, so a colony large enough
+  // to saturate the traffic cap still tells the household *where* it is working. Batched to 10 Hz
+  // with the accumulated dt — identical integral, a tenth of the per-frame cost, and heat moves far
+  // too slowly for the granularity to matter.
+  world.heatAcc += dt;
+  if (world.heatAcc >= HEAT_INTERVAL) {
+    depositWorkerHeat(world, world.heatAcc);
+    depositTrailHeat(world, world.heatAcc);
+    world.heatAcc = 0;
+  }
 
   const scout = world.scout;
   if (scout.alive && scout.sprinting && scout.exposure > 0.35) {

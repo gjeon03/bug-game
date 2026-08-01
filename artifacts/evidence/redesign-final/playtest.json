@@ -1,30 +1,3441 @@
 {
   "growth": {
     "scenario": "growth",
-    "harnessError": "Error: page.evaluate: Target page, context or browser has been closed"
-  },
-  "shadow": {
-    "scenario": "shadow",
-    "harnessError": "Error: browser.newContext: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> /Users/jeongyeong-yeon/Library/Caches/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/jp/p_d2kmdn4sxcmg9fw29g0gzh0000gn/T/playwright_chromiumdev_profile-bCu0m9 --remote-debugging-pipe --no-startup-window\n<launched> pid=5953\n[pid=5953][err] [0802/010808.640741:ERROR:sandbox/mac/system_services.cc:31] SetApplicationIsDaemon: Error Domain=NSOSStatusErrorDomain Code=-50 \"paramErr: error in user parameter list\" (-50)\n[pid=5953] <gracefully close start>"
-  },
-  "aggressive": {
-    "scenario": "aggressive",
-    "harnessError": "Error: browser.newContext: Target page, context or browser has been closed"
-  },
-  "recovery": {
-    "scenario": "recovery",
-    "harnessError": "Error: browser.newContext: Target page, context or browser has been closed"
-  },
-  "idle": {
-    "scenario": "idle",
-    "harnessError": "Error: browser.newContext: Target page, context or browser has been closed"
-  },
-  "restarts": {
-    "scenario": "restarts",
-    "harnessError": "Error: browser.newContext: Target page, context or browser has been closed"
-  },
-  "focus": {
-    "scenario": "focus",
-    "harnessError": "Error: browser.newContext: Target page, context or browser has been closed"
+    "seed": 1234,
+    "family": "brood",
+    "readyMs": 328,
+    "firstInputMs": 381,
+    "bootObjective": "Walk to Dishwasher crumbs — then bring the scent home.",
+    "bootSource": "gate:foodLine",
+    "marks": {
+      "firstDelivery": 20.1,
+      "firstOffer": 55.7,
+      "firstAdaptation": 56.5,
+      "operation2": 65,
+      "firstRoutine": 103.1,
+      "firstSweep": 127.3,
+      "operation3": 202.7,
+      "firstFunction": 227.1,
+      "firstHazard": 295.4,
+      "finalResponse": 305.4,
+      "operation4": 305.4
+    },
+    "status": "won",
+    "loseCause": null,
+    "runSeconds": 368.3,
+    "finalColony": {
+      "food": 117.86583333333527,
+      "water": 3.863671875003047,
+      "foodCap": 120,
+      "waterCap": 100,
+      "population": 8,
+      "capacity": 69,
+      "brood": 0,
+      "hatched": 26,
+      "lost": 33,
+      "totalFood": 755.4765499999984,
+      "totalWater": 358.24932499999795,
+      "nurseries": 2,
+      "caches": 0,
+      "boltholes": 0
+    },
+    "adaptations": [
+      "brood1",
+      "forage1",
+      "forage2",
+      "brood2"
+    ],
+    "zonesHeld": [
+      "sink",
+      "dishwasher",
+      "pantry",
+      "island",
+      "trash"
+    ],
+    "zoneHold": [
+      {
+        "id": "sink",
+        "hold": 1
+      },
+      {
+        "id": "dishwasher",
+        "hold": 1
+      },
+      {
+        "id": "pantry",
+        "hold": 0.89
+      },
+      {
+        "id": "stove",
+        "hold": 0
+      },
+      {
+        "id": "fridge",
+        "hold": 0
+      },
+      {
+        "id": "island",
+        "hold": 0.99
+      },
+      {
+        "id": "trash",
+        "hold": 0.87
+      },
+      {
+        "id": "doorway",
+        "hold": 0
+      }
+    ],
+    "heat": {
+      "known": 3,
+      "total": 3.566229935202955,
+      "hottest": 0.999916672706604
+    },
+    "suspicion": {
+      "value": 86.54675149607358,
+      "tier": 3,
+      "peak": 86.54841816274025,
+      "floor": 47.60162998950714,
+      "lastCause": "corpse"
+    },
+    "counts": {
+      "workers": 8,
+      "workersOutbound": 0,
+      "workersInbound": 0,
+      "workersCarrying": 4,
+      "workersPanicking": 8,
+      "workersTrapped": 0,
+      "workersQueued": 0,
+      "sweeps": 0,
+      "routines": 1,
+      "corpses": 32,
+      "hazards": 1,
+      "patrols": 0,
+      "sprays": 1,
+      "footfalls": 0,
+      "pheromoneNodes": 61
+    },
+    "stats": {
+      "runSeconds": 368.28333333332705,
+      "firstMoveAt": 0.733333333333334,
+      "firstTrailAt": 4.583333333333322,
+      "firstDeliveryAt": 20.116666666666806,
+      "firstClaimAt": 68.94999999999737,
+      "deliveries": 219,
+      "workersLost": 33,
+      "scoutDeaths": 1,
+      "trapsSprung": 0,
+      "peakPopulation": 41,
+      "idleSeconds": 240.31666666675005,
+      "distanceTravelled": 27922.26734584289,
+      "trailNodesLaid": 339,
+      "routinesExploited": 2,
+      "operationsCompleted": 3,
+      "functionsBuilt": 2
+    },
+    "probe": {
+      "samples": 3662,
+      "maxWorkers": 41,
+      "stuckEvents": 18,
+      "worstStuckSeconds": 3.9,
+      "stuckSample": [
+        {
+          "id": 1,
+          "seconds": 2.38,
+          "x": 705,
+          "y": 1727,
+          "state": "harvest"
+        },
+        {
+          "id": 9,
+          "seconds": 2.22,
+          "x": 700,
+          "y": 1728,
+          "state": "outbound"
+        },
+        {
+          "id": 5,
+          "seconds": 2.18,
+          "x": 704,
+          "y": 1728,
+          "state": "outbound"
+        },
+        {
+          "id": 3,
+          "seconds": 3.9,
+          "x": 564,
+          "y": 1950,
+          "state": "inbound"
+        },
+        {
+          "id": 8,
+          "seconds": 3.72,
+          "x": 564,
+          "y": 1928,
+          "state": "inbound"
+        },
+        {
+          "id": 3,
+          "seconds": 2.4,
+          "x": 872,
+          "y": 2043,
+          "state": "idle"
+        },
+        {
+          "id": 5,
+          "seconds": 2.43,
+          "x": 875,
+          "y": 2086,
+          "state": "idle"
+        },
+        {
+          "id": 8,
+          "seconds": 2.07,
+          "x": 1800,
+          "y": 2199,
+          "state": "idle"
+        },
+        {
+          "id": 19,
+          "seconds": 2.23,
+          "x": 1797,
+          "y": 2172,
+          "state": "idle"
+        },
+        {
+          "id": 19,
+          "seconds": 2.2,
+          "x": 1799,
+          "y": 2185,
+          "state": "idle"
+        }
+      ],
+      "overlapEvents": 0,
+      "worstOverlapSeconds": 0,
+      "overlapSample": [],
+      "carryMismatch": 0,
+      "emptyObjectiveSeconds": 0,
+      "cappedFoodSeconds": 50.6,
+      "cappedWaterSeconds": 17.3,
+      "cappedPopSeconds": 0,
+      "cappedUnexplainedSeconds": 0,
+      "longestPlateauSeconds": 29.9,
+      "longestPlateauAt": 359.7,
+      "longestPlateauSource": "final",
+      "decisions": 67,
+      "decisionLog": [
+        {
+          "t": 0.9,
+          "kind": "objective",
+          "detail": "gate:foodLine"
+        },
+        {
+          "t": 0.9,
+          "kind": "operation",
+          "detail": "operation 1"
+        },
+        {
+          "t": 0.9,
+          "kind": "alert",
+          "detail": "tier 0"
+        },
+        {
+          "t": 7.7,
+          "kind": "objective",
+          "detail": "gate:waterLine"
+        },
+        {
+          "t": 19.1,
+          "kind": "objective",
+          "detail": "gate:pop12"
+        },
+        {
+          "t": 32.1,
+          "kind": "territory",
+          "detail": "held 1"
+        },
+        {
+          "t": 55.6,
+          "kind": "objective",
+          "detail": "adaptation:offer"
+        },
+        {
+          "t": 56.1,
+          "kind": "objective",
+          "detail": "gate:pop12"
+        },
+        {
+          "t": 56.1,
+          "kind": "adaptation",
+          "detail": "brood1"
+        },
+        {
+          "t": 63.9,
+          "kind": "objective",
+          "detail": "operation:complete"
+        },
+        {
+          "t": 64,
+          "kind": "objective",
+          "detail": "gate:foothold1"
+        },
+        {
+          "t": 64,
+          "kind": "operation",
+          "detail": "operation 2"
+        },
+        {
+          "t": 69,
+          "kind": "objective",
+          "detail": "gate:routines"
+        },
+        {
+          "t": 91,
+          "kind": "territory",
+          "detail": "held 2"
+        },
+        {
+          "t": 92,
+          "kind": "objective",
+          "detail": "routine:incoming"
+        },
+        {
+          "t": 92,
+          "kind": "routine",
+          "detail": "dishes:incoming"
+        },
+        {
+          "t": 92.5,
+          "kind": "alert",
+          "detail": "tier 1"
+        },
+        {
+          "t": 99.5,
+          "kind": "objective",
+          "detail": "adaptation:offer"
+        },
+        {
+          "t": 101,
+          "kind": "objective",
+          "detail": "routine:incoming"
+        },
+        {
+          "t": 101,
+          "kind": "adaptation",
+          "detail": "brood1,forage1"
+        },
+        {
+          "t": 103,
+          "kind": "objective",
+          "detail": "routine:active"
+        },
+        {
+          "t": 103,
+          "kind": "routine",
+          "detail": "dishes:active"
+        },
+        {
+          "t": 127.3,
+          "kind": "sweep",
+          "detail": "first cleaning pass"
+        },
+        {
+          "t": 133.7,
+          "kind": "objective",
+          "detail": "gate:routines"
+        },
+        {
+          "t": 135,
+          "kind": "objective",
+          "detail": "capped:claim"
+        },
+        {
+          "t": 137,
+          "kind": "objective",
+          "detail": "gate:routines"
+        },
+        {
+          "t": 137.6,
+          "kind": "objective",
+          "detail": "capped:claim"
+        },
+        {
+          "t": 140,
+          "kind": "objective",
+          "detail": "gate:routines"
+        },
+        {
+          "t": 153.5,
+          "kind": "objective",
+          "detail": "adaptation:offer"
+        },
+        {
+          "t": 154.2,
+          "kind": "objective",
+          "detail": "gate:routines"
+        },
+        {
+          "t": 154.2,
+          "kind": "adaptation",
+          "detail": "brood1,forage1,forage2"
+        },
+        {
+          "t": 166.2,
+          "kind": "objective",
+          "detail": "routine:incoming"
+        },
+        {
+          "t": 166.2,
+          "kind": "routine",
+          "detail": "trash:incoming"
+        },
+        {
+          "t": 179.1,
+          "kind": "objective",
+          "detail": "routine:active"
+        },
+        {
+          "t": 179.1,
+          "kind": "routine",
+          "detail": "trash:active"
+        },
+        {
+          "t": 188.7,
+          "kind": "territory",
+          "detail": "held 3"
+        },
+        {
+          "t": 197.6,
+          "kind": "objective",
+          "detail": "gate:functions2:saving"
+        },
+        {
+          "t": 197.6,
+          "kind": "operation",
+          "detail": "operation 3"
+        },
+        {
+          "t": 208.5,
+          "kind": "objective",
+          "detail": "threat"
+        },
+        {
+          "t": 210.7,
+          "kind": "objective",
+          "detail": "gate:functions2:saving"
+        },
+        {
+          "t": 213,
+          "kind": "objective",
+          "detail": "shortage"
+        },
+        {
+          "t": 217.8,
+          "kind": "objective",
+          "detail": "gate:functions2:saving"
+        },
+        {
+          "t": 218.5,
+          "kind": "objective",
+          "detail": "gate:functions2"
+        },
+        {
+          "t": 223,
+          "kind": "objective",
+          "detail": "capped:claim"
+        },
+        {
+          "t": 226.6,
+          "kind": "objective",
+          "detail": "gate:functions2"
+        },
+        {
+          "t": 226.7,
+          "kind": "objective",
+          "detail": "shortage"
+        },
+        {
+          "t": 226.7,
+          "kind": "alert",
+          "detail": "tier 2"
+        },
+        {
+          "t": 226.7,
+          "kind": "foothold",
+          "detail": "functions 1"
+        },
+        {
+          "t": 238.9,
+          "kind": "objective",
+          "detail": "gate:functions2:saving"
+        },
+        {
+          "t": 240.2,
+          "kind": "objective",
+          "detail": "routine:incoming"
+        },
+        {
+          "t": 240.2,
+          "kind": "routine",
+          "detail": "dishes:incoming"
+        },
+        {
+          "t": 251.2,
+          "kind": "objective",
+          "detail": "routine:active"
+        },
+        {
+          "t": 251.2,
+          "kind": "routine",
+          "detail": "dishes:active"
+        },
+        {
+          "t": 262.5,
+          "kind": "objective",
+          "detail": "adaptation:offer"
+        },
+        {
+          "t": 262.7,
+          "kind": "objective",
+          "detail": "routine:active"
+        },
+        {
+          "t": 262.7,
+          "kind": "adaptation",
+          "detail": "brood1,forage1,forage2,brood2"
+        },
+        {
+          "t": 274.6,
+          "kind": "territory",
+          "detail": "held 4"
+        },
+        {
+          "t": 294.7,
+          "kind": "hazard",
+          "detail": "first hazard"
+        },
+        {
+          "t": 295.1,
+          "kind": "objective",
+          "detail": "capped:claim"
+        },
+        {
+          "t": 297.2,
+          "kind": "objective",
+          "detail": "gate:functions2"
+        },
+        {
+          "t": 303,
+          "kind": "alert",
+          "detail": "tier 3"
+        },
+        {
+          "t": 305,
+          "kind": "objective",
+          "detail": "final"
+        },
+        {
+          "t": 305,
+          "kind": "operation",
+          "detail": "operation 4"
+        },
+        {
+          "t": 305,
+          "kind": "foothold",
+          "detail": "functions 2"
+        },
+        {
+          "t": 316.8,
+          "kind": "routine",
+          "detail": "trash:incoming"
+        },
+        {
+          "t": 329.8,
+          "kind": "routine",
+          "detail": "trash:active"
+        },
+        {
+          "t": 359.8,
+          "kind": "territory",
+          "detail": "held 5"
+        }
+      ],
+      "objectiveLog": [
+        {
+          "t": 0.9,
+          "source": "gate:foodLine",
+          "objective": "Walk to Dishwasher crumbs — then bring the scent home."
+        },
+        {
+          "t": 7.7,
+          "source": "gate:waterLine",
+          "objective": "Walk to Sink drip — then bring the scent home."
+        },
+        {
+          "t": 9,
+          "source": "gate:waterLine",
+          "objective": "Walk to Sink drip, then walk home holding the lay key to leave a trail."
+        },
+        {
+          "t": 19.1,
+          "source": "gate:pop12",
+          "objective": "Keep both reserves flowing — the colony grows on food and moisture together."
+        },
+        {
+          "t": 55.6,
+          "source": "adaptation:offer",
+          "objective": "Choose an adaptation — press 1, 2 or 3."
+        },
+        {
+          "t": 56.1,
+          "source": "gate:pop12",
+          "objective": "Keep both reserves flowing — the colony grows on food and moisture together."
+        },
+        {
+          "t": 63.9,
+          "source": "operation:complete",
+          "objective": "Operation complete."
+        },
+        {
+          "t": 64,
+          "source": "gate:foothold1",
+          "objective": "Walk to Sink-run crack and press E to claim it."
+        },
+        {
+          "t": 69,
+          "source": "gate:routines",
+          "objective": "Wait for the house to move — then get a trail onto whatever it drops."
+        },
+        {
+          "t": 92,
+          "source": "routine:incoming",
+          "objective": "Washing up in 11s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 93,
+          "source": "routine:incoming",
+          "objective": "Washing up in 10s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 94,
+          "source": "routine:incoming",
+          "objective": "Washing up in 9s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 95,
+          "source": "routine:incoming",
+          "objective": "Washing up in 8s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 96,
+          "source": "routine:incoming",
+          "objective": "Washing up in 7s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 97,
+          "source": "routine:incoming",
+          "objective": "Washing up in 6s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 98,
+          "source": "routine:incoming",
+          "objective": "Washing up in 5s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 99,
+          "source": "routine:incoming",
+          "objective": "Washing up in 4s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 99.5,
+          "source": "adaptation:offer",
+          "objective": "Choose an adaptation — press 1, 2 or 3."
+        },
+        {
+          "t": 101,
+          "source": "routine:incoming",
+          "objective": "Washing up in 2s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 102,
+          "source": "routine:incoming",
+          "objective": "Washing up in 1s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 103,
+          "source": "routine:active",
+          "objective": "Washing up: 44s to get a trail onto it."
+        },
+        {
+          "t": 104.1,
+          "source": "routine:active",
+          "objective": "Washing up: 43s to get a trail onto it."
+        },
+        {
+          "t": 105.1,
+          "source": "routine:active",
+          "objective": "Washing up: 42s to get a trail onto it."
+        },
+        {
+          "t": 106.1,
+          "source": "routine:active",
+          "objective": "Washing up: 41s to get a trail onto it."
+        },
+        {
+          "t": 107.1,
+          "source": "routine:active",
+          "objective": "Washing up: 40s to get a trail onto it."
+        },
+        {
+          "t": 108.1,
+          "source": "routine:active",
+          "objective": "Washing up: 39s to get a trail onto it."
+        },
+        {
+          "t": 109.1,
+          "source": "routine:active",
+          "objective": "Washing up: 38s to get a trail onto it."
+        },
+        {
+          "t": 110.1,
+          "source": "routine:active",
+          "objective": "Washing up: 37s to get a trail onto it."
+        },
+        {
+          "t": 111.1,
+          "source": "routine:active",
+          "objective": "Washing up: 36s to get a trail onto it."
+        },
+        {
+          "t": 112.1,
+          "source": "routine:active",
+          "objective": "Washing up: 35s to get a trail onto it."
+        },
+        {
+          "t": 113.1,
+          "source": "routine:active",
+          "objective": "Washing up: 34s to get a trail onto it."
+        },
+        {
+          "t": 114.1,
+          "source": "routine:active",
+          "objective": "Washing up: 33s to get a trail onto it."
+        },
+        {
+          "t": 115,
+          "source": "routine:active",
+          "objective": "Washing up: 32s to get a trail onto it."
+        },
+        {
+          "t": 116,
+          "source": "routine:active",
+          "objective": "Washing up: 31s to get a trail onto it."
+        },
+        {
+          "t": 117.1,
+          "source": "routine:active",
+          "objective": "Washing up: 30s to get a trail onto it."
+        },
+        {
+          "t": 118.1,
+          "source": "routine:active",
+          "objective": "Washing up: 29s to get a trail onto it."
+        },
+        {
+          "t": 119,
+          "source": "routine:active",
+          "objective": "Washing up: 28s to get a trail onto it."
+        },
+        {
+          "t": 120,
+          "source": "routine:active",
+          "objective": "Washing up: 27s to get a trail onto it."
+        },
+        {
+          "t": 121.1,
+          "source": "routine:active",
+          "objective": "Washing up: 26s to get a trail onto it."
+        },
+        {
+          "t": 122.1,
+          "source": "routine:active",
+          "objective": "Washing up: 25s to get a trail onto it."
+        },
+        {
+          "t": 123.1,
+          "source": "routine:active",
+          "objective": "Washing up: 24s to get a trail onto it."
+        },
+        {
+          "t": 124.1,
+          "source": "routine:active",
+          "objective": "Washing up: 23s to get a trail onto it."
+        },
+        {
+          "t": 125,
+          "source": "routine:active",
+          "objective": "Washing up: 22s to get a trail onto it."
+        },
+        {
+          "t": 126.1,
+          "source": "routine:active",
+          "objective": "Washing up: 21s to get a trail onto it."
+        },
+        {
+          "t": 127.1,
+          "source": "routine:active",
+          "objective": "Washing up: 20s to get a trail onto it."
+        },
+        {
+          "t": 128.1,
+          "source": "routine:active",
+          "objective": "Washing up: 19s to get a trail onto it."
+        },
+        {
+          "t": 129.1,
+          "source": "routine:active",
+          "objective": "Washing up: 18s to get a trail onto it."
+        },
+        {
+          "t": 130.1,
+          "source": "routine:active",
+          "objective": "Washing up: 17s to get a trail onto it."
+        },
+        {
+          "t": 131.1,
+          "source": "routine:active",
+          "objective": "Washing up: 16s to get a trail onto it."
+        },
+        {
+          "t": 132.1,
+          "source": "routine:active",
+          "objective": "Washing up: 15s to get a trail onto it."
+        },
+        {
+          "t": 133.1,
+          "source": "routine:active",
+          "objective": "Washing up: 14s to get a trail onto it."
+        },
+        {
+          "t": 133.7,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 14s — run a trail to it now."
+        },
+        {
+          "t": 134.1,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 13s — run a trail to it now."
+        },
+        {
+          "t": 135,
+          "source": "capped:claim",
+          "objective": "Moisture is full — claim Island crack (34 food, 22 moisture). It raises your caps."
+        },
+        {
+          "t": 137,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 11s — run a trail to it now."
+        },
+        {
+          "t": 137.1,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 10s — run a trail to it now."
+        },
+        {
+          "t": 137.6,
+          "source": "capped:claim",
+          "objective": "Moisture is full — claim Island crack (34 food, 22 moisture). It raises your caps."
+        },
+        {
+          "t": 140,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 8s — run a trail to it now."
+        },
+        {
+          "t": 140.1,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 7s — run a trail to it now."
+        },
+        {
+          "t": 141.1,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 6s — run a trail to it now."
+        },
+        {
+          "t": 142.1,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 5s — run a trail to it now."
+        },
+        {
+          "t": 143.1,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 4s — run a trail to it now."
+        },
+        {
+          "t": 144.1,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 3s — run a trail to it now."
+        },
+        {
+          "t": 145.1,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 2s — run a trail to it now."
+        },
+        {
+          "t": 146.1,
+          "source": "gate:routines",
+          "objective": "Washing up is open for 1s — run a trail to it now."
+        },
+        {
+          "t": 147.1,
+          "source": "gate:routines",
+          "objective": "Wait for the house to move — then get a trail onto whatever it drops."
+        },
+        {
+          "t": 153.5,
+          "source": "adaptation:offer",
+          "objective": "Choose an adaptation — press 1, 2 or 3."
+        },
+        {
+          "t": 154.2,
+          "source": "gate:routines",
+          "objective": "Wait for the house to move — then get a trail onto whatever it drops."
+        },
+        {
+          "t": 166.2,
+          "source": "routine:incoming",
+          "objective": "Bin run in 13s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 167.1,
+          "source": "routine:incoming",
+          "objective": "Bin run in 12s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 168.1,
+          "source": "routine:incoming",
+          "objective": "Bin run in 11s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 169.2,
+          "source": "routine:incoming",
+          "objective": "Bin run in 10s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 170.1,
+          "source": "routine:incoming",
+          "objective": "Bin run in 9s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 171.2,
+          "source": "routine:incoming",
+          "objective": "Bin run in 8s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 172.1,
+          "source": "routine:incoming",
+          "objective": "Bin run in 7s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 173.1,
+          "source": "routine:incoming",
+          "objective": "Bin run in 6s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 174.1,
+          "source": "routine:incoming",
+          "objective": "Bin run in 5s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 175.1,
+          "source": "routine:incoming",
+          "objective": "Bin run in 4s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 176.1,
+          "source": "routine:incoming",
+          "objective": "Bin run in 3s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 177.2,
+          "source": "routine:incoming",
+          "objective": "Bin run in 2s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 178.1,
+          "source": "routine:incoming",
+          "objective": "Bin run in 1s — The richest food in the kitchen, on the most exposed tile in the kitchen."
+        },
+        {
+          "t": 179.1,
+          "source": "routine:active",
+          "objective": "Bin run: 44s to get a trail onto it."
+        },
+        {
+          "t": 180.2,
+          "source": "routine:active",
+          "objective": "Bin run: 43s to get a trail onto it."
+        },
+        {
+          "t": 181.1,
+          "source": "routine:active",
+          "objective": "Bin run: 42s to get a trail onto it."
+        },
+        {
+          "t": 182.1,
+          "source": "routine:active",
+          "objective": "Bin run: 41s to get a trail onto it."
+        },
+        {
+          "t": 183.2,
+          "source": "routine:active",
+          "objective": "Bin run: 40s to get a trail onto it."
+        },
+        {
+          "t": 184.1,
+          "source": "routine:active",
+          "objective": "Bin run: 39s to get a trail onto it."
+        },
+        {
+          "t": 185.1,
+          "source": "routine:active",
+          "objective": "Bin run: 38s to get a trail onto it."
+        },
+        {
+          "t": 186.1,
+          "source": "routine:active",
+          "objective": "Bin run: 37s to get a trail onto it."
+        },
+        {
+          "t": 187.1,
+          "source": "routine:active",
+          "objective": "Bin run: 36s to get a trail onto it."
+        },
+        {
+          "t": 188.1,
+          "source": "routine:active",
+          "objective": "Bin run: 35s to get a trail onto it."
+        },
+        {
+          "t": 189.1,
+          "source": "routine:active",
+          "objective": "Bin run: 34s to get a trail onto it."
+        },
+        {
+          "t": 190.1,
+          "source": "routine:active",
+          "objective": "Bin run: 33s to get a trail onto it."
+        },
+        {
+          "t": 191.2,
+          "source": "routine:active",
+          "objective": "Bin run: 32s to get a trail onto it."
+        },
+        {
+          "t": 192.1,
+          "source": "routine:active",
+          "objective": "Bin run: 31s to get a trail onto it."
+        },
+        {
+          "t": 193.2,
+          "source": "routine:active",
+          "objective": "Bin run: 30s to get a trail onto it."
+        },
+        {
+          "t": 194.1,
+          "source": "routine:active",
+          "objective": "Bin run: 29s to get a trail onto it."
+        },
+        {
+          "t": 195.1,
+          "source": "routine:active",
+          "objective": "Bin run: 28s to get a trail onto it."
+        },
+        {
+          "t": 196.1,
+          "source": "routine:active",
+          "objective": "Bin run: 27s to get a trail onto it."
+        },
+        {
+          "t": 197.1,
+          "source": "routine:active",
+          "objective": "Bin run: 26s to get a trail onto it."
+        },
+        {
+          "t": 197.6,
+          "source": "gate:functions2:saving",
+          "objective": "20 more food needed — get another food line running."
+        },
+        {
+          "t": 199.7,
+          "source": "gate:functions2:saving",
+          "objective": "21 more food needed — get another food line running."
+        },
+        {
+          "t": 201.8,
+          "source": "gate:functions2:saving",
+          "objective": "22 more food needed — get another food line running."
+        },
+        {
+          "t": 203.8,
+          "source": "gate:functions2:saving",
+          "objective": "23 more food needed — get another food line running."
+        },
+        {
+          "t": 205.9,
+          "source": "gate:functions2:saving",
+          "objective": "24 more food needed — get another food line running."
+        },
+        {
+          "t": 208,
+          "source": "gate:functions2:saving",
+          "objective": "25 more food needed — get another food line running."
+        },
+        {
+          "t": 208.5,
+          "source": "threat",
+          "objective": "A cleaning pass is starting — the scent it crosses will be gone."
+        },
+        {
+          "t": 210.7,
+          "source": "gate:functions2:saving",
+          "objective": "26 more food needed — get another food line running."
+        },
+        {
+          "t": 212.2,
+          "source": "gate:functions2:saving",
+          "objective": "27 more food needed — get another food line running."
+        },
+        {
+          "t": 213,
+          "source": "shortage",
+          "objective": "Food is running low — get another food line running."
+        },
+        {
+          "t": 217.8,
+          "source": "gate:functions2:saving",
+          "objective": "3 more food needed — get another food line running."
+        },
+        {
+          "t": 218.5,
+          "source": "gate:functions2",
+          "objective": "Stand in Sink-run crack and press E to fit it out."
+        },
+        {
+          "t": 223,
+          "source": "capped:claim",
+          "objective": "The larder is full — claim Pantry crack (32 food, 20 moisture). It raises your caps."
+        },
+        {
+          "t": 226.6,
+          "source": "gate:functions2",
+          "objective": "Stand in Sink-run crack and press E to fit it out."
+        },
+        {
+          "t": 226.7,
+          "source": "shortage",
+          "objective": "Moisture is running low — get another moisture line running."
+        },
+        {
+          "t": 238.9,
+          "source": "gate:functions2:saving",
+          "objective": "17 more moisture needed — get another moisture line running."
+        },
+        {
+          "t": 239.3,
+          "source": "gate:functions2:saving",
+          "objective": "10 more moisture needed — get another moisture line running."
+        },
+        {
+          "t": 240.2,
+          "source": "routine:incoming",
+          "objective": "Washing up in 11s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 241.1,
+          "source": "routine:incoming",
+          "objective": "Washing up in 10s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 242.1,
+          "source": "routine:incoming",
+          "objective": "Washing up in 9s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 243.1,
+          "source": "routine:incoming",
+          "objective": "Washing up in 8s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 244.1,
+          "source": "routine:incoming",
+          "objective": "Washing up in 7s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 245.2,
+          "source": "routine:incoming",
+          "objective": "Washing up in 6s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 246.1,
+          "source": "routine:incoming",
+          "objective": "Washing up in 5s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 247.1,
+          "source": "routine:incoming",
+          "objective": "Washing up in 4s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 248.1,
+          "source": "routine:incoming",
+          "objective": "Washing up in 3s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 249.1,
+          "source": "routine:incoming",
+          "objective": "Washing up in 2s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 250.1,
+          "source": "routine:incoming",
+          "objective": "Washing up in 1s — Standing water is free moisture — but the wiped floor kills scent where it passes."
+        },
+        {
+          "t": 251.2,
+          "source": "routine:active",
+          "objective": "Washing up: 44s to get a trail onto it."
+        },
+        {
+          "t": 252.1,
+          "source": "routine:active",
+          "objective": "Washing up: 43s to get a trail onto it."
+        },
+        {
+          "t": 253.1,
+          "source": "routine:active",
+          "objective": "Washing up: 42s to get a trail onto it."
+        },
+        {
+          "t": 254.1,
+          "source": "routine:active",
+          "objective": "Washing up: 41s to get a trail onto it."
+        },
+        {
+          "t": 255.1,
+          "source": "routine:active",
+          "objective": "Washing up: 40s to get a trail onto it."
+        },
+        {
+          "t": 256.1,
+          "source": "routine:active",
+          "objective": "Washing up: 39s to get a trail onto it."
+        },
+        {
+          "t": 257.1,
+          "source": "routine:active",
+          "objective": "Washing up: 38s to get a trail onto it."
+        },
+        {
+          "t": 258.1,
+          "source": "routine:active",
+          "objective": "Washing up: 37s to get a trail onto it."
+        },
+        {
+          "t": 259.1,
+          "source": "routine:active",
+          "objective": "Washing up: 36s to get a trail onto it."
+        },
+        {
+          "t": 260.1,
+          "source": "routine:active",
+          "objective": "Washing up: 35s to get a trail onto it."
+        },
+        {
+          "t": 261.2,
+          "source": "routine:active",
+          "objective": "Washing up: 34s to get a trail onto it."
+        },
+        {
+          "t": 262.1,
+          "source": "routine:active",
+          "objective": "Washing up: 33s to get a trail onto it."
+        },
+        {
+          "t": 262.5,
+          "source": "adaptation:offer",
+          "objective": "Choose an adaptation — press 1, 2 or 3."
+        },
+        {
+          "t": 262.7,
+          "source": "routine:active",
+          "objective": "Washing up: 33s to get a trail onto it."
+        },
+        {
+          "t": 263.1,
+          "source": "routine:active",
+          "objective": "Washing up: 32s to get a trail onto it."
+        },
+        {
+          "t": 264.1,
+          "source": "routine:active",
+          "objective": "Washing up: 31s to get a trail onto it."
+        },
+        {
+          "t": 265.1,
+          "source": "routine:active",
+          "objective": "Washing up: 30s to get a trail onto it."
+        },
+        {
+          "t": 266.1,
+          "source": "routine:active",
+          "objective": "Washing up: 29s to get a trail onto it."
+        },
+        {
+          "t": 267.1,
+          "source": "routine:active",
+          "objective": "Washing up: 28s to get a trail onto it."
+        },
+        {
+          "t": 268.1,
+          "source": "routine:active",
+          "objective": "Washing up: 27s to get a trail onto it."
+        },
+        {
+          "t": 269.2,
+          "source": "routine:active",
+          "objective": "Washing up: 26s to get a trail onto it."
+        },
+        {
+          "t": 270.1,
+          "source": "routine:active",
+          "objective": "Washing up: 25s to get a trail onto it."
+        },
+        {
+          "t": 271.1,
+          "source": "routine:active",
+          "objective": "Washing up: 24s to get a trail onto it."
+        },
+        {
+          "t": 272.1,
+          "source": "routine:active",
+          "objective": "Washing up: 23s to get a trail onto it."
+        },
+        {
+          "t": 273.2,
+          "source": "routine:active",
+          "objective": "Washing up: 22s to get a trail onto it."
+        },
+        {
+          "t": 274.1,
+          "source": "routine:active",
+          "objective": "Washing up: 21s to get a trail onto it."
+        },
+        {
+          "t": 275.1,
+          "source": "routine:active",
+          "objective": "Washing up: 20s to get a trail onto it."
+        },
+        {
+          "t": 276.2,
+          "source": "routine:active",
+          "objective": "Washing up: 19s to get a trail onto it."
+        },
+        {
+          "t": 277.1,
+          "source": "routine:active",
+          "objective": "Washing up: 18s to get a trail onto it."
+        },
+        {
+          "t": 278.1,
+          "source": "routine:active",
+          "objective": "Washing up: 17s to get a trail onto it."
+        },
+        {
+          "t": 279.1,
+          "source": "routine:active",
+          "objective": "Washing up: 16s to get a trail onto it."
+        },
+        {
+          "t": 280.1,
+          "source": "routine:active",
+          "objective": "Washing up: 15s to get a trail onto it."
+        },
+        {
+          "t": 281.2,
+          "source": "routine:active",
+          "objective": "Washing up: 14s to get a trail onto it."
+        },
+        {
+          "t": 282.1,
+          "source": "routine:active",
+          "objective": "Washing up: 13s to get a trail onto it."
+        },
+        {
+          "t": 283.1,
+          "source": "routine:active",
+          "objective": "Washing up: 12s to get a trail onto it."
+        },
+        {
+          "t": 284.1,
+          "source": "routine:active",
+          "objective": "Washing up: 11s to get a trail onto it."
+        },
+        {
+          "t": 285.1,
+          "source": "routine:active",
+          "objective": "Washing up: 10s to get a trail onto it."
+        },
+        {
+          "t": 286.1,
+          "source": "routine:active",
+          "objective": "Washing up: 9s to get a trail onto it."
+        },
+        {
+          "t": 287.1,
+          "source": "routine:active",
+          "objective": "Washing up: 8s to get a trail onto it."
+        },
+        {
+          "t": 288.1,
+          "source": "routine:active",
+          "objective": "Washing up: 7s to get a trail onto it."
+        },
+        {
+          "t": 289.1,
+          "source": "routine:active",
+          "objective": "Washing up: 6s to get a trail onto it."
+        },
+        {
+          "t": 290.1,
+          "source": "routine:active",
+          "objective": "Washing up: 5s to get a trail onto it."
+        },
+        {
+          "t": 291.1,
+          "source": "routine:active",
+          "objective": "Washing up: 4s to get a trail onto it."
+        },
+        {
+          "t": 292.1,
+          "source": "routine:active",
+          "objective": "Washing up: 3s to get a trail onto it."
+        },
+        {
+          "t": 293.1,
+          "source": "routine:active",
+          "objective": "Washing up: 2s to get a trail onto it."
+        },
+        {
+          "t": 294.1,
+          "source": "routine:active",
+          "objective": "Washing up: 1s to get a trail onto it."
+        },
+        {
+          "t": 295.1,
+          "source": "capped:claim",
+          "objective": "The larder is full — claim Pantry crack (32 food, 20 moisture). It raises your caps."
+        },
+        {
+          "t": 297.2,
+          "source": "gate:functions2",
+          "objective": "Stand in Island crack and press E to fit it out."
+        },
+        {
+          "t": 305,
+          "source": "final",
+          "objective": "Get the colony into claimed cracks and keep them there."
+        }
+      ],
+      "tierLog": [
+        {
+          "t": 0.9,
+          "tier": 0
+        },
+        {
+          "t": 92.5,
+          "tier": 1
+        },
+        {
+          "t": 226.7,
+          "tier": 2
+        },
+        {
+          "t": 303,
+          "tier": 3
+        }
+      ],
+      "routineLog": [
+        {
+          "t": 92,
+          "phase": "dishes:incoming"
+        },
+        {
+          "t": 103,
+          "phase": "dishes:active"
+        },
+        {
+          "t": 166.2,
+          "phase": "trash:incoming"
+        },
+        {
+          "t": 179.1,
+          "phase": "trash:active"
+        },
+        {
+          "t": 240.2,
+          "phase": "dishes:incoming"
+        },
+        {
+          "t": 251.2,
+          "phase": "dishes:active"
+        },
+        {
+          "t": 316.8,
+          "phase": "trash:incoming"
+        },
+        {
+          "t": 329.8,
+          "phase": "trash:active"
+        }
+      ]
+    },
+    "perf": {
+      "label": "run",
+      "frames": 15608,
+      "durationMs": 365935.5,
+      "p50": 25,
+      "p95": 26.3,
+      "p99": 33.3,
+      "worst": 66.7,
+      "mean": 23.45,
+      "over16": 13894,
+      "over33": 199,
+      "over50": 8,
+      "over100": 0,
+      "over50Pct": 0.051,
+      "cpuP50": 1,
+      "cpuP95": 1.4,
+      "cpuP99": 2.1,
+      "cpuWorst": 6.2,
+      "peak": {
+        "roaches": 42,
+        "workers": 41,
+        "hazards": 3,
+        "particles": 72,
+        "voices": 12,
+        "drawCalls": 346,
+        "pheromoneNodes": 246
+      }
+    },
+    "telemetry": {
+      "fps": 41.6,
+      "p95": 26.399999618530273,
+      "counters": {
+        "roaches": 9,
+        "workers": 8,
+        "hazards": 2,
+        "particles": 188,
+        "voices": 5,
+        "drawCalls": 398,
+        "pheromoneNodes": 61
+      },
+      "startup": {
+        "atlasMs": 111.3,
+        "rendererMs": 130.3,
+        "bootMs": 133,
+        "firstFrameMs": 186.8
+      }
+    },
+    "errors": [],
+    "watch": {
+      "consoleErrors": [],
+      "pageErrors": [],
+      "failedRequests": [],
+      "requests": 3
+    },
+    "transcript": [
+      {
+        "t": 9.1,
+        "op": 1,
+        "tag": "line:Dishwasher crumbs",
+        "src": "gate:waterLine",
+        "pop": 6,
+        "food": 45,
+        "water": 34,
+        "adapts": 0,
+        "held": 0
+      },
+      {
+        "t": 20.4,
+        "op": 1,
+        "tag": "line:Sink drip",
+        "src": "gate:pop12",
+        "pop": 7,
+        "food": 42,
+        "water": 29,
+        "adapts": 0,
+        "held": 0
+      },
+      {
+        "t": 41.5,
+        "op": 1,
+        "tag": "line:stoveGrease",
+        "src": "gate:pop12",
+        "pop": 9,
+        "food": 59,
+        "water": 34,
+        "adapts": 0,
+        "held": 1
+      },
+      {
+        "t": 43.5,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "gate:pop12",
+        "pop": 9,
+        "food": 65,
+        "water": 44,
+        "adapts": 0,
+        "held": 1
+      },
+      {
+        "t": 45.5,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "gate:pop12",
+        "pop": 10,
+        "food": 62,
+        "water": 45,
+        "adapts": 0,
+        "held": 1
+      },
+      {
+        "t": 47.6,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "gate:pop12",
+        "pop": 10,
+        "food": 62,
+        "water": 45,
+        "adapts": 0,
+        "held": 1
+      },
+      {
+        "t": 49.6,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "gate:pop12",
+        "pop": 10,
+        "food": 62,
+        "water": 45,
+        "adapts": 0,
+        "held": 1
+      },
+      {
+        "t": 51.7,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "gate:pop12",
+        "pop": 10,
+        "food": 68,
+        "water": 44,
+        "adapts": 0,
+        "held": 1
+      },
+      {
+        "t": 53.7,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "gate:pop12",
+        "pop": 10,
+        "food": 67,
+        "water": 44,
+        "adapts": 0,
+        "held": 1
+      },
+      {
+        "t": 55.7,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "adaptation:offer",
+        "pop": 11,
+        "food": 65,
+        "water": 40,
+        "adapts": 0,
+        "held": 1
+      },
+      {
+        "t": 56.5,
+        "op": 1,
+        "tag": "adapt:brood1",
+        "src": "gate:pop12",
+        "pop": 11,
+        "food": 41,
+        "water": 26,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 58.9,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "gate:pop12",
+        "pop": 11,
+        "food": 40,
+        "water": 26,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 60.9,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "gate:pop12",
+        "pop": 11,
+        "food": 40,
+        "water": 25,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 62.9,
+        "op": 1,
+        "tag": "wait:grow",
+        "src": "gate:pop12",
+        "pop": 11,
+        "food": 39,
+        "water": 35,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 65,
+        "op": 2,
+        "tag": "wait:grow",
+        "src": "gate:foothold1",
+        "pop": 12,
+        "food": 31,
+        "water": 36,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 69.2,
+        "op": 2,
+        "tag": "interact:Sink-run crack",
+        "src": "gate:routines",
+        "pop": 14,
+        "food": 12,
+        "water": 20,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 70.8,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 14,
+        "food": 11,
+        "water": 25,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 72.3,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 14,
+        "food": 11,
+        "water": 25,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 73.8,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 14,
+        "food": 10,
+        "water": 25,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 75.4,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 14,
+        "food": 10,
+        "water": 24,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 76.9,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 14,
+        "food": 34,
+        "water": 24,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 78.5,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 14,
+        "food": 39,
+        "water": 24,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 80,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 14,
+        "food": 45,
+        "water": 24,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 81.6,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 14,
+        "food": 44,
+        "water": 23,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 83.1,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 15,
+        "food": 36,
+        "water": 19,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 84.6,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 15,
+        "food": 41,
+        "water": 19,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 86.2,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 15,
+        "food": 41,
+        "water": 19,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 87.7,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 15,
+        "food": 47,
+        "water": 28,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 89.2,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 15,
+        "food": 46,
+        "water": 33,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 90.8,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 15,
+        "food": 46,
+        "water": 33,
+        "adapts": 1,
+        "held": 1
+      },
+      {
+        "t": 92.3,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "routine:incoming",
+        "pop": 16,
+        "food": 37,
+        "water": 28,
+        "adapts": 1,
+        "held": 2
+      },
+      {
+        "t": 94.1,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 16,
+        "food": 37,
+        "water": 28,
+        "adapts": 1,
+        "held": 2
+      },
+      {
+        "t": 95.9,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 16,
+        "food": 36,
+        "water": 28,
+        "adapts": 1,
+        "held": 2
+      },
+      {
+        "t": 97.6,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 16,
+        "food": 35,
+        "water": 28,
+        "adapts": 1,
+        "held": 2
+      },
+      {
+        "t": 99.3,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 16,
+        "food": 33,
+        "water": 23,
+        "adapts": 1,
+        "held": 2
+      },
+      {
+        "t": 100.9,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "adaptation:offer",
+        "pop": 17,
+        "food": 44,
+        "water": 23,
+        "adapts": 1,
+        "held": 2
+      },
+      {
+        "t": 101.4,
+        "op": 2,
+        "tag": "adapt:forage1",
+        "src": "routine:incoming",
+        "pop": 17,
+        "food": 22,
+        "water": 11,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 103.1,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 22,
+        "water": 11,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 105.1,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 21,
+        "water": 10,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 106.8,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 20,
+        "water": 15,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 108.6,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 20,
+        "water": 39,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 110.3,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 19,
+        "water": 59,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 112,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 27,
+        "water": 59,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 113.7,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 35,
+        "water": 58,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 115.5,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 35,
+        "water": 58,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 117.2,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 40,
+        "water": 58,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 118.8,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 48,
+        "water": 58,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 120.5,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 17,
+        "food": 56,
+        "water": 57,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 122.2,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 18,
+        "food": 65,
+        "water": 53,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 123.9,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 18,
+        "food": 73,
+        "water": 53,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 125.6,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 18,
+        "food": 73,
+        "water": 52,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 127.3,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 18,
+        "food": 90,
+        "water": 52,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 129.3,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 19,
+        "food": 81,
+        "water": 55,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 131,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 19,
+        "food": 89,
+        "water": 76,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 133,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 19,
+        "food": 88,
+        "water": 76,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 134.7,
+        "op": 2,
+        "tag": "line:Washing up",
+        "src": "gate:routines",
+        "pop": 19,
+        "food": 105,
+        "water": 97,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 136.3,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "capped:claim",
+        "pop": 19,
+        "food": 113,
+        "water": 100,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 140.3,
+        "op": 2,
+        "tag": "interact:Island crack",
+        "src": "gate:routines",
+        "pop": 22,
+        "food": 69,
+        "water": 78,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 141.8,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 22,
+        "food": 69,
+        "water": 85,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 143.4,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 22,
+        "food": 77,
+        "water": 84,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 144.9,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 22,
+        "food": 85,
+        "water": 84,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 146.4,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 23,
+        "food": 76,
+        "water": 80,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 148,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 23,
+        "food": 75,
+        "water": 79,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 149.5,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 23,
+        "food": 75,
+        "water": 79,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 151,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 23,
+        "food": 74,
+        "water": 78,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 152.6,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 23,
+        "food": 73,
+        "water": 78,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 154.1,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "adaptation:offer",
+        "pop": 24,
+        "food": 64,
+        "water": 74,
+        "adapts": 2,
+        "held": 2
+      },
+      {
+        "t": 154.6,
+        "op": 2,
+        "tag": "adapt:forage2",
+        "src": "gate:routines",
+        "pop": 24,
+        "food": 27,
+        "water": 48,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 156.1,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 24,
+        "food": 35,
+        "water": 47,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 157.6,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 24,
+        "food": 34,
+        "water": 47,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 159.2,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 24,
+        "food": 33,
+        "water": 46,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 160.7,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 24,
+        "food": 33,
+        "water": 46,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 162.3,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 24,
+        "food": 32,
+        "water": 45,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 163.8,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 24,
+        "food": 31,
+        "water": 45,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 165.3,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "gate:routines",
+        "pop": 24,
+        "food": 30,
+        "water": 45,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 166.9,
+        "op": 2,
+        "tag": "idle:gate:routines",
+        "src": "routine:incoming",
+        "pop": 24,
+        "food": 30,
+        "water": 44,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 184.8,
+        "op": 2,
+        "tag": "line:Bin run",
+        "src": "routine:active",
+        "pop": 24,
+        "food": 21,
+        "water": 39,
+        "adapts": 3,
+        "held": 2
+      },
+      {
+        "t": 202.7,
+        "op": 3,
+        "tag": "line:Bin run",
+        "src": "gate:functions2:saving",
+        "pop": 24,
+        "food": 13,
+        "water": 35,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 205.6,
+        "op": 3,
+        "tag": "interact:Island spill",
+        "src": "gate:functions2:saving",
+        "pop": 24,
+        "food": 11,
+        "water": 34,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 206,
+        "op": 3,
+        "tag": "interact:Island spill",
+        "src": "gate:functions2:saving",
+        "pop": 24,
+        "food": 11,
+        "water": 34,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 206.4,
+        "op": 3,
+        "tag": "interact:Island spill",
+        "src": "gate:functions2:saving",
+        "pop": 24,
+        "food": 11,
+        "water": 34,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 206.7,
+        "op": 3,
+        "tag": "interact:Island spill",
+        "src": "gate:functions2:saving",
+        "pop": 24,
+        "food": 11,
+        "water": 33,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 207.1,
+        "op": 3,
+        "tag": "interact:Island spill",
+        "src": "gate:functions2:saving",
+        "pop": 24,
+        "food": 10,
+        "water": 33,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 207.4,
+        "op": 3,
+        "tag": "interact:Island spill",
+        "src": "gate:functions2:saving",
+        "pop": 24,
+        "food": 10,
+        "water": 33,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 207.8,
+        "op": 3,
+        "tag": "interact:Island spill",
+        "src": "gate:functions2:saving",
+        "pop": 24,
+        "food": 10,
+        "water": 33,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 208.2,
+        "op": 3,
+        "tag": "interact:Island spill",
+        "src": "gate:functions2:saving",
+        "pop": 24,
+        "food": 10,
+        "water": 33,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 208.5,
+        "op": 3,
+        "tag": "interact:Island spill",
+        "src": "threat",
+        "pop": 24,
+        "food": 10,
+        "water": 33,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 222.5,
+        "op": 3,
+        "tag": "reroute:trashSpill",
+        "src": "gate:functions2",
+        "pop": 24,
+        "food": 116,
+        "water": 29,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 226.7,
+        "op": 3,
+        "tag": "interact:Sink-run crack",
+        "src": "gate:functions2",
+        "pop": 25,
+        "food": 111,
+        "water": 24,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 227.1,
+        "op": 3,
+        "tag": "fit:crackSink",
+        "src": "shortage",
+        "pop": 27,
+        "food": 76,
+        "water": 2,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 231,
+        "op": 3,
+        "tag": "line:Sink drip",
+        "src": "shortage",
+        "pop": 27,
+        "food": 74,
+        "water": 1,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 234.6,
+        "op": 3,
+        "tag": "patrol:Sink drip",
+        "src": "shortage",
+        "pop": 27,
+        "food": 72,
+        "water": 0,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 237.1,
+        "op": 3,
+        "tag": "patrol:Sink drip",
+        "src": "shortage",
+        "pop": 27,
+        "food": 71,
+        "water": 0,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 239.7,
+        "op": 3,
+        "tag": "patrol:Sink drip",
+        "src": "gate:functions2:saving",
+        "pop": 26,
+        "food": 70,
+        "water": 14,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 240.1,
+        "op": 3,
+        "tag": "interact:Sink drip",
+        "src": "gate:functions2:saving",
+        "pop": 26,
+        "food": 69,
+        "water": 14,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 242.5,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 26,
+        "food": 68,
+        "water": 13,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 244.1,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 26,
+        "food": 76,
+        "water": 27,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 245.8,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 26,
+        "food": 75,
+        "water": 27,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 247.5,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 26,
+        "food": 74,
+        "water": 34,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 249.1,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 27,
+        "food": 74,
+        "water": 36,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 250.8,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:incoming",
+        "pop": 27,
+        "food": 91,
+        "water": 36,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 252.5,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 27,
+        "food": 120,
+        "water": 50,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 254.2,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 28,
+        "food": 120,
+        "water": 53,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 255.9,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 28,
+        "food": 120,
+        "water": 59,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 257.6,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 28,
+        "food": 120,
+        "water": 66,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 259.3,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 29,
+        "food": 120,
+        "water": 69,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 261,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 29,
+        "food": 120,
+        "water": 90,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 262.6,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "adaptation:offer",
+        "pop": 30,
+        "food": 111,
+        "water": 93,
+        "adapts": 3,
+        "held": 3
+      },
+      {
+        "t": 263.1,
+        "op": 3,
+        "tag": "adapt:brood2",
+        "src": "routine:active",
+        "pop": 30,
+        "food": 59,
+        "water": 59,
+        "adapts": 4,
+        "held": 3
+      },
+      {
+        "t": 264.8,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 30,
+        "food": 57,
+        "water": 80,
+        "adapts": 4,
+        "held": 3
+      },
+      {
+        "t": 266.5,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 30,
+        "food": 56,
+        "water": 86,
+        "adapts": 4,
+        "held": 3
+      },
+      {
+        "t": 268.1,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 31,
+        "food": 47,
+        "water": 89,
+        "adapts": 4,
+        "held": 3
+      },
+      {
+        "t": 269.8,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 31,
+        "food": 46,
+        "water": 100,
+        "adapts": 4,
+        "held": 3
+      },
+      {
+        "t": 271.5,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 31,
+        "food": 44,
+        "water": 100,
+        "adapts": 4,
+        "held": 3
+      },
+      {
+        "t": 273.2,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 31,
+        "food": 52,
+        "water": 100,
+        "adapts": 4,
+        "held": 3
+      },
+      {
+        "t": 274.8,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 31,
+        "food": 50,
+        "water": 100,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 276.5,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 32,
+        "food": 41,
+        "water": 100,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 278.2,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 32,
+        "food": 40,
+        "water": 100,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 279.8,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 32,
+        "food": 38,
+        "water": 99,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 281.8,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 32,
+        "food": 80,
+        "water": 98,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 283.5,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 32,
+        "food": 96,
+        "water": 98,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 285.3,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 33,
+        "food": 120,
+        "water": 93,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 286.9,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 33,
+        "food": 120,
+        "water": 92,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 288.6,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 33,
+        "food": 119,
+        "water": 91,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 290.4,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 34,
+        "food": 119,
+        "water": 86,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 292.1,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 34,
+        "food": 119,
+        "water": 86,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 293.7,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "routine:active",
+        "pop": 34,
+        "food": 120,
+        "water": 85,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 295.4,
+        "op": 3,
+        "tag": "line:Washing up",
+        "src": "capped:claim",
+        "pop": 35,
+        "food": 120,
+        "water": 80,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 300.6,
+        "op": 3,
+        "tag": "interact:Pantry crack",
+        "src": "gate:functions2",
+        "pop": 38,
+        "food": 75,
+        "water": 53,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 304.9,
+        "op": 3,
+        "tag": "interact:Island crack",
+        "src": "gate:functions2",
+        "pop": 39,
+        "food": 71,
+        "water": 47,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 305.4,
+        "op": 4,
+        "tag": "fit:crackIsland",
+        "src": "final",
+        "pop": 41,
+        "food": 33,
+        "water": 23,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 307.3,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 41,
+        "food": 31,
+        "water": 22,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 308.9,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 41,
+        "food": 29,
+        "water": 21,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 310.4,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 41,
+        "food": 28,
+        "water": 20,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 312,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 41,
+        "food": 52,
+        "water": 19,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 313.5,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 41,
+        "food": 59,
+        "water": 18,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 315.1,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 41,
+        "food": 93,
+        "water": 17,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 316.6,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 41,
+        "food": 100,
+        "water": 16,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 318.1,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 39,
+        "food": 107,
+        "water": 16,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 319.7,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 39,
+        "food": 120,
+        "water": 15,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 321.2,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 39,
+        "food": 118,
+        "water": 14,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 322.7,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 38,
+        "food": 120,
+        "water": 13,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 324.3,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 35,
+        "food": 120,
+        "water": 12,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 325.8,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 32,
+        "food": 119,
+        "water": 12,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 327.3,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 32,
+        "food": 118,
+        "water": 11,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 328.9,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 32,
+        "food": 117,
+        "water": 10,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 330.4,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 26,
+        "food": 115,
+        "water": 9,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 332,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 14,
+        "food": 115,
+        "water": 9,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 333.5,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 114,
+        "water": 9,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 335.1,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 114,
+        "water": 9,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 336.6,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 113,
+        "water": 8,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 338.1,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 113,
+        "water": 8,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 339.7,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 113,
+        "water": 8,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 341.2,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 112,
+        "water": 8,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 342.7,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 112,
+        "water": 7,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 344.3,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 111,
+        "water": 7,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 345.8,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 120,
+        "water": 7,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 347.3,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 119,
+        "water": 7,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 348.9,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 119,
+        "water": 6,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 350.4,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 119,
+        "water": 6,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 352,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 118,
+        "water": 6,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 353.5,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 11,
+        "food": 118,
+        "water": 6,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 355,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 10,
+        "food": 117,
+        "water": 5,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 356.6,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 10,
+        "food": 120,
+        "water": 5,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 358.1,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 10,
+        "food": 120,
+        "water": 5,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 359.6,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 10,
+        "food": 120,
+        "water": 5,
+        "adapts": 4,
+        "held": 4
+      },
+      {
+        "t": 361.2,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 10,
+        "food": 119,
+        "water": 5,
+        "adapts": 4,
+        "held": 5
+      },
+      {
+        "t": 362.7,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 10,
+        "food": 119,
+        "water": 4,
+        "adapts": 4,
+        "held": 5
+      },
+      {
+        "t": 364.2,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 10,
+        "food": 118,
+        "water": 4,
+        "adapts": 4,
+        "held": 5
+      },
+      {
+        "t": 365.8,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 8,
+        "food": 118,
+        "water": 4,
+        "adapts": 4,
+        "held": 5
+      },
+      {
+        "t": 367.3,
+        "op": 4,
+        "tag": "idle:final",
+        "src": "final",
+        "pop": 8,
+        "food": 118,
+        "water": 4,
+        "adapts": 4,
+        "held": 5
+      }
+    ]
   }
 }

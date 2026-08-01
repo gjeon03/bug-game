@@ -81,7 +81,7 @@ const SAMPLER_INSTALL = `() => {
     if (foodFull) S.cappedFood += S.dt;
     if (waterFull) S.cappedWater += S.dt;
     if (s.colony.population >= s.colony.capacity) S.cappedPop += S.dt;
-    if ((foodFull || waterFull) && !/^(capped:|adaptation:|routine:|shortage|threat|gate:)/.test(s.hud.source)) {
+    if ((foodFull || waterFull) && !/^(capped:|adaptation:|routine:|shortage|threat|final|gate:)/.test(s.hud.source)) {
       S.cappedUnexplained += S.dt;
     }
 

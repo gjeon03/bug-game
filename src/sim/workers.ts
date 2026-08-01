@@ -461,6 +461,11 @@ export function updateWorkers(world: World, dt: number): void {
       }
       w.x = c.x;
       w.y = c.y;
+      // Remember what we walked into. Sliding alone cannot escape a concave corner, because the
+      // desired direction keeps pointing into it; the recovery ladder needs to know which way the
+      // wall runs before it can follow it out.
+      w.blockedNx = c.nx;
+      w.blockedNy = c.ny;
     }
 
     const sp = Math.hypot(w.vx, w.vy);
@@ -475,7 +480,7 @@ export function updateWorkers(world: World, dt: number): void {
 
     // ── Stuck watchdog. "Useful progress" is defined per state, so a worker legitimately standing
     // still (feeding, waiting its turn, sheltering) is never mistaken for a broken one.
-    const progressed = madeProgress(w, sp);
+    const progressed = madeProgress(w);
     if (progressed) {
       w.stuckTime = 0;
       w.recoverStage = 0;
@@ -592,22 +597,22 @@ function turnToward(from: number, to: number, maxStep: number): number {
  * is doing its job while standing still; only the states that are *supposed* to be making headway
  * are held to a movement test.
  */
-function madeProgress(w: Worker, speed: number): boolean {
+function madeProgress(w: Worker): boolean {
   switch (w.state) {
     case 'outbound':
     case 'inbound':
-      return (
-        w.nodeIndex !== w.markIndex ||
-        dist2(w.x, w.y, w.markX, w.markY) > 36 ||
-        w.carrying !== null ||
-        speed > 20
-      );
+      // Displacement, not speed. `speed > 20` was in this test and it is exactly the hole a jammed
+      // worker falls through: one shoving against a neighbour or a corner has plenty of velocity and
+      // goes nowhere, so the watchdog counted it as progressing forever. A real-browser probe that
+      // measured actual movement found 61 workers stalled past two seconds in one run, the worst for
+      // 35 s, while the watchdog was satisfied throughout.
+      return w.nodeIndex !== w.markIndex || dist2(w.x, w.y, w.markX, w.markY) > 36;
     case 'harvest':
     case 'queue':
     case 'trapped':
       return true;
     case 'panic':
-      return dist2(w.x, w.y, w.markX, w.markY) > 36 || speed > 20;
+      return dist2(w.x, w.y, w.markX, w.markY) > 36;
     default:
       // Idle is only a problem when a worker is idling somewhere it cannot be recruited from.
       return true;
@@ -623,6 +628,37 @@ function madeProgress(w: Worker, speed: number): boolean {
 function recoverWorker(w: Worker, home: { x: number; y: number }): void {
   w.recoverStage++;
   w.stuckTime = 0;
+  if (w.recoverStage > 5) w.recoverStage = 4;
+  // The first two rungs are not skippable, even when a wall is involved. Jumping a blocked worker
+  // straight to wall-following was tried and measured: stalls went from 43 events / 4.7 s worst to
+  // 81 events / 28.2 s worst, because a worker that has *also* lost its place on the trail then runs
+  // along the wall away from the line it was serving. Re-read the scent first; follow the wall only
+  // once that has not helped.
+  if (w.recoverStage >= 4) {
+    // Wall-following, and it never gives up.
+    //
+    // The ladder used to stop after "abandon the route and walk home", which is fine on open floor
+    // and useless in a concave corner: a worker carrying food toward a nest behind a cabinet pressed
+    // into the same wall indefinitely. Measured in a real browser: 106 workers stalled past two
+    // seconds in one run, the worst for 89 s, all of them past the end of the ladder.
+    //
+    // From here the worker runs *along* the surface it hit, alternating direction each attempt, and
+    // the stage cycles rather than terminating.
+    const nx = w.blockedNx;
+    const ny = w.blockedNy;
+    const side = w.recoverStage % 2 === 0 ? 1 : -1;
+    if (nx !== 0 || ny !== 0) {
+      w.vx = -ny * side * w.speed;
+      w.vy = nx * side * w.speed;
+    } else {
+      const a = w.angle + (Math.PI / 2) * side;
+      w.vx = Math.cos(a) * w.speed;
+      w.vy = Math.sin(a) * w.speed;
+    }
+    // Re-read the field on the way out, so a worker that escapes rejoins a line rather than wandering.
+    w.nodeIndex = -1;
+    return;
+  }
   if (w.recoverStage === 1) {
     // Re-read the trail from scratch: the usual cause is a node index that no longer matches where
     // the body actually is, after a hazard shove or a route edit.
