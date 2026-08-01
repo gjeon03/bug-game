@@ -2,6 +2,8 @@ import { dist2 } from '../core/math.ts';
 import {
   BASE_CAPACITY,
   BROOD_CHAMBER_CAPACITY,
+  BROOD_RESERVE_MARGIN_FOOD,
+  BROOD_RESERVE_MARGIN_WATER,
   BROOD_CHAMBER_MULT,
   BROOD_FOOD_COST,
   BROOD_RATE,
@@ -10,6 +12,7 @@ import {
   CACHE_WATER_BONUS,
   FOOD_CAP,
   STARVE_DEATH_INTERVAL,
+  STARVE_GRACE,
   SUSPICION_WEIGHTS,
   UPKEEP_FOOD,
   UPKEEP_WATER,
@@ -46,7 +49,9 @@ export function updateColony(world: World, dt: number): void {
   c.food = Math.max(0, c.food - UPKEEP_FOOD * pop * dt);
   c.water = Math.max(0, c.water - UPKEEP_WATER * pop * dt);
 
-  if (c.food <= 0 && pop > 0) {
+  const grace = world.time < STARVE_GRACE;
+
+  if (c.food <= 0 && pop > 0 && !grace) {
     c.starving += dt;
     if (c.starving >= STARVE_DEATH_INTERVAL) {
       c.starving = 0;
@@ -56,7 +61,7 @@ export function updateColony(world: World, dt: number): void {
     c.starving = Math.max(0, c.starving - dt * 0.5);
   }
 
-  if (c.water <= 0 && pop > 0) {
+  if (c.water <= 0 && pop > 0 && !grace) {
     c.thirsting += dt;
     if (c.thirsting >= STARVE_DEATH_INTERVAL * 0.75) {
       c.thirsting = 0;
@@ -66,11 +71,12 @@ export function updateColony(world: World, dt: number): void {
     c.thirsting = Math.max(0, c.thirsting - dt * 0.5);
   }
 
-  // ── Brood. Needs food AND water, so a food-only strategy stalls.
+  // ── Brood. Needs food AND water, so a food-only strategy stalls, and it never spends the colony
+  // into starvation: growth comes out of surplus only.
   if (
     c.population < c.capacity &&
-    c.food >= BROOD_FOOD_COST &&
-    c.water >= BROOD_WATER_COST &&
+    c.food >= BROOD_FOOD_COST + BROOD_RESERVE_MARGIN_FOOD &&
+    c.water >= BROOD_WATER_COST + BROOD_RESERVE_MARGIN_WATER &&
     world.status === 'playing'
   ) {
     c.brood += BROOD_RATE * (c.upgrades.brood ? BROOD_CHAMBER_MULT : 1) * dt;

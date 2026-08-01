@@ -1,0 +1,51 @@
+{
+  "covered": {
+    "id": 1,
+    "nodes": 25,
+    "linked": true,
+    "exposure": 0.06593248198530724,
+    "traffic": 4,
+    "resourceId": "dishCrumbs",
+    "nestId": "home"
+  },
+  "open": {
+    "id": 2,
+    "nodes": 63,
+    "linked": true,
+    "exposure": 0.1294587775988442,
+    "traffic": 2,
+    "resourceId": "dishCrumbs",
+    "nestId": "home"
+  },
+  "allRoutes": [
+    {
+      "id": 1,
+      "nodes": 25,
+      "linked": true,
+      "exposure": 0.06593248198530724,
+      "traffic": 4,
+      "resourceId": "dishCrumbs",
+      "nestId": "home"
+    },
+    {
+      "id": 2,
+      "nodes": 63,
+      "linked": true,
+      "exposure": 0.1294587775988442,
+      "traffic": 2,
+      "resourceId": "dishCrumbs",
+      "nestId": "home"
+    }
+  ],
+  "scout": {
+    "x": 738.6764273020291,
+    "y": 1697.1470586783976,
+    "alive": true,
+    "stamina": 100,
+    "exposure": 0.30316446429495575,
+    "spotted": 0,
+    "trapped": false,
+    "laying": false
+  },
+  "reserve": 81.68000000000325
+}

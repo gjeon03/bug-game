@@ -36,6 +36,50 @@ export const SOLIDS: readonly Solid[] = [
   { id: 'tableLegB', x: 3160, y: 1300, w: 96, h: 96, mat: 'cabinet' },
   { id: 'tableLegC', x: 2700, y: 1760, w: 96, h: 96, mat: 'cabinet' },
   { id: 'tableLegD', x: 3160, y: 1760, w: 96, h: 96, mat: 'cabinet' },
+
+  // Floor clutter: cover and landmarks in the exposed middle of the room, which is otherwise a
+  // featureless plain at insect scale.
+  { id: 'chairLegA', x: 1520, y: 2136, w: 84, h: 84, mat: 'cabinet' },
+  { id: 'chairLegB', x: 1808, y: 2136, w: 84, h: 84, mat: 'cabinet' },
+  { id: 'chairLegC', x: 1520, y: 2404, w: 84, h: 84, mat: 'cabinet' },
+  { id: 'chairLegD', x: 1808, y: 2404, w: 84, h: 84, mat: 'cabinet' },
+  { id: 'boxPantry', x: 880, y: 1948, w: 268, h: 132, mat: 'plastic', label: 'box' },
+  { id: 'binLiner', x: 2760, y: 2320, w: 150, h: 108, mat: 'plastic' },
+  { id: 'pipeRun', x: 3400, y: 300, w: 144, h: 430, mat: 'metal', label: 'pipe' },
+  { id: 'stoolLeg', x: 2560, y: 620, w: 74, h: 74, mat: 'metal' },
+];
+
+export type DecalKind = 'mat' | 'vent' | 'cable' | 'crack' | 'spill' | 'ring';
+
+export interface Decal {
+  kind: DecalKind;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  rot: number;
+}
+
+/**
+ * Non-colliding floor detail. These carry no gameplay rules — they exist so the kitchen reads as a
+ * used room and so the eye has landmarks to navigate by between the big solids.
+ */
+export const DECALS: readonly Decal[] = [
+  { kind: 'mat', x: 620, y: 1000, w: 430, h: 560, rot: 0 },
+  { kind: 'mat', x: 2660, y: 1880, w: 520, h: 300, rot: 0.06 },
+  { kind: 'vent', x: 2180, y: 640, w: 250, h: 130, rot: 0 },
+  { kind: 'vent', x: 300, y: 2320, w: 210, h: 110, rot: 1.57 },
+  { kind: 'cable', x: 2600, y: 800, w: 900, h: 220, rot: 0 },
+  { kind: 'cable', x: 700, y: 700, w: 640, h: 180, rot: 0.4 },
+  { kind: 'crack', x: 1500, y: 1900, w: 420, h: 190, rot: 0.3 },
+  { kind: 'crack', x: 900, y: 1250, w: 300, h: 140, rot: -0.8 },
+  { kind: 'crack', x: 2900, y: 1300, w: 360, h: 160, rot: 1.1 },
+  { kind: 'spill', x: 1560, y: 820, w: 300, h: 230, rot: 0 },
+  { kind: 'spill', x: 2900, y: 2350, w: 340, h: 260, rot: 0 },
+  { kind: 'spill', x: 1000, y: 2280, w: 260, h: 200, rot: 0 },
+  { kind: 'ring', x: 2700, y: 2216, w: 250, h: 250, rot: 0 },
+  { kind: 'ring', x: 1200, y: 1500, w: 170, h: 170, rot: 0 },
+  { kind: 'ring', x: 2300, y: 900, w: 200, h: 200, rot: 0 },
 ];
 
 /** Static light sources. The room light added by patrols is dynamic and lives in the sim. */
@@ -64,7 +108,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'food',
     x: 712,
     y: 1704,
-    amount: 58,
+    amount: 240,
     unlockNight: 1,
     label: 'Dishwasher crumbs',
   },
@@ -73,7 +117,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'water',
     x: 664,
     y: 1312,
-    amount: 74,
+    amount: 260,
     unlockNight: 1,
     label: 'Sink drip',
   },
@@ -82,7 +126,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'food',
     x: 1608,
     y: 716,
-    amount: 76,
+    amount: 300,
     unlockNight: 1,
     label: 'Stove grease',
   },
@@ -93,7 +137,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'food',
     x: 1872,
     y: 1948,
-    amount: 104,
+    amount: 380,
     unlockNight: 2,
     label: 'Island spill',
   },
@@ -102,7 +146,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'water',
     x: 2556,
     y: 872,
-    amount: 122,
+    amount: 420,
     unlockNight: 2,
     label: 'Fridge condensation',
   },
@@ -111,7 +155,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'food',
     x: 912,
     y: 2312,
-    amount: 118,
+    amount: 400,
     unlockNight: 2,
     label: 'Pantry grain',
   },
@@ -122,7 +166,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'food',
     x: 2884,
     y: 2472,
-    amount: 168,
+    amount: 560,
     unlockNight: 3,
     label: 'Bin spill',
   },
@@ -131,7 +175,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     kind: 'water',
     x: 2700,
     y: 2216,
-    amount: 116,
+    amount: 400,
     unlockNight: 3,
     label: 'Pet bowl',
   },

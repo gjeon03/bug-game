@@ -1,6 +1,8 @@
 import { clamp01, dist2 } from '../core/math.ts';
 import {
   EXPOSURE_DANGER,
+  NODE_LIFE,
+  NODE_REINFORCE,
   NYMPH_TIME,
   WORKER_CARRY_FOOD,
   WORKER_CARRY_WATER,
@@ -147,6 +149,9 @@ export function updateWorkers(world: World, dt: number): void {
 
         w.lostTime = 0;
         w.nodeIndex = idx;
+        // Traffic reinforces the trail it walks on, so a working supply line sustains itself.
+        const here = nodes[idx];
+        if (here.life < NODE_LIFE) here.life = Math.min(NODE_LIFE, here.life + NODE_REINFORCE * dt);
         const sign =
           w.state === 'outbound' ? (route.resEnd === 1 ? 1 : -1) : route.nestEnd === 1 ? 1 : -1;
         w.dirSign = sign;

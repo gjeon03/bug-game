@@ -243,7 +243,7 @@ export function updatePheromone(world: World, dt: number): void {
 
     if (linked) {
       for (let j = 0; j < route.nodes.length; j++) {
-        if (route.nodes[j].exposure > 0.45) exposedTrail++;
+        if (route.nodes[j].exposure > 0.28) exposedTrail++;
       }
     }
 

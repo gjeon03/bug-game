@@ -138,8 +138,11 @@ export function distToSolid2(x: number, y: number): number {
 export function coverAt(x: number, y: number): number {
   const d = Math.sqrt(distToSolid2(x, y));
   if (d >= COVER_RADIUS) return 0;
+  // Ease-out, not ease-in: a roach one body-length from a cabinet is already mostly hidden, and the
+  // protection tapers off toward the edge of the band. A squared falloff made wall-hugging almost
+  // worthless, which broke the whole safe-route-versus-short-route decision.
   const t = 1 - d / COVER_RADIUS;
-  return t * t;
+  return t * (2 - t);
 }
 
 /** The static, always-on part of the light field. */
@@ -204,7 +207,10 @@ export function solidsForRender(): readonly Solid[] {
  * shape on a bare tile is exactly what a human notices.
  */
 export function exposureFrom(light: number, cover: number): number {
-  const shielded = light * (1 - 0.72 * cover);
-  const openFloor = (1 - cover) * 0.14;
+  const shielded = light * (1 - 0.78 * cover);
+  // Open floor is never free, even unlit: a scuttling shape on bare tile is exactly what a human
+  // notices out of the corner of an eye. This term is what makes route geometry — not just
+  // brightness — the thing the player is actually choosing between.
+  const openFloor = (1 - cover) * 0.3;
   return clamp01(shielded + openFloor);
 }

@@ -1,6 +1,7 @@
 import {
   INTERLUDE_LENGTH,
   NIGHT_LENGTH,
+  NIGHT_RESOURCE_REGROWTH,
   WIN_FOOD,
   WIN_POPULATION,
   WIN_WATER,
@@ -164,6 +165,15 @@ function startNight(world: World, night: NightIndex): void {
   world.nightLength = NIGHT_LENGTH[night];
   world.status = 'playing';
   world.scout.spotted = 0;
+
+  // The household cooks again: sources you did not strip bare partly recover. Sources you drained
+  // completely were noticed and cleaned up, and stay gone — which is the cost of over-harvesting.
+  for (let i = 0; i < world.resources.length; i++) {
+    const r = world.resources[i];
+    if (r.depleted) continue;
+    r.amount = Math.min(r.initial, r.amount + r.initial * NIGHT_RESOURCE_REGROWTH);
+  }
+
   world.events.push({ t: 'phase', night });
   updateObjective(world);
 }
@@ -224,10 +234,58 @@ function lose(world: World, cause: 'collapse' | 'nestDestroyed' | 'exterminated'
   world.events.push({ t: 'lose', cause });
 }
 
+/**
+ * Picks the world-space thing the current objective is talking about, so the HUD can point at it.
+ * On a kitchen this large, "go and find it" without a bearing is just wandering.
+ */
+function updateGuide(world: World): void {
+  const c = world.colony;
+  const unclaimed = world.nests.filter((n) => !n.claimed && n.unlockNight <= world.night);
+  const servedFood = world.routes.some(
+    (r) => r.linked && world.resources.find((x) => x.id === r.resourceId)?.kind === 'food',
+  );
+  const servedWater = world.routes.some(
+    (r) => r.linked && world.resources.find((x) => x.id === r.resourceId)?.kind === 'water',
+  );
+
+  // Priority: an unserved resource type first, then the next crack, then home.
+  let wantKind: 'food' | 'water' | null = null;
+  if (!servedFood) wantKind = 'food';
+  else if (!servedWater) wantKind = 'water';
+  else if (c.food < c.water) wantKind = 'food';
+  else if (unclaimed.length === 0) wantKind = 'water';
+
+  if (wantKind !== null) {
+    let best: { x: number; y: number; label: string } | null = null;
+    let bestD = Infinity;
+    for (let i = 0; i < world.resources.length; i++) {
+      const r = world.resources[i];
+      if (r.depleted || r.unlockNight > world.night || r.kind !== wantKind) continue;
+      const d = (r.x - world.scout.x) ** 2 + (r.y - world.scout.y) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        best = { x: r.x, y: r.y, label: r.label };
+      }
+    }
+    if (best) {
+      world.guide = best;
+      return;
+    }
+  }
+
+  if (unclaimed.length > 0) {
+    world.guide = { x: unclaimed[0].x, y: unclaimed[0].y, label: unclaimed[0].label };
+    return;
+  }
+  const home = homeNest(world);
+  world.guide = { x: home.x, y: home.y, label: 'Home crack' };
+}
+
 /** One short line, always answering "what should I do right now?". */
 function updateObjective(world: World): void {
   const c = world.colony;
   const linked = world.routes.some((r) => r.linked);
+  updateGuide(world);
 
   if (!linked) {
     world.objective = 'Link the nest to food or moisture with a pheromone trail.';

@@ -1,0 +1,38 @@
+- generic [ref=e2]:
+  - img "Baseboard Empire game view" [ref=e3]
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic: Food
+          - generic: 17/200
+        - generic:
+          - generic: Moisture
+          - generic: 13/160
+        - generic:
+          - generic: Colony
+          - generic: 6/14
+        - generic:
+          - generic: Brood
+          - generic: 0%
+    - generic:
+      - generic:
+        - generic: Unnoticed · 0
+        - generic: No evidence yet.
+        - generic: Nobody has noticed anything yet.
+    - generic:
+      - generic:
+        - generic:
+          - generic: Sprint
+          - generic: "100"
+        - generic:
+          - generic: Pheromone
+          - generic: "100"
+        - generic: Scout ready
+    - generic:
+      - generic: W A S D — get out of the crack.
+      - generic: Link the nest to food or moisture with a pheromone trail.
+    - generic:
+      - generic:
+        - generic: Night 1 — Establish
+        - generic: 2:57

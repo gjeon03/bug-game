@@ -6,6 +6,8 @@ import {
   NIGHT_LENGTH,
   SCOUT_STAMINA_MAX,
   RESERVE_MAX,
+  START_FOOD,
+  START_WATER,
   START_POPULATION,
   WATER_CAP,
   WORKER_CAP,
@@ -121,6 +123,8 @@ export interface World {
   onboarding: OnboardingState;
 
   objective: string;
+  /** World-space target the objective refers to, so the HUD can point at it. */
+  guide: { x: number; y: number; label: string } | null;
   /** Current onboarding prompt, empty once the sequence is complete. */
   tutorial: string;
   /** Transient feedback toast (inspect results, refused claims). */
@@ -305,8 +309,8 @@ export function createWorld(seed: number): World {
     nextId: 1,
 
     colony: {
-      food: 18,
-      water: 14,
+      food: START_FOOD,
+      water: START_WATER,
       foodCap: FOOD_CAP,
       waterCap: WATER_CAP,
       population: 0,
@@ -377,6 +381,7 @@ export function createWorld(seed: number): World {
     onboarding: { step: 0, stepTime: 0, seenBefore: false, satisfied: false },
 
     objective: 'Leave the crack and find something to eat.',
+    guide: null,
     tutorial: '',
     hint: '',
     hintKey: '',

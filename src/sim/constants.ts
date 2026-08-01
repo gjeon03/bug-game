@@ -4,8 +4,11 @@ import type { NightIndex } from './types.ts';
 
 export const WORLD_W = 3600;
 export const WORLD_H = 2600;
-/** Anything within this distance of a solid edge counts as cover. Cabinetry is safety. */
-export const COVER_RADIUS = 96;
+/**
+ * Anything within this distance of a solid edge counts as cover — roughly the depth of a toe-kick,
+ * about four body lengths. Cabinetry is safety, and that is taught by the darkness, not by a tooltip.
+ */
+export const COVER_RADIUS = 120;
 
 /* ── Scout ─────────────────────────────────────────────────────────────────── */
 
@@ -27,7 +30,13 @@ export const SCOUT_INVULN_TIME = 1.6;
 /* ── Pheromone ─────────────────────────────────────────────────────────────── */
 
 export const NODE_SPACING = 26;
-export const NODE_LIFE = 68;
+export const NODE_LIFE = 95;
+/**
+ * Worker traffic refreshes the nodes it walks over. A route in use sustains itself; a route nobody
+ * uses evaporates. That is how real trail pheromone behaves, and it removes the busywork of
+ * re-walking a working supply line every minute.
+ */
+export const NODE_REINFORCE = 7.5;
 export const RESERVE_MAX = 100;
 export const RESERVE_REGEN = 5.2;
 export const RESERVE_COST = 1;
@@ -67,11 +76,22 @@ export const CACHE_FOOD_BONUS = 120;
 export const CACHE_WATER_BONUS = 60;
 export const BROOD_RATE = 0.09;
 export const BROOD_CHAMBER_MULT = 1.75;
-export const BROOD_FOOD_COST = 10;
-export const BROOD_WATER_COST = 7;
-export const UPKEEP_FOOD = 0.03;
-export const UPKEEP_WATER = 0.022;
-export const STARVE_DEATH_INTERVAL = 4.5;
+export const BROOD_FOOD_COST = 8;
+export const BROOD_WATER_COST = 5;
+/**
+ * Brood only draws from reserves above this margin. Without it the colony eats its own starting
+ * stock down to zero before the player's first delivery lands, and starves for reasons the player
+ * had no way to see coming.
+ */
+export const BROOD_RESERVE_MARGIN_FOOD = 14;
+export const BROOD_RESERVE_MARGIN_WATER = 8;
+export const START_FOOD = 46;
+export const START_WATER = 34;
+export const UPKEEP_FOOD = 0.016;
+export const UPKEEP_WATER = 0.012;
+export const STARVE_DEATH_INTERVAL = 5.5;
+/** No colony member starves during the opening minute; the tutorial has to be survivable. */
+export const STARVE_GRACE = 55;
 export const NEST_INTEGRITY_DRAIN = 0.055;
 
 /* ── Suspicion ─────────────────────────────────────────────────────────────── */
@@ -105,6 +125,8 @@ export const SUSPICION_WEIGHTS = {
 
 export const NIGHT_LENGTH: Record<NightIndex, number> = { 1: 178, 2: 266, 3: 322 };
 export const INTERLUDE_LENGTH = 11;
+/** Fraction of its original size an un-drained resource recovers between nights (they cook again). */
+export const NIGHT_RESOURCE_REGROWTH = 0.3;
 /** Suspicion never drops below this once the night has started. */
 export const NIGHT_SUSPICION_FLOOR: Record<NightIndex, number> = { 1: 0, 2: 10, 3: 22 };
 
