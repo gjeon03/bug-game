@@ -1,0 +1,321 @@
+export type ResourceKind = 'food' | 'water';
+export type UpgradeKind = 'brood' | 'cache' | 'escape';
+export type RunStatus = 'playing' | 'interlude' | 'won' | 'lost';
+export type NightIndex = 1 | 2 | 3;
+
+export type DeathCause = 'foot' | 'trap' | 'spray' | 'starve' | 'thirst' | 'bait';
+export type LoseCause = 'collapse' | 'nestDestroyed' | 'exterminated';
+
+export type SuspicionCause =
+  'seen' | 'corpse' | 'traffic' | 'depleted' | 'trap' | 'expansion' | 'noise' | 'droppings';
+
+export type WorkerState =
+  'idle' | 'outbound' | 'harvest' | 'inbound' | 'panic' | 'trapped' | 'dying';
+
+export interface Solid {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Material family drives how the renderer draws it. */
+  mat: 'cabinet' | 'steel' | 'wall' | 'plastic' | 'metal';
+  label?: string;
+}
+
+export interface LightSource {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+  intensity: number;
+  /** 0 = cold, 1 = warm — drives both the render tint and nothing else. */
+  warmth: number;
+}
+
+export interface ResourceNode {
+  id: string;
+  kind: ResourceKind;
+  x: number;
+  y: number;
+  /** Remaining units. */
+  amount: number;
+  initial: number;
+  /** Night from which the node is reachable/known. */
+  unlockNight: NightIndex;
+  label: string;
+  /** True once fully drained — drained nodes are visible evidence for the humans. */
+  depleted: boolean;
+  depletedReported: boolean;
+  /** Number of workers currently harvesting, for the renderer and for spacing. */
+  busy: number;
+  /** Visual: how disturbed the node looks, 0..1. */
+  disturbance: number;
+}
+
+export interface NestNode {
+  id: string;
+  x: number;
+  y: number;
+  /** Home nest is the colony hub and the thing that must not be destroyed. */
+  home: boolean;
+  claimed: boolean;
+  /** The function this crack provides once claimed. Home has none. */
+  upgrade: UpgradeKind | null;
+  unlockNight: NightIndex;
+  label: string;
+  costFood: number;
+  costWater: number;
+  /** 0..1 integrity; only meaningful for the home nest. */
+  integrity: number;
+  /** Cosmetic growth level 0..3, driven by colony size. */
+  growth: number;
+  /** Seconds since claimed, for the reveal animation. */
+  age: number;
+}
+
+export interface TrailNode {
+  x: number;
+  y: number;
+  /** Unit tangent along the direction the scout was walking. */
+  dx: number;
+  dy: number;
+  /** Remaining life in seconds. */
+  life: number;
+  /** Index along the route, ascending in lay order. */
+  i: number;
+  /** Cached exposure at this point, sampled once at lay time. */
+  exposure: number;
+}
+
+export interface Route {
+  id: number;
+  nodes: TrailNode[];
+  /** Which end sits on a nest: -1 none, 0 first node, 1 last node. */
+  nestEnd: -1 | 0 | 1;
+  /** Which end sits on a resource. */
+  resEnd: -1 | 0 | 1;
+  /** Id of the resource node this route serves, when linked. */
+  resourceId: string | null;
+  /** Id of the nest node this route serves, when linked. */
+  nestId: string | null;
+  linked: boolean;
+  /** Rising edge tracker so the link chime fires once. */
+  wasLinked: boolean;
+  /** Mean exposure of the route's nodes — this is what makes an open-floor route expensive. */
+  exposure: number;
+  /** Workers currently assigned. */
+  traffic: number;
+  age: number;
+}
+
+export interface Worker {
+  alive: boolean;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  angle: number;
+  speed: number;
+  state: WorkerState;
+  routeId: number;
+  /** Current index along the assigned route. */
+  nodeIndex: number;
+  /** +1 to walk toward the resource end, -1 toward the nest end. */
+  dirSign: 1 | -1;
+  carrying: ResourceKind | null;
+  carryAmount: number;
+  timer: number;
+  /** Seconds without finding a trail node, used to give up gracefully. */
+  lostTime: number;
+  panicTime: number;
+  gait: number;
+  /** Per-instance visual variation, stable for the worker's life. */
+  variant: number;
+  scale: number;
+  exposure: number;
+  hazardId: number;
+  targetResource: string | null;
+  targetNest: string | null;
+  nymphTime: number;
+}
+
+export interface Corpse {
+  x: number;
+  y: number;
+  angle: number;
+  age: number;
+  /** Cover at the corpse position, sampled once — corpses in the open are the real evidence. */
+  cover: number;
+  cause: DeathCause;
+  scale: number;
+  reported: boolean;
+}
+
+export type HazardKind = 'trap' | 'bait';
+
+export interface Hazard {
+  id: number;
+  kind: HazardKind;
+  x: number;
+  y: number;
+  radius: number;
+  /** Seconds until it becomes lethal — the telegraph window. */
+  armTime: number;
+  armed: boolean;
+  /** Remaining uses before a trap is "full" and stops catching. */
+  capacity: number;
+  age: number;
+  sprung: number;
+  night: NightIndex;
+}
+
+export interface Footfall {
+  x: number;
+  y: number;
+  /** Counts down; impact happens at 0. */
+  warn: number;
+  warnTotal: number;
+  radius: number;
+  done: boolean;
+  /** Post-impact linger, for the sole resting on the floor. */
+  linger: number;
+}
+
+export interface Patrol {
+  id: number;
+  path: { x: number; y: number }[];
+  /** Index of the segment currently being walked. */
+  seg: number;
+  t: number;
+  speed: number;
+  x: number;
+  y: number;
+  /** Facing, used by the light cone. */
+  angle: number;
+  /** Seconds until the next footfall is scheduled. */
+  stepTimer: number;
+  /** How strongly this patrol lights the room, 0..1. */
+  lightPower: number;
+  coneRange: number;
+  /** True while the patrol is actively looking (raises exposure hard). */
+  looking: boolean;
+  life: number;
+  night: NightIndex;
+  /** Set once the patrol has finished its path and should be culled. */
+  done: boolean;
+}
+
+export interface Spray {
+  id: number;
+  path: { x: number; y: number }[];
+  seg: number;
+  t: number;
+  speed: number;
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  /** Ramp-in so the cloud does not appear instantly lethal. */
+  age: number;
+  done: boolean;
+}
+
+export interface Colony {
+  food: number;
+  water: number;
+  foodCap: number;
+  waterCap: number;
+  population: number;
+  capacity: number;
+  brood: number;
+  /** Cumulative totals for the run summary. */
+  totalFood: number;
+  totalWater: number;
+  hatched: number;
+  lost: number;
+  upgrades: Record<UpgradeKind, boolean>;
+  /** Seconds spent with an empty larder — used for the loss explanation. */
+  starving: number;
+  thirsting: number;
+}
+
+export interface SuspicionState {
+  value: number;
+  peak: number;
+  floor: number;
+  tier: number;
+  /** Total contribution per cause, for the "what raised suspicion" ledger. */
+  causes: Record<SuspicionCause, number>;
+  /** Most recent cause, for the HUD ticker. */
+  lastCause: SuspicionCause | null;
+  lastCauseTime: number;
+  /** Rising-edge guard so a tier only escalates once. */
+  reachedTier: number;
+}
+
+export interface RunStats {
+  runSeconds: number;
+  firstMoveAt: number;
+  firstTrailAt: number;
+  firstDeliveryAt: number;
+  firstClaimAt: number;
+  deliveries: number;
+  workersLost: number;
+  scoutDeaths: number;
+  trapsSprung: number;
+  peakPopulation: number;
+  idleSeconds: number;
+  distanceTravelled: number;
+  trailNodesLaid: number;
+}
+
+export type GameEvent =
+  | { t: 'pickup'; x: number; y: number; kind: ResourceKind }
+  | { t: 'deliver'; x: number; y: number; kind: ResourceKind; amount: number }
+  | { t: 'trailLaid'; x: number; y: number }
+  | { t: 'trailAcquired'; x: number; y: number }
+  | { t: 'routeLinked'; x: number; y: number }
+  | { t: 'routeLost'; x: number; y: number }
+  | { t: 'claim'; x: number; y: number; node: string }
+  | { t: 'upgrade'; x: number; y: number; kind: UpgradeKind }
+  | { t: 'hatch'; x: number; y: number }
+  | { t: 'suspicion'; delta: number; cause: SuspicionCause; x: number; y: number }
+  | { t: 'tier'; tier: number }
+  | { t: 'footWarn'; x: number; y: number }
+  | { t: 'footHit'; x: number; y: number }
+  | { t: 'lightOn'; x: number; y: number }
+  | { t: 'lightOff' }
+  | { t: 'trapArmed'; x: number; y: number; kind: HazardKind }
+  | { t: 'trapSprung'; x: number; y: number }
+  | { t: 'sprayStart'; x: number; y: number }
+  | { t: 'scoutHurt'; x: number; y: number }
+  | { t: 'scoutDied'; x: number; y: number; cause: DeathCause }
+  | { t: 'scoutRespawn'; x: number; y: number }
+  | { t: 'workerDied'; x: number; y: number; cause: DeathCause }
+  | { t: 'sprint'; x: number; y: number }
+  | { t: 'phase'; night: NightIndex }
+  | { t: 'interlude'; night: NightIndex }
+  | { t: 'win' }
+  | { t: 'lose'; cause: LoseCause }
+  | { t: 'objective'; text: string };
+
+export interface InputState {
+  up: boolean;
+  down: boolean;
+  left: boolean;
+  right: boolean;
+  lay: boolean;
+  erase: boolean;
+  sprint: boolean;
+  interact: boolean;
+  /** Rising-edge latch consumed by the sim, set by the input layer. */
+  interactPressed: boolean;
+  erasePressed: boolean;
+}
+
+export interface Intent {
+  paused: boolean;
+  restart: boolean;
+  skipInterlude: boolean;
+}

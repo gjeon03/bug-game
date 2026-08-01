@@ -1,0 +1,137 @@
+import type { NightIndex } from './types.ts';
+
+/* ── World ─────────────────────────────────────────────────────────────────── */
+
+export const WORLD_W = 3600;
+export const WORLD_H = 2600;
+/** Anything within this distance of a solid edge counts as cover. Cabinetry is safety. */
+export const COVER_RADIUS = 96;
+
+/* ── Scout ─────────────────────────────────────────────────────────────────── */
+
+export const SCOUT_RADIUS = 11;
+export const SCOUT_LENGTH = 26;
+export const SCOUT_SPEED = 218;
+export const SCOUT_SPRINT_SPEED = 402;
+export const SCOUT_ACCEL = 2600;
+/** Fraction of velocity remaining after one second with no input. */
+export const SCOUT_DAMP = 0.000004;
+export const SCOUT_TURN_RATE = 16;
+export const SCOUT_STAMINA_MAX = 100;
+export const SCOUT_SPRINT_DRAIN = 36;
+export const SCOUT_STAMINA_REGEN = 19;
+export const SCOUT_STAMINA_REGEN_DELAY = 0.7;
+export const SCOUT_RESPAWN_TIME = 2.6;
+export const SCOUT_INVULN_TIME = 1.6;
+
+/* ── Pheromone ─────────────────────────────────────────────────────────────── */
+
+export const NODE_SPACING = 26;
+export const NODE_LIFE = 68;
+export const RESERVE_MAX = 100;
+export const RESERVE_REGEN = 5.2;
+export const RESERVE_COST = 1;
+export const MAX_ROUTES = 4;
+/** How close a route end must be to a nest/resource to count as linked. */
+export const LINK_RADIUS = 92;
+/** How far a worker can be from a trail node and still read it. */
+export const FOLLOW_RADIUS = 150;
+export const ERASE_RADIUS = 90;
+export const ERASE_RATE = 26;
+export const MAX_NODES_PER_ROUTE = 190;
+
+/* ── Workers ───────────────────────────────────────────────────────────────── */
+
+export const WORKER_CAP = 90;
+export const WORKER_RADIUS = 8;
+export const WORKER_SPEED_MIN = 118;
+export const WORKER_SPEED_MAX = 148;
+export const WORKER_CARRY_FOOD = 6;
+export const WORKER_CARRY_WATER = 5;
+export const WORKER_HARVEST_TIME = 0.85;
+export const WORKER_SEPARATION = 17;
+export const WORKER_LOOKAHEAD = 4;
+export const WORKER_PANIC_RADIUS = 190;
+export const WORKER_PANIC_TIME = 3.2;
+export const NYMPH_TIME = 6;
+
+/* ── Colony ────────────────────────────────────────────────────────────────── */
+
+export const START_POPULATION = 6;
+export const BASE_CAPACITY = 14;
+export const CAPACITY_PER_NEST = 8;
+export const BROOD_CHAMBER_CAPACITY = 14;
+export const FOOD_CAP = 200;
+export const WATER_CAP = 160;
+export const CACHE_FOOD_BONUS = 120;
+export const CACHE_WATER_BONUS = 60;
+export const BROOD_RATE = 0.09;
+export const BROOD_CHAMBER_MULT = 1.75;
+export const BROOD_FOOD_COST = 10;
+export const BROOD_WATER_COST = 7;
+export const UPKEEP_FOOD = 0.03;
+export const UPKEEP_WATER = 0.022;
+export const STARVE_DEATH_INTERVAL = 4.5;
+export const NEST_INTEGRITY_DRAIN = 0.055;
+
+/* ── Suspicion ─────────────────────────────────────────────────────────────── */
+
+export const SUSPICION_MAX = 100;
+export const SUSPICION_DECAY = 0.36;
+/** Suspicion can never fall below this fraction of its own peak — evidence is not erasable. */
+export const SUSPICION_PEAK_FLOOR = 0.55;
+export const TIER_THRESHOLDS = [25, 50, 70, 90] as const;
+
+export const SUSPICION_WEIGHTS = {
+  /** Per sighting of a roach in bright light while a patrol is looking. */
+  seen: 6,
+  /** Per second, per corpse lying in the open. */
+  corpse: 0.11,
+  /** Per second, scaled by the number of workers on exposed floor. */
+  traffic: 0.05,
+  /** One-shot when a food node is fully drained. */
+  depleted: 4.5,
+  /** One-shot when a trap catches something. */
+  trap: 5,
+  /** One-shot per crack claimed — a bigger nest is a more obvious nest. */
+  expansion: 7,
+  /** Per second of sprinting on exposed floor. */
+  noise: 0.6,
+  /** Per second, scaled by pheromone trail length on exposed floor. */
+  droppings: 0.055,
+} as const;
+
+/* ── Nights ────────────────────────────────────────────────────────────────── */
+
+export const NIGHT_LENGTH: Record<NightIndex, number> = { 1: 178, 2: 266, 3: 322 };
+export const INTERLUDE_LENGTH = 11;
+/** Suspicion never drops below this once the night has started. */
+export const NIGHT_SUSPICION_FLOOR: Record<NightIndex, number> = { 1: 0, 2: 10, 3: 22 };
+
+/* ── Win / lose ────────────────────────────────────────────────────────────── */
+
+export const WIN_POPULATION = 36;
+export const WIN_FOOD = 120;
+export const WIN_WATER = 90;
+
+/* ── Threats ───────────────────────────────────────────────────────────────── */
+
+export const FOOT_WARN_TIME = 1.15;
+export const FOOT_RADIUS = 150;
+export const FOOT_KILL_RADIUS = 122;
+export const PATROL_STEP_INTERVAL = 1.45;
+export const TRAP_RADIUS = 62;
+export const TRAP_ARM_TIME = 2.2;
+export const TRAP_CAPACITY = 4;
+export const TRAP_STRUGGLE_TIME = 4.4;
+export const BAIT_RADIUS = 74;
+export const SPRAY_RADIUS = 210;
+export const SPRAY_DPS = 0.9;
+export const MAX_HAZARDS = 12;
+
+/* ── Exposure ──────────────────────────────────────────────────────────────── */
+
+/** Exposure above this starts filling the "spotted" meter. */
+export const EXPOSURE_DANGER = 0.55;
+export const SPOT_FILL_RATE = 0.62;
+export const SPOT_DECAY_RATE = 0.5;
