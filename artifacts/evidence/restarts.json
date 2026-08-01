@@ -1,0 +1,47 @@
+[
+  {
+    "restart": 1,
+    "restartMs": 227,
+    "workers": 6,
+    "particles": 1,
+    "voices": 1,
+    "drawCalls": 123,
+    "listeners": 238
+  },
+  {
+    "restart": 2,
+    "restartMs": 251,
+    "workers": 6,
+    "particles": 0,
+    "voices": 0,
+    "drawCalls": 122,
+    "listeners": 238
+  },
+  {
+    "restart": 3,
+    "restartMs": 227,
+    "workers": 6,
+    "particles": 0,
+    "voices": 0,
+    "drawCalls": 122,
+    "listeners": 238
+  },
+  {
+    "restart": 4,
+    "restartMs": 228,
+    "workers": 6,
+    "particles": 0,
+    "voices": 0,
+    "drawCalls": 122,
+    "listeners": 238
+  },
+  {
+    "restart": 5,
+    "restartMs": 202,
+    "workers": 6,
+    "particles": 0,
+    "voices": 0,
+    "drawCalls": 122,
+    "listeners": 238
+  }
+]

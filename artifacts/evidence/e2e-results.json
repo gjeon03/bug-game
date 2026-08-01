@@ -1,0 +1,256 @@
+{
+  "config": {
+    "argv": [
+      "/Users/jeongyeong-yeon/.asdf/installs/nodejs/23.5.0/bin/node",
+      "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/node_modules/@playwright/test/cli.js",
+      "test",
+      "tests/e2e/perf.spec.ts",
+      "tests/e2e/threats.spec.ts"
+    ],
+    "configFile": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/playwright.config.ts",
+    "rootDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 180000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "artifacts/evidence/e2e-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": {
+      "command": "node scripts/serve-nested.mjs 4178 /bug-game/ dist",
+      "url": "http://127.0.0.1:4178/bug-game/",
+      "reuseExistingServer": false,
+      "timeout": 30000,
+      "stdout": "ignore",
+      "stderr": "pipe"
+    }
+  },
+  "suites": [
+    {
+      "title": "perf.spec.ts",
+      "file": "perf.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "performance",
+          "file": "perf.spec.ts",
+          "line": 66,
+          "column": 6,
+          "specs": [
+            {
+              "title": "14 active play and peak load stay inside the frame-time budget",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 1200000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 376886,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-01T07:04:58.073Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "73ed389be8d3d6a89cdb-0a46d2da8f43d33554af",
+              "file": "perf.spec.ts",
+              "line": 69,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "threats.spec.ts",
+      "file": "threats.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "household response",
+          "file": "threats.spec.ts",
+          "line": 20,
+          "column": 6,
+          "specs": [
+            {
+              "title": "06 standing in the fridge light raises suspicion and pulls a response tier",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 300000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 94039,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-01T07:11:15.168Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c10e1de0146a6e946067-cdb8309487f22c28eab6",
+              "file": "threats.spec.ts",
+              "line": 23,
+              "column": 3
+            },
+            {
+              "title": "07 a footfall is telegraphed, lethal, and survivable by leaving the marked ground",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 300000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 105944,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-01T07:12:49.211Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c10e1de0146a6e946067-19005c594d337d8860c2",
+              "file": "threats.spec.ts",
+              "line": 77,
+              "column": 3
+            },
+            {
+              "title": "08 losing the scout costs a body and the colony provides a replacement",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 300000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 31215,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-01T07:14:35.159Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c10e1de0146a6e946067-8b17f6964a8da9601e1d",
+              "file": "threats.spec.ts",
+              "line": 103,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-08-01T07:04:57.585Z",
+    "duration": 609136.3110000001,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -88,6 +88,14 @@ push(
   } | \`restarts.json\` |`,
 );
 push();
+push(
+  '¹ Idle seconds count frames with no input from the **scripted bot**, which stands still between',
+);
+push(
+  'waypoints and does nothing at all while a night plays out. It is not a measure of how much a human',
+);
+push('player would have to do.');
+push();
 
 push('## Route choice');
 push();
@@ -207,8 +215,16 @@ if (perf) {
     `Fixed-clock health: ${perf.clock?.steps} steps, ${n(perf.clock?.discardedTime, 3)} s discarded, ${perf.clock?.overloadFrames} overload frame(s).`,
   );
   push(
-    `Bundle: ${perf.bundle?.files} files, ${(perf.bundle?.bytes / 1024).toFixed(0)} kB on disk (sourcemap included), ${perf.bundle?.absoluteAssetRefs} absolute asset references.`,
+    `Bundle: ${perf.bundle?.files} files, ${(perf.bundle?.bytes / 1024).toFixed(0)} kB on disk, ${perf.bundle?.absoluteAssetRefs} absolute asset references.`,
   );
+  push();
+  push(
+    'These windows are from the **headless** host, which presents on a fixed ~25 ms cadence of its own —',
+  );
+  push(
+    'see `perf/README.md` and `perf/perf-headed.json` for the same build measured in a real browser',
+  );
+  push('window (p50 8.3 ms, p99 10.2 ms, zero frames over 50 ms).');
 } else {
   push(missing('perf/perf.json'));
 }

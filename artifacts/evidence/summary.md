@@ -7,49 +7,62 @@ its source. Do not edit by hand.
 
 | Metric | Budget | Measured | Source |
 | ------ | ------ | -------- | ------ |
-| Cold load to playable | < 8 s | 1.05 s | `startup.json` |
-| Procedural asset build | — | 104.2 ms | `startup.json → startup.atlasMs` |
+| Cold load to playable | < 8 s | 0.95 s | `startup.json` |
+| Procedural asset build | — | 137.5 ms | `startup.json → startup.atlasMs` |
 | First movement | ≤ 15 s | 0.4 s | `core-loop.json` |
-| First pheromone trail | — | 0.5 s | `core-loop.json` |
-| First worker delivery | ≤ 60 s | 15.2 s | `core-loop.json` |
-| First crack claimed | ≤ 5 min | — _(run-win.json not present)_ | `run-win.json → stats.firstClaimAt` |
-| Winning run length | 12–15 min | — | `run-win.json → stats.runSeconds` |
-| Idle seconds in the winning run | — | — | `run-win.json → stats.idleSeconds` |
+| First pheromone trail | — | 0.6 s | `core-loop.json` |
+| First worker delivery | ≤ 60 s | 15.4 s | `core-loop.json` |
+| First crack claimed | ≤ 5 min | 193.2 s | `run-win.json → stats.firstClaimAt` |
+| Winning run length | 12–15 min | 13.1 min | `run-win.json → stats.runSeconds` |
+| Idle seconds in the winning run | — | 601 s | `run-win.json → stats.idleSeconds` |
 | Restart to playable | ≤ 2 s | 0.25 s worst of 5 | `restarts.json` |
+
+¹ Idle seconds count frames with no input from the **scripted bot**, which stands still between
+waypoints and does nothing at all while a night plays out. It is not a measure of how much a human
+player would have to do.
 
 ## Route choice
 
 | Route | Mean exposure | Nodes | Source |
 | ----- | ------------- | ----- | ------ |
-| Cover-hugging | 0.066 | 25 | `route-risk.json` |
-| Straight across open tile | 0.129 | 63 | `route-risk.json` |
+| Cover-hugging | 0.063 | 25 | `route-risk.json` |
+| Straight across open tile | 0.128 | 63 | `route-risk.json` |
 
-Open-floor routing carries **1.96×** the exposure of the covered route to the same node.
+Open-floor routing carries **2.04×** the exposure of the covered route to the same node.
 
 ## Escalation and fairness
 
 | Observation | Value | Source |
 | ----------- | ----- | ------ |
-| Suspicion reached | 82.4 (tier 3) | `escalation.json` |
+| Suspicion reached | 56.7 (tier 2) | `escalation.json` |
 | Attributed last cause | `seen` | `escalation.json` |
-| Stated next response | Next: bait and longer patrols across the whole kitchen. | `escalation.json` |
-| Responses deployed | 2 patrol(s), 10 hazard(s) | `escalation.json` |
-| Scout deaths while loitering in light | 4 | `escalation.json` |
+| Stated next response | Next: sticky traps go down on your busiest floor routes. | `escalation.json` |
+| Responses deployed | 1 patrol(s), 2 hazard(s) | `escalation.json` |
+| Scout deaths while loitering in light | 5 | `escalation.json` |
 | Colony size before/after a scout loss | 7 → 7 | `scout-loss.json` |
+| Reckless run peak suspicion | 100.0 | `run-reckless-mid.json` |
 
 ## Outcomes
 
 | Run | Result | Colony | Suspicion peak | Source |
 | --- | ------ | ------ | -------------- | ------ |
-| Careful three-night run | — _(run-win.json not present)_ | | | |
-| Reckless run | — _(run-loss.json not present)_ | | | |
+| Careful three-night run | **won** | 46 roaches, 310 food, 215 moisture | 100.0 | `run-win.json` |
+| Reckless run | **lost** (`collapse`) | 0 roaches | 100.0 | `run-loss.json` |
+
+Win criteria at the end of the winning run:
+
+- ✅ `population`
+- ✅ `food`
+- ✅ `water`
+- ✅ `nests`
+- ✅ `survived`
 
 Colony at each night boundary:
 
 | Boundary | Time | Population | Food | Moisture | Source |
 | -------- | ---- | ---------- | ---- | -------- | ------ |
 | End of night 1 supply setup | 22 s | 7 | 71 | 28 | `run-win-night1.json` |
-| Night 2, both cracks claimed | 205 s | 19 | 84 | 101 | `run-win-night2.json` |
+| Night 2, both cracks claimed | 263 s | 29 | 145 | 132 | `run-win-night2.json` |
 
 ## Performance
 
@@ -57,11 +70,17 @@ Reference: 1600×900 @ dpr 1, 14 logical cores, headless Chromium.
 
 | Window | Frames | p50 | p95 | p99 | worst | >50 ms | >100 ms | CPU p95 | Peak roaches | Peak hazards | Peak particles | Draw calls |
 | ------ | ------ | --- | --- | --- | ----- | ------ | ------- | ------- | ------------ | ------------ | -------------- | ---------- |
-| active-play | 1553 | 0.9 | 1.3 | 1.4 | 2.3 | 0% | 0 | — | 11 | 0 | 70 | 279 |
-| peak-load | 2614 | 0.5 | 1.2 | 1.6 | 3.3 | 0% | 0 | — | 15 | 14 | 123 | 224 |
+| idle-baseline | 164 | 25 | 33.3 | 33.4 | 33.4 | 0% | 0 | 0.8 | 7 | 0 | 0 | 122 |
+| active-play | 1563 | 25 | 32.2 | 33.4 | 34.2 | 0% | 0 | 1.3 | 12 | 0 | 73 | 307 |
+| peak-load | 1897 | 25.1 | 33.5 | 34.5 | 35 | 0% | 0 | 2 | 30 | 10 | 173 | 467 |
+| peak-load | 10863 | 25 | 33.4 | 34.4 | 43.1 | 0% | 0 | 1.6 | 53 | 8 | 199 | 387 |
 
-Fixed-clock health: 11563 steps, 0.000 s discarded, 0 overload frame(s).
-Bundle: 5 files, 548 kB on disk (sourcemap included), 0 absolute asset references.
+Fixed-clock health: 22541 steps, 0.000 s discarded, 0 overload frame(s).
+Bundle: 4 files, 131 kB on disk, 0 absolute asset references.
+
+These windows are from the **headless** host, which presents on a fixed ~25 ms cadence of its own —
+see `perf/README.md` and `perf/perf-headed.json` for the same build measured in a real browser
+window (p50 8.3 ms, p99 10.2 ms, zero frames over 50 ms).
 
 ## Static deployment
 
@@ -69,24 +88,24 @@ Bundle: 5 files, 548 kB on disk (sourcemap included), 0 absolute asset reference
 - Requests leaving the origin at runtime: **0**
 - Absolute asset references in `dist/index.html`: **0**
 - `.nojekyll` present: **true**
-- Files in `dist/`: .nojekyll, assets, index.html, assets/index-B_QCf2tk.js, assets/index-B_QCf2tk.js.map, assets/index-D8u_xPN7.css
+- Files in `dist/`: .nojekyll, assets, index.html, assets/index-ByQb7YUT.css, assets/index-DCY_K6rG.js
 
 ## Assets
 
 - Temporary assets: **0**
 - HUD icons rendered: 7
-- Peak audio voices during active play: — (cap 24)
+- Peak audio voices during active play: 5 (cap 24)
 - All sprites, textures, VFX and audio are generated procedurally at boot; see ASSET_MANIFEST.md.
 
 ## Restart integrity
 
 | # | Restart ms | Workers | Particles | Voices |
 | - | ---------- | ------- | --------- | ------ |
-| 1 | 227 | 6 | 1 | 0 |
-| 2 | 227 | 6 | 0 | 0 |
-| 3 | 230 | 6 | 0 | 0 |
-| 4 | 252 | 6 | 0 | 0 |
-| 5 | 226 | 6 | 0 | 0 |
+| 1 | 227 | 6 | 1 | 1 |
+| 2 | 251 | 6 | 0 | 0 |
+| 3 | 227 | 6 | 0 | 0 |
+| 4 | 228 | 6 | 0 | 0 |
+| 5 | 202 | 6 | 0 | 0 |
 
-Game seconds advanced while the tab reported itself hidden for 4 s: **0.55 s**  (`focus-loss.json`).
+Game seconds advanced while the tab reported itself hidden for 4 s: **0.57 s**  (`focus-loss.json`).
 

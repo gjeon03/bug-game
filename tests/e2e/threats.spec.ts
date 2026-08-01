@@ -58,10 +58,13 @@ test.describe('household response', () => {
 
     expect(s1.suspicion.value).toBeGreaterThan(24);
     expect(s1.suspicion.tier).toBeGreaterThanOrEqual(1);
-    // The HUD must name the cause and the next response, not just move a bar.
+    // The HUD must name what was noticed and preview what is coming, not just move a bar.
     expect(s1.suspicion.lastCause).not.toBeNull();
-    await expect(page.locator('#suspicion .cause')).toContainText(/Latest:/);
-    await expect(page.locator('#suspicion .next')).toContainText(/Next:/);
+    await expect(page.locator('#suspicion .cause')).not.toContainText('No evidence yet');
+    await expect(page.locator('#suspicion .cause')).toContainText(
+      /roach|Bodies|traffic|Food|trap|nest openings|Scuttling|Trails/,
+    );
+    await expect(page.locator('#suspicion .next')).toContainText(/light|traps|bait|spray/);
 
     // Tier 1+ deploys a patrol; tier 2 puts traps down where the player's traffic went.
     await waitForState(page, (s) => s.counts.patrols > 0 || s.counts.hazards > 0, 60_000);

@@ -1,0 +1,183 @@
+{
+  "reference": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Safari/537.36",
+    "viewport": {
+      "width": 1600,
+      "height": 900
+    },
+    "deviceScaleFactor": 1,
+    "hardwareConcurrency": 14
+  },
+  "budget": {
+    "p50": 16.7,
+    "p95": 20,
+    "p99": 33,
+    "over50Pct": 1
+  },
+  "windows": [
+    {
+      "label": "idle-baseline",
+      "frames": 164,
+      "durationMs": 4123.9000000059605,
+      "p50": 25,
+      "p95": 33.3,
+      "p99": 33.4,
+      "worst": 33.4,
+      "mean": 25.16,
+      "over16": 161,
+      "over33": 14,
+      "over50": 0,
+      "over100": 0,
+      "over50Pct": 0,
+      "cpuP50": 0.7,
+      "cpuP95": 0.8,
+      "cpuP99": 0.9,
+      "cpuWorst": 1.2,
+      "peak": {
+        "roaches": 7,
+        "workers": 6,
+        "hazards": 0,
+        "particles": 0,
+        "voices": 0,
+        "drawCalls": 122,
+        "pheromoneNodes": 0
+      }
+    },
+    {
+      "label": "active-play",
+      "frames": 1563,
+      "durationMs": 38825.60000000894,
+      "p50": 25,
+      "p95": 32.2,
+      "p99": 33.4,
+      "worst": 34.2,
+      "mean": 24.84,
+      "over16": 1534,
+      "over33": 61,
+      "over50": 0,
+      "over100": 0,
+      "over50Pct": 0,
+      "cpuP50": 0.8,
+      "cpuP95": 1.3,
+      "cpuP99": 1.4,
+      "cpuWorst": 2.2,
+      "peak": {
+        "roaches": 12,
+        "workers": 11,
+        "hazards": 0,
+        "particles": 73,
+        "voices": 5,
+        "drawCalls": 307,
+        "pheromoneNodes": 62
+      }
+    },
+    {
+      "label": "peak-load",
+      "frames": 1897,
+      "durationMs": 51638.20000000298,
+      "p50": 25.1,
+      "p95": 33.5,
+      "p99": 34.5,
+      "worst": 35,
+      "mean": 27.22,
+      "over16": 1891,
+      "over33": 449,
+      "over50": 0,
+      "over100": 0,
+      "over50Pct": 0,
+      "cpuP50": 0.9,
+      "cpuP95": 2,
+      "cpuP99": 3.3,
+      "cpuWorst": 3.8,
+      "peak": {
+        "roaches": 30,
+        "workers": 29,
+        "hazards": 10,
+        "particles": 173,
+        "voices": 8,
+        "drawCalls": 467,
+        "pheromoneNodes": 82
+      }
+    }
+  ],
+  "budgets": {
+    "frame": {
+      "p50": 16.7,
+      "p95": 20,
+      "p99": 33,
+      "over50Pct": 1
+    },
+    "cpuMs": 8,
+    "loadRatio": 1.3
+  },
+  "note": "p50/p95/p99 are presented frame intervals (rAF deltas); cpu* is time inside the game's frame callback. A headless host presents on a fixed cadence, so the absolute frame budget is only enforced when the host itself can reach 60 Hz; the load ratio and the CPU budget are enforced everywhere. perf-headed.json holds the same capture from a real browser window.",
+  "startup": {
+    "atlasMs": 108.9,
+    "rendererMs": 122.8,
+    "bootMs": 125.7,
+    "firstFrameMs": 172.5
+  },
+  "clock": {
+    "steps": 22541,
+    "discardedTime": 0,
+    "overloadFrames": 0
+  },
+  "countersAtEnd": {
+    "roaches": 11,
+    "workers": 10,
+    "hazards": 7,
+    "particles": 55,
+    "voices": 0,
+    "drawCalls": 304,
+    "pheromoneNodes": 82
+  },
+  "audioVoices": 0,
+  "stateAtPeak": {
+    "counts": {
+      "workers": 29,
+      "workersOutbound": 1,
+      "workersInbound": 19,
+      "workersCarrying": 20,
+      "workersPanicking": 7,
+      "workersTrapped": 0,
+      "corpses": 4,
+      "hazards": 6,
+      "patrols": 2,
+      "sprays": 2,
+      "footfalls": 3,
+      "pheromoneNodes": 82
+    },
+    "suspicion": {
+      "value": 98.71639494744299,
+      "tier": 4,
+      "peak": 98.71806161410966,
+      "floor": 54.294933887760315,
+      "lastCause": "seen"
+    },
+    "colony": {
+      "food": 191.01226666666915,
+      "water": 153.97180000000347,
+      "foodCap": 200,
+      "waterCap": 160,
+      "population": 29,
+      "capacity": 36,
+      "brood": 0.5616249999999258,
+      "hatched": 28,
+      "lost": 4,
+      "totalFood": 490.90346666671905,
+      "totalWater": 304.0356000000158,
+      "upgrades": {
+        "brood": true,
+        "cache": false,
+        "escape": false
+      }
+    }
+  },
+  "bundle": {
+    "files": 4,
+    "bytes": 134357,
+    "largest": "dist/assets/index-DCY_K6rG.js",
+    "absoluteAssetRefs": 0
+  },
+  "memory": 10000000
+}

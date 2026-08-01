@@ -1,0 +1,28 @@
+{
+  "firstMoveAt": 0.4333333333333333,
+  "firstTrailAt": 0.55,
+  "firstDeliveryAt": 15.36666666666701,
+  "deliveries": 12,
+  "population": 9,
+  "hatched": 3,
+  "routes": [
+    {
+      "id": 1,
+      "nodes": 24,
+      "linked": true,
+      "exposure": 0.09749126638924553,
+      "traffic": 4,
+      "resourceId": "dishCrumbs",
+      "nestId": "home"
+    },
+    {
+      "id": 2,
+      "nodes": 37,
+      "linked": true,
+      "exposure": 0.06596552252989706,
+      "traffic": 4,
+      "resourceId": "sinkDrip",
+      "nestId": "home"
+    }
+  ]
+}

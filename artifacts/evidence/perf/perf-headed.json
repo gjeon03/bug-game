@@ -1,0 +1,144 @@
+{
+  "reference": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Safari/537.36",
+    "viewport": {
+      "width": 1600,
+      "height": 900
+    },
+    "deviceScaleFactor": 1,
+    "hardwareConcurrency": 14
+  },
+  "budget": {
+    "p50": 16.7,
+    "p95": 20,
+    "p99": 33,
+    "over50Pct": 1
+  },
+  "windows": [
+    {
+      "label": "active-play",
+      "frames": 4564,
+      "durationMs": 38035.60000000894,
+      "p50": 8.3,
+      "p95": 9.9,
+      "p99": 10.2,
+      "worst": 10.4,
+      "mean": 8.33,
+      "over16": 0,
+      "over33": 0,
+      "over50": 0,
+      "over100": 0,
+      "over50Pct": 0,
+      "cpuP50": 0.3,
+      "cpuP95": 0.4,
+      "cpuP99": 0.5,
+      "cpuWorst": 0.7,
+      "peak": {
+        "roaches": 11,
+        "workers": 10,
+        "hazards": 0,
+        "particles": 72,
+        "voices": 6,
+        "drawCalls": 307,
+        "pheromoneNodes": 62
+      }
+    },
+    {
+      "label": "peak-load",
+      "frames": 5010,
+      "durationMs": 41752.39999999106,
+      "p50": 8.3,
+      "p95": 9.8,
+      "p99": 10.2,
+      "worst": 10.4,
+      "mean": 8.33,
+      "over16": 0,
+      "over33": 0,
+      "over50": 0,
+      "over100": 0,
+      "over50Pct": 0,
+      "cpuP50": 0.4,
+      "cpuP95": 0.5,
+      "cpuP99": 0.6,
+      "cpuWorst": 0.8,
+      "peak": {
+        "roaches": 32,
+        "workers": 32,
+        "hazards": 10,
+        "particles": 148,
+        "voices": 8,
+        "drawCalls": 464,
+        "pheromoneNodes": 82
+      }
+    }
+  ],
+  "startup": {
+    "atlasMs": 383,
+    "rendererMs": 386.1,
+    "bootMs": 388.2,
+    "firstFrameMs": 405
+  },
+  "clock": {
+    "steps": 22051,
+    "discardedTime": 1.2046666666666666,
+    "overloadFrames": 7
+  },
+  "countersAtEnd": {
+    "roaches": 10,
+    "workers": 9,
+    "hazards": 7,
+    "particles": 77,
+    "voices": 2,
+    "drawCalls": 268,
+    "pheromoneNodes": 82
+  },
+  "audioVoices": 1,
+  "stateAtPeak": {
+    "counts": {
+      "workers": 31,
+      "workersOutbound": 0,
+      "workersInbound": 0,
+      "workersCarrying": 18,
+      "workersPanicking": 30,
+      "workersTrapped": 0,
+      "corpses": 1,
+      "hazards": 6,
+      "patrols": 2,
+      "sprays": 2,
+      "footfalls": 5,
+      "pheromoneNodes": 82
+    },
+    "suspicion": {
+      "value": 99.99833333333333,
+      "tier": 4,
+      "peak": 100,
+      "floor": 55.00000000000001,
+      "lastCause": "seen"
+    },
+    "colony": {
+      "food": 199.24773333333422,
+      "water": 153.16719999999756,
+      "foodCap": 200,
+      "waterCap": 160,
+      "population": 31,
+      "capacity": 36,
+      "brood": 0.965874999999924,
+      "hatched": 28,
+      "lost": 1,
+      "totalFood": 503.4285333333987,
+      "totalWater": 305.6439000000239,
+      "upgrades": {
+        "brood": true,
+        "cache": false,
+        "escape": false
+      }
+    }
+  },
+  "bundle": {
+    "files": 4,
+    "bytes": 134357,
+    "largest": "dist/assets/index-DCY_K6rG.js",
+    "absoluteAssetRefs": 0
+  },
+  "memory": 4689301
+}

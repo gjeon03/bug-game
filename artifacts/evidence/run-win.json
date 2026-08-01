@@ -1,0 +1,119 @@
+{
+  "status": "won",
+  "loseCause": null,
+  "winCriteria": {
+    "population": true,
+    "food": true,
+    "water": true,
+    "nests": true,
+    "survived": true
+  },
+  "colony": {
+    "food": 310.8455999999995,
+    "water": 215.21564999999924,
+    "foodCap": 320,
+    "waterCap": 220,
+    "population": 46,
+    "capacity": 52,
+    "brood": 0.142749999999971,
+    "hatched": 95,
+    "lost": 51,
+    "totalFood": 1487.780266666661,
+    "totalWater": 824.8664000000573,
+    "upgrades": {
+      "brood": true,
+      "cache": true,
+      "escape": true
+    }
+  },
+  "suspicion": {
+    "value": 99.99833333333333,
+    "tier": 4,
+    "peak": 100,
+    "floor": 55.00000000000001,
+    "lastCause": "droppings"
+  },
+  "stats": {
+    "runSeconds": 788.3499999996117,
+    "firstMoveAt": 0.5833333333333335,
+    "firstTrailAt": 0.5833333333333335,
+    "firstDeliveryAt": 14.650000000000308,
+    "firstClaimAt": 193.1833333333792,
+    "deliveries": 1056,
+    "workersLost": 51,
+    "scoutDeaths": 10,
+    "trapsSprung": 6,
+    "peakPopulation": 52,
+    "idleSeconds": 600.7666666664489,
+    "distanceTravelled": 29067.728939416033,
+    "trailNodesLaid": 262
+  },
+  "nests": [
+    {
+      "id": "home",
+      "claimed": true,
+      "upgrade": null,
+      "integrity": 0.6143999999998663
+    },
+    {
+      "id": "crackIsland",
+      "claimed": true,
+      "upgrade": "brood",
+      "integrity": 1
+    },
+    {
+      "id": "crackPantry",
+      "claimed": true,
+      "upgrade": "cache",
+      "integrity": 1
+    },
+    {
+      "id": "crackWall",
+      "claimed": true,
+      "upgrade": "escape",
+      "integrity": 1
+    }
+  ],
+  "counts": {
+    "workers": 46,
+    "workersOutbound": 24,
+    "workersInbound": 21,
+    "workersCarrying": 21,
+    "workersPanicking": 0,
+    "workersTrapped": 0,
+    "corpses": 12,
+    "hazards": 6,
+    "patrols": 0,
+    "sprays": 2,
+    "footfalls": 0,
+    "pheromoneNodes": 195
+  },
+  "peakPerf": {
+    "label": "peak-load",
+    "frames": 10863,
+    "durationMs": 281672.90000000596,
+    "p50": 25,
+    "p95": 33.4,
+    "p99": 34.4,
+    "worst": 43.1,
+    "mean": 25.93,
+    "over16": 10720,
+    "over33": 1349,
+    "over50": 0,
+    "over100": 0,
+    "over50Pct": 0,
+    "cpuP50": 0.8,
+    "cpuP95": 1.6,
+    "cpuP99": 2.5,
+    "cpuWorst": 3.2,
+    "peak": {
+      "roaches": 53,
+      "workers": 52,
+      "hazards": 8,
+      "particles": 199,
+      "voices": 11,
+      "drawCalls": 387,
+      "pheromoneNodes": 201
+    }
+  }
+}

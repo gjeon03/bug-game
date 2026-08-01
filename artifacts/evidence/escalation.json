@@ -1,0 +1,25 @@
+{
+  "suspicion": {
+    "value": 56.743840246894266,
+    "tier": 2,
+    "peak": 56.8905069135608,
+    "floor": 31.289778802458443,
+    "lastCause": "seen"
+  },
+  "counts": {
+    "workers": 4,
+    "workersOutbound": 0,
+    "workersInbound": 0,
+    "workersCarrying": 0,
+    "workersPanicking": 0,
+    "workersTrapped": 0,
+    "corpses": 0,
+    "hazards": 2,
+    "patrols": 1,
+    "sprays": 0,
+    "footfalls": 1,
+    "pheromoneNodes": 0
+  },
+  "nextResponse": "Next: sticky traps go down on your busiest floor routes.",
+  "scoutDeaths": 5
+}
