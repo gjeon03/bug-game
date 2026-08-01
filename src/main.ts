@@ -18,6 +18,8 @@ import { Overlays } from './ui/overlays.ts';
 import { loadSettings, saveBestRun, saveSettings, type Settings } from './ui/settings.ts';
 
 const VERSION = '1.0.0';
+/** Seconds the world-space win/lose payoff plays before the end card appears over it. */
+const END_CARD_DELAY = 2.4;
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 const hudRoot = document.getElementById('hud') as HTMLElement;
@@ -60,6 +62,9 @@ let backgrounded = false;
 let lastTime = performance.now();
 let bestSaved = false;
 let skitterAcc = 0;
+/** Seconds since the run ended, so the world-space payoff plays before the end card covers it. */
+let outcomeTime = -1;
+let celebrateAcc = 0;
 
 const overlays = new Overlays(overlayRoot, settings, {
   resume: () => {
@@ -94,6 +99,9 @@ function startRun(seed?: number): void {
   world.onboarding.seenBefore = settings.seenOnboarding;
   particles.clear();
   clock.reset();
+  outcomeTime = -1;
+  celebrateAcc = 0;
+  renderer.setOutcome(null, 0);
   camera.snapTo(world.scout.x, world.scout.y);
   audio.resetMix();
   overlays.hide();
@@ -502,7 +510,8 @@ function frame(now: number): void {
   else if (
     (world.status === 'won' || world.status === 'lost') &&
     overlays.kind !== 'win' &&
-    overlays.kind !== 'lose'
+    overlays.kind !== 'lose' &&
+    outcomeTime >= END_CARD_DELAY
   ) {
     overlays.showEnd(world);
     if (!bestSaved) {
@@ -520,6 +529,63 @@ function frame(now: number): void {
   }
 
   const dtRender = Math.min(dtReal, 0.05);
+
+  // ── Outcome payoff. The simulation is frozen, so the celebration is presentation-only.
+  if (world.status === 'won' || world.status === 'lost') {
+    if (outcomeTime < 0) outcomeTime = 0;
+    outcomeTime += dtRender;
+    renderer.setOutcome(world.status, outcomeTime);
+    if (world.status === 'won' && outcomeTime < 6) {
+      // Celebrate around the camera, not around the home crack: the scout may be on the far side of
+      // the kitchen when the run ends, and a payoff the player cannot see is not a payoff.
+      celebrateAcc += dtRender * 110;
+      while (celebrateAcc >= 1) {
+        celebrateAcc -= 1;
+        const a = Math.random() * Math.PI * 2;
+        const r = 60 + Math.random() * 620 * Math.min(1, outcomeTime / 2.5);
+        particles.emit(
+          'glow',
+          Math.random() < 0.5 ? TINT.warm : TINT.amber,
+          camera.x + Math.cos(a) * r,
+          camera.y + Math.sin(a) * r * 0.62,
+          Math.cos(a) * 40,
+          Math.sin(a) * 40,
+          1.9,
+          6 + Math.random() * 7,
+          0.8,
+          PRIO.signal,
+        );
+      }
+      if (outcomeTime < 0.1) {
+        particles.ring(TINT.warm, camera.x, camera.y, 20, 1100, 1.8, 1, PRIO.signal);
+        for (const nest of world.nests) {
+          if (nest.claimed)
+            particles.ring(TINT.warm, nest.x, nest.y, 10, 260, 1.4, 0.9, PRIO.signal);
+        }
+      }
+    } else if (world.status === 'lost' && outcomeTime < 6) {
+      celebrateAcc += dtRender * 34;
+      while (celebrateAcc >= 1) {
+        celebrateAcc -= 1;
+        const b = camera.bounds(0);
+        particles.emit(
+          'dust',
+          TINT.bone,
+          b.x0 + Math.random() * (b.x1 - b.x0),
+          b.y0 + Math.random() * (b.y1 - b.y0) - 200,
+          0,
+          40 + Math.random() * 60,
+          3.6,
+          3 + Math.random() * 4,
+          0.5,
+          PRIO.decor,
+          0,
+          0.05,
+        );
+      }
+    }
+  }
+
   const s = world.scout;
   camera.follow(s.x, s.y, s.vx, s.vy, dtRender, rs.shakeScale);
   particles.update(dtRender);

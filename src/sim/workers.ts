@@ -27,6 +27,8 @@ import { findNest, findResource, homeNest, type World } from './world.ts';
  */
 
 const ARRIVE_NODE = 30;
+/** How far from a route's nest end a worker can be and still pick that route up. */
+const ACQUIRE_RADIUS = 520;
 
 export function killWorker(world: World, w: Worker, cause: DeathCause): void {
   if (!w.alive) return;
@@ -58,6 +60,15 @@ export function updateWorkers(world: World, dt: number): void {
   const home = homeNest(world);
   let exposed = 0;
   let alive = 0;
+
+  // Recomputed from scratch: a worker killed or panicked mid-harvest used to leak this counter.
+  for (let i = 0; i < world.resources.length; i++) world.resources[i].busy = 0;
+  for (let i = 0; i < workers.length; i++) {
+    const w = workers[i];
+    if (!w.alive || w.state !== 'harvest') continue;
+    const res = findResource(world, w.targetResource);
+    if (res) res.busy++;
+  }
 
   for (let i = 0; i < workers.length; i++) {
     const w = workers[i];
@@ -107,7 +118,20 @@ export function updateWorkers(world: World, dt: number): void {
           dirY = w.vy * 0.02;
           speedMul = 0.28;
         }
-        if (w.nymphTime <= 0) tryAcquireRoute(world, w);
+        if (w.nymphTime <= 0) {
+          if (tryAcquireRoute(world, w)) {
+            w.lostTime = 0;
+          } else {
+            // Nothing to do from this nest. A colony whose brood all hatch in one chamber would
+            // otherwise strand its entire labour force there, unable to reach routes anchored
+            // anywhere else — which reads to the player as "thirty roaches and nobody hauling".
+            w.lostTime += dt;
+            if (w.lostTime > 5) {
+              w.lostTime = 0;
+              redistribute(world, w);
+            }
+          }
+        }
         break;
       }
 
@@ -183,7 +207,6 @@ export function updateWorkers(world: World, dt: number): void {
               w.state = 'harvest';
               w.timer = WORKER_HARVEST_TIME;
               w.targetResource = res.id;
-              res.busy++;
             } else {
               w.state = 'inbound';
             }
@@ -202,7 +225,6 @@ export function updateWorkers(world: World, dt: number): void {
         if (w.timer <= 0) {
           const res = findResource(world, w.targetResource);
           if (res) {
-            res.busy = Math.max(0, res.busy - 1);
             const want = res.kind === 'food' ? WORKER_CARRY_FOOD : WORKER_CARRY_WATER;
             const bonus = world.colony.upgrades.cache ? 1.25 : 1;
             const take = Math.min(res.amount, want * bonus);
@@ -350,11 +372,32 @@ function deliver(world: World, w: Worker, x: number, y: number): void {
   w.timer = world.rng.range(0.1, 0.5);
 }
 
-function tryAcquireRoute(world: World, w: Worker): void {
-  w.timer -= 0;
-  if (world.routes.length === 0) return;
+/**
+ * Sends an idle worker to whichever claimed nest anchors the least-served live route, so labour
+ * follows demand across the colony instead of pooling wherever it happened to hatch.
+ */
+function redistribute(world: World, w: Worker): void {
+  let best: string | null = null;
+  let bestTraffic = Infinity;
+  for (let i = 0; i < world.routes.length; i++) {
+    const r = world.routes[i];
+    if (!r.linked || r.nestId === null) continue;
+    const res = findResource(world, r.resourceId);
+    if (!res || res.depleted) continue;
+    if (r.nestId === w.targetNest) continue;
+    if (r.traffic < bestTraffic) {
+      bestTraffic = r.traffic;
+      best = r.nestId;
+    }
+  }
+  if (best !== null) w.targetNest = best;
+}
+
+/** Returns true when the worker took a route. */
+function tryAcquireRoute(world: World, w: Worker): boolean {
+  if (world.routes.length === 0) return false;
   // Cheap gate: only look a few times a second, staggered per worker.
-  if ((world.tick + w.variant * 7) % 18 !== 0) return;
+  if ((world.tick + w.variant * 7) % 18 !== 0) return w.routeId >= 0;
 
   let best: number = -1;
   let bestScore = Infinity;
@@ -366,7 +409,7 @@ function tryAcquireRoute(world: World, w: Worker): void {
     const nestIdx = r.nestEnd === 1 ? r.nodes.length - 1 : 0;
     const n = r.nodes[nestIdx];
     const d2 = dist2(w.x, w.y, n.x, n.y);
-    if (d2 > 420 * 420) continue;
+    if (d2 > ACQUIRE_RADIUS * ACQUIRE_RADIUS) continue;
     // Prefer near, lightly used routes so traffic self-balances across the network.
     const score = d2 + r.traffic * 9000;
     if (score < bestScore) {
@@ -374,7 +417,7 @@ function tryAcquireRoute(world: World, w: Worker): void {
       best = i;
     }
   }
-  if (best < 0) return;
+  if (best < 0) return false;
 
   const route = world.routes[best];
   w.routeId = route.id;
@@ -385,6 +428,7 @@ function tryAcquireRoute(world: World, w: Worker): void {
   w.lostTime = 0;
   route.traffic++;
   world.events.push({ t: 'trailAcquired', x: w.x, y: w.y });
+  return true;
 }
 
 /** Scatters nearby workers away from a threat. Used by footfalls, traps and spray. */

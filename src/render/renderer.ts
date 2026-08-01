@@ -56,6 +56,8 @@ export class Renderer {
   private lastCamY = 0;
   private lastZoom = 1;
   private lastT = 0;
+  private outcome: 'won' | 'lost' | null = null;
+  private outcomeTime = 0;
 
   dpr = 1;
   cssW = 1280;
@@ -94,6 +96,15 @@ export class Renderer {
     this.canvas.style.height = `${cssH}px`;
     this.light.width = Math.max(2, Math.round(cssW / 2));
     this.light.height = Math.max(2, Math.round(cssH / 2));
+  }
+
+  /**
+   * Drives the world-space win/lose payoff: the kitchen lights come up on a roach domain, or the
+   * colour drains out of it. Presentation only — the simulation is already frozen by then.
+   */
+  setOutcome(status: 'won' | 'lost' | null, seconds: number): void {
+    this.outcome = status;
+    this.outcomeTime = seconds;
   }
 
   addFlash(
@@ -207,23 +218,39 @@ export class Renderer {
 
       switch (d.kind) {
         case 'mat': {
-          ctx.fillStyle = 'rgba(10,16,22,0.55)';
-          ctx.fillRect(-hw + 6, -hh + 8, d.w, d.h);
-          ctx.fillStyle = '#2b2f34';
+          // A rubber-backed kitchen mat: raised enough to cast a shadow, ribbed enough to read as
+          // fabric at insect scale, and dark enough to stay decoration rather than signal.
+          ctx.fillStyle = 'rgba(4,7,11,0.6)';
+          ctx.fillRect(-hw + 7, -hh + 9, d.w, d.h);
+          ctx.fillStyle = '#232a31';
           ctx.fillRect(-hw, -hh, d.w, d.h);
-          ctx.strokeStyle = 'rgba(226,240,255,0.09)';
-          ctx.lineWidth = 2;
-          for (let k = 0; k < 18; k++) {
-            const y = -hh + (d.h / 18) * k;
+          ctx.strokeStyle = 'rgba(226,240,255,0.16)';
+          ctx.lineWidth = 3;
+          const ribs = Math.max(8, Math.round(d.h / 26));
+          for (let k = 1; k < ribs; k++) {
+            const y = -hh + (d.h / ribs) * k;
             ctx.beginPath();
-            ctx.moveTo(-hw + 4, y);
-            ctx.lineTo(hw - 4, y);
+            ctx.moveTo(-hw + 9, y);
+            ctx.lineTo(hw - 9, y);
             ctx.stroke();
           }
-          ctx.strokeStyle = 'rgba(0,0,0,0.55)';
-          ctx.lineWidth = 5;
+          ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+          ctx.lineWidth = 3;
+          for (let k = 1; k < ribs; k++) {
+            const y = -hh + (d.h / ribs) * k + 3;
+            ctx.beginPath();
+            ctx.moveTo(-hw + 9, y);
+            ctx.lineTo(hw - 9, y);
+            ctx.stroke();
+          }
+          // Bound edge: a lighter binding strip all the way round.
+          ctx.strokeStyle = 'rgba(150,178,204,0.22)';
+          ctx.lineWidth = 7;
+          ctx.strokeRect(-hw + 3.5, -hh + 3.5, d.w - 7, d.h - 7);
+          ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+          ctx.lineWidth = 3;
           ctx.strokeRect(-hw, -hh, d.w, d.h);
-          this.drawCalls += 3;
+          this.drawCalls += 4;
           break;
         }
         case 'vent': {
@@ -421,8 +448,34 @@ export class Renderer {
     const ctx = this.ctx;
     for (let i = 0; i < world.nests.length; i++) {
       const n = world.nests[i];
-      if (n.unlockNight > world.night && !n.claimed) continue;
+      const sealed = n.unlockNight > world.night && !n.claimed;
       const R = n.home ? 54 : 42;
+
+      if (sealed) {
+        // Visible but plainly shut: scouting one out early is worth doing, claiming it is not yet.
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = '#0a0e14';
+        ctx.beginPath();
+        ctx.ellipse(n.x, n.y, R * 0.8, R * 0.6, 0, 0, TAU);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(150,178,204,0.35)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 7]);
+        ctx.beginPath();
+        ctx.ellipse(n.x, n.y, R * 0.8, R * 0.6, 0, 0, TAU);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // A crust of old paint across the opening.
+        ctx.strokeStyle = 'rgba(190,205,225,0.22)';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(n.x - R * 0.7, n.y - R * 0.2);
+        ctx.lineTo(n.x + R * 0.7, n.y + R * 0.18);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        this.drawCalls += 3;
+        continue;
+      }
 
       // Void: a torn opening rather than a circle.
       ctx.fillStyle = '#05070b';
@@ -1008,10 +1061,20 @@ export class Renderer {
     // Ambient darkness. Low enough for macro-noir, high enough that a hazard on bare tile is
     // legible without the room light — tuned against captures, not guessed.
     const base = settings.highContrast ? 214 : 172;
-    const lift = world.roomLight;
-    const r = Math.round(lerp(base * 0.86, 232, lift));
-    const g = Math.round(lerp(base * 0.96, 236, lift));
-    const bl = Math.round(lerp(base * 1.12, 244, lift));
+    // Victory turns the kitchen lights on over the colony; defeat drains it toward cold ash.
+    const win = this.outcome === 'won' ? clamp01(this.outcomeTime / 2.2) : 0;
+    const loss = this.outcome === 'lost' ? clamp01(this.outcomeTime / 1.6) : 0;
+    const lift = clamp01(world.roomLight + win * 0.85);
+    let r = Math.round(lerp(base * 0.86, 244, lift));
+    let g = Math.round(lerp(base * 0.96, 232, lift));
+    let bl = Math.round(lerp(base * 1.12, 208, lift));
+    if (loss > 0) {
+      // Drain toward a flat, cold, colourless room.
+      const grey = Math.round(lerp((r + g + bl) / 3, 96, loss));
+      r = Math.round(lerp(r, grey, loss));
+      g = Math.round(lerp(g, grey, loss));
+      bl = Math.round(lerp(bl, grey * 1.06, loss));
+    }
     lc.fillStyle = `rgb(${r},${g},${bl})`;
     lc.fillRect(0, 0, lw, lh);
 

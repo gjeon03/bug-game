@@ -10,7 +10,7 @@ Pages **repository subpath**: `https://<owner>.github.io/<repository>/`.
 get wrong — the same `dist/` runs from the domain root, from `/bug-game/`, or from any nested path.
 
 All game assets are generated procedurally in JavaScript at boot (`src/render/atlas.ts`,
-`src/render/textures` equivalents, `src/audio/audio.ts`), so there is no asset directory to resolve
+`src/render/solids.ts`, `src/audio/audio.ts`), so there is no asset directory to resolve
 in the first place. The only files served are `index.html`, one JS bundle, one CSS file, a sourcemap
 and `.nojekyll`.
 

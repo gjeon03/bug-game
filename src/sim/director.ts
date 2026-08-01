@@ -1,4 +1,5 @@
 import {
+  CRITICAL_RESERVE,
   INTERLUDE_LENGTH,
   NIGHT_LENGTH,
   NIGHT_RESOURCE_REGROWTH,
@@ -248,9 +249,11 @@ function updateGuide(world: World): void {
     (r) => r.linked && world.resources.find((x) => x.id === r.resourceId)?.kind === 'water',
   );
 
-  // Priority: an unserved resource type first, then the next crack, then home.
+  // Priority: a shortage first, then an unserved resource type, then the next crack.
   let wantKind: 'food' | 'water' | null = null;
-  if (!servedFood) wantKind = 'food';
+  if (c.water <= c.waterCap * CRITICAL_RESERVE) wantKind = 'water';
+  else if (c.food <= c.foodCap * CRITICAL_RESERVE) wantKind = 'food';
+  else if (!servedFood) wantKind = 'food';
   else if (!servedWater) wantKind = 'water';
   else if (c.food < c.water) wantKind = 'food';
   else if (unclaimed.length === 0) wantKind = 'water';
@@ -286,6 +289,23 @@ function updateObjective(world: World): void {
   const c = world.colony;
   const linked = world.routes.some((r) => r.linked);
   updateGuide(world);
+
+  // A shortage outranks every other objective. Losing an entire colony to an empty meter the player
+  // was never told about is the least fair failure this game can produce, so it shouts.
+  const waterCritical = c.water <= c.waterCap * CRITICAL_RESERVE;
+  const foodCritical = c.food <= c.foodCap * CRITICAL_RESERVE;
+  if (waterCritical || foodCritical) {
+    const which =
+      waterCritical && foodCritical ? 'FOOD AND MOISTURE' : waterCritical ? 'MOISTURE' : 'FOOD';
+    const target = waterCritical ? 'water' : 'food';
+    world.objective =
+      c.population > 0
+        ? `${which} RUNNING OUT — run a trail to ${target} now or the colony dies.`
+        : `${which} RUNNING OUT — rebuild from a ${target} trail.`;
+    world.shortage = waterCritical ? 'water' : 'food';
+    return;
+  }
+  world.shortage = null;
 
   if (!linked) {
     world.objective = 'Link the nest to food or moisture with a pheromone trail.';

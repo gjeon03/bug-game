@@ -7,6 +7,7 @@ import {
   MAX_HAZARDS,
   NEST_INTEGRITY_DRAIN,
   PATROL_STEP_INTERVAL,
+  SPRAY_DPS,
   SPRAY_RADIUS,
   SUSPICION_WEIGHTS,
   TRAP_ARM_TIME,
@@ -298,7 +299,6 @@ export function updateThreats(world: World, dt: number): void {
         const w = world.workers[j];
         if (!w.alive || w.state === 'trapped') continue;
         if (dist2(w.x, w.y, h.x, h.y) > r2) continue;
-        w.timer -= dt;
         if (w.state !== 'panic') {
           w.state = 'panic';
           w.panicTime = 1.4;
@@ -337,7 +337,7 @@ export function updateThreats(world: World, dt: number): void {
         w.panicTime = 2.6;
         w.angle = Math.atan2(w.y - s.y, w.x - s.x);
       }
-      if (world.rng.next() < dt * 1.15 * lethality) killWorker(world, w, 'spray');
+      if (world.rng.next() < dt * SPRAY_DPS * lethality) killWorker(world, w, 'spray');
     }
 
     if (dist2(home.x, home.y, s.x, s.y) < (s.radius + 60) * (s.radius + 60)) {

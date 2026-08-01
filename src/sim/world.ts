@@ -125,6 +125,8 @@ export interface World {
   objective: string;
   /** World-space target the objective refers to, so the HUD can point at it. */
   guide: { x: number; y: number; label: string } | null;
+  /** Set while a reserve is critically low, so the HUD can escalate the matching meter. */
+  shortage: 'food' | 'water' | null;
   /** Current onboarding prompt, empty once the sequence is complete. */
   tutorial: string;
   /** Transient feedback toast (inspect results, refused claims). */
@@ -140,8 +142,6 @@ export interface World {
   winCriteria: WinCriteria;
 
   workerHash: SpatialHash;
-  /** Round-robin cursor so per-worker exposure sampling is spread across frames. */
-  exposureCursor: number;
   /** Scratch counter used by the traffic suspicion term. */
   exposedWorkers: number;
   /** Length of pheromone trail currently sitting on exposed floor. */
@@ -382,6 +382,7 @@ export function createWorld(seed: number): World {
 
     objective: 'Leave the crack and find something to eat.',
     guide: null,
+    shortage: null,
     tutorial: '',
     hint: '',
     hintKey: '',
@@ -399,7 +400,6 @@ export function createWorld(seed: number): World {
     },
 
     workerHash: new SpatialHash(WORLD_W, WORLD_H, 96),
-    exposureCursor: 0,
     exposedWorkers: 0,
     exposedTrail: 0,
     pheromoneNodeCount: 0,

@@ -1,11 +1,13 @@
 import { clamp01 } from '../core/math.ts';
 import {
+  MAX_ROUTES,
   RESERVE_MAX,
   SCOUT_STAMINA_MAX,
   SUSPICION_MAX,
   TIER_THRESHOLDS,
 } from '../sim/constants.ts';
 import { interactTarget } from '../sim/colony.ts';
+import { scoutStruggleProgress } from '../sim/scout.ts';
 import { CAUSE_LABELS, tierName } from '../sim/suspicion.ts';
 import type { World } from '../sim/world.ts';
 import { ICONS } from './icons.ts';
@@ -86,6 +88,8 @@ export class Hud {
     this.el.prompt = this.root.querySelector('#prompt') as HTMLElement;
     this.el.objective = this.root.querySelector('#objective') as HTMLElement;
     this.el.suspicionPanel = this.root.querySelector('#suspicion') as HTMLElement;
+    this.el.foodMeter = this.root.querySelector('.f-food') as HTMLElement;
+    this.el.waterMeter = this.root.querySelector('.f-water') as HTMLElement;
   }
 
   private set(key: string, value: string): void {
@@ -127,11 +131,17 @@ export class Hud {
     this.width('stamFill', s.stamina / SCOUT_STAMINA_MAX);
     this.set('stamNum', `${Math.floor(s.stamina)}`);
     this.width('pherFill', world.reserve / RESERVE_MAX);
-    this.set('pherNum', `${Math.floor(world.reserve)}`);
+    const linkedRoutes = world.routes.filter((r) => r.linked).length;
+    this.set('pherNum', `${Math.floor(world.reserve)} · ${linkedRoutes}/${MAX_ROUTES}`);
+
+    // A shortage is escalated on the meter itself, not only in the objective line.
+    this.el.foodMeter?.classList.toggle('critical', world.shortage === 'food');
+    this.el.waterMeter?.classList.toggle('critical', world.shortage === 'water');
 
     let state = 'Scout ready';
     if (!s.alive) state = `Scout lost — replacement in ${Math.max(0, s.respawnTimer).toFixed(1)}s`;
-    else if (s.trapId >= 0) state = 'STUCK — mash SHIFT and a direction';
+    else if (s.trapId >= 0)
+      state = `STUCK — mash SHIFT and a direction · ${Math.round(scoutStruggleProgress(world) * 100)}%`;
     else if (s.spotted > 0.55) state = 'SEEN — get to cover';
     else if (s.exposure > 0.55) state = 'Exposed — in the light';
     else if (s.laying) state = 'Laying pheromone';

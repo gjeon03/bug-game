@@ -9,6 +9,7 @@ import {
   BROOD_RATE,
   BROOD_WATER_COST,
   CACHE_FOOD_BONUS,
+  CAPACITY_PER_NEST,
   CACHE_WATER_BONUS,
   FOOD_CAP,
   STARVE_DEATH_INTERVAL,
@@ -34,7 +35,9 @@ export function recomputeLimits(world: World): void {
   }
   c.capacity = Math.min(
     WORKER_CAP,
-    BASE_CAPACITY + satellites * 8 + (c.upgrades.brood ? BROOD_CHAMBER_CAPACITY : 0),
+    BASE_CAPACITY +
+      satellites * CAPACITY_PER_NEST +
+      (c.upgrades.brood ? BROOD_CHAMBER_CAPACITY : 0),
   );
   c.foodCap = FOOD_CAP + (c.upgrades.cache ? CACHE_FOOD_BONUS : 0);
   c.waterCap = WATER_CAP + (c.upgrades.cache ? CACHE_WATER_BONUS : 0);
@@ -128,7 +131,7 @@ function cullWeakest(world: World, cause: 'starve' | 'thirst'): void {
 }
 
 export interface InteractTarget {
-  kind: 'nest' | 'escape' | 'resource';
+  kind: 'nest' | 'escape' | 'resource' | 'sealed';
   id: string;
   label: string;
   affordable: boolean;
@@ -149,10 +152,22 @@ export function interactTarget(world: World): InteractTarget | null {
 
   for (let i = 0; i < world.nests.length; i++) {
     const n = world.nests[i];
-    if (n.unlockNight > world.night) continue;
     const d = dist2(n.x, n.y, s.x, s.y);
     if (d >= bestD) continue;
-    if (!n.claimed) {
+    if (n.unlockNight > world.night) {
+      // Scouting ahead is the point of being a scout: a sealed crack is worth finding early.
+      bestD = d;
+      best = {
+        kind: 'sealed',
+        id: n.id,
+        label: `${n.label} — sealed until night ${n.unlockNight}`,
+        affordable: false,
+        costFood: n.costFood,
+        costWater: n.costWater,
+        x: n.x,
+        y: n.y,
+      };
+    } else if (!n.claimed) {
       bestD = d;
       best = {
         kind: 'nest',
@@ -206,6 +221,15 @@ export function doInteract(world: World): void {
   if (!target) {
     world.hint = 'Nothing to inspect here.';
     world.hintKey = 'nothing';
+    return;
+  }
+
+  if (target.kind === 'sealed') {
+    const nest = world.nests.find((n) => n.id === target.id);
+    if (nest) {
+      world.hint = `${nest.label}: still sealed. It opens on night ${nest.unlockNight} and will cost ${nest.costFood} food, ${nest.costWater} moisture.`;
+      world.hintKey = `sealed:${nest.id}`;
+    }
     return;
   }
 

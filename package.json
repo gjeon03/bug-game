@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Baseboard Empire — a top-down macro-noir strategy-action game about growing a cockroach colony inside a hostile human kitchen.",
+  "description": "Baseboard Empire \u2014 a top-down macro-noir strategy-action game about growing a cockroach colony inside a hostile human kitchen.",
   "license": "MIT",
   "packageManager": "pnpm@10.13.1",
   "engines": {
@@ -22,7 +22,9 @@
     "serve:nested": "node scripts/serve-nested.mjs",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e"
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e && pnpm evidence:pack && pnpm evidence:report",
+    "evidence:pack": "node scripts/pack-evidence.mjs",
+    "evidence:report": "node scripts/report.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -1,0 +1,64 @@
+{
+  "id": "crackWall",
+  "target": {
+    "x": 3488,
+    "y": 1632
+  },
+  "scout": {
+    "x": 3492.5621369909186,
+    "y": 1669.1035891227498,
+    "alive": true,
+    "stamina": 100,
+    "exposure": 0.05540113978405911,
+    "spotted": 0,
+    "trapped": false,
+    "laying": false
+  },
+  "colony": {
+    "food": 49.775199999938664,
+    "water": 0,
+    "foodCap": 320,
+    "waterCap": 220,
+    "population": 0,
+    "capacity": 44,
+    "brood": 0,
+    "hatched": 22,
+    "lost": 31,
+    "totalFood": 376.27466666667215,
+    "totalWater": 185.30420000000456,
+    "upgrades": {
+      "brood": true,
+      "cache": true,
+      "escape": false
+    }
+  },
+  "night": 3,
+  "nightTime": 64.33333333333097,
+  "status": "playing",
+  "nests": [
+    {
+      "id": "home",
+      "claimed": true,
+      "upgrade": null,
+      "integrity": 1
+    },
+    {
+      "id": "crackIsland",
+      "claimed": true,
+      "upgrade": "brood",
+      "integrity": 1
+    },
+    {
+      "id": "crackPantry",
+      "claimed": true,
+      "upgrade": "cache",
+      "integrity": 1
+    },
+    {
+      "id": "crackWall",
+      "claimed": false,
+      "upgrade": "escape",
+      "integrity": 1
+    }
+  ]
+}

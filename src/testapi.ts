@@ -73,6 +73,7 @@ export interface StateSnapshot {
   };
   stats: Record<string, number>;
   objective: string;
+  shortage: string | null;
   tutorial: string;
   nextResponse: string;
   reserve: number;
@@ -207,6 +208,7 @@ export function snapshot(world: World, paused: boolean, overlay: string): StateS
     },
     stats: { ...world.stats } as unknown as Record<string, number>,
     objective: world.objective,
+    shortage: world.shortage,
     tutorial: world.tutorial,
     nextResponse: world.nextResponse,
     reserve: world.reserve,

@@ -110,6 +110,19 @@ test.describe('static deployment', () => {
     expect(audit.glowTints).toBe(6);
     expect(audit.audioStarted).toBe(true);
 
+    // "Core interactions are not silent": sample the mixer while the scout is actually moving and
+    // laying pheromone, and require that voices were genuinely scheduled.
+    const voiceSamples: number[] = [];
+    await driveTo(page, PLACES.sinkDrip.x, PLACES.sinkDrip.y, { timeout: 200 });
+    for (let i = 0; i < 30; i++) {
+      voiceSamples.push((await page.evaluate(() => window.__roach.telemetry())).audioVoices);
+      await page.waitForTimeout(120);
+    }
+    await releaseAll(page);
+    const peakVoices = Math.max(...voiceSamples);
+    expect(peakVoices, 'no audio voices were scheduled during active play').toBeGreaterThan(0);
+    expect(peakVoices, 'voice cap exceeded').toBeLessThanOrEqual(24);
+
     // No unstyled text, no debug rectangles: the HUD is real DOM with real content.
     await expect(page.locator('#objective')).not.toBeEmpty();
     await expect(page.locator('#suspicion .tier-name')).not.toBeEmpty();
@@ -119,6 +132,7 @@ test.describe('static deployment', () => {
       generatedFinal: audit,
       temporaryAssets: [],
       hudIcons: await page.locator('#hud svg.ic').count(),
+      peakAudioVoices: peakVoices,
       objective: s.objective,
       note: 'All sprites, textures, VFX and audio are generated procedurally at boot; see ASSET_MANIFEST.md.',
     });

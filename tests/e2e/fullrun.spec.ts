@@ -27,7 +27,9 @@ async function layRoute(
   from: { x: number; y: number },
   to: { x: number; y: number },
   waypoints: { x: number; y: number }[] = [],
+  approach: { x: number; y: number }[] = [],
 ): Promise<void> {
+  for (const wp of approach) await driveTo(page, wp.x, wp.y, { timeout: 40_000, arrive: 70 });
   await driveTo(page, from.x, from.y, { timeout: 45_000, arrive: 55 });
   for (const wp of waypoints) {
     await driveTo(page, wp.x, wp.y, { lay: true, timeout: 35_000, arrive: 55 });
@@ -121,9 +123,22 @@ test.describe('complete runs', () => {
 
     await layRoute(page, PLACES.crackIsland, PLACES.islandDrop, [{ x: 1600, y: 1830 }]);
 
-    const pantry = await claim(page, PLACES.crackPantry, 'crackPantry', [{ x: 900, y: 2300 }]);
+    // Moisture is the scarcer resource and a growing colony dies without it, so the second water
+    // line goes in before any more food: out past the island and up into the fridge light.
+    await layRoute(page, PLACES.crackIsland, PLACES.fridgeCondensation, [
+      { x: 2560, y: 1800 },
+      { x: 2560, y: 1000 },
+    ]);
+
+    const pantry = await claim(page, PLACES.crackPantry, 'crackPantry', [
+      { x: 2000, y: 2300 },
+      { x: 1000, y: 2400 },
+    ]);
     expect(pantry).toBe(true);
     await layRoute(page, PLACES.crackPantry, PLACES.pantryGrain, [{ x: 900, y: 2440 }]);
+
+    const s2 = await state(page);
+    expect(s2.colony.water).toBeGreaterThan(0);
 
     s = await state(page);
     expect(s.colony.upgrades.brood).toBe(true);
@@ -136,7 +151,25 @@ test.describe('complete runs', () => {
       routes: s.routes,
     });
 
-    await driveTo(page, 900, 2440, { timeout: 30_000 });
+    // Play out the rest of the night in cover, reacting to a shortage warning the way a player
+    // would: the HUD says which reserve is failing, so go and fix that reserve.
+    for (let i = 0; i < 8; i++) {
+      const s = await state(page);
+      if (s.night >= 3) break;
+      if (s.shortage === 'water') {
+        await layRoute(page, PLACES.sinkDrip, { x: PLACES.home.x + 20, y: PLACES.home.y }, [
+          { x: 620, y: 1620 },
+          { x: 600, y: 2010 },
+        ]);
+      } else if (s.shortage === 'food') {
+        await layRoute(page, { x: PLACES.home.x + 20, y: PLACES.home.y }, PLACES.dishCrumbs, [
+          { x: 600, y: 2010 },
+          { x: 600, y: 1760 },
+        ]);
+      }
+      await driveTo(page, 900, 2440, { timeout: 25_000 });
+      await page.waitForTimeout(8000);
+    }
     await waitForNight(page, 3, 300_000);
 
     // ── Night 3: the escape tunnel, then hold on through the final response.
@@ -149,13 +182,24 @@ test.describe('complete runs', () => {
     expect(wall).toBe(true);
     await shot(page, '23-escape-tunnel');
 
+    // Water first — the colony's moisture line has to scale with the colony.
+    await layRoute(
+      page,
+      PLACES.petBowl,
+      PLACES.crackWall,
+      [
+        { x: 3200, y: 2470 },
+        { x: 3470, y: 2200 },
+      ],
+      [
+        { x: 3450, y: 1900 },
+        { x: 3450, y: 2490 },
+        { x: 3000, y: 2500 },
+      ],
+    );
     await layRoute(page, PLACES.crackWall, PLACES.trashSpill, [
       { x: 3470, y: 2100 },
       { x: 3450, y: 2490 },
-    ]);
-    await layRoute(page, PLACES.petBowl, PLACES.crackWall, [
-      { x: 3200, y: 2500 },
-      { x: 3470, y: 2200 },
     ]);
 
     await page.evaluate(() => window.__roach.endPerf());

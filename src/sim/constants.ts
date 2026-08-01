@@ -42,7 +42,12 @@ export const NODE_REINFORCE = 7.5;
 export const RESERVE_MAX = 100;
 export const RESERVE_REGEN = 5.2;
 export const RESERVE_COST = 1;
-export const MAX_ROUTES = 4;
+/**
+ * Concurrent routes. Five is enough for three food lines and two water lines, which is what a
+ * surviving colony actually needs — four made the oldest route silently evict itself and could
+ * delete the colony's only water supply without the player noticing.
+ */
+export const MAX_ROUTES = 5;
 /** How close a route end must be to a nest/resource to count as linked. */
 export const LINK_RADIUS = 92;
 /** How far a worker can be from a trail node and still read it. */
@@ -63,7 +68,6 @@ export const WORKER_CARRY_WATER = 5;
 export const WORKER_HARVEST_TIME = 0.85;
 export const WORKER_SEPARATION = 17;
 export const WORKER_LOOKAHEAD = 4;
-export const WORKER_PANIC_RADIUS = 190;
 export const WORKER_PANIC_TIME = 3.2;
 export const NYMPH_TIME = 6;
 
@@ -80,7 +84,7 @@ export const CACHE_WATER_BONUS = 60;
 export const BROOD_RATE = 0.09;
 export const BROOD_CHAMBER_MULT = 1.75;
 export const BROOD_FOOD_COST = 8;
-export const BROOD_WATER_COST = 5;
+export const BROOD_WATER_COST = 4;
 /**
  * Brood only draws from reserves above this margin. Without it the colony eats its own starting
  * stock down to zero before the player's first delivery lands, and starves for reasons the player
@@ -91,7 +95,7 @@ export const BROOD_RESERVE_MARGIN_WATER = 8;
 export const START_FOOD = 46;
 export const START_WATER = 34;
 export const UPKEEP_FOOD = 0.016;
-export const UPKEEP_WATER = 0.012;
+export const UPKEEP_WATER = 0.009;
 export const STARVE_DEATH_INTERVAL = 5.5;
 /** No colony member starves during the opening minute; the tutorial has to be survivable. */
 export const STARVE_GRACE = 55;
@@ -135,6 +139,9 @@ export const NIGHT_SUSPICION_FLOOR: Record<NightIndex, number> = { 1: 0, 2: 10, 
 
 /* ── Win / lose ────────────────────────────────────────────────────────────── */
 
+/** Reserve fraction below which the HUD and the objective start shouting about a shortage. */
+export const CRITICAL_RESERVE = 0.12;
+
 export const WIN_POPULATION = 36;
 export const WIN_FOOD = 120;
 export const WIN_WATER = 90;
@@ -151,7 +158,8 @@ export const TRAP_CAPACITY = 4;
 export const TRAP_STRUGGLE_TIME = 4.4;
 export const BAIT_RADIUS = 74;
 export const SPRAY_RADIUS = 210;
-export const SPRAY_DPS = 0.9;
+/** Probability per second that a roach inside a fully ramped spray cloud dies. */
+export const SPRAY_DPS = 1.15;
 export const MAX_HAZARDS = 12;
 
 /* ── Exposure ──────────────────────────────────────────────────────────────── */

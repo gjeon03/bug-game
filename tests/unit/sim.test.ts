@@ -471,3 +471,35 @@ function summarise(w: World): Record<string, unknown> {
     upgrades: { ...w.colony.upgrades },
   };
 }
+
+describe('labour distribution', () => {
+  it('workers hatched at a satellite nest still serve routes anchored elsewhere', () => {
+    const world = createWorld(6161);
+    // Simulate the mid-game shape: a brood chamber is claimed and hatches happen there, while the
+    // colony's only water line is anchored at the home crack on the far side of the kitchen.
+    world.night = 2;
+    const island = world.nests.find((n) => n.id === 'crackIsland')!;
+    island.claimed = true;
+    world.colony.upgrades.brood = true;
+
+    layRouteToCrumbs(world);
+    expect(world.routes[0].linked).toBe(true);
+
+    // Park the entire workforce at the brood chamber, out of range of the home route.
+    for (const w of world.workers) {
+      if (!w.alive) continue;
+      w.x = island.x + world.rng.signed() * 30;
+      w.y = island.y + world.rng.signed() * 30;
+      w.state = 'idle';
+      w.routeId = -1;
+      w.targetNest = island.id;
+    }
+    const deliveriesBefore = world.stats.deliveries;
+
+    idle(world, 90);
+
+    // Without redistribution the labour force stays stranded and nothing is ever hauled.
+    expect(world.stats.deliveries).toBeGreaterThan(deliveriesBefore);
+    expect(world.workers.filter((w) => w.alive && w.targetNest === 'home').length).toBeGreaterThan(0);
+  });
+});

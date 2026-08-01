@@ -9,8 +9,9 @@ production contract:
 - **temporary** — must be replaced before completion (target: zero rows)
 
 All rows are first-party. Licence for every generated asset: **MIT**, © this repository — the
-generator source is the asset, and it is in `src/render/atlas.ts`, `src/render/textures.ts` and
-`src/audio/`. No binary asset file is fetched at runtime; there are no third-party assets and
+generator source is the asset, and it lives in `src/render/atlas.ts` (sprites, textures, glows),
+`src/render/solids.ts` (cabinetry and appliances), `src/render/renderer.ts` (decals, resources,
+nests, hazards, VFX) and `src/audio/audio.ts` (every sound). No binary asset file is fetched at runtime; there are no third-party assets and
 therefore no third-party licence obligations.
 
 Statuses below are filled from the final audit (`artifacts/evidence/asset-audit.json`).

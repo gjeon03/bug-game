@@ -1,17 +1,17 @@
 {
-  "time": 204.650000000055,
+  "time": 204.71666666672172,
   "colony": {
-    "food": 84.2946666666142,
-    "water": 98.19419999997994,
+    "food": 84.64239999994857,
+    "water": 101.6395499999745,
     "foodCap": 320,
     "waterCap": 220,
     "population": 19,
     "capacity": 44,
-    "brood": 0.8112499999999935,
+    "brood": 0.8269999999999934,
     "hatched": 9,
     "lost": 0,
-    "totalFood": 233.77466666667212,
-    "totalWater": 185.30420000000456,
+    "totalFood": 234.14426666667435,
+    "totalWater": 172.73435000002306,
     "upgrades": {
       "brood": true,
       "cache": true,
@@ -19,18 +19,18 @@
     }
   },
   "suspicion": {
-    "value": 16.234808641975366,
+    "value": 16.216537808642023,
     "tier": 0,
-    "peak": 16.75635725308638,
+    "peak": 16.75788503086416,
     "floor": 10,
     "lastCause": "expansion"
   },
   "routes": [
     {
       "id": 2,
-      "nodes": 35,
+      "nodes": 37,
       "linked": false,
-      "exposure": 0.08175738968463517,
+      "exposure": 0.09496309103108244,
       "traffic": 0,
       "resourceId": null,
       "nestId": "home"
@@ -39,7 +39,7 @@
       "id": 3,
       "nodes": 20,
       "linked": true,
-      "exposure": 0.23262123096814036,
+      "exposure": 0.23450576031730397,
       "traffic": 0,
       "resourceId": "islandDrop",
       "nestId": "crackIsland"
@@ -48,7 +48,7 @@
       "id": 4,
       "nodes": 6,
       "linked": true,
-      "exposure": 0.2468765555997944,
+      "exposure": 0.24525890095402525,
       "traffic": 0,
       "resourceId": "pantryGrain",
       "nestId": "crackPantry"

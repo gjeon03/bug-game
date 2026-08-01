@@ -4,7 +4,9 @@
       "/Users/jeongyeong-yeon/.asdf/installs/nodejs/23.5.0/bin/node",
       "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/node_modules/@playwright/test/cli.js",
       "test",
-      "tests/e2e/restart.spec.ts"
+      "tests/e2e/fullrun.spec.ts",
+      "-g",
+      "09 a careful"
     ],
     "configFile": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/playwright.config.ts",
     "rootDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e",
@@ -73,25 +75,25 @@
   },
   "suites": [
     {
-      "title": "restart.spec.ts",
-      "file": "restart.spec.ts",
+      "title": "fullrun.spec.ts",
+      "file": "fullrun.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "restart and lifecycle",
-          "file": "restart.spec.ts",
-          "line": 22,
+          "title": "complete runs",
+          "file": "fullrun.spec.ts",
+          "line": 82,
           "column": 6,
           "specs": [
             {
-              "title": "11 five consecutive restarts leak no state and stay playable",
-              "ok": true,
+              "title": "09 a careful three-night run reaches victory",
+              "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 420000,
+                  "timeout": 1500000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "",
@@ -100,91 +102,58 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 36056,
-                      "errors": [],
+                      "status": "failed",
+                      "duration": 535938,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/fullrun.spec.ts:155:18",
+                        "location": {
+                          "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/fullrun.spec.ts",
+                          "column": 18,
+                          "line": 155
+                        },
+                        "snippet": "  153 |       { x: 3450, y: 1900 },\n  154 |     ]);\n> 155 |     expect(wall).toBe(true);\n      |                  ^\n  156 |     await shot(page, '23-escape-tunnel');\n  157 |\n  158 |     // Water first — the colony's moisture line has to scale with the colony."
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/fullrun.spec.ts",
+                            "column": 18,
+                            "line": 155
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  153 |       { x: 3450, y: 1900 },\n  154 |     ]);\n> 155 |     expect(wall).toBe(true);\n      |                  ^\n  156 |     await shot(page, '23-escape-tunnel');\n  157 |\n  158 |     // Water first — the colony's moisture line has to scale with the colony.\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/fullrun.spec.ts:155:18"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-01T05:10:52.661Z",
+                      "startTime": "2026-08-01T05:23:40.529Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/fullrun-complete-runs-09-a-b6d5b-e-night-run-reaches-victory/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/fullrun-complete-runs-09-a-b6d5b-e-night-run-reaches-victory/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/fullrun.spec.ts",
+                        "column": 18,
+                        "line": 155
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
-              "id": "62be28aa61e216d7fcc8-76809402866f48bee505",
-              "file": "restart.spec.ts",
-              "line": 25,
-              "column": 3
-            },
-            {
-              "title": "12 losing focus suspends the run instead of fast-forwarding it",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 420000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 7931,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-01T05:11:28.944Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "62be28aa61e216d7fcc8-1c6f563668484987b7a2",
-              "file": "restart.spec.ts",
-              "line": 94,
-              "column": 3
-            },
-            {
-              "title": "13 pause stops the simulation and the settings survive a restart",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 420000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 4823,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-01T05:11:36.879Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "62be28aa61e216d7fcc8-0fe713c8162095ca985d",
-              "file": "restart.spec.ts",
-              "line": 140,
+              "id": "10e71ebee97db66b31a0-f77c7e0ef85bad75f073",
+              "file": "fullrun.spec.ts",
+              "line": 85,
               "column": 3
             }
           ]
@@ -194,11 +163,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-01T05:10:52.201Z",
-    "duration": 49588.464,
-    "expected": 3,
+    "startTime": "2026-08-01T05:23:40.055Z",
+    "duration": 539574.804,
+    "expected": 0,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 1,
     "flaky": 0
   }
 }
