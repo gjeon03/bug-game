@@ -8,7 +8,15 @@ import {
 } from './adaptations.ts';
 import { MAX_ROUTES } from './constants.ts';
 import { activeRoutine, specFor } from './routines.ts';
-import { heldZones, nextZoneToHold, ZONES_TO_WIN, zoneName } from './territory.ts';
+import {
+  heldZones,
+  nextZoneToHold,
+  zoneAt,
+  ZONES,
+  ZONES_TO_WIN,
+  zoneName,
+  type ZoneState,
+} from './territory.ts';
 import type { World } from './world.ts';
 
 /**
@@ -88,18 +96,40 @@ const linkedRoutes = (world: World, kind: 'food' | 'water'): number => {
   return n;
 };
 
+const servedByLinkedRoute = (world: World, id: string): boolean =>
+  world.routes.some((r) => r.linked && r.resourceId === id);
+
+/**
+ * The nearest source of a kind that the colony is **not already drawing from**, falling back to the
+ * plain nearest when every one of them is served.
+ *
+ * The unserved preference is the whole point. The shortage objective says "add a second source" and
+ * its blocker says "your line is not keeping up" — and it was pointing at the source the player
+ * already had a line on, so following the objective exactly meant standing on a working line while
+ * the reserve emptied. Measured on a slow host: 320 s, 62 trail nodes laid in total, moisture at
+ * zero, twenty-three roaches starved, alert tier 0 — nothing killed that colony but its own
+ * unfollowable advice.
+ */
 const nearestResource = (world: World, kind: 'food' | 'water') => {
   let best: { x: number; y: number; label: string } | null = null;
   let bestD = Infinity;
+  let bestServed: { x: number; y: number; label: string } | null = null;
+  let bestServedD = Infinity;
   for (const res of world.resources) {
     if (res.kind !== kind || res.depleted || res.unlockOp > world.operation) continue;
     const d = (res.x - world.scout.x) ** 2 + (res.y - world.scout.y) ** 2;
-    if (d < bestD) {
+    const here = { x: res.x, y: res.y, label: res.label };
+    if (servedByLinkedRoute(world, res.id)) {
+      if (d < bestServedD) {
+        bestServedD = d;
+        bestServed = here;
+      }
+    } else if (d < bestD) {
       bestD = d;
-      best = { x: res.x, y: res.y, label: res.label };
+      best = here;
     }
   }
-  return best;
+  return best ?? bestServed;
 };
 
 const nearestUnclaimedNest = (world: World) => {
@@ -508,9 +538,43 @@ export function resolveHud(world: World): Hud {
   //    climax: a routine is incoming-or-active about two thirds of the time, and routines sat above
   //    threat advice in this list. Captured in the shipped evidence — forecast "EXTERMINATION — 1s",
   //    objective "Washing up in 5s".
+  //    And it must not be one motionless sentence for the whole 62 seconds either. Measured on the
+  //    shadow run: the objective line did not change for **53.6 s**, ending at t = 452.8 — past the
+  //    contract's own 45-second decision gate, and at the one moment the player is watching it
+  //    hardest. The climax now reads the fight: which cloud is where, which region is slipping,
+  //    how much of it is left. Same instruction, live state.
   if (world.finalResponse) {
-    base.objective =
-      world.threatAdvice ?? 'Get the colony into claimed cracks and hold the regions you have.';
+    const held = heldZones(world);
+    const left = Math.max(0, Math.ceil(FINAL_RESPONSE_LENGTH - world.finalResponseTime));
+    const cloud = world.sprays.find((s) => !s.done);
+    const hitZone = cloud ? zoneAt(cloud.x, cloud.y) : null;
+    // A region that counts today but is falling is the one worth a body right now.
+    let slipping: ZoneState | null = null;
+    for (const z of world.zones) {
+      if (!z.held || !z.contested) continue;
+      if (!slipping || z.hold < slipping.hold) slipping = z;
+    }
+
+    if (hitZone) {
+      base.objective = `The spray is on ${zoneName(hitZone.id)} — get them into a crack until it passes.`;
+      base.target = { x: cloud!.x, y: cloud!.y, label: zoneName(hitZone.id) };
+    } else if (held.length < ZONES_TO_WIN) {
+      const next = nextZoneToHold(world);
+      base.objective = next
+        ? `Holding ${held.length} of ${ZONES_TO_WIN} — get bodies back into ${zoneName(next.state.id)}. ${left}s.`
+        : `Holding ${held.length} of ${ZONES_TO_WIN} with ${left}s left.`;
+      base.target = next
+        ? { x: next.spec.x, y: next.spec.y, label: zoneName(next.state.id) }
+        : null;
+    } else if (slipping) {
+      const spec = ZONES.find((z) => z.id === slipping.id) ?? null;
+      base.objective = `All ${ZONES_TO_WIN} still yours, but ${zoneName(slipping.id)} is slipping — ${left}s.`;
+      base.target = spec ? { x: spec.x, y: spec.y, label: zoneName(spec.id) } : base.target;
+    } else {
+      base.objective =
+        world.threatAdvice ??
+        `${left}s. Keep all ${ZONES_TO_WIN} regions and stay out of the open.`;
+    }
     base.source = 'final';
     return base;
   }

@@ -1,7 +1,7 @@
 {
   "generatedFinal": {
     "version": "1.0.0",
-    "atlasBuildMs": 137.7,
+    "atlasBuildMs": 138.5,
     "roachAtlas": {
       "w": 1152,
       "h": 640
@@ -27,7 +27,7 @@
   },
   "temporaryAssets": [],
   "hudIcons": 7,
-  "peakAudioVoices": 5,
+  "peakAudioVoices": 4,
   "objective": "Walk to Sink drip — then bring the scent home.",
   "note": "All sprites, textures, VFX and audio are generated procedurally at boot; see ASSET_MANIFEST.md."
 }

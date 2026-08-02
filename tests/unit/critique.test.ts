@@ -7,7 +7,9 @@ import { stepWorld } from '../../src/sim/sim.ts';
 import { createWorld } from '../../src/sim/world.ts';
 import { SCOUT_SPEED } from '../../src/sim/constants.ts';
 import { heldZones } from '../../src/sim/territory.ts';
-import { stepUntil } from './helpers.ts';
+import { firstResource, HOME, pt } from '../map.ts';
+import { idle, stepUntil } from './helpers.ts';
+import { layLine } from './play.ts';
 
 /**
  * Regressions for defects found by the independent critics.
@@ -44,6 +46,62 @@ describe('defects found by independent critique', () => {
     const hud = resolveHud(world);
     expect(hud.source).toBe('final');
     expect(hud.objective.toLowerCase()).not.toContain('snack');
+  });
+
+  it('the climax objective moves with the fight instead of freezing for a minute', () => {
+    // Measured on the shipped shadow run: the objective line did not change for **53.6 s**, ending at
+    // t = 452.8 — the whole extermination under one motionless sentence, past the contract's own
+    // 45-second decision gate, at the moment the player is watching the line hardest.
+    //
+    // The colony is grown first and given cracks to hide in. A bare world forced into the finale
+    // collapses in eight seconds, which is how the first version of this test passed against the
+    // frozen sentence it was written to catch — it never reached the plateau it was measuring.
+    const world = createWorld(20260801);
+    layLine(world, { x: HOME.x + 30, y: HOME.y }, pt(firstResource('food')));
+    layLine(world, pt(firstResource('water')), { x: HOME.x + 30, y: HOME.y });
+    idle(world, 120);
+    for (const n of world.nests) n.claimed = true;
+    world.operation = 4;
+    expect(world.status, 'the colony has to survive to the finale').toBe('playing');
+    expect(world.colony.population, 'and it has to be a colony').toBeGreaterThan(8);
+
+    world.finalResponse = true;
+    world.finalResponseTime = 0;
+    world.finalWave = -1;
+
+    let last = resolveHud(world).objective;
+    let since = 0;
+    let longest = 0;
+    let measured = 0;
+    const seen = new Set<string>([last]);
+    for (let step = 0; step < 62 / SIM_DT; step++) {
+      stepWorld(world, SIM_DT);
+      if (world.status !== 'playing') break;
+      measured += SIM_DT;
+      const now = resolveHud(world);
+      expect(now.source, 'the extermination still outranks everything').toBe('final');
+      if (now.objective === last) {
+        since += SIM_DT;
+        longest = Math.max(longest, since);
+      } else {
+        last = now.objective;
+        since = 0;
+        seen.add(last);
+      }
+    }
+
+    expect(measured, 'the run has to actually reach the plateau being measured').toBeGreaterThan(
+      45,
+    );
+    expect(
+      longest,
+      `the climax objective held still for ${longest.toFixed(1)}s`,
+    ).toBeLessThanOrEqual(45);
+    expect(seen.size, 'and it said more than one thing').toBeGreaterThan(1);
+    for (const line of seen) {
+      expect(line.length).toBeGreaterThan(8);
+      expect(line, 'no doubled article from a region name').not.toMatch(/\bthe the\b/);
+    }
   });
 
   it('a counterplay hint expires with the threat that caused it', () => {

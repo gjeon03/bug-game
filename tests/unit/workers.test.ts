@@ -7,12 +7,13 @@ import {
   WORKER_CLEARANCE,
   WORKER_RADIUS,
 } from '../../src/sim/constants.ts';
-import { isInsideSolid } from '../../src/sim/field.ts';
+import { collideCircle, isInsideSolid } from '../../src/sim/field.ts';
 import { stepWorld } from '../../src/sim/sim.ts';
+import { panicWorkers } from '../../src/sim/workers.ts';
 import { createWorld, type World } from '../../src/sim/world.ts';
 import { firstResource, HOME, pt } from '../map.ts';
 import { idle } from './helpers.ts';
-import { layLine } from './play.ts';
+import { layLine, walkTo } from './play.ts';
 
 /**
  * Worker quality.
@@ -33,6 +34,9 @@ function twoLines(seed: number): World {
   layLine(world, pt(firstResource('water')), { x: HOME.x + 30, y: HOME.y });
   return world;
 }
+
+/** The island's top edge — the surface every worst stall in the evidence package sat on. */
+const ISLAND_TOP = 1180;
 
 /** Three bodies inside this of each other read as one malformed roach rather than as traffic. */
 const SEVERE_OVERLAP = WORKER_CLEARANCE * 0.6;
@@ -262,5 +266,184 @@ describe('restart', () => {
       idle(played, 30);
       expect(shape(createWorld(3030))).toEqual(first);
     }
+  }, 30_000);
+});
+
+describe('a panicking colony finds its way to shelter', () => {
+  /**
+   * Bolting for cover must not become pressing into a cabinet.
+   *
+   * Panic steers straight at the nearest claimed crack and, while that crack is nominally within
+   * reach, keeps refreshing its own timer. Where a solid stands on the straight line the distance
+   * never closes, so the timer never expires: measured in a real browser under a spray, twenty
+   * roaches strung motionless along one cabinet edge, the worst for **19.9 s**, at the most closely
+   * watched moment the game has. The stuck ladder could not rescue them either — its own sideways
+   * nudge moved each body far enough to count as progress, so the ladder reset to zero and cycled
+   * 0-1-2 for the entire nineteen seconds instead of reaching the rung that follows a wall.
+   *
+   * The setup is derived rather than guessed: it searches the kitchen for a standing spot that is
+   * inside a refuge's reach but has cabinetry across the straight line to it, which is exactly the
+   * geometry that produced the stall. A version of this test that simply frightened a healthy colony
+   * passed with the defect still in place, because most roaches have clear line of sight to a crack.
+   */
+  it('never leaves a panicking roach pressed against a wall', () => {
+    const world = twoLines(4242);
+    idle(world, 40);
+
+    // One refuge only, so the trap cannot be dodged by bolting somewhere else.
+    const refuge = world.nests.find((n) => !n.home) ?? world.nests[0];
+    for (const n of world.nests) n.claimed = n === refuge;
+
+    const blockedFrom = (x: number, y: number): boolean => {
+      const d = Math.hypot(refuge.x - x, refuge.y - y);
+      if (d > 600 || d < 120) return false;
+      for (let k = 1; k < 40; k++) {
+        const t = k / 40;
+        if (isInsideSolid(x + (refuge.x - x) * t, y + (refuge.y - y) * t)) return true;
+      }
+      return false;
+    };
+
+    // Find standing room with cabinetry between it and the only shelter.
+    const spots: { x: number; y: number }[] = [];
+    for (let x = 200; x < 2400 && spots.length < 6; x += 40) {
+      for (let y = 200; y < 2600 && spots.length < 6; y += 40) {
+        if (isInsideSolid(x, y)) continue;
+        if (blockedFrom(x, y)) spots.push({ x, y });
+      }
+    }
+    expect(spots.length, 'the kitchen has to contain the geometry being tested').toBeGreaterThan(0);
+
+    let worstPanicStall = 0;
+    let recovered = 0;
+    let placed = 0;
+
+    for (const spot of spots) {
+      const live = world.workers.filter((w) => w.alive).slice(0, 4);
+      for (let k = 0; k < live.length; k++) {
+        const w = live[k];
+        w.x = spot.x + (k % 2) * 14;
+        w.y = spot.y + Math.floor(k / 2) * 14;
+        w.vx = 0;
+        w.vy = 0;
+        placed++;
+      }
+      panicWorkers(world, spot.x, spot.y, 60);
+
+      const still = new Map<number, { x: number; y: number; t: number }>();
+      for (let step = 0; step < 14 / SIM_DT; step++) {
+        stepWorld(world, SIM_DT);
+        for (let i = 0; i < world.workers.length; i++) {
+          const w = world.workers[i];
+          if (!w.alive || w.state !== 'panic') {
+            still.delete(i);
+            continue;
+          }
+          const prev = still.get(i);
+          if (!prev || Math.hypot(w.x - prev.x, w.y - prev.y) > 6) {
+            still.set(i, { x: w.x, y: w.y, t: 0 });
+          } else {
+            prev.t += SIM_DT;
+            worstPanicStall = Math.max(worstPanicStall, prev.t);
+          }
+        }
+      }
+      recovered += world.workers.filter((w) => w.alive && w.state !== 'panic').length;
+    }
+
+    expect(placed, 'the test has to have actually frightened somebody').toBeGreaterThan(4);
+    expect(recovered, 'and they have to have come out of it').toBeGreaterThan(4);
+    expect(
+      worstPanicStall,
+      `a panicking roach held still for ${worstPanicStall.toFixed(2)}s — it is pressing into something`,
+    ).toBeLessThanOrEqual(2);
+  }, 30_000);
+});
+
+describe('a trail that hugs a cabinet still moves traffic', () => {
+  /**
+   * The lane offset must never aim a worker at a solid.
+   *
+   * Two counter-flowing lanes sit either side of the scent corridor. Where the player's line runs
+   * along cabinetry — which the shortest route very often does — the lane on that side computes a
+   * steering target *inside* the cabinet, and every step pushes its whole cohort into the wall. No
+   * amount of stuck-recovery helps, because the steering puts them straight back; it is the same
+   * shape as the panic-into-a-cabinet defect above. Measured across every scenario in the shipped
+   * evidence package, the worst stalls were all on **y = 1172**, the top edge of the island, spread
+   * along 400 units of it, all in the lane whose sign faces that edge, the longest for **69.7 s**.
+   *
+   * The assertion is the steering target, not the stall duration. A first version of this test
+   * measured how long workers held still and appeared to show an 18.7 s → 2.4 s improvement; the
+   * 18.7 s was an **idle** roach loitering at a nest, which is not stuck at all, and once idle was
+   * excluded the figure was identical with and without the fix. The invariant below is what the fix
+   * actually guarantees, and it is checked directly.
+   */
+  it('never computes a lane target inside cabinetry', () => {
+    const world = createWorld(8181);
+    // A working line from the home crack to the stove grease, deliberately routed along the top edge
+    // of the island — the surface the evidence named. A route only carries traffic when its ends are
+    // a nest and a source, so the waypoints shape the middle and the ends do the linking.
+    const edgeY = ISLAND_TOP - 26;
+    const direct = { style: 'open' as const };
+    walkTo(world, { x: HOME.x + 30, y: HOME.y }, direct);
+    walkTo(world, { x: 1300, y: edgeY }, { ...direct, lay: true });
+    walkTo(world, { x: 2380, y: edgeY }, { ...direct, lay: true });
+    walkTo(world, { x: 1660, y: 780 }, { ...direct, lay: true });
+    walkTo(world, { x: 1608, y: 716 }, { ...direct, lay: true }); // stoveGrease
+    idle(world, 60);
+    expect(
+      world.routes.some((r) => r.linked),
+      'the wall-hugging line has to be a working route',
+    ).toBe(true);
+
+    // The observable consequence, not a re-derivation of the fix: a worker following a route should
+    // never be held in continuous contact with cabinetry. A first version of this test recomputed the
+    // lane arithmetic itself and asserted its own result, which passed with the guard removed
+    // entirely — it was testing the test.
+    let worstContact = 0;
+    let worstAt = '';
+    let routed = 0;
+    let onEdge = 0;
+    let insideSolid = 0;
+    const contact = new Map<number, number>();
+
+    for (let step = 0; step < 120 / SIM_DT; step++) {
+      stepWorld(world, SIM_DT);
+      for (let i = 0; i < world.workers.length; i++) {
+        const w = world.workers[i];
+        if (!w.alive) continue;
+        if (isInsideSolid(w.x, w.y)) insideSolid++;
+        if (Math.abs(w.y - ISLAND_TOP) < 40 && w.x > 1240 && w.x < 2480) onEdge++;
+        if (w.state !== 'outbound' && w.state !== 'inbound') {
+          contact.delete(i);
+          continue;
+        }
+        routed++;
+        if (collideCircle(w.x, w.y, WORKER_RADIUS * w.scale).hit) {
+          const t = (contact.get(i) ?? 0) + SIM_DT;
+          contact.set(i, t);
+          if (t > worstContact) {
+            worstContact = t;
+            worstAt = `${w.state} at ${Math.round(w.x)},${Math.round(w.y)}`;
+          }
+        } else {
+          contact.delete(i);
+        }
+      }
+    }
+
+    expect(onEdge, 'the test has to have put traffic on the edge it is about').toBeGreaterThan(200);
+    expect(routed, 'and that traffic has to have been following a route').toBeGreaterThan(500);
+    expect(insideSolid, 'no worker may stand inside cabinetry').toBe(0);
+    // The contract's figure is 2 s and this asserts 3. That is the measured current state, not a
+    // relaxed target: without the lane guard a routed worker is held against cabinetry for **11.1 s**
+    // here, with it **2.78 s**, and the residual sits on the island's top-left corner where both
+    // lanes and the centreline are all inside the roach's own radius of the corner. The gap is
+    // recorded as unmet in REDESIGN_CONTRACT.md and PLAYTEST_REPORT.md §5 rather than hidden by
+    // moving the number the contract asks for. This bound exists to catch a regression past today.
+    expect(
+      worstContact,
+      `a routed worker was held against cabinetry for ${worstContact.toFixed(2)}s — ${worstAt}`,
+    ).toBeLessThanOrEqual(3);
   }, 30_000);
 });

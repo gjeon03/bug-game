@@ -3,8 +3,8 @@
     "id": 1,
     "nodes": 25,
     "linked": true,
-    "exposure": 0.16367679539959634,
-    "traffic": 8,
+    "exposure": 0.15875384250724894,
+    "traffic": 7,
     "resourceId": "dishCrumbs",
     "nestId": "home"
   },
@@ -12,8 +12,8 @@
     "id": 2,
     "nodes": 169,
     "linked": true,
-    "exposure": 0.21968222458407335,
-    "traffic": 0,
+    "exposure": 0.22009688549884296,
+    "traffic": 1,
     "resourceId": "dishCrumbs",
     "nestId": "home"
   },
@@ -22,8 +22,8 @@
       "id": 1,
       "nodes": 25,
       "linked": true,
-      "exposure": 0.16367679539959634,
-      "traffic": 8,
+      "exposure": 0.15875384250724894,
+      "traffic": 7,
       "resourceId": "dishCrumbs",
       "nestId": "home"
     },
@@ -31,21 +31,21 @@
       "id": 2,
       "nodes": 169,
       "linked": true,
-      "exposure": 0.21968222458407335,
-      "traffic": 0,
+      "exposure": 0.22009688549884296,
+      "traffic": 1,
       "resourceId": "dishCrumbs",
       "nestId": "home"
     }
   ],
   "scout": {
-    "x": 721.0846566458475,
-    "y": 1669.2851278724718,
+    "x": 719.4156159604375,
+    "y": 1669.6069623312815,
     "alive": true,
     "stamina": 100,
-    "exposure": 0.3478598215130155,
+    "exposure": 0.3491754511113284,
     "spotted": 0,
     "trapped": false,
     "laying": false
   },
-  "reserve": 49.473333333339276
+  "reserve": 49.6466666666726
 }

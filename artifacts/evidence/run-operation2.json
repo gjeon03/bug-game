@@ -1,18 +1,18 @@
 {
-  "time": 141.85000000000502,
+  "time": 143.75000000000654,
   "operation": 2,
   "colony": {
-    "food": 29.181199999995616,
-    "water": 24.29567499999945,
+    "food": 53.71366666666282,
+    "water": 52.85768750000135,
     "foodCap": 300,
     "waterCap": 220,
-    "population": 21,
+    "population": 23,
     "capacity": 31,
-    "brood": 0.03113333333332835,
-    "hatched": 12,
+    "brood": 0.9949666666666928,
+    "hatched": 13,
     "lost": 0,
-    "totalFood": 293.09999999999985,
-    "totalWater": 168.5,
+    "totalFood": 327.2999999999998,
+    "totalWater": 202,
     "nurseries": 0,
     "caches": 2,
     "boltholes": 0
@@ -72,14 +72,14 @@
   },
   "heat": {
     "known": 3,
-    "total": 2.286989730575442,
-    "hottest": 0.9309920072555542
+    "total": 1.9334647913783556,
+    "hottest": 0.9727519750595093
   },
   "suspicion": {
-    "value": 37.05058730089551,
+    "value": 39.451025822720425,
     "tier": 1,
-    "peak": 38.12353596253814,
-    "floor": 20.967944779395978,
-    "lastCause": "expansion"
+    "peak": 39.982910270087935,
+    "floor": 21.990600648548366,
+    "lastCause": "trap"
   }
 }

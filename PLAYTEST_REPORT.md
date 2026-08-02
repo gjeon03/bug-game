@@ -65,9 +65,10 @@ node scripts/playtest.mjs --out artifacts/evidence/redesign-final
 | `restarts`   | Five consecutive restarts, checking every carrier of state                     |
 | `focus`      | Tab hidden for six seconds, then restored                                      |
 
-Headless coverage sits alongside it: 131 unit/integration tests, including a full run played to a win
+Headless coverage sits alongside it: 133 unit/integration tests, including a full run played to a win
 on three seeds, the capped-resource invariant, the objective hierarchy, regional heat, the threat
-budget, worker stuck/overlap limits and restart equality.
+budget, worker stuck/overlap limits, panic pathing out of a blocked refuge, the climax objective's
+decision density, and restart equality.
 
 ---
 
@@ -125,32 +126,58 @@ it found the territory defect that made the ending unreachable.
 
 ### 4c. Verification commands
 
-| Command                                                | Result                                                                                 |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `pnpm format:check`                                    | pass                                                                                   |
-| `pnpm lint`                                            | pass                                                                                   |
-| `pnpm typecheck`                                       | pass                                                                                   |
-| `pnpm test`                                            | **131 passed** in ~11 s                                                                |
-| `pnpm build`                                           | pass — `dist/assets/index-*.js` 191.9 kB raw, **63.0 kB gzip** (budget 150 kB)         |
-| `node scripts/check-subpath.mjs dist`                  | `4 file(s) checked; build is subpath-safe.`                                            |
-| `pnpm exec playwright test tests/e2e/gameplay.spec.ts` | **5 passed** (1.3 min)                                                                 |
-| `pnpm exec playwright test tests/e2e/deploy.spec.ts`   | **3 passed** — nested subpath, zero requests leaving the origin, no placeholder assets |
+| Command                               | Result                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------ |
+| `pnpm format:check`                   | pass                                                                           |
+| `pnpm lint`                           | pass                                                                           |
+| `pnpm typecheck`                      | pass                                                                           |
+| `pnpm test`                           | **133 passed** in ~12 s                                                        |
+| `pnpm build`                          | pass — `dist/assets/index-*.js` 192.5 kB raw, **63.2 kB gzip** (budget 150 kB) |
+| `node scripts/check-subpath.mjs dist` | `4 file(s) checked; build is subpath-safe.`                                    |
+| `pnpm test:e2e`                       | **17 passed** (27.6 min) — the whole suite, on the nested `/bug-game/` path    |
 
-### 4d. What was not completed in this pass
+The E2E total is the load-bearing one. It covers all six specs — `gameplay`, `deploy`, `perf`,
+`threats`, `restart`, `fullrun` — and the deploy job is gated on the same command, so nothing ships
+without it. Getting there took four separate defects out of the game and the harness; they are
+itemised in `DECISIONS.md`.
 
-Stated plainly rather than implied.
+### 4d. What the verification itself got wrong
 
-- **The seven-scenario `playtest.mjs` package did not finish.** Its per-run screenshots and the
-  guided-run transcript above are real and come from the shipped build, but `playtest.json` is not a
-  complete seven-scenario record. Two causes were found and fixed along the way — an in-page steering
-  loop that could hang when the browser throttled `requestAnimationFrame` (now watchdogged in both
-  `tests/e2e/driver.ts` and `scripts/lib/bot.mjs`), and an O(n²) overlap scan running at 10 Hz inside
-  the page (now 2 Hz) — but the full package was not re-run to completion afterwards.
-- **`perf.spec.ts`, `threats.spec.ts`, `restart.spec.ts` and `fullrun.spec.ts` were not observed
-  green locally.** They are long by design (a full playthrough runs in real time) and every local
-  attempt was made on a machine that was also running other captures. They run in CI on every push,
-  and the deploy job is gated on them.
-- **Frame-time tails were therefore not captured for this build.** No p50/p95/p99 figure is claimed.
+Four of the defects fixed in the last pass were found _because_ a check that had been reporting
+success stopped doing so. Recorded here rather than in the fix list, because the pattern is the
+point: every one of them was a measurement that failed in the direction of making the game look
+fine.
+
+- **The stall probe could not have shown its own worst case.** It reported a 27 s worst stall and
+  illustrated it with ten two-second events, because `stuckSample` kept the _first_ ten rather than
+  the worst ten. The `state` it recorded was read at the moment a stall _ended_ — and since every
+  excused state (harvest, queue, trapped, idle) is what ends a stall, that label was guaranteed to
+  name the wrong one. Corrected, the same run named the defect in one line: every worst stall was
+  `panic`, on one cabinet edge. See `DECISIONS.md` D20.
+- **The performance gate was measuring the compositor.** On the GitHub runner the _idle baseline_ —
+  a static kitchen, no particles, no hazards — already fails `over50Pct < 1` by sixteen times, and
+  cannot present a frame faster than 50 ms. Presented-interval budgets are now enforced only where
+  the idle window shows the host can reach 60 Hz; the game's own cost is enforced everywhere. D19.
+- **Two regression tests passed without their fix.** The first panic test frightened a healthy
+  colony, where most roaches have clear line of sight to a crack, so it never met the geometry that
+  causes the stall. The first climax test forced a bare world into the finale, which collapses in
+  eight seconds, so it never reached the plateau it was measuring. Both were rewritten to derive
+  their setup from the observed evidence, and both were then confirmed to fail with the fix reverted.
+- **A fix that passed its test and broke the game.** Making panicking workers abandon an unreachable
+  refuge removed the stall and cost a run: they milled about in the open instead of pouring into the
+  walls, and seed 4242 went from a win to a wipe-out. Caught by `winnable.test.ts`, which plays three
+  seeds to a win rather than asserting one. The shipped behaviour discounts cracks behind the wall
+  the worker is against and bolts for the best one it can actually see.
+
+### 4e. Limits on what this evidence proves
+
+- **Frame-time tails are claimed from the development machine and the headed capture, not from CI.**
+  The reason is in 4d; the numbers and the host they came from are both in `perf/perf.json`.
+- **The 45-second decision gate is measured under play, and the `idle` scenario is over it** at
+  124.7 s. That scenario makes no inputs at all: the objective correctly reads "Moisture is running
+  low" and nobody acts on it. A do-nothing run is not normal play, and the plateau is the game
+  waiting, not the game stalling.
+- **Audio is verified by code inspection and voice-pool counters, not by listening.**
 
 ---
 
@@ -159,20 +186,32 @@ Stated plainly rather than implied.
 Recorded rather than hidden. Each is either a critic finding that was not fixed, or a limit on what
 the evidence proves.
 
-1. **No outer time limit on a run.** A colony that never reaches three held regions keeps playing
+1. **Worker stalls are at the contract's boundary, not comfortably inside it.** The gate is no
+   unintentionally stuck worker over 2 s; the worst measured in a full real-browser run is **2.7 s**,
+   with the rest of the sample at 2.4–2.5 s. Three causes were found and fixed in this pass and the
+   improvement is large — on the `growth` scenario, worst stall **212.5 s → 2.7 s**, stall events
+   67 → 28, workers that died mid-stall 6 → 0, severe overlaps 10 → 0, and the cluster on the
+   island's top edge is gone from the sample entirely. The causes were a panic run that steered into
+   cabinetry (`DECISIONS.md` D20), a lane offset that computed its steering target inside a solid,
+   and that guard's first version testing a _point_ rather than the roach's own radius (D23). Three
+   separate attempts to close the remainder by making the stuck ladder escalate faster were measured
+   and every one was worse (D22).
+2. **No outer time limit on a run.** A colony that never reaches three held regions keeps playing
    instead of being resolved. Every measured competent run ends, and household patience makes
    stalling expensive, but there is no hard stop. (Gameplay critic D4, partially fixed: the ending is
    now reachable and was measured on three seeds; the unbounded case remains.)
-2. **No persistent per-zone hold readout.** The objective names the region it is pointing at and its
+3. **No persistent per-zone hold readout.** The objective names the region it is pointing at and its
    percentage, and the end card shows the top four, but there is no always-on panel. (D17.)
-3. **Two of six light sources have no drawn emitter** — `dishwasherLamp` and `binGlow` sit just
+4. **Two of six light sources have no drawn emitter** — `dishwasherLamp` and `binGlow` sit just
    outside their fixtures. (Visual critic #14.)
-4. **Antennae are budgeted off past 30 on-screen roaches**, which is inside the range a late colony
+5. **Antennae are budgeted off past 30 on-screen roaches**, which is inside the range a late colony
    reaches. (Visual critic #15.)
-5. **The absolute frame budget is asserted conditionally on a fast host.** A headless CI box cannot
-   prove a desktop frame budget, so the suite falls back to a CPU-time budget there. This is a stated
-   limit, not a claim. (Technical verifier D4.)
-6. **Several restart and deploy assertions restate a hard cap and cannot fail.** Noise rather than
+6. **The absolute frame budget is asserted conditionally on a fast host.** A headless CI box cannot
+   prove a desktop frame budget — its idle window with the page doing nothing already fails it — so
+   the suite enforces the game's own frame-callback cost there instead. The single worst frame is
+   held to that budget scaled by a measured host factor, floored at 1 so a fast host gets no relief.
+   This is a stated limit, not a claim. (Technical verifier D4; see §4d and `DECISIONS.md` D19.)
+7. **Several restart and deploy assertions restate a hard cap and cannot fail.** Noise rather than
    false green — the load-bearing assertions in those specs are real. (Technical verifier D5–D9.)
-7. **Audio was verified by code inspection and by the voice-pool counters, not by listening.** No
+8. **Audio was verified by code inspection and by the voice-pool counters, not by listening.** No
    automated check hears the mix.

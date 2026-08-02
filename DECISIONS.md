@@ -169,7 +169,7 @@ player (`world.banking`) rather than being a silent rule.
 
 ---
 
-## D9 — Four player-driven operations replace the three-night clock
+## D14 — Four player-driven operations replace the three-night clock
 
 **Default in brief:** a player-driven four-operation infestation run, unless a better structure is proved.
 **Chosen:** the default, adopted essentially unchanged.
@@ -187,7 +187,7 @@ raises household patience when overrun, so dawdling costs pressure rather than e
 
 ---
 
-## D10 — Regional evidence heat, added alongside the global tier
+## D15 — Regional evidence heat, added alongside the global tier
 
 **Default in brief:** the household should learn _where_ activity occurred, not only accumulate a number.
 **Chosen:** a 12 × 9 grid (`sim/heat.ts`) that every evidence source deposits into at the position it
@@ -205,7 +205,7 @@ pounding scored identically to one nobody used.
 
 ---
 
-## D11 — Spacing enforced positionally, not as a steering force
+## D16 — Spacing enforced positionally, not as a steering force
 
 **Default:** keep the existing separation force and tune it.
 **Chosen:** a Jacobi positional relaxation pass after integration, plus per-worker lane offsets.
@@ -218,7 +218,7 @@ separation query radius of 17 units against a drawn body ≈ 21 units long. Over
 
 ---
 
-## D12 — Caps are derived from what the player built
+## D17 — Caps are derived from what the player built
 
 **Default:** raise the caps.
 **Chosen:** low base caps (`FOOD_CAP 120`, `WATER_CAP 100`, `BASE_CAPACITY 13`) that only rise through
@@ -231,7 +231,7 @@ capped resource must always name a spend, a cap-raiser, a reason to hold, or the
 
 ---
 
-## D13 — Three defects found by playing, not by reading
+## D18 — Three defects found by playing, not by reading
 
 Recorded because each was invisible to static analysis and to the unit suite, and each was fixed only
 after the guided bot reproduced it in a real browser.
@@ -249,3 +249,188 @@ after the guided bot reproduced it in a real browser.
    concurrent-route budget after the spill was cleared away, so opportunistic routing silently
    deleted the colony's own supply lines. Routine routes are now removed with their resource, the
    player is told, and the route budget went from 5 to 6 to leave room for opportunism.
+
+---
+
+## D19 — Four defects the full CI suite found that the local suite could not
+
+The repository's E2E suite was long enough that it had never been observed green end to end on one
+machine; the deploy job ran it in CI, and the first honest run of it failed 4 of 17. Recorded because
+each failure was a real defect rather than a flaky test, and because three of the four were in the
+_verification_ layer, which is exactly where a false green hides.
+
+1. **The performance spec was measuring the host, not the game.** `cpuWorst` came in at 14.7 ms
+   against an 8 ms budget on a headless CI box. The frame budget belongs to the game, so the game's
+   own cost is what has to be inside it — and it was not, because territory hold and regional heat
+   were both recomputed every simulation step. Both are now batched at 10 Hz
+   (`TERRITORY_INTERVAL`, `HEAT_INTERVAL`), which took the same measurement to 2.1 ms p99 / 6.2 ms
+   worst. The spec's long-frame assertion was also rewritten: counting long intervals on a shared CI
+   runner measures the runner, so it now asserts that the game's own CPU time stays inside budget —
+   an explainable frame, rather than an absent one.
+2. **A restart assertion had become impossible to satisfy.** It required every zone's hold to be 0
+   after a restart, which stopped being true the moment the home crack counted as a foothold: a fresh
+   world legitimately starts with presence in its own region. Replaced with the property that was
+   actually meant — no zone is _held_, and no zone has accumulated meaningful hold.
+3. **A player who was only ever seen got no response at all.** Measured: alert tier 2, five sightings,
+   zero patrols, zero traps. The household acted only on ground whose regional heat had passed
+   `HEAT_KNOWN`, and a player who never routes anything deposits almost no regional heat — so being
+   spotted repeatedly produced nothing. Sightings now deposit heavily where they happen, and from
+   tier 2 the household will act on the best ground it has, because by then it is looking.
+4. **The full-run spec's player starved itself.** It stacked the brood family three times and ran out
+   of food. Replaced with the guided player used everywhere else in the evidence package, which acts
+   only on `hud.source` and `hud.target` — the same information a human has. That player then
+   reproduced defect 2 of D18 inside the test harness itself: an offer it could not afford
+   short-circuited its step with neither an action nor a wait, spinning its whole iteration budget in
+   seconds. Same shape as the bug in the game's objective hierarchy, same fix — an offer never
+   expires, so an unaffordable one is a reason to go earn it, not a reason to stop.
+
+**The general lesson, recorded because it cost the most time here:** a test suite too slow to run
+locally is a suite whose failures are discovered by the deploy job. The specs are long because a
+playthrough happens in real time and that is not negotiable, so the mitigation is that the deploy job
+runs the _whole_ suite rather than a fast subset of it — `.github/workflows/pages.yml` now invokes
+`pnpm test:e2e`, and nothing reaches Pages that has not passed all seventeen.
+
+---
+
+## D20 — Panicking roaches pressed into walls, and the stuck ladder could not save them
+
+The worst worker stall in the seven-scenario package was **19.9 s**, in the aggressive run, under a
+spray. Every one of the ten worst stalls had the same shape: state `panic`, and a position on the
+line **y = 1172** — twenty roaches strung along a single cabinet edge, motionless, at the most
+closely-watched moment in the game.
+
+**Two causes, both load-bearing.**
+
+1. **A refuge in range is not a refuge that can be reached.** Panic steers straight at the nearest
+   claimed crack and, because that crack is nominally within reach, refreshes `panicTime` every
+   step. When a cabinet stands on the straight line, the worker pushes into it forever: the
+   distance never closes, so the timer never expires, so the panic never ends. The run now checks
+   the surface it is actually standing against — if that surface faces back along the run, the
+   worker follows it instead of pushing through it, and the timer stops being pinned so the panic
+   can end on its own.
+2. **The stuck ladder counted its own nudge as an escape.** Rung 2 shoves the worker sideways. That
+   shove moves the body more than the watchdog's progress threshold, so `recoverStage` reset to
+   zero — and the panic steering immediately pushed it back into the same wall. The ladder cycled
+   0-1-2 for the full nineteen seconds and never reached rung 4, the one that follows a wall out.
+   Fixing cause 1 removes the force that was pushing them back; the cycling itself is recorded here
+   because it is a general hazard of a ladder whose own rungs create displacement, and because the
+   opposite fix — escalating to wall-following sooner — was tried earlier in this project and
+   measured **worse** (43 events / 4.7 s worst → 81 events / 28.2 s worst).
+
+**How it was found, and what nearly hid it.** The probe reported a 27 s worst stall but its
+`stuckSample` held the _first_ ten events rather than the worst ten, so every recorded sample was a
+harmless two-second one and nothing explained the number. Worse, the recorded `state` was read at
+the moment the stall _ended_ — and since every excused state (harvest, queue, trapped, idle) counts
+as progress and therefore ends a stall, the label was guaranteed to be the wrong one. Events marked
+`harvest` were really "stalled somewhere else, then reached the food". The probe now keeps the worst
+by duration, records the state the stall began in, every state seen during it, how it ended, and the
+recovery rung reached — and counts a worker that died mid-stall separately, so an aggressive run's
+casualties cannot inflate the figure that the gate reads.
+
+**The lesson worth keeping:** the measurement was wrong in the direction that made the game look
+fine. A sampled-first-N record of a worst-case metric is not evidence about the worst case.
+
+---
+
+## D21 — Two measurements that were reading the wrong thing
+
+Both were found while chasing gates that appeared to be failing, and in each case the check was
+answering a question next to the one being asked. Recorded because a wrong measurement is more
+expensive than a wrong implementation: it points the work at the wrong place.
+
+**The decision-density probe read the rule id, not the instruction.** The contract forbids a plateau
+longer than 45 s without something new for the player to decide, and the probe marked a beat when
+`hud.source` changed. That is a fair proxy almost everywhere — it ignores a countdown ticking inside
+an otherwise unchanged objective, which is exactly the noise it needs to ignore. It is wrong in the
+one place the rule is pinned by design: for the whole 62-second extermination `hud.source` is
+`final`, so a finale whose objective moved from "the spray is on the pantry — get them into a crack"
+to "holding 2 of 3 — get bodies back into the island" scored as a single **51.8 s** plateau. The
+probe now marks a beat when the instruction changes with its digits masked, which counts a different
+instruction and still ignores a countdown, and reports the rule-only figure alongside it as
+`longestRuleSeconds` so neither reading is hidden.
+
+That said, the frozen finale was a real defect and was fixed first, before the measurement was
+touched: the climax objective now names which cloud is where, which region is slipping and how long
+is left, and `critique.test.ts` holds it to the 45-second gate. The measurement change came second,
+and it changes what the gate reads for one rule in one phase of the game.
+
+**A regex inside the in-page sampler was eaten before it compiled.** The sampler is shipped to the
+page as a template literal, so `\d` in its source collapses to a literal `d` and the digit mask
+would have stripped the letter d out of every objective instead of the numbers. `eslint` flagged it
+as a useless escape, which is precisely what it was. The mask is a character class now. The same
+hazard bit once already in this file — a pair of backticks inside a comment in the sampler
+terminated the template literal and broke the parse — so it is worth stating plainly: **the sampler
+is a string, and normal escaping intuitions do not apply inside it.**
+
+---
+
+## D22 — Three attempts to make the stuck ladder escalate, all measured worse
+
+Recorded as a negative result, with numbers, because the intuition that a worker stuck for seven
+seconds should climb the recovery ladder faster is extremely strong and it is wrong in this kitchen
+every time it has been tried.
+
+The ladder is: **1** re-read the scent · **2** step sideways and flip lanes · **3** abandon the route
+and walk home · **4+** follow the wall, alternating side, cycling forever. A worker resets to rung 0
+the moment it makes progress.
+
+| Attempt                                                 | Worst real-browser stall | Outcome                                                                                                                        |
+| ------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Baseline (this ordering)                                | 43 events / **4.7 s**    | shipped                                                                                                                        |
+| Skip straight to wall-following when a wall is involved | 81 events / **28.2 s**   | reverted — a worker that has also lost the trail runs along the wall away from its line                                        |
+| Hold the rung 1.2 s so a nudge cannot reset the ladder  | —                        | reverted — queue jams promoted healthy workers to "drop the route"; seed 20260801 went from a win to a collapse at operation 2 |
+| Wall-following ahead of the abandon step, with the hold | **66.7 s**               | reverted — the island is a 1 240-unit convex edge and a committed follower walks its whole length                              |
+
+The rung that resets the ladder is doing real work: **rung 2's own sideways shove is movement**, so
+it clears the progress threshold and the worker starts again from rung 1 next time. That looks like
+a bug and reads like a cycle in the probe output (`recoverStage: 2`, over and over). It is also what
+keeps a jammed-but-fine worker from being promoted to a rung that costs the player a supply line.
+
+**Where that leaves the gate.** The contract asks for no unintentionally stuck worker over 2 s. Sixty
+seconds of two-route traffic meets it and is asserted in `workers.test.ts`. A ten-minute real-browser
+run with thirty roaches, hazards and a spray does not: the worst measured stall is **7.2 s**, and the
+stalls cluster on one coordinate — the top-left corner of the island. That is an honest miss, it is
+in `PLAYTEST_REPORT.md` §5, and the four attempts above are why it is not being fixed by tuning the
+ladder. The next thing to try is the map rather than the AI: a convex corner that thirty roaches
+route around at once is a level-design problem, and rounding or chamfering that corner is a smaller,
+more predictable change than another pass at the recovery heuristic.
+
+---
+
+## D23 — A lane offset that aimed workers into cabinetry
+
+Every worst stall in the shipped evidence package sat on one line: **y = 1172**, the top edge of the
+island, spread across 400 units of it, in `inbound`, on recovery rung 2, the longest **69.7 s**.
+
+The cause is arithmetic, not AI. Workers ride two counter-flowing lanes offset perpendicular to the
+trail tangent, `lateral = sign * LANE_OFFSET + lane * LANE_JITTER`, and the steering target is that
+offset applied to a lookahead node. Where the player's line runs along cabinetry — which the shortest
+route very often does — the lane whose sign faces the cabinet computes a target **inside** it, and
+every step aims the whole cohort at the wall. The stuck ladder cannot help: it nudges the worker
+free and the steering immediately puts it back. Exactly the shape of the panic defect in D20, in a
+different system.
+
+The fix mirrors the lane when its target is inside a solid. Counter-flow separation is lost for those
+few nodes and the traffic moves. Measured directly: over 120 s on a wall-hugging route, the old
+formula produced **4 745** steering targets inside cabinetry; the new one produces **zero**, and
+`workers.test.ts` asserts it.
+
+**The test for it was wrong three times, and each way was instructive.**
+
+1. **It counted idle roaches as stuck.** It reported **18.7 s → 2.4 s**, which read as a decisive
+   win. The 18.7 s figure was an `idle` roach loitering at a nest, which is not stuck at all — the
+   simulation's own watchdog excuses idle for exactly that reason and the test did not. With idle
+   excluded the figure was identical with and without the fix.
+2. **It re-derived the fix and asserted its own arithmetic.** Rewritten to check the invariant
+   directly, it recomputed the lane offset in the test body and asserted the recomputed result was
+   reachable — which is true by construction. It passed with the guard deleted from the game
+   entirely. A test that reimplements the code under test is testing itself.
+3. **The guard used a point test, so it barely worked.** With the test finally measuring an
+   observable — how long a routed worker is held in continuous contact with cabinetry — the guard
+   showed 11.1 s → 2.8 s rather than the clean result the earlier versions implied. The reason is
+   that `isInsideSolid` is a _point_ test: a lane target one unit clear of a cabinet passes it, while
+   a body of radius 8 cannot stand there at all. The real-browser package agreed and was blunter —
+   worst stall **212 s**, still on y = 1172. The guard tests a circle now.
+
+The shipped assertion is the observable one: no worker following a route is held against cabinetry
+for longer than the bound, measured on a trail deliberately laid along the island's top edge.

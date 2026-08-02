@@ -210,7 +210,30 @@ export function updateWorkers(world: World, dt: number): void {
         // ride one side of the scent corridor and returning roaches the other, each with a stable
         // spread inside its own lane. This is the difference between a trail that reads as one long
         // segmented animal and one that reads as traffic.
-        const lateral = sign * LANE_OFFSET + w.lane * LANE_JITTER;
+        let lateral = sign * LANE_OFFSET + w.lane * LANE_JITTER;
+        // A lane must not be steered into cabinetry. Where a trail runs along a solid — and the
+        // player's shortest line very often hugs one — the lane on that side aims its whole cohort at
+        // the wall, every step, and the stuck ladder cannot help because the steering keeps putting
+        // them back. Measured across every scenario in the evidence package: the worst stalls were
+        // all on **y = 1172**, the top edge of the island, spread along 400 units of it, all in
+        // `inbound` (the lane whose sign points at that edge), all cycling on recovery rung 2, the
+        // longest for **69.7 s**. This is the same shape as the panic-into-a-cabinet defect: not a
+        // recovery failure but a steering target inside a solid.
+        //
+        // Mirroring the lane is enough. The corridor is symmetric, so the other side is the same
+        // trail — the counter-flow separation is lost for those few nodes and traffic still moves.
+        //
+        // The reachability test is a *circle*, not a point. A point test was tried first and left the
+        // defect nearly intact — worst stall 212 s, still on y = 1172 — because a target one unit
+        // clear of the cabinet passes a point test while a body of radius 8 cannot stand there at
+        // all, so the lane went on aiming at a spot the roach could never occupy.
+        const rad = WORKER_RADIUS * w.scale;
+        if (collideCircle(tn.x - tn.dy * lateral, tn.y + tn.dx * lateral, rad).hit) {
+          const mirrored = -sign * LANE_OFFSET + w.lane * LANE_JITTER;
+          lateral = collideCircle(tn.x - tn.dy * mirrored, tn.y + tn.dx * mirrored, rad).hit
+            ? 0
+            : mirrored;
+        }
         const tx = tn.x - tn.dy * lateral;
         const ty = tn.y + tn.dx * lateral;
         const d = Math.max(1, Math.hypot(tx - w.x, ty - w.y));
@@ -340,29 +363,78 @@ export function updateWorkers(world: World, dt: number): void {
         // Bolt for the nearest claimed crack. This is the colony's counterplay to a sweep: the
         // roaches pour into the walls and wait it out, which is both what real ones do and the
         // reason claiming cracks is worth the evidence it costs. The escape tunnel reaches furthest.
+        //
+        // A refuge within reach is not a refuge that can be *reached*: the straight line to it may
+        // run through a cabinet. Steering at it regardless — and refreshing the panic timer every
+        // step because it is nominally in range — pressed whole clusters into the same edge and kept
+        // them there. Measured under a spray: twenty workers strung along y = 1172, every one of them
+        // motionless in `panic`, the worst for 19.9 s. The stuck ladder could not save them either,
+        // because its own sideways nudge moved the body far enough to count as progress, which reset
+        // the ladder to zero; it cycled 0-1-2 for the whole nineteen seconds and never reached the
+        // rung that follows a wall.
+        //
+        // The answer is *not* to give up on shelter. That was tried, and it cost a run: workers that
+        // abandoned the crack milled about in the open through the spray instead of pouring into the
+        // walls, and seed 4242 went from a win to a wipe-out at operation 2. Sheltering is the whole
+        // counterplay to a sweep. So a worker that is standing against a wall discounts the cracks
+        // that lie *behind* that wall and bolts for the best one it can actually see, and only takes
+        // its chances in the open when there is nothing else left.
+        const wallFresh = w.blockedAge < 0.35 && (w.blockedNx !== 0 || w.blockedNy !== 0);
         const bolt = world.nests.find((n) => n.claimed && n.fn === 'bolthole');
         let refuge: { x: number; y: number; id: string } | null = null;
-        let bestD2 = Infinity;
+        let bestScore = Infinity;
         for (let k = 0; k < world.nests.length; k++) {
           const n = world.nests[k];
           if (!n.claimed) continue;
           const reach = (n === bolt ? 1100 : 680) * world.traits.refugeReachMult;
           const d2n = dist2(w.x, w.y, n.x, n.y);
-          if (d2n < reach * reach && d2n < bestD2) {
-            bestD2 = d2n;
+          if (d2n >= reach * reach) continue;
+          // Behind the surface we are pressed against counts as far away, not as unreachable — a
+          // crack round the corner is still worth the run when it is the only one there is.
+          let score = d2n;
+          if (wallFresh) {
+            const d = Math.max(1, Math.sqrt(d2n));
+            const facing = ((n.x - w.x) / d) * w.blockedNx + ((n.y - w.y) / d) * w.blockedNy;
+            if (facing < -0.15) score += reach * reach;
+          }
+          if (score < bestScore) {
+            bestScore = score;
             refuge = n;
           }
         }
-        if (refuge) {
-          const d = Math.max(1, Math.hypot(refuge.x - w.x, refuge.y - w.y));
+        const toRefuge = refuge ? Math.max(1, Math.hypot(refuge.x - w.x, refuge.y - w.y)) : 0;
+        const intoWall =
+          refuge !== null &&
+          wallFresh &&
+          ((refuge.x - w.x) / toRefuge) * w.blockedNx +
+            ((refuge.y - w.y) / toRefuge) * w.blockedNy <
+            -0.15;
+        // Blocked time accrues faster than it is forgiven. Sliding along a wall breaks the contact
+        // for a moment, which un-blocks the worker, which turns it back into the wall — a symmetric
+        // timer sat at zero through that oscillation and the roach pressed for 3.3 s regardless.
+        if (intoWall) w.refugeBlocked += dt;
+        else w.refugeBlocked = Math.max(0, w.refugeBlocked - dt * 0.35);
+        // Last resort only: every crack in reach is behind something. Take cover in the open rather
+        // than stand still against a cabinet.
+        const refugeHopeless = w.refugeBlocked > 1.6;
+
+        if (refuge && !refugeHopeless) {
+          const d = toRefuge;
           dirX = (refuge.x - w.x) / d;
           dirY = (refuge.y - w.y) / d;
-          w.panicTime = Math.max(w.panicTime, 0.35);
+          if (intoWall) {
+            const side = w.variant % 2 === 0 ? 1 : -1;
+            dirX = -w.blockedNy * side;
+            dirY = w.blockedNx * side;
+          } else {
+            w.panicTime = Math.max(w.panicTime, 0.35);
+          }
           if (d < 46) {
             w.x = refuge.x + world.rng.signed() * 26;
             w.y = refuge.y + world.rng.signed() * 26;
             w.state = 'idle';
             w.panicTime = 0;
+            w.refugeBlocked = 0;
             w.routeId = -1;
             // Live where you sheltered. Resetting to the home crack sent the whole colony marching
             // back across open floor after every sweep, which is both slow and more evidence.
@@ -466,6 +538,9 @@ export function updateWorkers(world: World, dt: number): void {
       // wall runs before it can follow it out.
       w.blockedNx = c.nx;
       w.blockedNy = c.ny;
+      w.blockedAge = 0;
+    } else {
+      w.blockedAge += dt;
     }
 
     const sp = Math.hypot(w.vx, w.vy);
@@ -634,6 +709,20 @@ function recoverWorker(w: Worker, home: { x: number; y: number }): void {
   // 81 events / 28.2 s worst, because a worker that has *also* lost its place on the trail then runs
   // along the wall away from the line it was serving. Re-read the scent first; follow the wall only
   // once that has not helped.
+  //
+  // Two further attempts to make the ladder escalate more readily were tried here and both were
+  // measured worse, which is why the rungs are in this order and reset the way they do:
+  //
+  //  - Holding the rung for 1.2 s after a nudge, so the nudge's own displacement could not reset the
+  //    ladder. Ordinary traffic jams — two brief stalls inside a second, which a queue produces
+  //    constantly — then promoted healthy workers to "drop the route", and seed 20260801 went from a
+  //    win to a collapse at operation 2 with its supply lines abandoned.
+  //  - Moving wall-following ahead of the abandon step, so escalating could not cost the player a
+  //    line. Worst stall went from **7.2 s to 66.7 s**: this kitchen's island is a 1 240-unit convex
+  //    edge, and a worker that commits to following it simply walks its whole length.
+  //
+  // Wall-following is a last resort in a *concave* corner, and it earns its place there. It is not a
+  // general answer to being blocked, and reaching it sooner makes the colony worse, not better.
   if (w.recoverStage >= 4) {
     // Wall-following, and it never gives up.
     //

@@ -94,7 +94,10 @@ async function guidedStep(page: Page): Promise<string> {
     src.startsWith('capped:repair') ||
     src.startsWith('gate:zones')
   ) {
-    if (!target) return 'wait';
+    if (!target) {
+      await page.waitForTimeout(2500);
+      return 'wait';
+    }
     await driveTo(page, target.x, target.y, { timeout: 40_000, arrive: 50 });
     await tapInteract(page);
     await page.waitForTimeout(400);
@@ -107,16 +110,44 @@ async function guidedStep(page: Page): Promise<string> {
 
   // Run a line to whatever the objective is pointing at — unless it is already served, in which case
   // a fresh lay would only evict one of the player's own working lines.
+  //
+  // "Already served" is not a reason to ignore a *shortage*, though. A shortage means the lines that
+  // exist are not keeping up, and its blocker says so in as many words: add a second source. Treating
+  // the existing line as an answer is how this player lost a colony on a slow CI host — it spent
+  // 89 % of a 320 s run standing at the crack being told moisture was running low, laid 62 trail
+  // nodes all run, and starved twenty-three roaches at alert tier 0.
+  const supplyUrgent = src === 'shortage' || src.endsWith(':saving');
   if (target) {
-    const served = s.routes.some((r) => {
-      if (!r.linked || !r.resourceId) return false;
-      const res = s.resources.find((x) => x.id === r.resourceId);
-      return !!res && Math.hypot(res.x - target.x, res.y - target.y) < 120;
-    });
-    if (!served) {
-      await layLine(page, HOME_MOUTH, { x: target.x, y: target.y });
+    const servedBy = (tx: number, ty: number): boolean =>
+      s.routes.some((r) => {
+        if (!r.linked || !r.resourceId) return false;
+        const res = s.resources.find((x) => x.id === r.resourceId);
+        return !!res && Math.hypot(res.x - tx, res.y - ty) < 120;
+      });
+
+    let go: { x: number; y: number; label: string } | null = servedBy(target.x, target.y)
+      ? null
+      : target;
+
+    // Under a shortage, if the objective's own target is served, go find one that is not.
+    if (!go && supplyUrgent && s.routes.length < 6) {
+      const kind = /moisture|water/i.test(s.hud.objective) ? 'water' : 'food';
+      let bestD = Infinity;
+      for (const res of s.resources) {
+        if (res.kind !== kind || res.depleted || res.unlockOp > s.operation) continue;
+        if (servedBy(res.x, res.y)) continue;
+        const d = Math.hypot(res.x - s.scout.x, res.y - s.scout.y);
+        if (d < bestD) {
+          bestD = d;
+          go = { x: res.x, y: res.y, label: res.id };
+        }
+      }
+    }
+
+    if (go) {
+      await layLine(page, HOME_MOUTH, { x: go.x, y: go.y });
       await page.waitForTimeout(1500);
-      return `line:${target.label}`;
+      return `line:${go.label}`;
     }
   }
 
@@ -219,10 +250,22 @@ test.describe('complete runs', () => {
     await shot(page, '22-footholds');
 
     // ── Play on. Progress is entirely the player's; the household escalates on its own.
+    //
+    // Every decision is recorded. A failure here used to report only the operation it stopped at,
+    // which said nothing about *why* — the CI host and this one disagreed and there was no way to
+    // tell whether the player had been starved of time or had simply stood still. The tally below
+    // answers that directly: `hold:` dominating means the player had nothing it was willing to act
+    // on, and the source it was holding against names the rule that failed to give it one.
+    const decisions: string[] = [];
     for (let i = 0; i < 120; i++) {
       s = await state(page);
       if (s.status !== 'playing' || s.operation >= 4) break;
-      await guidedStep(page);
+      decisions.push(await guidedStep(page));
+    }
+    const tally: Record<string, number> = {};
+    for (const d of decisions) {
+      const key = d.split(':').slice(0, 2).join(':');
+      tally[key] = (tally[key] ?? 0) + 1;
     }
 
     const end = await state(page);
@@ -238,6 +281,8 @@ test.describe('complete runs', () => {
       heat: end.heat,
       suspicion: end.suspicion,
       stats: end.stats,
+      decisions: tally,
+      decisionLog: decisions,
       peakPerf: tele,
     });
 

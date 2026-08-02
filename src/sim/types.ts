@@ -264,6 +264,10 @@ export interface Worker {
   /** Surface normal of the last thing this worker walked into, for wall-following recovery. */
   blockedNx: number;
   blockedNy: number;
+  /** Seconds since that surface was last touched; the normal is stale once this grows. */
+  blockedAge: number;
+  /** How long a bolt for shelter has been running into something instead of closing on it. */
+  refugeBlocked: number;
 }
 
 export interface Corpse {

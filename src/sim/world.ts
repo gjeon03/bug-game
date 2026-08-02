@@ -285,6 +285,8 @@ function makeWorker(): Worker {
     markIndex: -1,
     blockedNx: 0,
     blockedNy: 0,
+    blockedAge: 99,
+    refugeBlocked: 0,
   };
 }
 
@@ -336,6 +338,8 @@ export function spawnWorker(
     w.markIndex = -1;
     w.blockedNx = 0;
     w.blockedNy = 0;
+    w.blockedAge = 99;
+    w.refugeBlocked = 0;
     return w;
   }
   return null;

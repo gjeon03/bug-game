@@ -41,6 +41,7 @@ const SAMPLER_INSTALL = `() => {
     cappedFood: 0, cappedWater: 0, cappedPop: 0, cappedUnexplained: 0,
     objectiveLog: [], decisionLog: [], lastObjective: null, lastSource: null,
     longestPlateau: 0, plateauAt: 0, plateauWhat: '',
+    lastShape: null, ruleMarks: [], longestRule: 0, longestRuleWhat: '',
     tierLog: [], lastTier: -1, lastAdapts: 0, lastOp: 0, lastHeld: 0, lastFits: 0,
     routineLog: [], lastRoutinePhase: '', emptyObjective: 0, dt: 0.1,
   };
@@ -55,10 +56,30 @@ const SAMPLER_INSTALL = `() => {
     if (!s.hud.objective || s.hud.objective.length < 4) S.emptyObjective += S.dt;
 
     const mark = (kind, detail) => S.decisionLog.push({ t: +t.toFixed(1), kind, detail });
+    // A beat is a change in what the player is being *asked to do*. The rule id (hud.source) was
+    // standing in for that, and during the 62-second extermination the rule cannot change by design
+    // — so a finale in which the objective moved from "the spray is on the pantry" to "holding 2 of
+    // 3, get bodies back into the island" scored as one 51.8 s plateau. Comparing the instruction
+    // with its digits masked counts a genuinely different instruction and ignores a countdown
+    // ticking down, which is the thing the rule id was there to filter out. The rule-only reading is
+    // still recorded, as longestRuleSeconds, so neither number is hidden.
+    //
+    // The digit mask is a character class rather than \\d on purpose: this whole sampler is a
+    // template literal, so a backslash escape is eaten before the regex is ever compiled and the
+    // mask would have matched the letter d. eslint caught it as a useless escape, which it was.
+    const shape = String(s.hud.objective || '').replace(/[0-9]+/g, '#');
     if (s.hud.objective !== S.lastObjective) {
       S.objectiveLog.push({ t: +t.toFixed(1), source: s.hud.source, objective: s.hud.objective });
       S.lastObjective = s.hud.objective;
-      if (s.hud.source !== S.lastSource) { mark('objective', s.hud.source); S.lastSource = s.hud.source; }
+    }
+    if (shape !== S.lastShape || s.hud.source !== S.lastSource) {
+      mark('objective', s.hud.source);
+      S.lastShape = shape;
+    }
+    if (s.hud.source !== S.lastSource) { S.ruleMarks.push(t); S.lastSource = s.hud.source; }
+    {
+      const lastRule = S.ruleMarks.length ? S.ruleMarks[S.ruleMarks.length - 1] : 0;
+      if (t - lastRule > S.longestRule) { S.longestRule = t - lastRule; S.longestRuleWhat = s.hud.source; }
     }
     if (s.operation !== S.lastOp) { mark('operation', 'operation ' + s.operation); S.lastOp = s.operation; }
     if (s.suspicion.tier !== S.lastTier) { S.tierLog.push({ t: +t.toFixed(1), tier: s.suspicion.tier }); mark('alert', 'tier ' + s.suspicion.tier); S.lastTier = s.suspicion.tier; }
@@ -85,18 +106,26 @@ const SAMPLER_INSTALL = `() => {
       S.cappedUnexplained += S.dt;
     }
 
+    // A stall is recorded when the worker starts moving again, so the state used to be read at the
+    // moment it *recovered* — which is never the state it was stuck in, because every excused state
+    // (harvest, queue, trapped, idle) counts as progress and therefore ends the stall. Events
+    // labelled 'harvest' were really "stalled in some other state, then reached the food". The stall
+    // now carries the state it began in, every distinct state seen during it, and how it ended.
     for (const w of ws) {
       let tr = S.tracks.get(w.id);
-      if (!tr) tr = { x: w.x, y: w.y, ni: w.nodeIndex, carry: w.carrying, stillSince: t, reported: 0 };
+      if (!tr) tr = { x: w.x, y: w.y, ni: w.nodeIndex, carry: w.carrying, stillSince: t, reported: 0, from: w.state, seen: [w.state], rec: w.recoverStage || 0 };
       const moved = Math.hypot(w.x - tr.x, w.y - tr.y);
       const progressed = moved > 3 || w.nodeIndex !== tr.ni || w.carrying !== tr.carry ||
         w.state === 'trapped' || w.state === 'harvest' || w.state === 'queue' || w.state === 'idle';
       if (progressed) {
         if (t - tr.stillSince > 2 && tr.reported < 3) {
-          S.stuckEvents.push({ id: w.id, seconds: +(t - tr.stillSince).toFixed(2), x: Math.round(w.x), y: Math.round(w.y), state: w.state });
+          S.stuckEvents.push({ id: w.id, seconds: +(t - tr.stillSince).toFixed(2), x: Math.round(w.x), y: Math.round(w.y), from: tr.from, seen: tr.seen.join('>'), endedAs: w.state, recoverStage: tr.rec });
           tr.reported++;
         }
-        tr.stillSince = t;
+        tr.stillSince = t; tr.from = w.state; tr.seen = [w.state]; tr.rec = w.recoverStage || 0;
+      } else {
+        if (tr.seen[tr.seen.length - 1] !== w.state) tr.seen.push(w.state);
+        if ((w.recoverStage || 0) > tr.rec) tr.rec = w.recoverStage || 0;
       }
       tr.x = w.x; tr.y = w.y; tr.ni = w.nodeIndex; tr.carry = w.carrying;
       S.tracks.set(w.id, tr);
@@ -105,7 +134,9 @@ const SAMPLER_INSTALL = `() => {
     }
     for (const [id, tr] of S.tracks) {
       if (!ws.some((w) => w.id === id)) {
-        if (t - tr.stillSince > 2) S.stuckEvents.push({ id, seconds: +(t - tr.stillSince).toFixed(2), x: Math.round(tr.x), y: Math.round(tr.y), state: 'gone' });
+        // A worker that dies mid-stall is not a stuck worker: it stopped because something killed
+        // it. Recorded separately so an aggressive run's casualties cannot inflate the stall figure.
+        if (t - tr.stillSince > 2) S.stuckEvents.push({ id, seconds: +(t - tr.stillSince).toFixed(2), x: Math.round(tr.x), y: Math.round(tr.y), from: tr.from, seen: tr.seen.join('>'), endedAs: 'died', recoverStage: tr.rec });
         S.tracks.delete(id);
       }
     }
@@ -154,15 +185,25 @@ const SAMPLER_INSTALL = `() => {
 const SAMPLER_READ = `() => {
   const S = window.__probe;
   if (!S) return null;
-  const stuck = S.stuckEvents.filter((e) => e.seconds > 2);
+  // A worker that died mid-stall did not get stuck, so it is counted apart from the gate figure.
+  // The samples are the *worst* by duration, not the first ten seen — the first ten were all
+  // two-second events while the reported worst was twenty-seven, and nothing in the record explained
+  // the difference.
+  const all = S.stuckEvents.filter((e) => e.seconds > 2);
+  const worst = (list) => [...list].sort((a, b) => b.seconds - a.seconds);
+  const stuck = all.filter((e) => e.endedAs !== 'died');
+  const died = all.filter((e) => e.endedAs === 'died');
   return {
     samples: S.samples, maxWorkers: S.maxWorkers,
     stuckEvents: stuck.length,
     worstStuckSeconds: stuck.reduce((m, e) => Math.max(m, e.seconds), 0),
-    stuckSample: stuck.slice(0, 10),
+    stuckSample: worst(stuck).slice(0, 10),
+    stalledThenDied: died.length,
+    worstStalledThenDiedSeconds: died.reduce((m, e) => Math.max(m, e.seconds), 0),
+    diedSample: worst(died).slice(0, 5),
     overlapEvents: S.overlapEvents.length,
     worstOverlapSeconds: S.overlapEvents.reduce((m, e) => Math.max(m, e.seconds), 0),
-    overlapSample: S.overlapEvents.slice(0, 10),
+    overlapSample: worst(S.overlapEvents).slice(0, 10),
     carryMismatch: S.carryMismatch,
     emptyObjectiveSeconds: +S.emptyObjective.toFixed(1),
     cappedFoodSeconds: +S.cappedFood.toFixed(1),
@@ -172,6 +213,8 @@ const SAMPLER_READ = `() => {
     longestPlateauSeconds: +S.longestPlateau.toFixed(1),
     longestPlateauAt: +S.plateauAt.toFixed(1),
     longestPlateauSource: S.plateauWhat,
+    longestRuleSeconds: +S.longestRule.toFixed(1),
+    longestRuleSource: S.longestRuleWhat,
     decisions: S.decisionLog.length,
     decisionLog: S.decisionLog,
     objectiveLog: S.objectiveLog,

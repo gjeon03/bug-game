@@ -279,6 +279,11 @@ _(Implemented ahead of the rest of the redesign; all 73 pre-existing unit tests 
 
 - No unintentionally stuck worker > **2 s**; no persistent solid penetration; no severe 3-worker
   overlap > **0.75 s** outside authored states; no permanent endpoint piles.
+  - **Status: met on every clause except the stall bound, which sits at the boundary.** Overlap,
+    solid penetration, endpoint piles and carry/render agreement are met and asserted. The worst
+    stall measured in a full real-browser run is **2.7 s** against a 2 s gate, down from **212.5 s**
+    on the same scenario before this pass. Not weakened here — the gate still reads 2 s, and the
+    numbers are in `PLAYTEST_REPORT.md` §5 with the rejected fixes in `DECISIONS.md` D22.
 - Carrying state and rendered cargo always agree. Five restarts leave no stale worker state.
 
 ### Environment

@@ -194,6 +194,8 @@ export interface WorkerDiagnostic {
   targetResource: string | null;
   targetNest: string | null;
   lostTime: number;
+  /** Which rung of the stuck-recovery ladder this worker is on; 0 when it is moving normally. */
+  recoverStage: number;
   radius: number;
 }
 
@@ -218,6 +220,7 @@ export function workerDiagnostics(world: World): WorkerDiagnostic[] {
       targetResource: w.targetResource,
       targetNest: w.targetNest,
       lostTime: w.lostTime,
+      recoverStage: w.recoverStage,
       radius: WORKER_RADIUS * w.scale,
     });
   }
