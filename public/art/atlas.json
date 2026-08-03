@@ -1,0 +1,76 @@
+{
+  "ppu": 2,
+  "generatedBy": "tools/bake/run.mjs",
+  "props": {
+    "plate-single": {
+      "file": "plate-single.png",
+      "w": 310,
+      "h": 291,
+      "anchorX": 154.57,
+      "anchorY": 139.54
+    },
+    "plate-stack": {
+      "file": "plate-stack.png",
+      "w": 433,
+      "h": 436,
+      "anchorX": 219.37,
+      "anchorY": 192.05
+    },
+    "sink-drain": {
+      "file": "sink-drain.png",
+      "w": 462,
+      "h": 444,
+      "anchorX": 230.64,
+      "anchorY": 227.44
+    },
+    "sponge": {
+      "file": "sponge.png",
+      "w": 176,
+      "h": 135,
+      "anchorX": 87.71,
+      "anchorY": 56.74
+    },
+    "detergent-bottle": {
+      "file": "detergent-bottle.png",
+      "w": 148,
+      "h": 282,
+      "anchorX": 72.86,
+      "anchorY": 66.09
+    },
+    "crumb-a": {
+      "file": "crumb-a.png",
+      "w": 34,
+      "h": 39,
+      "anchorX": 16.86,
+      "anchorY": 17.61
+    },
+    "crumb-b": {
+      "file": "crumb-b.png",
+      "w": 29,
+      "h": 31,
+      "anchorX": 14.2,
+      "anchorY": 14.57
+    },
+    "crumb-c": {
+      "file": "crumb-c.png",
+      "w": 39,
+      "h": 45,
+      "anchorX": 18.17,
+      "anchorY": 20.88
+    },
+    "droplet-s": {
+      "file": "droplet-s.png",
+      "w": 34,
+      "h": 35,
+      "anchorX": 16.88,
+      "anchorY": 15.83
+    },
+    "droplet-m": {
+      "file": "droplet-m.png",
+      "w": 52,
+      "h": 53,
+      "anchorX": 25.94,
+      "anchorY": 23.98
+    }
+  }
+}

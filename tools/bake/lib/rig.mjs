@@ -51,6 +51,76 @@ export function buildLights(scene) {
   return { key, warmFill };
 }
 
+/**
+ * The night-kitchen environment that metals actually reflect.
+ *
+ * This is not decoration — it is the difference between steel and black. In physically based
+ * shading a metal has no diffuse response, so it is lit almost entirely by what it reflects. Baked
+ * with directional lights alone, every `metalness > 0.9` surface in this kitchen (sink deck, drain
+ * flange, strainer basket, taps) rendered near-black, and the drain read as a vinyl record. The
+ * environment supplies the reflected world those surfaces need.
+ *
+ * It is authored, not photographic: a dark room, a bright horizontal band where the under-cabinet
+ * LED strip lives, a cool wash above for the window, and a warm smear for the refrigerator seam.
+ * Because the same map feeds every prop, all the kitchen's metal agrees about where the room is.
+ */
+function buildEnvironment(renderer) {
+  const W = 512;
+  const H = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Vertical wash: cold night ceiling above, near-black floor below.
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0.0, '#243447');
+  sky.addColorStop(0.42, '#33485e');
+  sky.addColorStop(0.55, '#141c25');
+  sky.addColorStop(1.0, '#070b0f');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // Under-cabinet LED strip: the bright band a steel surface catches as a hard specular line.
+  const led = ctx.createLinearGradient(0, H * 0.3, 0, H * 0.46);
+  led.addColorStop(0, 'rgba(226,240,255,0)');
+  led.addColorStop(0.5, 'rgba(226,240,255,0.95)');
+  led.addColorStop(1, 'rgba(226,240,255,0)');
+  ctx.fillStyle = led;
+  ctx.fillRect(0, H * 0.3, W, H * 0.16);
+
+  // Refrigerator door seam: a narrow warm slit that keeps steel from reading uniformly cold.
+  const seam = ctx.createLinearGradient(W * 0.66, 0, W * 0.78, 0);
+  seam.addColorStop(0, 'rgba(255,186,110,0)');
+  seam.addColorStop(0.5, 'rgba(255,186,110,0.7)');
+  seam.addColorStop(1, 'rgba(255,186,110,0)');
+  ctx.fillStyle = seam;
+  ctx.fillRect(W * 0.66, H * 0.34, W * 0.12, H * 0.3);
+
+  // Window moonlight: a soft cool pool on the opposite side.
+  const moon = ctx.createRadialGradient(W * 0.2, H * 0.26, 0, W * 0.2, H * 0.26, H * 0.34);
+  moon.addColorStop(0, 'rgba(190,216,244,0.65)');
+  moon.addColorStop(1, 'rgba(190,216,244,0)');
+  ctx.fillStyle = moon;
+  ctx.fillRect(0, 0, W, H);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const env = pmrem.fromEquirectangular(tex).texture;
+  pmrem.dispose();
+  tex.dispose();
+  return env;
+}
+
+let cachedEnv = null;
+function environmentFor(renderer) {
+  if (!cachedEnv) cachedEnv = buildEnvironment(renderer);
+  return cachedEnv;
+}
+
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 4000);
 // Screen "up" maps to world -Z (further from the viewer) for a top-down game.
 camera.up.set(0, 0, -1);
@@ -65,6 +135,8 @@ camera.up.set(0, 0, -1);
 export function renderProp(renderer, object, opts = {}) {
   const padUnits = opts.pad ?? 3;
   const scene = new THREE.Scene();
+  scene.environment = environmentFor(renderer);
+  scene.environmentIntensity = opts.envIntensity ?? 1.0;
   buildLights(scene);
 
   // A ground plane invisible except where the prop's shadow falls. Baking the contact shadow into

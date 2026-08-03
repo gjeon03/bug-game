@@ -70,17 +70,27 @@ export const filmPlastic = (color = 0xd6dde2) => std({ color, metalness: 0.0, ro
 /** Organic food matter — crumbs, grains, scraps. Warm and rough so it never reads as a pebble. */
 export const foodCrumb = (color = 0xc09a5e) => std({ color, metalness: 0.0, roughness: 0.86 });
 
-/** Standing water / condensation. Physical transmission so droplets refract what is under them
- *  rather than sitting on top as flat blue discs. */
+/**
+ * Standing water / condensation.
+ *
+ * Heavy transmission was tried first and produced flat grey discs: a droplet baked in isolation has
+ * nothing behind it to refract, so transmission had nothing to do and the sprite collapsed into the
+ * exact "circle" defect this pipeline exists to kill. What actually makes water read is specular
+ * behaviour — a tight bright highlight, a clearcoat sheen and a darker wet rim — so the material
+ * leans on clearcoat and low roughness instead, and keeps only enough transmission to tint.
+ */
 export const water = () =>
   new THREE.MeshPhysicalMaterial({
-    color: 0xcfe6f2,
+    color: 0xbcd9e8,
     metalness: 0.0,
-    roughness: 0.05,
-    transmission: 0.92,
-    thickness: 2.5,
+    roughness: 0.03,
+    transmission: 0.34,
+    thickness: 1.2,
     ior: 1.33,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.02,
     transparent: true,
+    opacity: 0.86,
   });
 
 /** Cockroach chitin. Warm amber-brown, semi-gloss — the shell highlight is the single most
