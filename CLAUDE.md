@@ -7,7 +7,7 @@ override the other contract documents where the two disagree.
 
 You are the **logistics mind of a cockroach colony** secretly turning a lived-in modern Korean
 apartment kitchen at night into your domain, while the household learns from your evidence exactly
-where to exterminate you. You personally walk every route the colony will use. Scouting *is*
+where to exterminate you. You personally walk every route the colony will use. Scouting _is_
 routing. Growth is visible in the world, not in a number.
 
 ## 2. Korean-first localization (hard gate)
@@ -31,7 +31,9 @@ routing. Growth is visible in the world, not in a number.
   the Reserved Font Name list. Bundling, redistribution and embedding are permitted; the font may
   not be sold standalone. The OFL text and attribution ship in the repo.
 - Font OS/2 `fsType = 8` (editable embedding) — machine-readable embedding permission.
-- Vendored locally at `public/fonts/*.woff2`. **Never** load from Google Fonts or any CDN.
+- Vendored locally at `src/fonts/*.woff2` — **not** `public/`. Vite copies `public/` verbatim and
+  leaves the URL root-absolute, which 404s under `/bug-game/`; importing from `src/` makes Vite
+  fingerprint the file and emit a relative URL. **Never** load from Google Fonts or any CDN.
 - Weights shipped: Regular 400, Bold 700, ExtraBold 800. Declare explicit `@font-face` weight
   mappings; never rely on synthetic bolding.
 - **Wait for `document.fonts.ready` before any canvas text measurement or final layout.** Font
@@ -53,7 +55,7 @@ routing. Growth is visible in the world, not in a number.
   migration entry supersedes this line.
 - **Art is baked offline, never drawn procedurally at runtime.** `tools/bake/` renders parametric
   3D props in headless Chromium (three.js, SwiftShader — deterministic) through **one shared camera
-  and light rig** (`tools/bake/lib/rig.mjs`) and writes PNG atlases to `public/art/`.
+  and light rig** (`tools/bake/lib/rig.mjs`) and writes one packed sprite sheet to `src/art/` (same subpath reason as the fonts).
   - three.js is a **devDependency only**. It must never reach the runtime bundle.
   - Scale anchor: scout = 26 world units = 35 mm. Model every prop in real millimetres via
     `tools/bake/lib/units.mjs`. Never eyeball sizes in world units.
@@ -64,13 +66,13 @@ routing. Growth is visible in the world, not in a number.
 - **Banned, because each was a confirmed user-reported defect:** objects represented as bare
   circles/lines; large unbroken blue-black rectangles; appliances drawn as flat "walls"; floating
   labels compensating for weak art; flat vector icons used as world objects; uniform darkness.
-- `ART_BIBLE.md`'s old rule *"Cabinets and appliances are walls, not props"* is **rescinded** — it
+- `ART_BIBLE.md`'s old rule _"Cabinets and appliances are walls, not props"_ is **rescinded** — it
   is the direct cause of the giant-rectangle defect.
 
 ## 6. Asset finality
 
-Every visible and audible element is classified in `ASSET_MANIFEST.md` as *intentional final*,
-*generated final*, *licensed final*, or *temporary*. **Temporary assets block completion.** A
+Every visible and audible element is classified in `ASSET_MANIFEST.md` as _intentional final_,
+_generated final_, _licensed final_, or _temporary_. **Temporary assets block completion.** A
 placeholder that passes a test is still a placeholder.
 
 ## 7. Real-runtime playtesting (no substitutes)
@@ -112,7 +114,13 @@ Parallel agents may work on isolated art, audio, localization review, criticism 
 never a finished deliverable.** Do not report success without recorded real-browser evidence for the
 specific claim being made. If something is blocked, say so plainly and show the exact failure.
 
-## 11. Known environment facts (verified 2026-08-04)
+## 11. Korean particles are computed, never hardcoded
+
+A particle after an interpolated value depends on the **sound** of that value. For a number that
+means how it is read: 24 is 이십사 and takes 가; 18 is 십팔 and takes 이. Write `{amount}{amount?이/가}`
+in the catalog — `t()` picks the form. Never write `{amount}이`. Guarded by `tests/unit/i18n.test.ts`.
+
+## 12. Known environment facts (verified 2026-08-04)
 
 - No Blender, ffmpeg, ImageMagick, Inkscape or Python PIL on this machine. Available: Node 21,
   Python 3.10 (+ `fonttools`, `brotli` installed via pip), `rsvg-convert`, pnpm 9, and Playwright

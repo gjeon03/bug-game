@@ -26,6 +26,17 @@ export const ko = {
   'a11y.hudRegion': '상태 표시',
 
   /* ── shared units and cost fragments ─────────────────────────────────────── */
+
+  /* ── glossary anchors ────────────────────────────────────────────────────
+   * Single words the tests assert on, so a behavioural test can say "the blocker names the
+   * concept" without hardcoding one language's wording. Changing a term here changes both the
+   * game and the test that guards it, which is the point. */
+  'term.operation': '작전',
+  'term.capacityFull': '꽉 찼다',
+  'term.foothold': '거점',
+  'term.adaptation': '적응',
+  'term.cost': '든다',
+
   'unit.food': '먹이 {amount}',
   'unit.water': '수분 {amount}',
   'unit.costBoth': '먹이 {food} · 수분 {water}',
@@ -200,8 +211,8 @@ export const ko = {
     '둥지가 {capacity}에서 꽉 찼다. 거점을 차지하거나 번식 적응을 골라 늘려라.',
   'op.blocker.waterTooLow': '수분이 모자라 알을 못 기른다. 수분 길부터 돌려라.',
   'op.blocker.foodTooLow': '먹이가 모자라 알을 못 기른다. 먹이 길부터 돌려라.',
-  'op.blocker.nestCostFood': '{label}에는 먹이 {need}이 든다 — 지금 {have}.',
-  'op.blocker.nestCostWater': '{label}에는 수분 {need}이 든다 — 지금 {have}.',
+  'op.blocker.nestCostFood': '{label}에는 먹이 {need}{need?이/가} 든다 — 지금 {have}.',
+  'op.blocker.nestCostWater': '{label}에는 수분 {need}{need?이/가} 든다 — 지금 {have}.',
   'op.blocker.adaptCostFood': '제일 싼 적응이 먹이 {need} — 지금 {have}.',
   'op.blocker.adaptCostWater': '제일 싼 적응이 수분 {need} — 지금 {have}.',
   'op.blocker.fitCostFood': '{label} 꾸미기에 먹이 {need} — 지금 {have}.',
@@ -209,7 +220,7 @@ export const ko = {
   'op.blocker.zoneContested': '{zone}을 집이 훑고 있다 — 저기 있는 동안 장악이 깎인다.',
   'op.blocker.noShelter':
     '본거지 말고는 아무도 숨을 데가 없다 — 차지한 틈이 하나 더 있으면 위험이 갈린다.',
-  'op.blocker.adaptationSaving': '{name}에 {shortfall}이 모자란다.',
+  'op.blocker.adaptationSaving': '{name}에 {shortfall}{shortfall?이/가} 모자란다.',
   'op.blocker.shortfallFood': '먹이 {amount}',
   'op.blocker.shortfallWater': '수분 {amount}',
 
@@ -224,15 +235,15 @@ export const ko = {
   'objective.adaptation.choose': '적응을 골라라 — 1, 2, 3.',
   'objective.routine.incoming': '{title} {seconds}초 뒤 — {counter}',
   'objective.routine.active': '{title}: 길을 대기까지 {seconds}초.',
-  'objective.routine.harvesting': '{title}이 값을 치르는 중 — {seconds}초 남았다.',
+  'objective.routine.harvesting': '{title}{title?이/가} 값을 치르는 중 — {seconds}초 남았다.',
   'objective.shortage.food': '먹이가 바닥나 간다 — 먹이 길을 하나 더 돌려라.',
   'objective.shortage.water': '수분이 바닥나 간다 — 수분 길을 하나 더 돌려라.',
   'objective.shortage.noFoodLine': '먹이 길이 아예 하나도 안 이어져 있다.',
   'objective.shortage.noWaterLine': '수분 길이 아예 하나도 안 이어져 있다.',
   'objective.shortage.foodBehind': '먹이 길이 못 따라간다 — 공급원을 하나 더 붙여라.',
   'objective.shortage.waterBehind': '수분 길이 못 따라간다 — 공급원을 하나 더 붙여라.',
-  'objective.saving.food': '먹이 {amount}이 더 필요하다 — 먹이 길을 하나 더 돌려라.',
-  'objective.saving.water': '수분 {amount}이 더 필요하다 — 수분 길을 하나 더 돌려라.',
+  'objective.saving.food': '먹이 {amount}{amount?이/가} 더 필요하다 — 먹이 길을 하나 더 돌려라.',
+  'objective.saving.water': '수분 {amount}{amount?이/가} 더 필요하다 — 수분 길을 하나 더 돌려라.',
   'objective.saving.forAdaptFood': '{blocker} 먹이 길을 하나 더 돌려라.',
   'objective.saving.forAdaptWater': '{blocker} 수분 길을 하나 더 돌려라.',
   'objective.start': '틈에서 나와 먹을 것을 찾아라.',
@@ -298,14 +309,14 @@ export const ko = {
 
   /* ── Hints: contextual toasts ────────────────────────────────────────────── */
   'hint.nothingHere': '여기엔 살필 게 없다.',
-  'hint.sealed': '{label}: 작전 {op}까지 막혀 있다. 먹이 {food}, 수분 {water}이 든다.',
+  'hint.sealed': '{label}: 작전 {op}까지 막혀 있다. 먹이 {food}, 수분 {water}{water?이/가} 든다.',
   'hint.resource': '{label}: {noun} {amount} 남았다. 여기로 길을 놓아라.',
-  'hint.repairCost': '틈을 메우는 데 수분 {amount}이 든다.',
+  'hint.repairCost': '틈을 메우는 데 수분 {amount}{amount?이/가} 든다.',
   'hint.repaired': '{label}, {percent}%까지 메웠다.',
-  'hint.fitCost': '{label} 꾸미기에 먹이 {food}, 수분 {water}이 든다.',
+  'hint.fitCost': '{label} 꾸미기에 먹이 {food}, 수분 {water}{water?이/가} 든다.',
   'hint.fitChoose': '{label}: 무엇을 지을지 골라라 — 1 부화실, 2 창고, 3 대피소.',
-  'hint.claimCost': '{label}에는 먹이 {food}, 수분 {water}이 든다.',
-  'hint.adaptCost': '{name}에는 먹이 {food}, 수분 {water}이 든다.',
+  'hint.claimCost': '{label}에는 먹이 {food}, 수분 {water}{water?이/가} 든다.',
+  'hint.adaptCost': '{name}에는 먹이 {food}, 수분 {water}{water?이/가} 든다.',
   'hint.tooPoorAdapt': '곳간이 아직 모자란다.',
   'hint.tooPoorFit': '곳간이 모자라 그걸 못 꾸민다.',
   'hint.routeEvicted': '길은 한 번에 {max}개뿐 — 제일 오래된 게 삭았다.',

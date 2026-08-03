@@ -140,7 +140,7 @@ export function mesh(geometry, material) {
  * different kitchen and screenshots stop being comparable evidence.
  */
 export function makeRng(seed) {
-  let s = (seed >>> 0) || 1;
+  let s = seed >>> 0 || 1;
   return () => {
     s ^= s << 13;
     s >>>= 0;

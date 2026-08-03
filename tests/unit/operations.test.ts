@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { t } from '../../src/i18n/index.ts';
 import { zoneAt, ZONES_TO_WIN } from '../../src/sim/territory.ts';
 import { SIM_DT } from '../../src/core/clock.ts';
 import {
@@ -243,7 +244,7 @@ describe('the objective always says something useful', () => {
       if (i % 30 !== 0) continue;
       const hud = resolveHud(world);
       expect(hud.objective.trim().length, `empty objective at t=${world.time}`).toBeGreaterThan(8);
-      expect(hud.operation).toContain('Operation');
+      expect(hud.operation).toContain(t('term.operation'));
       expect(hud.forecast.trim().length).toBeGreaterThan(0);
       expect(hud.source).not.toBe('');
       sources.add(hud.source.split(':')[0]);
@@ -309,10 +310,10 @@ describe('the objective always says something useful', () => {
     expect(world.colony.population).toBe(world.colony.capacity);
     const blocker = popGate.blocker(world);
     expect(blocker, 'a colony at its ceiling must be told so').not.toBeNull();
-    expect(blocker!.toLowerCase()).toContain('capacity');
+    expect(blocker!).toContain(t('term.capacityFull'));
     expect(blocker!).toContain(String(world.colony.capacity));
     // ...and it has to name what would raise it, not merely restate the number.
-    expect(blocker!.toLowerCase()).toMatch(/foothold|adaptation/);
+    expect(blocker!).toMatch(new RegExp(`${t('term.foothold')}|${t('term.adaptation')}`));
   });
 
   it('names the cost when a foothold is unaffordable', () => {
@@ -327,7 +328,7 @@ describe('the objective always says something useful', () => {
     const blocker = gate.blocker(world);
     expect(blocker).not.toBeNull();
     expect(blocker!).toContain(sat.label);
-    expect(blocker!).toMatch(/\d+ (food|moisture)/);
+    expect(blocker!).toMatch(new RegExp(`(${t('unit.foodNoun')}|${t('unit.waterNoun')})\\s*\\d+`));
   });
 
   it('a claim the colony cannot pay for is refused with a reason', () => {
@@ -340,7 +341,7 @@ describe('the objective always says something useful', () => {
     doInteract(world);
 
     expect(world.nests.find((n) => n.id === sat.id)!.claimed).toBe(false);
-    expect(world.hint).toContain('needs');
+    expect(world.hint).toContain(t('term.cost'));
     expect(world.hint).toContain(String(sat.costFood));
   });
 });

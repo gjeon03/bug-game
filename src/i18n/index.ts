@@ -41,7 +41,36 @@ export function localeTag(): string {
   return current === 'ko' ? 'ko-KR' : 'en';
 }
 
-const PLACEHOLDER = /\{(\w+)\}/g;
+/**
+ * Does this value end in a consonant (받침)?
+ *
+ * Korean object and subject particles are chosen by the final sound of the preceding word, and for
+ * a NUMBER that means the sound it is *read* as, not the digit. 24 is read 이십사 and takes 가;
+ * 18 is read 십팔 and takes 이. Interpolating a number and then hardcoding one particle therefore
+ * gets it wrong for roughly half of all reachable values — which is exactly what the catalog was
+ * doing across a dozen keys before this existed.
+ *
+ * Sino-Korean digit readings: 영 일 이 삼 사 오 육 칠 팔 구. Of those, 이 사 오 구 end in a vowel.
+ * Any number ending in 0 is read 십/백/천/만 (or 영), all of which end in a consonant.
+ */
+function endsWithConsonant(value: string | number): boolean {
+  if (typeof value === 'number' || /^-?\d+$/.test(value)) {
+    const digit = Math.abs(Math.trunc(Number(value))) % 10;
+    return ![2, 4, 5, 9].includes(digit);
+  }
+  const last = value.trim().slice(-1);
+  const code = last.charCodeAt(0);
+  // Hangul syllables: the final consonant index is the remainder mod 28; 0 means no 받침.
+  if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28 !== 0;
+  // A Latin tail is read aloud in Korean; the common ones in this game end in a consonant sound.
+  return /[a-zA-Z]/.test(last);
+}
+
+/**
+ * `{name}` interpolates a value. `{name?이/가}` interpolates the PARTICLE that value requires,
+ * picking the first form after a consonant and the second after a vowel.
+ */
+const PLACEHOLDER = /\{(\w+)(?:\?([^/}]+)\/([^}]+))?\}/g;
 
 /**
  * Look up `key` and substitute `{name}` placeholders.
@@ -55,11 +84,17 @@ export function t(key: KoKey | string, params?: Readonly<Record<string, string |
     return key;
   }
   if (!params) return template;
-  return template.replace(PLACEHOLDER, (whole, name: string) => {
-    const value = params[name];
-    if (value === undefined) return whole;
-    return typeof value === 'number' ? value.toLocaleString(localeTag()) : value;
-  });
+  return template.replace(
+    PLACEHOLDER,
+    (whole, name: string, afterConsonant?: string, afterVowel?: string) => {
+      const value = params[name];
+      if (value === undefined) return whole;
+      if (afterConsonant !== undefined && afterVowel !== undefined) {
+        return endsWithConsonant(value) ? afterConsonant : afterVowel;
+      }
+      return typeof value === 'number' ? value.toLocaleString(localeTag()) : String(value);
+    },
+  );
 }
 
 /**

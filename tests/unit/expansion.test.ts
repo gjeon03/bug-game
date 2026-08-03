@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { t } from '../../src/i18n/index.ts';
 import { SIM_DT } from '../../src/core/clock.ts';
 import { doInteract, interactTarget } from '../../src/sim/colony.ts';
 import { NESTS } from '../../src/sim/kitchen.ts';
@@ -67,6 +68,6 @@ describe('footholds', () => {
 
     expect(world.nests.find((n) => n.id === later!.id)!.claimed).toBe(false);
     expect(world.hint).toContain(String(later!.unlockOp));
-    expect(world.hint.toLowerCase()).toContain('operation');
+    expect(world.hint.toLowerCase()).toContain(t('term.operation'));
   }, 30_000);
 });

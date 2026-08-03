@@ -51,6 +51,9 @@ export default tseslint.config(
       'playwright-report/**',
       'test-results/**',
       '.playwright-mcp/**',
+      // Scratch renders and one-off viewers the bake tool writes while iterating. Generated, not
+      // authored, and already gitignored.
+      'tools/bake/.cache/**',
     ],
   },
   eslint.configs.recommended,
@@ -73,6 +76,13 @@ export default tseslint.config(
   },
   {
     files: ['scripts/**/*.mjs', 'tests/unit/**/*.ts', '*.config.ts', '*.config.js'],
+    languageOptions: { globals: { ...NODE, ...BROWSER } },
+  },
+  {
+    // The offline bake tool. It is Node at the top level and browser inside the strings it injects
+    // into the headless page, so it legitimately needs both global sets — without this block every
+    // `process`, `console` and `document` in tools/ reports as no-undef.
+    files: ['tools/**/*.mjs'],
     languageOptions: { globals: { ...NODE, ...BROWSER } },
   },
   {

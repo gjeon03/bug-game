@@ -23,6 +23,13 @@ export const en = {
   'a11y.hudRegion': 'Status readout',
 
   /* ── shared units and cost fragments ─────────────────────────────────────── */
+
+  'term.operation': 'Operation',
+  'term.capacityFull': 'capacity',
+  'term.foothold': 'foothold',
+  'term.adaptation': 'adaptation',
+  'term.cost': 'needs',
+
   'unit.food': '{amount} food',
   'unit.water': '{amount} moisture',
   'unit.costBoth': '{food} food · {water} moisture',

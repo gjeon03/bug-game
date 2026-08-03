@@ -21,7 +21,31 @@ export interface BakedProp {
   oy: number;
   /** True when this prop draws over entities rather than under them. */
   foreground: boolean;
+  /**
+   * Baked sprite to draw instead of the procedural canvas, when one exists for this kind.
+   *
+   * The procedural canvas stays as the fallback so a prop kind without baked art still renders, and
+   * so a failed sheet load degrades to the old look rather than to an empty kitchen.
+   */
+  sprite?: string;
 }
+
+/**
+ * Which prop kinds have real baked art.
+ *
+ * This is the table that retires "a plate is two concentric arcs". Each entry points at a sprite
+ * modelled from real millimetre dimensions and rendered offline with true materials, shadows and a
+ * 26° camera — see `tools/bake/props/`. Kinds absent from this table still draw procedurally and
+ * are tracked as remaining work in ASSET_MANIFEST.md.
+ */
+const SPRITE_FOR_KIND: Partial<Record<Prop['kind'], string>> = {
+  drainGrate: 'sink-drain',
+  sponge: 'sponge',
+  plate: 'plate-single',
+  bottle: 'detergent-bottle',
+  crumbCluster: 'crumb-c',
+  waterRing: 'droplet-m',
+};
 
 const PAD = 30;
 
@@ -54,6 +78,7 @@ export function bakeProps(): BakedProp[] {
       ox: prop.x - w / 2,
       oy: prop.y - h / 2,
       foreground: lift >= 16,
+      sprite: SPRITE_FOR_KIND[prop.kind],
     });
   }
   return out;

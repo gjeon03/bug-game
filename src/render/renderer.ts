@@ -21,7 +21,7 @@ import {
 } from './atlas.ts';
 import type { Camera } from './camera.ts';
 import { PAL, rgba } from './palette.ts';
-import { drawSprite, spritesReady } from './sprites.ts';
+import { SPRITE_PPU, drawSprite, frame, spritesReady } from './sprites.ts';
 import type { Particles } from './particles.ts';
 import { bakeProps, type BakedProp } from './props.ts';
 import { bakeSolids, type BakedSolid } from './solids.ts';
@@ -421,6 +421,21 @@ export class Renderer {
       const w = p.canvas.width;
       const h = p.canvas.height;
       if (p.ox > b.x1 || p.ox + w < b.x0 || p.oy > b.y1 || p.oy + h < b.y0) continue;
+
+      // Baked art wherever it exists. Drawn at the prop's own authored world position and rotation,
+      // and sized so the sprite's modelled footprint matches the width the simulation reserved for
+      // it — the sim's collision and cover volumes are unchanged, only what fills them.
+      if (p.sprite && spritesReady()) {
+        const f = frame(p.sprite);
+        if (f) {
+          const fit = (p.prop.w * SPRITE_PPU) / f.w;
+          if (drawSprite(ctx, p.sprite, p.prop.x, p.prop.y, { scale: fit, rotation: p.prop.rot })) {
+            this.drawCalls++;
+            continue;
+          }
+        }
+      }
+
       ctx.drawImage(p.canvas, p.ox, p.oy);
       this.drawCalls++;
     }

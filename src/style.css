@@ -63,8 +63,7 @@
   /* Numerals and meters previously used a Latin monospace, which has no Hangul and would drop any
    * Korean in those slots to a fallback mid-string. NanumSquareNeo leads here too; the monospace
    * families remain only for digits. */
-  --mono:
-    'NanumSquareNeo', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --mono: 'NanumSquareNeo', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 
   --gap: 14px;
   --radius: 10px;
