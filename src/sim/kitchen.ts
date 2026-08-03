@@ -298,6 +298,33 @@ export const LIGHTS: readonly LightSource[] = [
   { id: 'hallway', x: 3100, y: 2588, radius: 920, intensity: 0.5, warmth: 0.78 },
   { id: 'outletLed', x: 2860, y: 806, radius: 190, intensity: 0.22, warmth: 0.3 },
   { id: 'binGlow', x: 3180, y: 2440, radius: 300, intensity: 0.18, warmth: 0.6 },
+
+  // ── Under-cabinet LED strip ────────────────────────────────────────────────
+  //
+  // The kitchen's KEY light, and it was missing entirely. Measured cause of "the kitchen is not
+  // recognizable": the six sources above leave the counter run and the whole room centre unlit, so
+  // no amount of prop detail could read — an unlit object is a silhouette regardless of how well it
+  // is modelled. A strip under the wall cabinets is the most common light left on overnight in a
+  // Korean apartment kitchen, so it is motivated as well as necessary.
+  //
+  // Modelled as four overlapping emitters along the run rather than one huge radius, because a
+  // single circle reads as a lamp; a strip has to be long and shallow. Cold (warmth 0.12) so it
+  // separates from the warm fridge seam and hallway spill.
+  //
+  // Exposure samples this same field, so these are gameplay values, not decoration — and the first
+  // attempt proved how sharp that coupling is. At radius 430 / intensity 0.38 the spill reached the
+  // stove and sink food sources, and a reckless run went from viable to collapsing in operation 1
+  // with ZERO deliveries. Real under-cabinet light lands on the worktop, not across the floor, so
+  // the radius is now 260 (≈350 mm of throw) and the intensity halved. Measured against the
+  // strategy suite rather than judged by eye.
+  { id: 'underCabA', x: 300, y: 500, radius: 260, intensity: 0.2, warmth: 0.12 },
+  { id: 'underCabB', x: 820, y: 500, radius: 260, intensity: 0.2, warmth: 0.12 },
+  { id: 'underCabC', x: 1980, y: 500, radius: 260, intensity: 0.18, warmth: 0.12 },
+  { id: 'underCabD', x: 2400, y: 500, radius: 260, intensity: 0.18, warmth: 0.12 },
+
+  // Pendant over the island — the second thing left on in a lived-in kitchen, and the reason the
+  // island reads as a place people stand rather than as a slab in the dark.
+  { id: 'islandPendant', x: 1860, y: 1440, radius: 400, intensity: 0.26, warmth: 0.72 },
 ];
 
 export interface ResourceSpec {
