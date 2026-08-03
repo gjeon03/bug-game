@@ -1,4 +1,5 @@
 import { clamp01 } from '../core/math.ts';
+import { t } from '../i18n/index.ts';
 import {
   MAX_ROUTES,
   RESERVE_MAX,
@@ -30,10 +31,10 @@ export class Hud {
     this.root.innerHTML = `
       <div class="corner tl">
         <div class="panel">
-          ${meter('food', 'Food', ICONS.food, 'f-food')}
-          ${meter('water', 'Moisture', ICONS.water, 'f-water')}
-          ${meter('pop', 'Colony', ICONS.pop, 'f-pop')}
-          ${meter('brood', 'Brood', ICONS.brood, 'f-brood')}
+          ${meter('food', t('hud.meter.food'), ICONS.food, 'f-food')}
+          ${meter('water', t('hud.meter.water'), ICONS.water, 'f-water')}
+          ${meter('pop', t('hud.meter.colony'), ICONS.pop, 'f-pop')}
+          ${meter('brood', t('hud.meter.brood'), ICONS.brood, 'f-brood')}
         </div>
       </div>
 
@@ -62,8 +63,8 @@ export class Hud {
 
       <div class="corner bl">
         <div class="panel">
-          ${meter('stam', 'Sprint', ICONS.stamina, 'f-stam')}
-          ${meter('pher', 'Pheromone', ICONS.pheromone, 'f-pher')}
+          ${meter('stam', t('hud.meter.sprint'), ICONS.stamina, 'f-stam')}
+          ${meter('pher', t('hud.meter.pheromone'), ICONS.pheromone, 'f-pher')}
           <div class="statusline" data-el="scoutState">Scout ready</div>
         </div>
       </div>
@@ -148,13 +149,13 @@ export class Hud {
     this.el.foodMeter?.classList.toggle('critical', world.shortage === 'food');
     this.el.waterMeter?.classList.toggle('critical', world.shortage === 'water');
 
-    let state = 'Scout ready';
-    if (!s.alive) state = `Scout lost — replacement in ${Math.max(0, s.respawnTimer).toFixed(1)}s`;
+    let state = t('hud.scout.ready');
+    if (!s.alive) state = t('hud.scout.dead', { seconds: Math.max(0, s.respawnTimer).toFixed(1) });
     else if (s.trapId >= 0)
-      state = `STUCK — mash SHIFT and a direction · ${Math.round(scoutStruggleProgress(world) * 100)}%`;
-    else if (s.spotted > 0.55) state = 'SEEN — get to cover';
-    else if (s.exposure > 0.55) state = 'Exposed — in the light';
-    else if (s.laying) state = 'Laying pheromone';
+      state = t('hud.scout.trapped', { percent: Math.round(scoutStruggleProgress(world) * 100) });
+    else if (s.spotted > 0.55) state = t('hud.scout.seen');
+    else if (s.exposure > 0.55) state = t('hud.scout.exposed');
+    else if (s.laying) state = t('hud.scout.laying');
     this.set('scoutState', state);
 
     const susp = world.suspicion;
@@ -263,7 +264,7 @@ export class Hud {
 function meter(id: string, label: string, icon: string, cls: string): string {
   return `<div class="meter ${cls}">
       ${icon}
-      <span class="label">${label}</span>
+      <span class="label" data-critical="${t('hud.meter.critical').trim()}">${label}</span>
       <span class="track"><span class="fill" data-el="${id}Fill" style="width:0%"></span></span>
       <span class="num" data-el="${id}Num">0</span>
     </div>`;
