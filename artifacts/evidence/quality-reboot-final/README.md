@@ -68,9 +68,11 @@ fixture exists there.
 | `dishwasher` | **yes** | mug with a handle, two ceramic plates, crumbs |
 | `stove` | **yes** | four burners with cross-grates, control knobs, oven vent, grease smear |
 | `counter-left` | partial | baked cabinet handles, tile grout, outlet, cables — but the worktop is still a large dark plane |
-| `fridge`, `island-edge`, `pantry`, `waste-corner`, `doorway` | not yet assessed | mostly procedural props |
+| `pantry` | **yes** | two crumpled snack packets with foil creases, jar with contents, spilled crumbs |
+| `fridge` | partial | condenser grille, outlet, cables legible; does not say "refrigerator" |
+| `island-edge`, `waste-corner`, `doorway` | not yet assessed | — |
 
-Three of the four inspected zones are identifiable without labels. That is real progress against
+Four of the six inspected zones are identifiable without labels. That is real progress against
 defects 2 and 3 but it is **not** the whole gate: the gate asks for the kitchen, not three of its
 zones, and 14 prop kinds remain procedural. Recorded as blocking in `ASSET_MANIFEST.md`.
 
