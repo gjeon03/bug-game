@@ -66,43 +66,41 @@ jobs:
       - name: Browser tests (nested path)
         run: pnpm test:e2e
 
-      # A failing E2E run used to report nothing but "Process completed with exit code 1". The
-      # detail existed — Playwright's JSON reporter writes it — but only inside an artifact, and
-      # downloading an artifact needs authentication. So a deployment could fail and be
-      # undiagnosable to anyone without repo credentials, which is exactly what happened on
-      # 691b259. The job summary is part of the public check output, so the failure now explains
-      # itself on the run page.
+      # A failing E2E run reported nothing but "Process completed with exit code 1", and the
+      # detail Playwright writes lives in an artifact that needs authentication to download. The
+      # job log and $GITHUB_STEP_SUMMARY need auth too — both were tried and neither is readable
+      # through the public API. ANNOTATIONS are, so the failure is emitted as `::error::` workflow
+      # commands, which surface on the public check-runs annotations endpoint. That makes a failed
+      # deployment diagnosable by anyone, with no credentials.
       - name: Explain the E2E failure
         if: failure()
         run: |
           node -e '
             const fs = require("fs");
             const p = "artifacts/evidence/e2e-results.json";
-            const out = [];
+            const esc = (t) => String(t).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+            const ansi = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g");
             if (!fs.existsSync(p)) {
-              out.push("No e2e-results.json — the suite died before reporting (build or webServer).");
-            } else {
-              const r = JSON.parse(fs.readFileSync(p, "utf8"));
-              const walk = (s) => {
-                for (const spec of s.specs ?? []) {
-                  if (spec.ok) continue;
-                  out.push("### FAILED: " + spec.title);
-                  out.push("`" + spec.file + ":" + spec.line + "`");
-                  for (const t of spec.tests ?? [])
-                    for (const res of t.results ?? []) {
-                      out.push("status: " + res.status + ", duration: " + Math.round((res.duration ?? 0) / 1000) + "s");
-                      const m = res.error && res.error.message;
-                      if (m) out.push("```\n" + m.replace(new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g"), "").slice(0, 2500) + "\n```");
-                    }
-                }
-                for (const c of s.suites ?? []) walk(c);
-              };
-              for (const s of r.suites ?? []) walk(s);
-              if (out.length === 0) out.push("Reporter recorded no failing spec; the runner itself failed.");
+              console.log("::error::E2E produced no results.json - the suite died before reporting (build or webServer).");
+              process.exit(0);
             }
-            const body = "## E2E failure detail\n\n" + out.join("\n\n") + "\n";
-            if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, body);
-            console.log(body);
+            const r = JSON.parse(fs.readFileSync(p, "utf8"));
+            let found = 0;
+            const walk = (s) => {
+              for (const spec of s.specs ?? []) {
+                if (spec.ok) continue;
+                found += 1;
+                const res = (spec.tests ?? [])[0]?.results?.[0] ?? {};
+                const msg = String(res.error?.message ?? "no error message")
+                  .replace(ansi, "").slice(0, 900);
+                console.log("::error file=" + spec.file + ",line=" + spec.line +
+                  "::E2E FAILED [" + spec.title + "] status=" + res.status +
+                  " duration=" + Math.round((res.duration ?? 0) / 1000) + "s :: " + esc(msg));
+              }
+              for (const c of s.suites ?? []) walk(c);
+            };
+            for (const s of r.suites ?? []) walk(s);
+            if (found === 0) console.log("::error::Reporter recorded no failing spec; the runner itself failed.");
           '
 
       - name: Upload evidence
