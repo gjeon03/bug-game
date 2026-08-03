@@ -1,9 +1,9 @@
 {
   "suspicion": {
-    "value": 50.487370329565216,
+    "value": 50.49237032956522,
     "tier": 2,
-    "peak": 50.77237032956496,
-    "floor": 27.92480368126073,
+    "peak": 50.78403699623162,
+    "floor": 27.931220347927393,
     "lastCause": "seen"
   },
   "counts": {
@@ -23,6 +23,6 @@
     "footfalls": 0,
     "pheromoneNodes": 0
   },
-  "nextResponse": "Next: sticky traps go down on your busiest floor routes.",
+  "nextResponse": "다음: 제일 붐비는 길에 끈끈이가 깔린다.",
   "scoutDeaths": 4
 }

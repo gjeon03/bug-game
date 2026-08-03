@@ -3,7 +3,9 @@
     "argv": [
       "/Users/jeongyeong-yeon/.asdf/installs/nodejs/21.7.2/bin/node",
       "/Users/jeongyeong-yeon/Documents/bug-game/node_modules/@playwright/test/cli.js",
-      "test"
+      "test",
+      "--grep",
+      "05 inspect reports a resource|06 standing in the fridge light"
     ],
     "configFile": "/Users/jeongyeong-yeon/Documents/bug-game/playwright.config.ts",
     "rootDir": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e",
@@ -72,245 +74,6 @@
   },
   "suites": [
     {
-      "title": "deploy.spec.ts",
-      "file": "deploy.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "static deployment",
-          "file": "deploy.spec.ts",
-          "line": 28,
-          "column": 6,
-          "specs": [
-            {
-              "title": "15 the production build runs from a nested repository subpath",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 7326,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:02:58.857Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "6f1c9f8fe7e196043de3-bfa7b33896b84172ce92",
-              "file": "deploy.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "16 no runtime request leaves the origin and no asset path is absolute",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 5281,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:03:06.396Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "6f1c9f8fe7e196043de3-1532bd0ee8bbfb22055e",
-              "file": "deploy.spec.ts",
-              "line": 48,
-              "column": 3
-            },
-            {
-              "title": "17 every visible and audible element is a shipping asset, not a placeholder",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 16725,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:03:11.683Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "6f1c9f8fe7e196043de3-79d1dbd703c5beffe686",
-              "file": "deploy.spec.ts",
-              "line": 91,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "fullrun.spec.ts",
-      "file": "fullrun.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "complete runs",
-          "file": "fullrun.spec.ts",
-          "line": 164,
-          "column": 6,
-          "specs": [
-            {
-              "title": "09 a careful run drives itself through the operations by achieving them",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 1500000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 381155,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m3\u001b[39m\nReceived:    \u001b[31m2\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m3\u001b[39m\nReceived:    \u001b[31m2\u001b[39m\n    at /Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts:291:27",
-                        "location": {
-                          "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts",
-                          "column": 27,
-                          "line": 291
-                        },
-                        "snippet": "  289 |     // The claim: a real browser, driving the real input layer, moved the run forward by *doing*\n  290 |     // things — and every advance is attributable to a completed checklist.\n> 291 |     expect(end.operation).toBeGreaterThanOrEqual(3);\n      |                           ^\n  292 |     expect(end.stats.operationsCompleted).toBeGreaterThanOrEqual(2);\n  293 |     expect(end.stats.deliveries).toBeGreaterThan(20);\n  294 |     expect(end.stats.routinesExploited).toBeGreaterThanOrEqual(2);"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts",
-                            "column": 27,
-                            "line": 291
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m3\u001b[39m\nReceived:    \u001b[31m2\u001b[39m\n\n  289 |     // The claim: a real browser, driving the real input layer, moved the run forward by *doing*\n  290 |     // things — and every advance is attributable to a completed checklist.\n> 291 |     expect(end.operation).toBeGreaterThanOrEqual(3);\n      |                           ^\n  292 |     expect(end.stats.operationsCompleted).toBeGreaterThanOrEqual(2);\n  293 |     expect(end.stats.deliveries).toBeGreaterThan(20);\n  294 |     expect(end.stats.routinesExploited).toBeGreaterThanOrEqual(2);\n    at /Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts:291:27"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:03:28.434Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents/bug-game/test-results/fullrun-complete-runs-09-a-65249-perations-by-achieving-them/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents/bug-game/test-results/fullrun-complete-runs-09-a-65249-perations-by-achieving-them/trace.zip"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts",
-                        "column": 27,
-                        "line": 291
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "10e71ebee97db66b31a0-ad72a8dd547c897996c2",
-              "file": "fullrun.spec.ts",
-              "line": 167,
-              "column": 3
-            },
-            {
-              "title": "10 reaching the last operation summons the extermination, and the card names the outcome",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 1500000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 229972,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:09:53.838Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "10e71ebee97db66b31a0-8126389548113141957e",
-              "file": "fullrun.spec.ts",
-              "line": 300,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
       "title": "gameplay.spec.ts",
       "file": "gameplay.spec.ts",
       "column": 0,
@@ -320,145 +83,9 @@
         {
           "title": "core play",
           "file": "gameplay.spec.ts",
-          "line": 28,
+          "line": 29,
           "column": 6,
           "specs": [
-            {
-              "title": "01 loads clean and reaches a playable scout",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2477,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:13:43.930Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "a8475ef9564cfbc88065-40dacb8b466491415ae0",
-              "file": "gameplay.spec.ts",
-              "line": 29,
-              "column": 3
-            },
-            {
-              "title": "02 onboarding teaches movement, and movement responds to real input",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3985,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:13:46.414Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "a8475ef9564cfbc88065-132a5c2ce0f5e6c2bc4b",
-              "file": "gameplay.spec.ts",
-              "line": 56,
-              "column": 3
-            },
-            {
-              "title": "03 closes the loop: scout route → worker acquisition → delivery → colony growth",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 35232,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:13:50.404Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "a8475ef9564cfbc88065-d8ae6a51afd285817943",
-              "file": "gameplay.spec.ts",
-              "line": 76,
-              "column": 3
-            },
-            {
-              "title": "04 route geometry changes risk: a covered route and an open-floor route differ measurably",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 32292,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:14:25.641Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "a8475ef9564cfbc88065-4f056dd79438d4f5d188",
-              "file": "gameplay.spec.ts",
-              "line": 130,
-              "column": 3
-            },
             {
               "title": "05 inspect reports a resource and refuses an unaffordable claim with a reason",
               "ok": true,
@@ -472,15 +99,15 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6327,
+                      "duration": 6489,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-03T17:14:57.938Z",
+                      "startTime": "2026-08-03T19:03:58.877Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -490,212 +117,7 @@
               ],
               "id": "a8475ef9564cfbc88065-0208bd3c28e5321e3a4a",
               "file": "gameplay.spec.ts",
-              "line": 173,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "perf.spec.ts",
-      "file": "perf.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "performance",
-          "file": "perf.spec.ts",
-          "line": 95,
-          "column": 6,
-          "specs": [
-            {
-              "title": "14 active play and peak load stay inside the frame-time budget",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 1200000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 782901,
-                      "error": {
-                        "message": "Error: peak-load p50 49.8 ms against an idle floor of 33.4 ms on this host\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m43.42\u001b[39m\nReceived:    \u001b[31m49.8\u001b[39m",
-                        "stack": "Error: peak-load p50 49.8 ms against an idle floor of 33.4 ms on this host\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m43.42\u001b[39m\nReceived:    \u001b[31m49.8\u001b[39m\n    at /Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts:246:9",
-                        "location": {
-                          "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts",
-                          "column": 9,
-                          "line": 246
-                        },
-                        "snippet": "  244 |         win!.p50,\n  245 |         `${win!.label} p50 ${win!.p50} ms against an idle floor of ${baseline!.p50} ms on this host`,\n> 246 |       ).toBeLessThanOrEqual(baseline!.p50 * LOAD_RATIO_BUDGET);\n      |         ^\n  247 |\n  248 |       // ── Presented-interval budgets.\n  249 |       //"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts",
-                            "column": 9,
-                            "line": 246
-                          },
-                          "message": "Error: peak-load p50 49.8 ms against an idle floor of 33.4 ms on this host\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m43.42\u001b[39m\nReceived:    \u001b[31m49.8\u001b[39m\n\n  244 |         win!.p50,\n  245 |         `${win!.label} p50 ${win!.p50} ms against an idle floor of ${baseline!.p50} ms on this host`,\n> 246 |       ).toBeLessThanOrEqual(baseline!.p50 * LOAD_RATIO_BUDGET);\n      |         ^\n  247 |\n  248 |       // ── Presented-interval budgets.\n  249 |       //\n    at /Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts:246:9"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:15:04.282Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents/bug-game/test-results/perf-performance-14-active-43944-nside-the-frame-time-budget/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents/bug-game/test-results/perf-performance-14-active-43944-nside-the-frame-time-budget/trace.zip"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts",
-                        "column": 9,
-                        "line": 246
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "73ed389be8d3d6a89cdb-0a46d2da8f43d33554af",
-              "file": "perf.spec.ts",
-              "line": 98,
-              "column": 3
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "restart.spec.ts",
-      "file": "restart.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "restart and lifecycle",
-          "file": "restart.spec.ts",
-          "line": 25,
-          "column": 6,
-          "specs": [
-            {
-              "title": "11 five consecutive restarts leak no state and stay playable",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 420000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 42257,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:28:16.406Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "62be28aa61e216d7fcc8-76809402866f48bee505",
-              "file": "restart.spec.ts",
-              "line": 28,
-              "column": 3
-            },
-            {
-              "title": "12 losing focus suspends the run instead of fast-forwarding it",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 420000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 8699,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:28:58.778Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "62be28aa61e216d7fcc8-1c6f563668484987b7a2",
-              "file": "restart.spec.ts",
-              "line": 105,
-              "column": 3
-            },
-            {
-              "title": "13 pause stops the simulation and the settings survive a restart",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 420000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 5958,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:29:07.482Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "62be28aa61e216d7fcc8-0fe713c8162095ca985d",
-              "file": "restart.spec.ts",
-              "line": 154,
+              "line": 174,
               "column": 3
             }
           ]
@@ -712,7 +134,7 @@
         {
           "title": "household response",
           "file": "threats.spec.ts",
-          "line": 24,
+          "line": 43,
           "column": 6,
           "specs": [
             {
@@ -728,15 +150,15 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 2,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 79930,
+                      "duration": 79961,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-03T17:29:13.455Z",
+                      "startTime": "2026-08-03T19:04:05.498Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -746,75 +168,7 @@
               ],
               "id": "c10e1de0146a6e946067-cdb8309487f22c28eab6",
               "file": "threats.spec.ts",
-              "line": 27,
-              "column": 3
-            },
-            {
-              "title": "07 a footfall is telegraphed, lethal, and survivable by leaving the marked ground",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 300000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 44861,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:30:33.389Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "c10e1de0146a6e946067-19005c594d337d8860c2",
-              "file": "threats.spec.ts",
-              "line": 86,
-              "column": 3
-            },
-            {
-              "title": "08 losing the scout costs a body and the colony provides a replacement",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 300000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 33910,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-03T17:31:18.255Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "c10e1de0146a6e946067-8b17f6964a8da9601e1d",
-              "file": "threats.spec.ts",
-              "line": 133,
+              "line": 46,
               "column": 3
             }
           ]
@@ -824,11 +178,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-03T17:02:56.341Z",
-    "duration": 1733807.621,
-    "expected": 15,
+    "startTime": "2026-08-03T19:03:57.614Z",
+    "duration": 87907.624,
+    "expected": 2,
     "skipped": 0,
-    "unexpected": 2,
+    "unexpected": 0,
     "flaky": 0
   }
 }

@@ -1,4 +1,23 @@
 import { expect, test } from '@playwright/test';
+import { ko } from '../../src/i18n/ko.ts';
+import { t } from '../../src/i18n/index.ts';
+
+/**
+ * A regex matching any shipped string under the given key prefixes.
+ *
+ * Placeholders are stripped to their literal segments, so a template like `'{place} 쪽 이동'` still
+ * matches the rendered line. This keeps threat assertions about MEANING rather than wording.
+ */
+function catalogAlternation(...prefixes: string[]): RegExp {
+  const parts = Object.entries(ko)
+    .filter(([k]) => prefixes.some((p) => k.startsWith(p)))
+    .flatMap(([, v]) => v.split(/\{[^}]*\}/))
+    .map((frag) => frag.trim())
+    .filter((frag) => frag.length >= 2)
+    .map((frag) => frag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  if (parts.length === 0) throw new Error(`no catalog entries for ${prefixes.join(', ')}`);
+  return new RegExp(parts.join('|'));
+}
 import { TIER_THRESHOLDS } from '../../src/sim/constants.ts';
 import {
   DATA_DIR,
@@ -69,11 +88,17 @@ test.describe('household response', () => {
     expect(s1.suspicion.tier).toBeGreaterThanOrEqual(1);
     // The HUD must name what was noticed and preview what is coming, not just move a bar.
     expect(s1.suspicion.lastCause).not.toBeNull();
-    await expect(page.locator('#suspicion .cause')).not.toContainText('No evidence yet');
+    // Locale-independent: build the alternation from the catalog itself, so these assert "the HUD
+    // names a real cause and previews a real response" rather than "the HUD is in English". The
+    // originals matched /roach|Bodies|traffic|.../ and /light|traps|bait|spray/, which silently
+    // became untestable the moment the UI shipped Korean.
+    await expect(page.locator('#suspicion .cause')).not.toContainText(t('hud.evidence.none'));
     await expect(page.locator('#suspicion .cause')).toContainText(
-      /roach|Bodies|traffic|Food|trap|nest openings|Scuttling|Trails/,
+      catalogAlternation('alert.cause.'),
     );
-    await expect(page.locator('#suspicion .next')).toContainText(/light|traps|bait|spray/);
+    await expect(page.locator('#suspicion .next')).toContainText(
+      catalogAlternation('threat.next.', 'alert.response.'),
+    );
 
     // Tier 1+ deploys a patrol; tier 2 puts traps down where the player's traffic went.
     await waitForState(page, (s) => s.counts.patrols > 0 || s.counts.hazards > 0, 60_000);
