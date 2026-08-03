@@ -1,0 +1,76 @@
+# Quality reboot — evidence index
+
+Generated 2026-08-04. Every claim below points at a file in this directory or at
+`artifacts/evidence/quality-reboot-baseline/`.
+
+## Baseline (before)
+
+`../quality-reboot-baseline/logs/summary.txt` — format/lint/typecheck/unit/build pass, **E2E
+fails 2 of 17**: `fullrun.spec.ts:167` (a careful run cannot complete its operations) and
+`perf.spec.ts:98` (active play exceeds the frame-time budget). Both failures pre-date this reboot.
+
+## Renderer decision
+
+`../quality-reboot-baseline/renderer-bakeoff/a-canvas2d-vs-b-webgl.png` — the same sink moment
+rendered by Canvas2D + baked lighting and by WebGL + normal-mapped dynamic lighting. Canvas2D
+chosen; rationale in `DECISIONS.md`. Losing prototype deleted.
+
+## Asset bake iterations (evidence-driven, each fixing a measured defect)
+
+| File | What it shows |
+| --- | --- |
+| `../quality-reboot-baseline/bake-iterations/01-first-bake.png` | Plates/sponge/crumbs pass; drain reads as a black record, bottle as a blob, droplets as grey circles |
+| `../quality-reboot-baseline/bake-iterations/02-after-envmap.png` | Root cause found: `metalness > 0.9` with no environment map renders every metal black |
+| `../quality-reboot-baseline/bake-iterations/03-after-drain-droplet-fix.png` | Drain carries its own steel deck; droplets get a meniscus ring and catchlight |
+| `../quality-reboot-baseline/bake-iterations/04-roach-v1-tick.png` | Roach reads as a tick — legs hidden under the body |
+| `../quality-reboot-baseline/bake-iterations/05-roach-v2-legs-hidden.png` | Front/mid legs visible, hind legs still lost |
+| `../quality-reboot-baseline/bake-iterations/06-roach-v3-sprawled.png` | Sign error fixed; six legs plant outside the body outline |
+| `../quality-reboot-baseline/bake-iterations/07-baked-roaches-live-ingame.png` | Baked roaches rendering in the running game |
+| `../quality-reboot-baseline/bake-iterations/08-roach-at-2x-zoom-ingame.png` | 2.2x zoom: segmented body, knee joints, antennae, shell gloss |
+
+## Korean
+
+| File | What it shows |
+| --- | --- |
+| `../quality-reboot-baseline/korean/01-font-loaded-hud-still-english.png` | NanumSquareNeo 400/700 `status=loaded`, HUD still English at that point |
+| `../quality-reboot-baseline/korean/02-hud-fully-korean.png` | HUD fully Korean |
+| `../quality-reboot-baseline/korean/03-played-korean-plate-and-scout.png` | Played, not teleported: Korean UI with a readable ceramic plate |
+
+Font is proven in USE, not merely loaded: `박멸 흔적 군체` measures 123.6 px in NanumSquareNeo
+against 114.9 px in the fallback stack.
+
+## Semantic zones — 1920x1080, one per zone
+
+Captured via the `__roach.placeScout()` evidence seam so the camera actually contains the fixture
+being judged. `edgeDraws` is the measured count of baked cabinet cross-sections drawn that frame.
+
+| Zone | edgeDraws | File |
+| --- | --- | --- |
+| counter-left | 8 | `zones/counter-left.png` |
+| counter-right | 10 | `zones/counter-right.png` |
+| dishwasher | 2 | `zones/dishwasher.png` |
+| doorway | 0 | `zones/doorway.png` |
+| fridge | 5 | `zones/fridge.png` |
+| island-edge | 7 | `zones/island-edge.png` |
+| pantry | 0 | `zones/pantry.png` |
+| sink-run | 3 | `zones/sink-run.png` |
+| stove | 10 | `zones/stove.png` |
+| waste-corner | 0 | `zones/waste-corner.png` |
+
+Total 45 edge draws, zero page errors. The three zones at 0 are correct: no `facing:'down'`
+fixture exists there.
+
+**Honest read of these captures.** `sink-run` reads as a sink: basin, drain, U-bend pipe, sponge,
+detergent bottle, tap, drying-rack slats. `counter-left` shows baked cabinet handles, tile grout,
+an outlet and cables. Neither yet meets "an uninformed reviewer names this a kitchen without
+labels" — cabinet faces remain large and dark, and 17 prop kinds are still procedural. Recorded as
+blocking in `ASSET_MANIFEST.md`.
+
+## Gates still unmet
+
+- Kitchen recognizability (defects 2 and 3) — improved and measured, not passed.
+- 17 prop kinds unbaked; all audio still runtime-synthesised.
+- `perf 14` frame-budget gate — failing at baseline, needs a measured re-baseline.
+- Run scenarios (cautious / aggressive / recovery / failure / victory / restart) — the E2E suite
+  covers these; see `logs/e2e.log` for the current result.
+- GitHub Pages deployment not played.
