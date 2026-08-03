@@ -148,6 +148,20 @@ export interface TestApi {
   ready: boolean;
   version: string;
   newRun(seed?: number): void;
+  /**
+   * Move the scout (and the camera with it) to a world position.
+   *
+   * Purely an evidence seam, alongside the rest of `__roach`: it exists so a capture script can
+   * photograph a named fixture — the sink run, the island edge, the fridge — instead of trying to
+   * walk there. Several hours of this project were lost judging screenshots that turned out not to
+   * contain the thing being judged, because the scout spawns ~1500 units from every counter and the
+   * direct route is blocked by the dishwasher.
+   *
+   * It is NOT a gameplay affordance and never appears in a scored run: the completion gates require
+   * a full session to be *played*, and this bypasses movement, so it is only ever used to position
+   * the camera for a still.
+   */
+  placeScout(x: number, y: number): void;
   state(): StateSnapshot;
   telemetry(): {
     fps: number;

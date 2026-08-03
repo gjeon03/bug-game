@@ -1,7 +1,13 @@
 {
   "generatedFinal": {
     "version": "1.0.0",
-    "atlasBuildMs": 218.5,
+    "atlasBuildMs": 220.8,
+    "cabinetEdgeDraws": 2,
+    "spriteSheet": {
+      "w": 1985,
+      "h": 899,
+      "frames": 23
+    },
     "roachAtlas": {
       "w": 1152,
       "h": 640
@@ -27,7 +33,7 @@
   },
   "temporaryAssets": [],
   "hudIcons": 7,
-  "peakAudioVoices": 3,
-  "objective": "Walk to Sink drip — then bring the scent home.",
+  "peakAudioVoices": 4,
+  "objective": "싱크대 물방울까지 걸어가라 — 그리고 냄새를 본거지로 데려와라.",
   "note": "All sprites, textures, VFX and audio are generated procedurally at boot; see ASSET_MANIFEST.md."
 }

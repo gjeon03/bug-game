@@ -1,16 +1,16 @@
 {
-  "time": 25.299999999999844,
+  "time": 24.983333333333196,
   "colony": {
-    "food": 63.29519999999758,
-    "water": 24.478549999999338,
+    "food": 63.33573333333079,
+    "water": 24.501349999999352,
     "foodCap": 120,
     "waterCap": 100,
     "population": 8,
     "capacity": 13,
-    "brood": 0.276999999999965,
+    "brood": 0.248499999999965,
     "hatched": 2,
     "lost": 0,
-    "totalFood": 36.00000000000001,
+    "totalFood": 35.99999999999999,
     "totalWater": 0,
     "nurseries": 0,
     "caches": 0,
@@ -21,44 +21,44 @@
       "id": 1,
       "nodes": 25,
       "linked": true,
-      "exposure": 0.16331146372594563,
+      "exposure": 0.16346546536009235,
       "traffic": 7,
       "resourceId": "dishCrumbs",
       "nestId": "home"
     },
     {
       "id": 2,
-      "nodes": 37,
+      "nodes": 38,
       "linked": true,
-      "exposure": 0.06408376007110968,
+      "exposure": 0.06909630708033339,
       "traffic": 0,
       "resourceId": "sinkDrip",
       "nestId": "home"
     }
   ],
   "hud": {
-    "operation": "Operation 1 — Establish the nest",
-    "objective": "Keep both reserves flowing — the colony grows on food and moisture together.",
+    "operation": "작전 1 — 둥지를 세운다",
+    "objective": "두 창고를 다 돌려라 — 군체는 먹이와 수분이 같이 있어야 큰다.",
     "blocker": null,
-    "nextUnlock": "The household starts its night routines — and those are opportunities.",
-    "forecast": "Unnoticed — Trails left on bare tile. They have not worked out where yet.",
+    "nextUnlock": "집이 밤 일과를 시작한다 — 그게 곧 기회다.",
+    "forecast": "조용함 — 맨 타일에 남은 자국. 아직 어딘지는 못 짚었다.",
     "counterplay": null,
     "source": "gate:pop12",
     "checklist": [
       {
-        "label": "1 food line",
+        "label": "먹이 길 1개",
         "have": 1,
         "need": 1,
         "done": true
       },
       {
-        "label": "A moisture line",
+        "label": "수분 길 1개",
         "have": 1,
         "need": 1,
         "done": true
       },
       {
-        "label": "12 roaches",
+        "label": "바퀴 12마리",
         "have": 8,
         "need": 12,
         "done": false
@@ -67,7 +67,7 @@
     "target": {
       "x": 664,
       "y": 1312,
-      "label": "Sink drip"
+      "label": "싱크대 물방울"
     }
   }
 }

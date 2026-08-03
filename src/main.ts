@@ -830,6 +830,15 @@ const api: TestApi = {
   newRun(seed?: number) {
     startRun(seed);
   },
+  placeScout(x: number, y: number) {
+    // Snap the camera too, otherwise it eases toward the new position over the next second and a
+    // screenshot taken immediately catches the pan rather than the fixture.
+    world.scout.x = x;
+    world.scout.y = y;
+    world.scout.vx = 0;
+    world.scout.vy = 0;
+    camera.snapTo(x, y);
+  },
   state() {
     return snapshot(world, paused, overlays.kind);
   },

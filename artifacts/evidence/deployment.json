@@ -6,13 +6,23 @@
     ".nojekyll",
     "assets",
     "index.html",
-    "assets/index-D604758x.css",
-    "assets/index-DIcpCP4J.js"
+    "assets/NanumSquareNeo-Bold-BPjYd6VN.woff2",
+    "assets/NanumSquareNeo-ExtraBold-Hs0OHfim.woff2",
+    "assets/NanumSquareNeo-Regular-EIa4PIAX.woff2",
+    "assets/index-B1En5c0v.js",
+    "assets/index-Cz8YGfrk.css",
+    "assets/props-CykyMU9K.png"
   ],
   "nojekyll": true,
   "assetAudit": {
     "version": "1.0.0",
-    "atlasBuildMs": 208.9,
+    "atlasBuildMs": 207.3,
+    "cabinetEdgeDraws": 1,
+    "spriteSheet": {
+      "w": 1985,
+      "h": 899,
+      "frames": 23
+    },
     "roachAtlas": {
       "w": 1152,
       "h": 640
@@ -38,7 +48,10 @@
   },
   "requests": [
     "200 http://127.0.0.1:4178/bug-game/",
-    "200 http://127.0.0.1:4178/bug-game/assets/index-D604758x.css",
-    "200 http://127.0.0.1:4178/bug-game/assets/index-DIcpCP4J.js"
+    "200 http://127.0.0.1:4178/bug-game/assets/index-Cz8YGfrk.css",
+    "200 http://127.0.0.1:4178/bug-game/assets/index-B1En5c0v.js",
+    "200 http://127.0.0.1:4178/bug-game/assets/props-CykyMU9K.png",
+    "200 http://127.0.0.1:4178/bug-game/assets/NanumSquareNeo-Bold-BPjYd6VN.woff2",
+    "200 http://127.0.0.1:4178/bug-game/assets/NanumSquareNeo-Regular-EIa4PIAX.woff2"
   ]
 }
