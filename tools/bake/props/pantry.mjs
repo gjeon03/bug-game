@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import * as M from '../lib/materials.mjs';
-import { cylinder, dome, makeRng, mesh, roundedBox } from '../lib/shapes.mjs';
+import { cylinder, makeRng, mesh, roundedBox } from '../lib/shapes.mjs';
 import { mm } from '../lib/units.mjs';
 
 /**
