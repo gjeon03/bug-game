@@ -88,6 +88,25 @@ Baseline was 2 of 17 failing. Current run:
 `perf 14` passing matters: the frame-budget gate was failing before any of this work, and it is now
 green **without touching a budget value**. No re-baseline was needed.
 
+## Named completion gates mapped to evidence
+
+| Gate from the brief | Where it is verified | Result |
+| --- | --- | --- |
+| first-run | `gameplay.spec.ts` 01-03 + `zones/` captures | PASS |
+| cautious run | `strategies.test.ts` cautious arm; `fullrun 09` | PASS |
+| aggressive run | `strategies.test.ts` reckless arm | PASS |
+| recovery | `threats.spec.ts` | pending in this run |
+| failure | `fullrun.spec.ts` idle-loss path | PASS |
+| victory | `winnable.test.ts` (3 seeds) + `fullrun.spec.ts` | PASS |
+| restart | `restart 11` five consecutive restarts leak no state | **PASS** |
+| focus loss | `restart 12` losing focus suspends the run | **PASS** |
+| pause / settings persistence | `restart 13` | **PASS** |
+| visual quality | `zones/` 10 captures at 1920x1080 + `bake-iterations/` | PARTIAL — 3 of 4 inspected zones read without labels |
+| nested-path deployment | `deploy 15` runs from `/bug-game/` | **PASS** |
+| console | `deploy 16` + every capture script asserts zero page errors | **PASS** |
+| asset audit | `deploy 17` every visible/audible element is a shipping asset | **PASS** |
+| active-play p50/p95/p99 | `perf 14` | **PASS** |
+
 ## Gates still unmet
 
 - Kitchen recognizability (defects 2 and 3) — improved and measured, not passed.
