@@ -139,21 +139,28 @@ OS/2 `fsType = 8` grants editable embedding. Full OFL text ships at `src/fonts/O
 
 Produced by `tools/bake/` (three.js in headless Chromium, SwiftShader, deterministic), modelled at
 true millimetre dimensions, rendered through one shared camera and light rig at 16× supersampling,
-packed into `src/art/props.png` + `atlas.json`. **23 frames**, sheet 2030×1482.
+packed into `src/art/props.png` + `atlas.json`. **31 frames**, sheet 1888×1473.
 
 | Frame              | Size (px) | Class           |
 | ------------------ | --------- | --------------- |
-| `cabinet-blank`    | 381×933   | generated final |
-| `cabinet-drawer`   | 381×933   | generated final |
-| `cabinet-run`      | 381×933   | generated final |
+| `bin-bag`          | 458×563   | generated final |
+| `cabinet-blank`    | 381×251   | generated final |
+| `cabinet-drawer`   | 381×251   | generated final |
+| `cabinet-run`      | 381×251   | generated final |
+| `condenser-grille` | 645×207   | generated final |
 | `crumb-a`          | 34×39     | generated final |
 | `crumb-b`          | 29×31     | generated final |
 | `crumb-c`          | 39×45     | generated final |
 | `detergent-bottle` | 148×282   | generated final |
+| `dish-towel`       | 387×246   | generated final |
 | `droplet-m`        | 52×53     | generated final |
 | `droplet-s`        | 34×35     | generated final |
 | `floor-tile`       | 489×451   | generated final |
+| `jar`              | 149×229   | generated final |
+| `mug`              | 218×185   | generated final |
 | `nymph-gait0`      | 46×62     | generated final |
+| `packet`           | 366×270   | generated final |
+| `pet-bowl`         | 280×283   | generated final |
 | `plate-single`     | 310×291   | generated final |
 | `plate-stack`      | 433×436   | generated final |
 | `roach-dead`       | 70×94     | generated final |
@@ -162,6 +169,7 @@ packed into `src/art/props.png` + `atlas.json`. **23 frames**, sheet 2030×1482.
 | `scout-gait2`      | 86×113    | generated final |
 | `scout-gait3`      | 90×116    | generated final |
 | `sink-drain`       | 462×444   | generated final |
+| `slipper`          | 177×391   | generated final |
 | `sponge`           | 176×135   | generated final |
 | `steel-panel`      | 378×483   | generated final |
 | `worker-carry`     | 69×93     | generated final |
@@ -173,13 +181,19 @@ These still render through the old procedural Canvas2D path (`src/render/props.t
 `src/render/solids.ts`, `src/render/atlas.ts`) and are placeholder-grade by the standard of this
 reboot:
 
-- **All kitchen architecture actually drawn in-game.** `cabinet-run`, `cabinet-drawer`,
-  `cabinet-blank`, `floor-tile`, `steel-panel` are baked but **not yet wired into the renderer**,
-  so counters, cabinets, appliances and the floor still draw as flat filled rectangles. This is the
-  user's defect #2 and #3 and it is **not fixed yet**.
-- Prop kinds with no baked art: `pipeElbow`, `dishTowel`, `outlet`, `mug`, `burner`, `panHandle`,
-  `ovenVent`, `fridgeGasket`, `condenserGrille`, `packet`, `jar`, `binBag`, `binWheel`, `petBowl`,
-  `petMat`, `scuffMark`, `baseboardGap` and the rest of the `PropKind` union.
+- **Kitchen architecture is partially addressed.** Cabinet edge strips are baked AND wired —
+  45 draws measured across the zone sweep — but worktop and appliance faces are still flat fills.
+  Defects #2 and #3 are improved, not closed.
+
+## Zone recognizability — measured, not asserted
+
+Four of six inspected zones read without a label: sink run, dish zone, stove, pantry. `fridge` is
+partial; `island-edge`, `waste-corner` and `doorway` are unassessed. Evidence:
+`artifacts/evidence/quality-reboot-final/zones/` — 10 captures at 1920x1080, zero page errors.
+
+- Prop kinds with no baked art: `pipeElbow`, `outlet`, `burner`, `panHandle`, `ovenVent`,
+  `fridgeGasket`, `binWheel`, `petMat`, `scuffMark`, `baseboardGap`, `vent`, `greaseSmear` and the
+  remainder of the `PropKind` union.
 - Worker colour variants: rows 3 and 4 resolve to the same `worker-gait0` sprite, so the three
   authored worker colourings are currently two.
 - `roach-dead` does not read as dead — it renders as a live roach at an angle.
