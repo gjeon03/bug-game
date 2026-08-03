@@ -60,11 +60,19 @@ being judged. `edgeDraws` is the measured count of baked cabinet cross-sections 
 Total 45 edge draws, zero page errors. The three zones at 0 are correct: no `facing:'down'`
 fixture exists there.
 
-**Honest read of these captures.** `sink-run` reads as a sink: basin, drain, U-bend pipe, sponge,
-detergent bottle, tap, drying-rack slats. `counter-left` shows baked cabinet handles, tile grout,
-an outlet and cables. Neither yet meets "an uninformed reviewer names this a kitchen without
-labels" — cabinet faces remain large and dark, and 17 prop kinds are still procedural. Recorded as
-blocking in `ASSET_MANIFEST.md`.
+**Honest read of these captures, zone by zone.**
+
+| Zone | Reads without a label? | What carries it |
+| --- | --- | --- |
+| `sink-run` | **yes** | basin, drain, U-bend pipe, sponge, detergent bottle, tap, drying-rack slats |
+| `dishwasher` | **yes** | mug with a handle, two ceramic plates, crumbs |
+| `stove` | **yes** | four burners with cross-grates, control knobs, oven vent, grease smear |
+| `counter-left` | partial | baked cabinet handles, tile grout, outlet, cables — but the worktop is still a large dark plane |
+| `fridge`, `island-edge`, `pantry`, `waste-corner`, `doorway` | not yet assessed | mostly procedural props |
+
+Three of the four inspected zones are identifiable without labels. That is real progress against
+defects 2 and 3 but it is **not** the whole gate: the gate asks for the kitchen, not three of its
+zones, and 14 prop kinds remain procedural. Recorded as blocking in `ASSET_MANIFEST.md`.
 
 ## Gates still unmet
 
