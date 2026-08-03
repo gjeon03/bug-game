@@ -1,60 +1,34 @@
 {
-  "status": "lost",
-  "loseCause": "collapse",
-  "operation": 2,
-  "operationsCompleted": 1,
+  "status": "playing",
+  "loseCause": null,
+  "operation": 4,
+  "operationsCompleted": 3,
   "colony": {
-    "food": 0,
-    "water": 42.88335000001051,
-    "foodCap": 210,
-    "waterCap": 160,
-    "population": 0,
-    "capacity": 31,
-    "brood": 0,
-    "hatched": 14,
-    "lost": 24,
-    "totalFood": 258,
-    "totalWater": 200,
+    "food": 215.39616666668292,
+    "water": 189.77851875001284,
+    "foodCap": 300,
+    "waterCap": 220,
+    "population": 32,
+    "capacity": 45,
+    "brood": 0.8357000000000615,
+    "hatched": 22,
+    "lost": 0,
+    "totalFood": 702.6787999999929,
+    "totalWater": 463,
     "nurseries": 0,
-    "caches": 1,
+    "caches": 2,
     "boltholes": 0
   },
   "adaptations": {
     "taken": [
-      "brood1"
-    ],
-    "offer": [
-      "brood2",
+      "brood1",
       "forage1",
-      "shadow1"
+      "shadow1",
+      "brood2"
     ],
-    "milestonesUsed": 1,
-    "offers": [
-      {
-        "id": "brood2",
-        "name": "Ootheca cluster",
-        "family": "brood",
-        "costFood": 52,
-        "costWater": 34,
-        "affordable": false
-      },
-      {
-        "id": "forage1",
-        "name": "Wider mandibles",
-        "family": "forage",
-        "costFood": 22,
-        "costWater": 12,
-        "affordable": false
-      },
-      {
-        "id": "shadow1",
-        "name": "Wall-hugging scent",
-        "family": "shadow",
-        "costFood": 22,
-        "costWater": 16,
-        "affordable": false
-      }
-    ]
+    "offer": [],
+    "milestonesUsed": 4,
+    "offers": []
   },
   "zones": [
     {
@@ -62,8 +36,8 @@
       "hold": 1,
       "held": true,
       "footholds": 1,
-      "workers": 1,
-      "routed": true,
+      "workers": 2,
+      "routed": false,
       "contested": false
     },
     {
@@ -71,7 +45,7 @@
       "hold": 1,
       "held": true,
       "footholds": 1,
-      "workers": 0,
+      "workers": 30,
       "routed": true,
       "contested": false
     },
@@ -117,7 +91,7 @@
       "held": false,
       "footholds": 0,
       "workers": 0,
-      "routed": true,
+      "routed": false,
       "contested": false
     },
     {
@@ -131,69 +105,83 @@
     }
   ],
   "heat": {
-    "known": 2,
-    "total": 1.9476667048202216,
+    "known": 3,
+    "total": 3.2483879474311834,
     "hottest": 1
   },
   "suspicion": {
-    "value": 19.293645534423213,
-    "tier": 0,
-    "peak": 19.745774270975467,
-    "floor": 10.860175849036507,
+    "value": 47.57906553892836,
+    "tier": 1,
+    "peak": 47.58073220559503,
+    "floor": 26.169402713077268,
     "lastCause": "droppings"
   },
   "stats": {
-    "runSeconds": 376.2666666666531,
-    "firstMoveAt": 0.9000000000000011,
-    "firstTrailAt": 1.3333333333333335,
-    "firstDeliveryAt": 16.966666666666985,
-    "firstClaimAt": 73.78333333333043,
-    "deliveries": 83,
-    "workersLost": 24,
+    "runSeconds": 266.7666666667527,
+    "firstMoveAt": 0.8833333333333344,
+    "firstTrailAt": 1.3166666666666669,
+    "firstDeliveryAt": 16.716666666667,
+    "firstClaimAt": 74.83333333333037,
+    "deliveries": 171,
+    "workersLost": 0,
     "scoutDeaths": 0,
-    "trapsSprung": 0,
-    "peakPopulation": 24,
-    "idleSeconds": 296.7666666667254,
-    "distanceTravelled": 11136.734752054803,
-    "trailNodesLaid": 201,
-    "routinesExploited": 0,
-    "operationsCompleted": 1,
-    "functionsBuilt": 1
+    "trapsSprung": 3,
+    "peakPopulation": 32,
+    "idleSeconds": 148.1833333333434,
+    "distanceTravelled": 24332.060469968277,
+    "trailNodesLaid": 394,
+    "routinesExploited": 2,
+    "operationsCompleted": 3,
+    "functionsBuilt": 2
   },
   "decisions": {
-    "line:Bin run": 1,
-    "hold:routine": 1
+    "line:세척기 부스러기": 1,
+    "hold:gate": 2,
+    "line:쓰레기 배출": 2,
+    "adapt": 2,
+    "hold:routine": 2,
+    "line:싱크대 물방울": 1,
+    "line:설거지": 1
   },
   "decisionLog": [
-    "line:Bin run",
+    "line:세척기 부스러기",
+    "hold:gate:routines",
+    "line:쓰레기 배출",
+    "adapt",
+    "hold:routine:active",
+    "line:싱크대 물방울",
+    "line:쓰레기 배출",
+    "hold:gate:routines",
+    "adapt",
+    "line:설거지",
     "hold:routine:active"
   ],
   "peakPerf": {
     "label": "active-play",
-    "frames": 9818,
-    "durationMs": 375886.6000000001,
+    "frames": 6783,
+    "durationMs": 266404.39999999944,
     "p50": 33.4,
-    "p95": 50.1,
-    "p99": 51.6,
-    "worst": 100,
-    "mean": 38.29,
-    "over16": 9818,
-    "over33": 8946,
-    "over50": 827,
+    "p95": 50.4,
+    "p99": 51.8,
+    "worst": 85.3,
+    "mean": 39.28,
+    "over16": 6782,
+    "over33": 6228,
+    "over50": 659,
     "over100": 0,
-    "over50Pct": 8.423,
-    "cpuP50": 1,
-    "cpuP95": 2.2,
-    "cpuP99": 3,
-    "cpuWorst": 7.9,
+    "over50Pct": 9.715,
+    "cpuP50": 1.7,
+    "cpuP95": 2.6,
+    "cpuP99": 3.4,
+    "cpuWorst": 6,
     "peak": {
-      "roaches": 25,
-      "workers": 24,
+      "roaches": 33,
+      "workers": 32,
       "hazards": 2,
-      "particles": 124,
-      "voices": 8,
-      "drawCalls": 336,
-      "pheromoneNodes": 139
+      "particles": 70,
+      "voices": 12,
+      "drawCalls": 452,
+      "pheromoneNodes": 337
     }
   }
 }

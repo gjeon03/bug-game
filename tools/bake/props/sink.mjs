@@ -305,6 +305,81 @@ function droplet(sizeMm = 9) {
   return g;
 }
 
+/** A mug, 82 mm across the body with a 95 mm handle loop. Its handle is the whole silhouette —
+ *  a handle-less cylinder from above is indistinguishable from a jar or a tin. */
+function mug() {
+  const g = new THREE.Group();
+  g.add(
+    mesh(
+      lathe([
+        [0, 0],
+        [38, 0],
+        [41, 4],
+        [41, 92],
+        [38, 96],
+        [35, 92],
+        [35, 6],
+        [0, 5],
+      ]),
+      M.ceramicWhite(),
+    ),
+  );
+  // Handle: a torus arc standing out sideways, the one feature that survives a top-down view.
+  const handle = mesh(
+    new THREE.TorusGeometry(mm(26), mm(6), 12, 28, Math.PI * 1.25),
+    M.ceramicWhite(),
+  );
+  handle.position.set(mm(56), mm(52), 0);
+  handle.rotation.z = -Math.PI / 2.6;
+  g.add(handle);
+  return g;
+}
+
+/** A folded dish towel. Cloth is the softest silhouette in the kitchen and the only prop that
+ *  should look slumped rather than machined. */
+function dishTowel() {
+  const g = new THREE.Group();
+  const rng = makeRng(0x70e1);
+  for (let i = 0; i < 3; i += 1) {
+    const fold = mesh(
+      roundedBox(240 - i * 14, 9, 150 - i * 10, 8),
+      M.cloth(i % 2 ? 0x94a6b4 : 0xa6b6c2),
+    );
+    fold.position.set(mm((rng() - 0.5) * 12), mm(2 + i * 7), mm((rng() - 0.5) * 10));
+    fold.rotation.y = (rng() - 0.5) * 0.16;
+    g.add(fold);
+  }
+  return g;
+}
+
+/** A screw-top storage jar with visible contents — pantry identity object. */
+function jar() {
+  const g = new THREE.Group();
+  g.add(
+    mesh(
+      lathe([
+        [0, 0],
+        [44, 0],
+        [46, 5],
+        [46, 108],
+        [40, 120],
+        [30, 126],
+        [30, 132],
+        [0, 132],
+      ]),
+      M.plasticTranslucent(0xcfd8dc),
+    ),
+  );
+  const lid = mesh(cylinder(33, 16, 40), M.plasticMatte(0x8a6b42));
+  lid.position.y = mm(128);
+  g.add(lid);
+  // Grain fill, so the jar reads as full rather than as an empty vessel.
+  const fill = mesh(cylinder(41, 62, 36), M.foodCrumb(0xd8bd83));
+  fill.position.y = mm(6);
+  g.add(fill);
+  return g;
+}
+
 export const SINK_PROPS = {
   'plate-single': { build: () => plate(200) },
   'plate-stack': { build: plateStack },
@@ -316,4 +391,7 @@ export const SINK_PROPS = {
   'crumb-c': { build: () => crumb(13, 7.0) },
   'droplet-s': { build: () => droplet(6) },
   'droplet-m': { build: () => droplet(11) },
+  mug: { build: mug },
+  'dish-towel': { build: dishTowel },
+  jar: { build: jar },
 };

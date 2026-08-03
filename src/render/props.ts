@@ -45,6 +45,9 @@ const SPRITE_FOR_KIND: Partial<Record<Prop['kind'], string>> = {
   bottle: 'detergent-bottle',
   crumbCluster: 'crumb-c',
   waterRing: 'droplet-m',
+  mug: 'mug',
+  dishTowel: 'dish-towel',
+  jar: 'jar',
 };
 
 const PAD = 30;
