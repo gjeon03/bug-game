@@ -74,6 +74,20 @@ Three of the four inspected zones are identifiable without labels. That is real 
 defects 2 and 3 but it is **not** the whole gate: the gate asks for the kitchen, not three of its
 zones, and 14 prop kinds remain procedural. Recorded as blocking in `ASSET_MANIFEST.md`.
 
+## E2E gate suite — both baseline failures now pass
+
+Baseline was 2 of 17 failing. Current run:
+
+| Gate | Baseline | Now |
+| --- | --- | --- |
+| `fullrun 09` a careful run drives itself through the operations | **FAIL** (6.4 min) | **PASS** (4.5 min) |
+| `perf 14` active play and peak load stay inside the frame-time budget | **FAIL** | **PASS** (12.5 min) |
+| `gameplay 05` inspect reports a resource | PASS | FAIL — stale English assertion (`'left'` against a now-Korean toast); fixed via a `term.remaining` anchor, awaiting re-run |
+| `deploy 15/16/17` nested subpath, no off-origin request, no placeholder asset | PASS | **PASS** |
+
+`perf 14` passing matters: the frame-budget gate was failing before any of this work, and it is now
+green **without touching a budget value**. No re-baseline was needed.
+
 ## Gates still unmet
 
 - Kitchen recognizability (defects 2 and 3) — improved and measured, not passed.
