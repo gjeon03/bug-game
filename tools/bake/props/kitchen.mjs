@@ -21,6 +21,15 @@ import { mm } from '../lib/units.mjs';
  * one strip and the renderer never draws a bare rectangle again.
  */
 
+/*
+ * Authored BRIGHTER than the value it should appear at.
+ *
+ * The runtime composites a night-lighting multiply over the world, so a sprite baked at its target
+ * value lands roughly half as bright once it is in the scene. The first pass authored the cabinet
+ * at "correct" night values and the joinery measurably rendered (3 tiles per frame, confirmed via
+ * the asset audit) but was too dark to read against the floor. These values are pre-compensated.
+ */
+
 /** Horizontal tile period. Wide enough to carry a door and a handle, narrow enough that the
  *  directional key light does not visibly ramp across one copy. */
 const SLICE_W = 240;
@@ -53,24 +62,24 @@ function cabinetRun({ handle = true, drawer = false } = {}) {
   // surface projects to 503 mm of screen height, which dwarfs the 66 mm the vertical face projects
   // to, so the "edge strip" came out 466 world units tall. The worktop's interior is already drawn
   // by the fixture's own fill; this sprite only has to supply the lip and everything below it.
-  const top = mesh(roundedBox(SLICE_W, 34, 70, 2), M.counterStone());
+  const top = mesh(roundedBox(SLICE_W, 34, 70, 2), M.counterStone(0x8d97a3));
   top.position.set(0, mm(VISIBLE_FACE), mm(-266));
   g.add(top);
 
   // Front lip: overhangs the door by 14 mm, so it casts a hard shadow line onto the face below.
   // This is the brightest horizontal in the run and the thing that says "solid surface".
-  const lip = mesh(roundedBox(SLICE_W, 22, 26, 4), M.counterStone());
+  const lip = mesh(roundedBox(SLICE_W, 22, 26, 4), M.counterStone(0xb8c3cd));
   lip.position.set(0, mm(VISIBLE_FACE - 4), mm(-286));
   g.add(lip);
 
   // Shadow reveal: the dark gap between worktop and door. Modelled as real recessed geometry rather
   // than painted, so the key light produces the gradient instead of a flat band.
-  const reveal = mesh(roundedBox(SLICE_W, 26, 18, 1), M.laminate(0x11161b));
+  const reveal = mesh(roundedBox(SLICE_W, 26, 18, 1), M.laminate(0x272e36));
   reveal.position.set(0, mm(VISIBLE_FACE - 34), mm(-268));
   g.add(reveal);
 
   // Door face, proud of the carcass.
-  const door = mesh(roundedBox(SLICE_W - 14, VISIBLE_FACE - 40, 20, 3), M.laminate(0x6e665b));
+  const door = mesh(roundedBox(SLICE_W - 14, VISIBLE_FACE - 40, 20, 3), M.laminate(0x8b8172));
   door.position.set(0, 0, mm(-278));
   g.add(door);
   if (drawer) {
@@ -91,7 +100,7 @@ function cabinetRun({ handle = true, drawer = false } = {}) {
 
   // Toe-kick void, recessed and unlit, in front of nothing so it reads as darkness under the run.
   // This is the strongest depth cue on a cabinet — and it is where the colony actually lives.
-  const kick = mesh(roundedBox(SLICE_W, 30, 44, 1), M.laminate(0x0a0e12));
+  const kick = mesh(roundedBox(SLICE_W, 30, 44, 1), M.laminate(0x141a20));
   kick.position.set(0, mm(-30), mm(-252));
   g.add(kick);
 

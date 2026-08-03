@@ -10,6 +10,7 @@ import { TINT } from './render/atlas.ts';
 import { Camera } from './render/camera.ts';
 import { PRIO, Particles } from './render/particles.ts';
 import { Renderer, type RenderSettings } from './render/renderer.ts';
+import { sheetInfo } from './render/sprites.ts';
 import { WORLD_H, WORLD_W } from './sim/constants.ts';
 import { chooseAdaptation, specById } from './sim/adaptations.ts';
 import { chooseFunction } from './sim/colony.ts';
@@ -872,6 +873,8 @@ const api: TestApi = {
     return {
       version: VERSION,
       atlasBuildMs: atlas.buildMs,
+      cabinetEdgeDraws: renderer.edgeDraws,
+      spriteSheet: sheetInfo(),
       roachAtlas: { w: atlas.roach.width, h: atlas.roach.height },
       floorTile: { w: atlas.floor.width, h: atlas.floor.height },
       debris: { w: atlas.debris.width, h: atlas.debris.height },

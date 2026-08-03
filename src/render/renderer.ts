@@ -87,6 +87,10 @@ export class Renderer {
   private outcome: 'won' | 'lost' | null = null;
   private outcomeTime = 0;
 
+  /** Cabinet-edge sprites drawn last frame. Reported by the asset audit so 'is the joinery
+   *  actually rendering?' is a measurement rather than a squint at a screenshot. */
+  edgeDraws = 0;
+
   dpr = 1;
   cssW = 1280;
   cssH = 720;
@@ -418,6 +422,7 @@ export class Renderer {
       ctx.drawImage(s.canvas, s.ox, s.oy);
       this.drawCalls++;
     }
+    this.edgeDraws = 0;
     // Edges go in a second pass, after every fixture fill is down. Drawing an edge immediately
     // after its own solid let the next solid in the list paint straight over it — the counter's
     // joinery was being buried under the dishwasher every frame.
@@ -466,7 +471,10 @@ export class Renderer {
     let index = Math.floor((start - solid.x) / tileW);
     for (let x = solid.x + index * tileW; x < end; x += tileW, index += 1) {
       const variant = index % 3 === 1 ? 'cabinet-drawer' : name;
-      if (drawSprite(ctx, variant, x + tileW / 2, edgeY, {})) this.drawCalls++;
+      if (drawSprite(ctx, variant, x + tileW / 2, edgeY, {})) {
+        this.drawCalls++;
+        this.edgeDraws++;
+      }
     }
   }
 

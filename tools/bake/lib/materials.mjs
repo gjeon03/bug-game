@@ -81,7 +81,7 @@ export const cloth = (color = 0x9fb0bd) => std({ color, metalness: 0.0, roughnes
 export const laminate = (color = 0x6b6258) => std({ color, metalness: 0.03, roughness: 0.55 });
 
 /** Countertop stone/composite. */
-export const counterStone = () => std({ color: 0x4c5560, metalness: 0.04, roughness: 0.42 });
+export const counterStone = (color = 0x4c5560) => std({ color, metalness: 0.04, roughness: 0.42 });
 
 /** Corrugated cardboard: delivery packaging. */
 export const cardboard = (color = 0xa8875e) => std({ color, metalness: 0.0, roughness: 0.9 });
