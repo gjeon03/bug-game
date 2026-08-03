@@ -1,4 +1,5 @@
 import { clamp01 } from '../core/math.ts';
+import { t } from '../i18n/index.ts';
 import {
   TRAFFIC_EVIDENCE_CAP,
   TRAIL_EVIDENCE_CAP,
@@ -75,30 +76,30 @@ import type { World } from './world.ts';
  */
 
 export const TIER_NAMES = [
-  'Unnoticed',
-  "Something's off",
-  'Infestation suspected',
-  'Calling it in',
-  'Extermination',
+  t('alert.tier.0'),
+  t('alert.tier.1'),
+  t('alert.tier.2'),
+  t('alert.tier.3'),
+  t('alert.tier.4'),
 ] as const;
 
 export const TIER_RESPONSE: readonly string[] = [
-  'Nobody has noticed anything yet.',
-  'Next: someone will come in and turn the light on.',
-  'Next: sticky traps go down on your busiest floor routes.',
-  'Next: bait and longer patrols across the whole kitchen.',
-  'Next: the spray comes out and they go for the nest.',
+  t('alert.response.0'),
+  t('alert.response.1'),
+  t('alert.response.2'),
+  t('alert.response.3'),
+  t('alert.response.4'),
 ];
 
 export const CAUSE_LABELS: Record<SuspicionCause, string> = {
-  seen: 'A roach was seen in the light',
-  corpse: 'Bodies left in the open',
-  traffic: 'Heavy traffic across open floor',
-  depleted: 'Food visibly disturbed',
-  trap: 'A trap caught something',
-  expansion: 'New nest openings',
-  noise: 'Scuttling heard in the open',
-  droppings: 'Trails left on bare tile',
+  seen: t('alert.cause.seen'),
+  corpse: t('alert.cause.corpse'),
+  traffic: t('alert.cause.traffic'),
+  depleted: t('alert.cause.depleted'),
+  trap: t('alert.cause.trap'),
+  expansion: t('alert.cause.expansion'),
+  noise: t('alert.cause.noise'),
+  droppings: t('alert.cause.droppings'),
 };
 
 export function addSuspicion(

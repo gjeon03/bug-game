@@ -21,6 +21,7 @@ import {
 } from './atlas.ts';
 import type { Camera } from './camera.ts';
 import { PAL, rgba } from './palette.ts';
+import { drawSprite, spritesReady } from './sprites.ts';
 import type { Particles } from './particles.ts';
 import { bakeProps, type BakedProp } from './props.ts';
 import { bakeSolids, type BakedSolid } from './solids.ts';
@@ -41,6 +42,8 @@ interface Flash {
 }
 
 const ROACH_ROWS = { scout: 0, worker: 1, nymph: 2 } as const;
+/** Distinct baked gait poses for the scout. The simulation's 8 gait frames fold onto these. */
+const SCOUT_GAIT_SPRITES = 4;
 /** Worker atlas rows, one per colouring. A worker's `variant` picks its row for life. */
 const WORKER_ROWS = [1, 3, 4] as const;
 /** Antennae are drawn procedurally for at most this many bodies per frame. */
@@ -1037,6 +1040,23 @@ export class Renderer {
     }
   }
 
+  /**
+   * Map a procedural-atlas (row, frame) pair onto a baked sprite name.
+   *
+   * The old atlas encoded body type as a row and gait as a column. Keeping that call convention and
+   * translating here means every existing call site — scout, workers, nymphs, corpses — switches to
+   * baked art without touching the simulation or the draw order.
+   *
+   * Rows 3 and 4 are worker colour variants the bake does not yet distinguish; they resolve to the
+   * same worker sprite rather than silently drawing nothing.
+   */
+  private static roachSprite(row: number, frame: number): string {
+    if (frame >= DEAD_FRAME) return 'roach-dead';
+    if (row === ROACH_ROWS.nymph) return 'nymph-gait0';
+    if (row === ROACH_ROWS.scout) return `scout-gait${frame % SCOUT_GAIT_SPRITES}`;
+    return 'worker-gait0';
+  }
+
   private blitRoach(
     row: number,
     frame: number,
@@ -1045,6 +1065,20 @@ export class Renderer {
     angle: number,
     scale: number,
   ): void {
+    // Baked bodies once the sheet is decoded; the procedural atlas stays as the fallback so a
+    // failed image load costs the player detail, not their scout.
+    if (spritesReady()) {
+      const drawn = drawSprite(this.ctx, Renderer.roachSprite(row, frame), x, y, {
+        scale,
+        // The bake's canonical heading is screen-up; the simulation's angle 0 is screen-right.
+        rotation: angle + Math.PI / 2,
+      });
+      if (drawn) {
+        this.drawCalls++;
+        return;
+      }
+    }
+
     const ctx = this.ctx;
     const s = scale / ATLAS_SCALE;
     const cos = Math.cos(angle) * s;

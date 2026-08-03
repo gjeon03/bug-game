@@ -1,4 +1,5 @@
 import { dist2 } from '../core/math.ts';
+import { t } from '../i18n/index.ts';
 import {
   BASE_CAPACITY,
   BOLTHOLE_CAPACITY,
@@ -222,7 +223,7 @@ export function interactTarget(world: World): InteractTarget | null {
       best = {
         kind: 'sealed',
         id: n.id,
-        label: `${n.label} — opens in operation ${n.unlockOp}`,
+        label: t('hud.target.sealed', { label: n.label, op: n.unlockOp }),
         affordable: false,
         costFood: n.costFood,
         costWater: n.costWater,
@@ -234,7 +235,7 @@ export function interactTarget(world: World): InteractTarget | null {
       best = {
         kind: 'claim',
         id: n.id,
-        label: `Claim ${n.label}`,
+        label: t('hud.target.claim', { label: n.label }),
         affordable: c.food >= n.costFood && c.water >= n.costWater,
         costFood: n.costFood,
         costWater: n.costWater,
@@ -246,7 +247,7 @@ export function interactTarget(world: World): InteractTarget | null {
       best = {
         kind: 'fit',
         id: n.id,
-        label: `Fit out ${n.label}`,
+        label: t('hud.target.fit', { label: n.label }),
         affordable: c.food >= n.fitFood && c.water >= n.fitWater,
         costFood: n.fitFood,
         costWater: n.fitWater,
@@ -258,7 +259,10 @@ export function interactTarget(world: World): InteractTarget | null {
       best = {
         kind: 'repair',
         id: n.id,
-        label: `Repair ${n.label} — ${Math.round(n.integrity * 100)}%`,
+        label: t('hud.target.repair', {
+          label: n.label,
+          percent: Math.round(n.integrity * 100),
+        }),
         affordable: c.water >= REPAIR_WATER,
         costFood: 0,
         costWater: REPAIR_WATER,
@@ -277,7 +281,7 @@ export function interactTarget(world: World): InteractTarget | null {
     best = {
       kind: 'resource',
       id: res.id,
-      label: `${res.label} — ${Math.ceil(res.amount)} left`,
+      label: t('hud.target.resource', { label: res.label, amount: Math.ceil(res.amount) }),
       affordable: true,
       costFood: 0,
       costWater: 0,
@@ -297,7 +301,7 @@ export const REPAIR_AMOUNT = 0.34;
 export function doInteract(world: World): void {
   const target = interactTarget(world);
   if (!target) {
-    world.hint = 'Nothing to inspect here.';
+    world.hint = t('hint.nothingHere');
     world.hintKey = 'nothing';
     return;
   }
@@ -305,7 +309,12 @@ export function doInteract(world: World): void {
   if (target.kind === 'sealed') {
     const nest = world.nests.find((n) => n.id === target.id);
     if (nest) {
-      world.hint = `${nest.label}: sealed until operation ${nest.unlockOp}. It will cost ${nest.costFood} food and ${nest.costWater} moisture.`;
+      world.hint = t('hint.sealed', {
+        label: nest.label,
+        op: nest.unlockOp,
+        food: nest.costFood,
+        water: nest.costWater,
+      });
       world.hintKey = `sealed:${nest.id}`;
     }
     return;
@@ -314,7 +323,11 @@ export function doInteract(world: World): void {
   if (target.kind === 'resource') {
     const res = world.resources.find((r) => r.id === target.id);
     if (res) {
-      world.hint = `${res.label}: ${Math.ceil(res.amount)} ${res.kind === 'food' ? 'food' : 'moisture'} left. Run a trail here.`;
+      world.hint = t('hint.resource', {
+        label: res.label,
+        amount: Math.ceil(res.amount),
+        noun: t(res.kind === 'food' ? 'unit.foodNoun' : 'unit.waterNoun'),
+      });
       world.hintKey = `inspect:${res.id}`;
     }
     return;
@@ -326,28 +339,35 @@ export function doInteract(world: World): void {
 
   if (target.kind === 'repair') {
     if (c.water < REPAIR_WATER) {
-      world.hint = `Patching the crack needs ${REPAIR_WATER} moisture.`;
+      world.hint = t('hint.repairCost', { amount: REPAIR_WATER });
       world.hintKey = `repair:${nest.id}`;
       return;
     }
     c.water -= REPAIR_WATER;
     nest.integrity = Math.min(1, nest.integrity + REPAIR_AMOUNT);
     world.events.push({ t: 'repair', x: nest.x, y: nest.y });
-    world.hint = `${nest.label} patched to ${Math.round(nest.integrity * 100)}%.`;
+    world.hint = t('hint.repaired', {
+      label: nest.label,
+      percent: Math.round(nest.integrity * 100),
+    });
     world.hintKey = `repaired:${nest.id}`;
     return;
   }
 
   if (target.kind === 'fit') {
     if (c.food < nest.fitFood || c.water < nest.fitWater) {
-      world.hint = `Fitting out ${nest.label} needs ${nest.fitFood} food and ${nest.fitWater} moisture.`;
+      world.hint = t('hint.fitCost', {
+        label: nest.label,
+        food: nest.fitFood,
+        water: nest.fitWater,
+      });
       world.hintKey = `fitcost:${nest.id}`;
       return;
     }
     // Opens the same one-of-three choice UI the adaptations use. Claiming buys the ground; this is
     // where the player decides what the ground is for.
     world.pendingFit = nest.id;
-    world.hint = `${nest.label}: choose what to build — 1 nursery, 2 cache, 3 bolt-hole.`;
+    world.hint = t('hint.fitChoose', { label: nest.label });
     world.hintKey = `fit:${nest.id}`;
     return;
   }
@@ -355,7 +375,11 @@ export function doInteract(world: World): void {
   // Claim.
   if (nest.claimed) return;
   if (c.food < nest.costFood || c.water < nest.costWater) {
-    world.hint = `${nest.label} needs ${nest.costFood} food and ${nest.costWater} moisture.`;
+    world.hint = t('hint.claimCost', {
+      label: nest.label,
+      food: nest.costFood,
+      water: nest.costWater,
+    });
     world.hintKey = `cost:${nest.id}`;
     return;
   }
@@ -399,10 +423,7 @@ export function chooseFunction(world: World, fn: FootholdFunction): FitResult {
 }
 
 export const FUNCTION_LABELS: Record<FootholdFunction, { name: string; blurb: string }> = {
-  nursery: { name: 'Nursery', blurb: '+10 capacity, and brood hatches here.' },
-  cache: { name: 'Cache', blurb: '+90 food and +60 moisture storage.' },
-  bolthole: {
-    name: 'Bolt-hole',
-    blurb: '+2 capacity, and roaches shelter here from further away.',
-  },
+  nursery: { name: t('foothold.nursery.name'), blurb: t('foothold.nursery.blurb') },
+  cache: { name: t('foothold.cache.name'), blurb: t('foothold.cache.blurb') },
+  bolthole: { name: t('foothold.bolthole.name'), blurb: t('foothold.bolthole.blurb') },
 };

@@ -1,4 +1,5 @@
 import { clamp01 } from '../core/math.ts';
+import { t } from '../i18n/index.ts';
 import { depositHeat } from './heat.ts';
 import type { ResourceNode } from './types.ts';
 import { zoneAt } from './territory.ts';
@@ -70,10 +71,9 @@ export interface RoutineSpec {
 export const ROUTINE_SPECS: readonly RoutineSpec[] = [
   {
     kind: 'snack',
-    title: 'Midnight snack',
-    warning: 'Footsteps in the hall. Somebody is going to the fridge.',
-    counterplay:
-      'Fresh crumbs, under a flood of warm light. Take what you can before the door shuts.',
+    title: t('routine.snack.title'),
+    warning: t('routine.snack.warning'),
+    counterplay: t('routine.snack.counter'),
     x: 2530,
     y: 1020,
     // The window has to contain the walk.
@@ -94,10 +94,9 @@ export const ROUTINE_SPECS: readonly RoutineSpec[] = [
   },
   {
     kind: 'dishes',
-    title: 'Washing up',
-    warning: 'The tap is running. The sink run is about to get wet and busy.',
-    counterplay:
-      'Standing water is free moisture — but the wiped floor kills scent where it passes.',
+    title: t('routine.dishes.title'),
+    warning: t('routine.dishes.warning'),
+    counterplay: t('routine.dishes.counter'),
     x: 660,
     y: 1520,
     incoming: 11,
@@ -111,9 +110,9 @@ export const ROUTINE_SPECS: readonly RoutineSpec[] = [
   },
   {
     kind: 'trash',
-    title: 'Bin run',
-    warning: 'The bin lid is up. Something rich just hit the floor by the door.',
-    counterplay: 'The richest food in the kitchen, on the most exposed tile in the kitchen.',
+    title: t('routine.trash.title'),
+    warning: t('routine.trash.warning'),
+    counterplay: t('routine.trash.counter'),
     x: 2980,
     y: 2300,
     incoming: 13,
@@ -214,7 +213,7 @@ function removeRoutineResource(world: World, r: Routine): void {
       }
     }
     world.routes.splice(i, 1);
-    world.hint = 'The spill is gone — that trail went with it.';
+    world.hint = t('routine.gone');
     world.hintKey = `routineGone:${r.id}`;
     world.hintTime = 3.5;
   }

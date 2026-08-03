@@ -1,6 +1,7 @@
 import './style.css';
 
 import { FixedClock, SIM_DT } from './core/clock.ts';
+import { t } from './i18n/index.ts';
 import { clamp } from './core/math.ts';
 import { Telemetry } from './core/telemetry.ts';
 import { GameAudio } from './audio/audio.ts';
@@ -214,14 +215,18 @@ function keyDown(e: KeyboardEvent): void {
         if (result === 'tooPoor') {
           const spec = specById(id);
           world.hint = spec
-            ? `${spec.name} needs ${spec.costFood} food and ${spec.costWater} moisture.`
-            : 'Not enough in the larder yet.';
+            ? t('hint.adaptCost', {
+                name: spec.name,
+                food: spec.costFood,
+                water: spec.costWater,
+              })
+            : t('hint.tooPoorAdapt');
           world.hintTime = 3;
         }
       } else if (world.pendingFit) {
         const fns: FootholdFunction[] = ['nursery', 'cache', 'bolthole'];
         if (chooseFunction(world, fns[slot]) === 'tooPoor') {
-          world.hint = 'Not enough in the larder to fit that out.';
+          world.hint = t('hint.tooPoorFit');
           world.hintTime = 3;
         }
       }

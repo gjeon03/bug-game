@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { World } from './world.ts';
 
 /**
@@ -17,49 +18,49 @@ export interface OnboardingStep {
 export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
   {
     key: 'move',
-    text: 'W A S D — get out of the crack.',
+    text: t('tutorial.move'),
     minTime: 1.2,
     done: (w) => w.stats.firstMoveAt >= 0 && w.time - w.stats.firstMoveAt > 1.4,
   },
   {
     key: 'cover',
-    text: 'Hug the cabinets. Bare tile is where they see you.',
+    text: t('tutorial.cover'),
     minTime: 4.5,
     done: (w) => w.time > 9,
   },
   {
     key: 'inspect',
-    text: 'E — inspect the crumbs or the sink drip.',
+    text: t('tutorial.inspect'),
     minTime: 2,
     done: (w) => w.hintKey.startsWith('inspect:'),
   },
   {
     key: 'lay',
-    text: 'Hold LEFT MOUSE (or SPACE) while walking to lay pheromone. Run a trail from the nest to the food.',
+    text: t('tutorial.lay'),
     minTime: 3,
     done: (w) => w.routes.some((r) => r.linked),
   },
   {
     key: 'follow',
-    text: 'The colony reads your trail. Follow one home.',
+    text: t('tutorial.follow'),
     minTime: 2,
     done: (w) => w.stats.deliveries >= 1,
   },
   {
     key: 'both',
-    text: 'Food breeds. Moisture keeps them alive. You need trails to both.',
+    text: t('tutorial.both'),
     minTime: 3,
     done: (w) => w.colony.totalFood > 0 && w.colony.totalWater > 0,
   },
   {
     key: 'sprint',
-    text: 'SHIFT sprints. It is loud, and loud on open floor gets noticed.',
+    text: t('tutorial.sprint'),
     minTime: 3.5,
     done: (w) => w.time > 60,
   },
   {
     key: 'risk',
-    text: 'Right mouse (or X) rubs a trail out. Tap it to recall everyone.',
+    text: t('tutorial.erase'),
     minTime: 4,
     done: (w) => w.time > 78,
   },
