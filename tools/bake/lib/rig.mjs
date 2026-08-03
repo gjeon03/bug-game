@@ -205,23 +205,11 @@ export function renderProp(renderer, object, opts = {}) {
     l.shadow.camera.updateProjectionMatrix();
   }
 
-  // A normal-map pass, for the renderer bake-off's WebGL candidate. A normal map is the only thing
-  // that lets a MOVING light (the household torch beam) relight a prop per-pixel rather than just
-  // tinting a rectangle over it, so the comparison is only honest if candidate B actually has one.
-  //
-  // The caller renders one pass per call and reads the canvas between them; bounds are computed
-  // deterministically from the geometry, so both passes land on identical pixel grids.
-  if (opts.pass === 'normal') {
-    const normalScene = new THREE.Scene();
-    object.traverse((n) => {
-      if (n.isMesh) n.material = new THREE.MeshNormalMaterial();
-    });
-    normalScene.add(object);
-    renderer.setSize(w * SSAA, h * SSAA, false);
-    renderer.render(normalScene, camera);
-    return { w, h, anchorX: (0 - minX) * BAKE_PPU, anchorY: (maxY - 0) * BAKE_PPU, ssaa: SSAA };
-  }
-
+  // A normal-map pass lived here for the renderer bake-off's WebGL candidate. That candidate lost
+  // (see DECISIONS.md): per-pixel relighting of a 26°-tilted sprite read worse than a composited
+  // light cone, and 9 of the kitchen's 14 sources are static anyway. The pass is gone rather than
+  // kept "just in case", because a second unused renderer path is exactly the kind of thing that
+  // rots and then gets believed.
   renderer.setSize(w * SSAA, h * SSAA, false);
   renderer.render(scene, camera);
 

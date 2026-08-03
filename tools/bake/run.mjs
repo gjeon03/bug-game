@@ -125,19 +125,8 @@ async function main() {
       path.join(OUT_DIR, file),
       Buffer.from(r.png.replace(/^data:image\/png;base64,/, ''), 'base64'),
     );
-    // View-space normal map, used only by the renderer bake-off's WebGL candidate. If that
-    // candidate loses, these are deleted along with it — two production renderers is not a thing
-    // this project will maintain.
-    const nrm = await page.evaluate((n) => window.__bake(n, 'normal'), name);
-    const normalFile = `${name}-n.png`;
-    fs.writeFileSync(
-      path.join(OUT_DIR, normalFile),
-      Buffer.from(nrm.png.replace(/^data:image\/png;base64,/, ''), 'base64'),
-    );
-
     atlas.props[name] = {
       file,
-      normalFile,
       w: r.w,
       h: r.h,
       anchorX: Math.round(r.anchorX * 100) / 100,
