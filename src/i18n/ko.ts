@@ -31,6 +31,7 @@ export const ko = {
    * Single words the tests assert on, so a behavioural test can say "the blocker names the
    * concept" without hardcoding one language's wording. Changing a term here changes both the
    * game and the test that guards it, which is the point. */
+  'term.remaining': '남았다',
   'term.operation': '작전',
   'term.capacityFull': '꽉 찼다',
   'term.foothold': '거점',

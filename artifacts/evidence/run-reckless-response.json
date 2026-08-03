@@ -1,27 +1,27 @@
 {
   "counts": {
-    "workers": 0,
-    "workersOutbound": 0,
-    "workersInbound": 0,
-    "workersCarrying": 0,
+    "workers": 5,
+    "workersOutbound": 2,
+    "workersInbound": 1,
+    "workersCarrying": 2,
     "workersPanicking": 0,
     "workersTrapped": 0,
     "workersQueued": 0,
     "sweeps": 0,
     "routines": 0,
-    "corpses": 8,
-    "hazards": 4,
-    "patrols": 0,
+    "corpses": 2,
+    "hazards": 3,
+    "patrols": 1,
     "sprays": 0,
-    "footfalls": 0,
+    "footfalls": 1,
     "pheromoneNodes": 25
   },
-  "forecast": "Extermination — A roach was seen in the light, worst around the dishwasher. They are ready to exterminate.",
-  "counterplay": null,
-  "nextResponse": "Next: the spray comes out and they go for the nest.",
+  "forecast": "박멸 — 불빛 속에서 바퀴를 봤다, 식기세척기 쪽이 제일 심하다. 박멸할 준비가 끝났다.",
+  "counterplay": "수납장 밑으로 붙어라 — 불빛은 맨바닥의 바퀴만 찾아낸다.",
+  "nextResponse": "다음: 살충제를 꺼내 둥지를 노린다.",
   "heat": {
-    "known": 4,
-    "total": 3.4349395526223816,
+    "known": 3,
+    "total": 3.1512948593881447,
     "hottest": 1
   }
 }

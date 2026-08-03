@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { t } from '../../src/i18n/index.ts';
 import {
   DATA_DIR,
   HOME,
@@ -185,7 +186,8 @@ test.describe('core play', () => {
     await expect(prompt).toContainText(firstFood.label);
     const toast = page.locator('#toast');
     await expect(toast).toContainText(firstFood.label);
-    await expect(toast).toContainText('left');
+    // Locale-independent: the concept, from the catalog, not one language's wording.
+    await expect(toast).toContainText(t('term.remaining'));
     await shot(page, '08-inspect');
     expectClean(w);
   });

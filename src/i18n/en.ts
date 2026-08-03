@@ -24,6 +24,7 @@ export const en = {
 
   /* ── shared units and cost fragments ─────────────────────────────────────── */
 
+  'term.remaining': 'left',
   'term.operation': 'Operation',
   'term.capacityFull': 'capacity',
   'term.foothold': 'foothold',
