@@ -9,19 +9,19 @@
     "workersQueued": 0,
     "sweeps": 0,
     "routines": 0,
-    "corpses": 9,
-    "hazards": 3,
+    "corpses": 8,
+    "hazards": 4,
     "patrols": 0,
     "sprays": 0,
-    "footfalls": 2,
+    "footfalls": 0,
     "pheromoneNodes": 25
   },
-  "forecast": "Calling it in — A roach was seen in the light, worst around the dishwasher. Expect bait, and spray if it gets worse.",
+  "forecast": "Extermination — A roach was seen in the light, worst around the dishwasher. They are ready to exterminate.",
   "counterplay": null,
-  "nextResponse": "Next: bait and longer patrols across the whole kitchen.",
+  "nextResponse": "Next: the spray comes out and they go for the nest.",
   "heat": {
-    "known": 5,
-    "total": 3.627422512843623,
+    "known": 4,
+    "total": 3.4349395526223816,
     "hottest": 1
   }
 }

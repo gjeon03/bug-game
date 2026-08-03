@@ -1,0 +1,40 @@
+NanumSquareNeo — font license and attribution
+=============================================
+
+Font:       NanumSquare Neo (나눔스퀘어 네오)
+Copyright:  Copyright (c) 2022 NAVER Corp. All rights reserved.
+            Font designed by Sandoll Inc.
+Source:     https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/
+            (Naver official static webfont host, reached from https://hangeul.naver.com/font)
+License:    SIL Open Font License, Version 1.1
+
+Naver's official licence notice (help.naver.com/service/30016/contents/18088) states:
+
+    Copyright (c) 2010, NAVER Corporation (https://www.navercorp.com/)
+    with Reserved Font Name Nanum, Naver Nanum, NanumGothic, ..., NanumSquareNeo
+
+    This Font Software is licensed under the SIL Open Font License, Version 1.1.
+    This license is copied below, and is also available with a FAQ at:
+    http://scripts.sil.org/OFL
+
+Naver additionally states that the Nanum fonts are provided free of charge to all users,
+including individual and corporate users; that commercial use is permitted except selling the
+fonts themselves; and that the fonts may be bundled with other software, redistributed, and
+freely modified, provided this copyright notice and the licence text accompany them.
+
+Attribution rendered where full licence text is impractical:
+    이 게임에는 네이버에서 제공한 나눔스퀘어 네오 글꼴이 적용되어 있습니다.
+
+Files vendored in this repository (unmodified, as downloaded from the source above):
+    NanumSquareNeo-Regular.woff2     (NanumSquareNeoTTF-bRg.woff2)  weight 400
+    NanumSquareNeo-Bold.woff2        (NanumSquareNeoTTF-cBd.woff2)  weight 700
+    NanumSquareNeo-ExtraBold.woff2   (NanumSquareNeoTTF-dEb.woff2)  weight 800
+
+SHA-256 (verifiable provenance):
+    97dfe9720fbed813fc988fcedbcf741e97eef9353515b2043717484ec0b90aa1  NanumSquareNeo-Bold.woff2
+    f27c0741248dba9a543520ff27eb32f9433de3ca50ac7ba4ccb5f5ede673c535  NanumSquareNeo-ExtraBold.woff2
+    d13846b612acc829078aff4f91c272c637c08441b409d46bb1a4c802eb2967c3  NanumSquareNeo-Regular.woff2
+
+OS/2 fsType = 8 (Editable embedding) — the font's own machine-readable embedding permission.
+
+The full text of the SIL Open Font License 1.1 is included in OFL-1.1.txt alongside this file.

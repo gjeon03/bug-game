@@ -11,3 +11,6 @@ artifacts/tmp/
 
 # Scratch harnesses. Kept out of the repo so they cannot break format/lint/CI.
 scripts/tmp/
+
+# Bake pipeline scratch renders (the packed atlases in public/art/ ARE committed)
+tools/bake/.cache/
