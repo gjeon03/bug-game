@@ -1,5 +1,6 @@
 import { Rng } from '../core/rng.ts';
 import { SpatialHash } from '../core/spatial.ts';
+import { t } from '../i18n/index.ts';
 import {
   BASE_CAPACITY,
   FOOD_CAP,
@@ -413,7 +414,7 @@ export function createWorld(seed: number): World {
     threatBudget: 0,
     tierHold: 0,
     threatAdvice: null,
-    forecast: 'Nobody has noticed anything yet.',
+    forecast: t('alert.response.0'),
     counterplay: null,
     counterplayTime: 0,
     deathCauses: {},
@@ -546,13 +547,13 @@ export function createWorld(seed: number): World {
     },
     onboarding: { step: 0, stepTime: 0, seenBefore: false, satisfied: false },
 
-    objective: 'Leave the crack and find something to eat.',
+    objective: t('objective.start'),
     hud: {
-      operation: 'Operation 1 — Establish the nest',
-      objective: 'Leave the crack and find something to eat.',
+      operation: t('op.title', { index: 1, title: t('op.1.title') }),
+      objective: t('objective.start'),
       blocker: null,
-      nextUnlock: 'The household starts its night routines — and those are opportunities.',
-      forecast: 'Nobody has noticed anything yet.',
+      nextUnlock: t('op.1.unlock'),
+      forecast: t('alert.response.0'),
       counterplay: null,
       checklist: [],
       target: null,
@@ -565,7 +566,7 @@ export function createWorld(seed: number): World {
     hint: '',
     hintKey: '',
     hintTime: 0,
-    nextResponse: 'Nobody has noticed anything yet.',
+    nextResponse: t('alert.response.0'),
     reactionNote: '',
 
     loseCause: null,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SIM_DT } from '../../src/core/clock.ts';
+import { t } from '../../src/i18n/index.ts';
 import { LABOUR_SHARE_CAP, MAX_ROUTES, TIER_THRESHOLDS } from '../../src/sim/constants.ts';
 import { operationSpec } from '../../src/sim/operations.ts';
 import { stepWorld } from '../../src/sim/sim.ts';
@@ -375,7 +376,11 @@ describe('trail affordances', () => {
       idle(world, 0.3);
     }
     expect(world.routes.length).toBeLessThanOrEqual(MAX_ROUTES);
-    expect(world.hint, 'the player must be told a trail was dissolved').toContain('dissolved');
+    // Asserted against the catalog, not against one language's wording: the contract is that the
+    // eviction is announced with the real route cap, whichever locale is shipped.
+    expect(world.hint, 'the player must be told a trail was dissolved').toBe(
+      t('hint.routeEvicted', { max: MAX_ROUTES }),
+    );
     expect(world.events.some((e) => e.t === 'routeLost')).toBe(true);
   }, 30_000);
 

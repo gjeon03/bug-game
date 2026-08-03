@@ -47,9 +47,14 @@ function cabinetRun({ handle = true, drawer = false } = {}) {
    */
   const VISIBLE_FACE = 150;
 
-  // Worktop slab. Its top face is the surface props actually stand on.
-  const top = mesh(roundedBox(SLICE_W, 34, 560, 2), M.counterStone());
-  top.position.set(0, mm(VISIBLE_FACE), 0);
+  // Only the leading 70 mm of the worktop, not the full 560 mm carcass depth.
+  //
+  // The full depth was modelled first and put the slab straight back: at 26° a 560 mm horizontal
+  // surface projects to 503 mm of screen height, which dwarfs the 66 mm the vertical face projects
+  // to, so the "edge strip" came out 466 world units tall. The worktop's interior is already drawn
+  // by the fixture's own fill; this sprite only has to supply the lip and everything below it.
+  const top = mesh(roundedBox(SLICE_W, 34, 70, 2), M.counterStone());
+  top.position.set(0, mm(VISIBLE_FACE), mm(-266));
   g.add(top);
 
   // Front lip: overhangs the door by 14 mm, so it casts a hard shadow line onto the face below.

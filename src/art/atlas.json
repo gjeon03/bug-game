@@ -3,36 +3,12 @@
   "generatedBy": "tools/bake/run.mjs",
   "sheet": {
     "file": "props.png",
-    "w": 2030,
-    "h": 1482
+    "w": 1985,
+    "h": 899
   },
   "frames": {
-    "cabinet-run": {
-      "x": 2,
-      "y": 2,
-      "w": 381,
-      "h": 933,
-      "anchorX": 190.23,
-      "anchorY": 402.11
-    },
-    "cabinet-drawer": {
-      "x": 387,
-      "y": 2,
-      "w": 381,
-      "h": 933,
-      "anchorX": 190.23,
-      "anchorY": 402.11
-    },
-    "cabinet-blank": {
-      "x": 772,
-      "y": 2,
-      "w": 381,
-      "h": 933,
-      "anchorX": 190.23,
-      "anchorY": 402.11
-    },
     "steel-panel": {
-      "x": 1157,
+      "x": 2,
       "y": 2,
       "w": 378,
       "h": 483,
@@ -40,7 +16,7 @@
       "anchorY": 39.38
     },
     "floor-tile": {
-      "x": 1539,
+      "x": 384,
       "y": 2,
       "w": 489,
       "h": 451,
@@ -48,144 +24,168 @@
       "anchorY": 220.32
     },
     "sink-drain": {
-      "x": 2,
-      "y": 939,
+      "x": 877,
+      "y": 2,
       "w": 462,
       "h": 444,
       "anchorX": 230.64,
       "anchorY": 227.44
     },
     "plate-stack": {
-      "x": 468,
-      "y": 939,
+      "x": 1343,
+      "y": 2,
       "w": 433,
       "h": 436,
       "anchorX": 219.37,
       "anchorY": 192.05
     },
     "plate-single": {
-      "x": 905,
-      "y": 939,
+      "x": 2,
+      "y": 489,
       "w": 310,
       "h": 291,
       "anchorX": 154.57,
       "anchorY": 139.54
     },
     "detergent-bottle": {
-      "x": 1219,
-      "y": 939,
+      "x": 316,
+      "y": 489,
       "w": 148,
       "h": 282,
       "anchorX": 72.86,
       "anchorY": 66.09
     },
+    "cabinet-run": {
+      "x": 468,
+      "y": 489,
+      "w": 381,
+      "h": 251,
+      "anchorX": 190.23,
+      "anchorY": -280.26
+    },
+    "cabinet-drawer": {
+      "x": 853,
+      "y": 489,
+      "w": 381,
+      "h": 251,
+      "anchorX": 190.23,
+      "anchorY": -280.26
+    },
+    "cabinet-blank": {
+      "x": 1238,
+      "y": 489,
+      "w": 381,
+      "h": 251,
+      "anchorX": 190.23,
+      "anchorY": -280.26
+    },
     "sponge": {
-      "x": 1371,
-      "y": 939,
+      "x": 1623,
+      "y": 489,
       "w": 176,
       "h": 135,
       "anchorX": 87.71,
       "anchorY": 56.74
     },
     "scout-gait3": {
-      "x": 1551,
-      "y": 939,
+      "x": 1803,
+      "y": 489,
       "w": 90,
       "h": 116,
       "anchorX": 40.9,
       "anchorY": 56.87
     },
     "scout-gait0": {
-      "x": 1645,
-      "y": 939,
+      "x": 1897,
+      "y": 489,
       "w": 86,
       "h": 113,
       "anchorX": 40.7,
       "anchorY": 53.76
     },
     "scout-gait2": {
-      "x": 1735,
-      "y": 939,
+      "x": 2,
+      "y": 784,
       "w": 86,
       "h": 113,
       "anchorX": 40.7,
       "anchorY": 53.76
     },
     "scout-gait1": {
-      "x": 1825,
-      "y": 939,
+      "x": 92,
+      "y": 784,
       "w": 81,
       "h": 108,
       "anchorX": 38.34,
       "anchorY": 48.51
     },
     "roach-dead": {
-      "x": 1910,
-      "y": 939,
+      "x": 177,
+      "y": 784,
       "w": 70,
       "h": 94,
       "anchorX": 37.85,
       "anchorY": 45.88
     },
     "worker-carry": {
-      "x": 2,
-      "y": 1387,
+      "x": 251,
+      "y": 784,
       "w": 69,
       "h": 93,
       "anchorX": 32.93,
       "anchorY": 43.76
     },
     "worker-gait0": {
-      "x": 75,
-      "y": 1387,
+      "x": 324,
+      "y": 784,
       "w": 69,
       "h": 91,
       "anchorX": 32.93,
       "anchorY": 43.76
     },
     "nymph-gait0": {
-      "x": 148,
-      "y": 1387,
+      "x": 397,
+      "y": 784,
       "w": 46,
       "h": 62,
       "anchorX": 22.42,
       "anchorY": 29.31
     },
     "droplet-m": {
-      "x": 198,
-      "y": 1387,
+      "x": 447,
+      "y": 784,
       "w": 52,
       "h": 53,
       "anchorX": 25.94,
       "anchorY": 23.98
     },
     "crumb-c": {
-      "x": 254,
-      "y": 1387,
+      "x": 503,
+      "y": 784,
       "w": 39,
       "h": 45,
       "anchorX": 18.17,
       "anchorY": 20.88
     },
     "crumb-a": {
-      "x": 297,
-      "y": 1387,
+      "x": 546,
+      "y": 784,
       "w": 34,
       "h": 39,
       "anchorX": 16.86,
       "anchorY": 17.61
     },
     "droplet-s": {
-      "x": 335,
-      "y": 1387,
+      "x": 584,
+      "y": 784,
       "w": 34,
       "h": 35,
       "anchorX": 16.88,
       "anchorY": 15.83
     },
     "crumb-b": {
-      "x": 373,
-      "y": 1387,
+      "x": 622,
+      "y": 784,
       "w": 29,
       "h": 31,
       "anchorX": 14.2,

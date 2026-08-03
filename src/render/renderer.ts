@@ -9,6 +9,7 @@ import {
   WORLD_W,
 } from '../sim/constants.ts';
 import { DECALS, LIGHTS } from '../sim/kitchen.ts';
+import type { FixtureRole, Solid } from '../sim/types.ts';
 import type { World } from '../sim/world.ts';
 import {
   ATLAS_SCALE,
@@ -44,6 +45,21 @@ interface Flash {
 const ROACH_ROWS = { scout: 0, worker: 1, nymph: 2 } as const;
 /** Distinct baked gait poses for the scout. The simulation's 8 gait frames fold onto these. */
 const SCOUT_GAIT_SPRITES = 4;
+
+/**
+ * Fixture roles whose room-facing edge gets a baked cabinet cross-section.
+ *
+ * Walls are excluded: a wall has no worktop, no door and no toe-kick, and giving it joinery would
+ * read as a cabinet floating against the room boundary.
+ */
+const EDGE_SPRITE: Partial<Record<FixtureRole, string>> = {
+  counter: 'cabinet-run',
+  island: 'cabinet-run',
+  dishwasher: 'steel-panel',
+  fridge: 'steel-panel',
+  stove: 'steel-panel',
+};
+const EDGE_ROLES = new Set(Object.keys(EDGE_SPRITE) as FixtureRole[]);
 /** Worker atlas rows, one per colouring. A worker's `variant` picks its row for life. */
 const WORKER_ROWS = [1, 3, 4] as const;
 /** Antennae are drawn procedurally for at most this many bodies per frame. */
@@ -401,6 +417,56 @@ export class Renderer {
       if (s.ox > b.x1 || s.oy > b.y1 || s.ox + w < b.x0 || s.oy + h < b.y0) continue;
       ctx.drawImage(s.canvas, s.ox, s.oy);
       this.drawCalls++;
+    }
+    // Edges go in a second pass, after every fixture fill is down. Drawing an edge immediately
+    // after its own solid let the next solid in the list paint straight over it — the counter's
+    // joinery was being buried under the dishwasher every frame.
+    for (let i = 0; i < this.solids.length; i++) {
+      this.drawSolidEdge(this.solids[i].solid, b);
+    }
+  }
+
+  /**
+   * Tile a baked cabinet cross-section along a fixture's room-facing edge.
+   *
+   * This is the fix for "large blue-black rectangular surfaces dominate the screen". The flat fill
+   * behind it stays — it is the worktop, and a worktop genuinely is a large flat surface — but the
+   * edge where the fixture meets the room is now real joinery: worktop lip, shadow reveal, door
+   * face, handle, and the unlit toe-kick void the colony lives in. Six value changes inside ~70
+   * units, repeated along the run, which is what turns a painted rectangle into furniture.
+   *
+   * Only the `down`-facing edge is drawn, because that is the only face a camera tilted 26° off
+   * vertical can actually see. Drawing all four would put a front elevation on the far side of the
+   * counter, which reads as a floor plan — the exact defect being repaired.
+   */
+  private drawSolidEdge(solid: Solid, b: { x0: number; y0: number; x1: number; y1: number }): void {
+    if (!spritesReady()) return;
+    if ((solid.facing ?? 'down') !== 'down') return;
+    const role = solid.role;
+    if (!role || !EDGE_ROLES.has(role)) return;
+
+    const name = EDGE_SPRITE[role];
+    const f = name ? frame(name) : undefined;
+    if (!name || !f) return;
+
+    // A baked sprite's pixels rise ABOVE its ground anchor, because the prop stands up out of the
+    // floor. A cabinet face, though, belongs BELOW the fixture's front edge — between the worktop
+    // and the room. Anchoring straight at the edge therefore laid the cabinet on top of the
+    // counter, where it was invisible against the fill. Pushing the anchor down by the sprite's own
+    // above-anchor height puts its top lip exactly on the edge, which is where joinery meets stone.
+    const edgeY = solid.y + solid.h + f.anchorY / SPRITE_PPU;
+    const tileW = f.w / SPRITE_PPU;
+    if (edgeY < b.y0 - f.h / SPRITE_PPU || edgeY > b.y1) return;
+
+    // Alternate the drawer variant every other tile so a long run has horizontal rhythm rather
+    // than one silhouette repeated to the horizon.
+    const ctx = this.ctx;
+    const start = Math.max(solid.x, b.x0 - tileW);
+    const end = Math.min(solid.x + solid.w, b.x1 + tileW);
+    let index = Math.floor((start - solid.x) / tileW);
+    for (let x = solid.x + index * tileW; x < end; x += tileW, index += 1) {
+      const variant = index % 3 === 1 ? 'cabinet-drawer' : name;
+      if (drawSprite(ctx, variant, x + tileW / 2, edgeY, {})) this.drawCalls++;
     }
   }
 

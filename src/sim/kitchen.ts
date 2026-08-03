@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { LightSource, NightIndex, Prop, Solid } from './types.ts';
 import { WORLD_H, WORLD_W } from './constants.ts';
 
@@ -321,9 +322,17 @@ export const RESOURCES: readonly ResourceSpec[] = [
     y: 1704,
     amount: 680,
     unlockOp: 1,
-    label: 'Dishwasher crumbs',
+    label: t('place.resource.dishCrumbs'),
   },
-  { id: 'sinkDrip', kind: 'water', x: 664, y: 1312, amount: 640, unlockOp: 1, label: 'Sink drip' },
+  {
+    id: 'sinkDrip',
+    kind: 'water',
+    x: 664,
+    y: 1312,
+    amount: 640,
+    unlockOp: 1,
+    label: t('place.resource.sinkDrip'),
+  },
   {
     id: 'stoveGrease',
     kind: 'food',
@@ -331,7 +340,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     y: 716,
     amount: 820,
     unlockOp: 1,
-    label: 'Stove grease',
+    label: t('place.resource.stoveGrease'),
   },
 
   // Operation 2 — richer, and out where the household can see you working.
@@ -342,7 +351,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     y: 1948,
     amount: 1150,
     unlockOp: 2,
-    label: 'Island spill',
+    label: t('place.resource.islandDrop'),
   },
   {
     id: 'fridgeCondensation',
@@ -351,7 +360,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     y: 872,
     amount: 1250,
     unlockOp: 2,
-    label: 'Fridge condensation',
+    label: t('place.resource.fridgeCondensation'),
   },
   {
     id: 'pantryGrain',
@@ -360,7 +369,7 @@ export const RESOURCES: readonly ResourceSpec[] = [
     y: 2312,
     amount: 1200,
     unlockOp: 2,
-    label: 'Pantry grain',
+    label: t('place.resource.pantryGrain'),
   },
 
   // Operation 3 — the biggest hauls, in the worst places.
@@ -371,9 +380,17 @@ export const RESOURCES: readonly ResourceSpec[] = [
     y: 2472,
     amount: 1900,
     unlockOp: 3,
-    label: 'Bin spill',
+    label: t('place.resource.trashSpill'),
   },
-  { id: 'petBowl', kind: 'water', x: 2700, y: 2216, amount: 1700, unlockOp: 3, label: 'Pet bowl' },
+  {
+    id: 'petBowl',
+    kind: 'water',
+    x: 2700,
+    y: 2216,
+    amount: 1700,
+    unlockOp: 3,
+    label: t('place.resource.petBowl'),
+  },
 ];
 
 export interface NestSpec {
@@ -404,7 +421,7 @@ export const NESTS: readonly NestSpec[] = [
     y: 2042,
     home: true,
     unlockOp: 1,
-    label: 'Home crack',
+    label: t('place.nest.home'),
     costFood: 0,
     costWater: 0,
     fitFood: 0,
@@ -416,7 +433,7 @@ export const NESTS: readonly NestSpec[] = [
     y: 1568,
     home: false,
     unlockOp: 2,
-    label: 'Sink-run crack',
+    label: t('place.nest.crackSink'),
     costFood: 30,
     costWater: 20,
     fitFood: 34,
@@ -428,7 +445,7 @@ export const NESTS: readonly NestSpec[] = [
     y: 1796,
     home: false,
     unlockOp: 2,
-    label: 'Island crack',
+    label: t('place.nest.crackIsland'),
     costFood: 34,
     costWater: 22,
     fitFood: 38,
@@ -440,7 +457,7 @@ export const NESTS: readonly NestSpec[] = [
     y: 2494,
     home: false,
     unlockOp: 2,
-    label: 'Pantry crack',
+    label: t('place.nest.crackPantry'),
     costFood: 32,
     costWater: 20,
     fitFood: 36,
@@ -452,7 +469,7 @@ export const NESTS: readonly NestSpec[] = [
     y: 640,
     home: false,
     unlockOp: 3,
-    label: 'Stove-side crack',
+    label: t('place.nest.crackStove'),
     costFood: 42,
     costWater: 28,
     fitFood: 44,
@@ -464,7 +481,7 @@ export const NESTS: readonly NestSpec[] = [
     y: 2088,
     home: false,
     unlockOp: 3,
-    label: 'Bin-corner crack',
+    label: t('place.nest.crackBin'),
     costFood: 46,
     costWater: 30,
     fitFood: 46,

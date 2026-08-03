@@ -1,4 +1,5 @@
 import { clamp01 } from '../core/math.ts';
+import { t } from '../i18n/index.ts';
 import type { World } from './world.ts';
 
 /**
@@ -27,14 +28,14 @@ export interface ZoneSpec {
  * "hold the sink" is a sentence the player can act on by looking at the room.
  */
 export const ZONES: readonly ZoneSpec[] = [
-  { id: 'sink', name: 'the sink run', x: 56, y: 820, w: 720, h: 780 },
-  { id: 'dishwasher', name: 'the dishwasher', x: 56, y: 1600, w: 720, h: 480 },
-  { id: 'pantry', name: 'the pantry', x: 56, y: 2080, w: 900, h: 464 },
-  { id: 'stove', name: 'the stove', x: 1040, y: 56, w: 900, h: 720 },
-  { id: 'fridge', name: 'the refrigerator', x: 2400, y: 56, w: 1144, h: 900 },
-  { id: 'island', name: 'the island', x: 1180, y: 1120, w: 1400, h: 800 },
-  { id: 'trash', name: 'the bin corner', x: 2680, y: 1900, w: 864, h: 644 },
-  { id: 'doorway', name: 'the hall doorway', x: 2900, y: 2200, w: 644, h: 400 },
+  { id: 'sink', name: t('place.zone.sink'), x: 56, y: 820, w: 720, h: 780 },
+  { id: 'dishwasher', name: t('place.zone.dishwasher'), x: 56, y: 1600, w: 720, h: 480 },
+  { id: 'pantry', name: t('place.zone.pantry'), x: 56, y: 2080, w: 900, h: 464 },
+  { id: 'stove', name: t('place.zone.stove'), x: 1040, y: 56, w: 900, h: 720 },
+  { id: 'fridge', name: t('place.zone.fridge'), x: 2400, y: 56, w: 1144, h: 900 },
+  { id: 'island', name: t('place.zone.island'), x: 1180, y: 1120, w: 1400, h: 800 },
+  { id: 'trash', name: t('place.zone.trash'), x: 2680, y: 1900, w: 864, h: 644 },
+  { id: 'doorway', name: t('place.zone.doorway'), x: 2900, y: 2200, w: 644, h: 400 },
 ] as const;
 
 export interface ZoneState {

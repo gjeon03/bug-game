@@ -238,7 +238,7 @@ export class Hud {
       )
       .join('');
     this.setHtml('checklist', list);
-    this.set('nextUnlock', world.finalResponse ? 'They are coming.' : `Next: ${h.nextUnlock}`);
+    this.set('nextUnlock', world.finalResponse ? t('hud.theyAreComing') : `Next: ${h.nextUnlock}`);
     this.el.phase?.classList.toggle('warn', world.finalResponse);
 
     this.toggle('blocker', h.blocker !== null);

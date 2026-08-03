@@ -1,16 +1,29 @@
 # ART_BIBLE — Baseboard Empire
 
+> **Rescinded 2026-08-04 — the rule that caused the defect.**
+>
+> This document previously said: _"Cabinets and appliances are **walls**, not props."_ That rule is
+> withdrawn. It is the direct, documented cause of the user's second-loudest complaint — "large
+> blue-black rectangular surfaces dominate the screen" — because it instructed the renderer to fill
+> a 1080×470-unit counter with one flat value, which at play zoom is wider than the screen.
+>
+> The replacement rule: **no fixture face may run more than 700 world units without a vertical
+> event, and every room-facing edge must resolve into at least four values within 60 units.**
+>
+> Recording this rather than quietly editing it, because the failure mode is instructive: the art
+> was not drifting from its direction, it was faithfully executing direction that was wrong.
+
 Target: **stylised macro-noir kitchen**. Not photoreal filth, not cartoon comedy. Cold architecture,
 warm pools of light, small amber bodies moving through it.
 
 ## Shape language
 
-| Family             | Shapes                                                                                                               |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Human architecture | Long straight edges, hard 90° corners, huge unbroken planes. Cabinets and appliances are **walls**, not props.       |
-| Colony             | Ovals, tapers, arcs. Every roach silhouette is a soft-cornered teardrop with a hard antenna crown.                   |
-| Threat             | Broad soft-edged masses (shadows, spray clouds) and one hard silhouette (the foot). Threat never uses colony shapes. |
-| Pheromone          | Dotted, granular, non-solid. Never a hard line — it must read as _scent_, not as a drawn path.                       |
+| Family             | Shapes                                                                                                                                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Human architecture | Long straight edges and hard 90° corners, but **never an unbroken plane**. Every fixture resolves into layered planes — worktop, lip, shadow reveal, door, handle, toe-kick void. See §Rescinded. |
+| Colony             | Ovals, tapers, arcs. Every roach silhouette is a soft-cornered teardrop with a hard antenna crown.                                                                                                |
+| Threat             | Broad soft-edged masses (shadows, spray clouds) and one hard silhouette (the foot). Threat never uses colony shapes.                                                                              |
+| Pheromone          | Dotted, granular, non-solid. Never a hard line — it must read as _scent_, not as a drawn path.                                                                                                    |
 
 ## Scale relationships
 
@@ -259,3 +272,28 @@ gradient, not a drawn line, and it is the one element the independent visual cri
 unambiguously solved.
 
 Where this file and this note disagree, this note is what ships.
+
+## Production pipeline (supersedes any procedural-drawing guidance above)
+
+Art is **baked offline**, never drawn with runtime primitives. `tools/bake/` models each prop as
+real 3D geometry at true millimetre dimensions, renders it in headless Chromium through **one
+shared camera and light rig**, and packs the results into a single sprite sheet at `src/art/`.
+
+- **One rig, no exceptions.** Every sprite passes through `tools/bake/lib/rig.mjs`, so no two props
+  can disagree about where the light comes from or how steeply they are viewed. Style consistency
+  is an invariant, not a review step.
+- **Camera tilt 26° off vertical.** Enough to reveal a front face and give objects elevation; the
+  simulation stays strictly 2D. Sprites are placed by their baked ground anchor.
+- **Model in millimetres.** A dinner plate is 200 mm, therefore 149 world units, therefore nearly
+  six scouts across. Eyeballing sizes in world units is how the scale gag dies.
+- **Environment map is mandatory for metal.** A PBR metal with no environment reflects nothing and
+  renders black. This is why the sink deck and drain were black in the first three bakes.
+- **Contact shadows are baked in.** Every prop carries its own shadow, which is what gives it weight.
+
+### Measured negative results — do not repeat
+
+| Attempt                                  | Outcome                                                                                                                                                                                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Procedural texture maps on flat surfaces | Invisible at `roughnessMap` only; invisible as albedo because `ExtrudeGeometry` emits world-unit UVs, not 0..1; visible as a repeating **grid** once the repeat was corrected — a banned artefact — and grew the sheet 321 kB → 1155 kB. Removed. |
+| Full-height cabinet geometry             | At 26° a 760 mm carcass projects to a 662-unit flat slab: a larger version of the rectangle it was meant to replace. Replaced with a ~210 mm edge profile.                                                                                        |
+| WebGL + normal-mapped dynamic lighting   | Lost the renderer bake-off. Identical object recognition, and its one unique capability read _worse_ than a composited light cone. See `DECISIONS.md`.                                                                                            |

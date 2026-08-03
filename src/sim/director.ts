@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { checkMilestone } from './adaptations.ts';
 import { CRITICAL_RESERVE } from './constants.ts';
 import { HEAT_KNOWN, hottestCell, knownCellCount, updateHeat } from './heat.ts';
@@ -246,35 +247,27 @@ function updatePressure(world: World, dt: number): void {
     case 'patrol':
       spawnPatrol(world, hot.x, hot.y);
       world.threatBudget -= 1;
-      setCounterplay(
-        world,
-        'Stay under cabinetry — a torch beam only finds roaches on open floor.',
-      );
+      setCounterplay(world, t('threat.counter.patrol'));
       break;
     case 'sweep':
       sweepRegion(world, hot.x, hot.y);
       world.threatBudget -= 1;
-      world.counterplay =
-        'A wipe erases scent, not roaches. Re-lay the line once the cloth passes.';
+      world.counterplay = t('threat.counter.sweep');
       break;
     case 'trap':
       deployTraps(world, tier >= 3 ? 2 : 1, hot.x, hot.y);
       world.threatBudget -= 1;
-      world.counterplay =
-        'Traps land where your traffic went. Move the line and the trap is wasted.';
+      world.counterplay = t('threat.counter.trap');
       break;
     case 'bait':
       deployBait(world, 1, hot.x, hot.y);
       world.threatBudget -= 1;
-      setCounterplay(world, 'Bait is slow. A roach that walks in has time to walk out.');
+      setCounterplay(world, t('threat.counter.bait'));
       break;
     case 'spray':
       spawnSpray(world, hot.x, hot.y, false);
       world.threatBudget -= 2;
-      setCounterplay(
-        world,
-        'Get everyone into a claimed crack. Spray cannot reach inside the walls.',
-      );
+      setCounterplay(world, t('threat.counter.spray'));
       break;
   }
   world.recentTargets.push(hot.index);
@@ -315,7 +308,7 @@ function beginFinalResponse(world: World): void {
   world.finalResponse = true;
   world.finalResponseTime = 0;
   world.events.push({ t: 'finalResponse' });
-  setCounterplay(world, 'Claimed cracks are shelter. Everything outside one is exposed.', 90);
+  setCounterplay(world, t('threat.counter.final'), 90);
 }
 
 /**
@@ -354,17 +347,27 @@ function updateForecast(world: World): void {
   const known = knownCellCount(world);
 
   if (world.finalResponse) {
-    world.forecast = `EXTERMINATION — ${Math.max(0, Math.ceil(FINAL_RESPONSE_LENGTH - world.finalResponseTime))}s. They are spraying where your traffic was heaviest.`;
-    world.threatAdvice = 'Get the colony into claimed cracks and keep them there.';
+    world.forecast = t('alert.forecast.final', {
+      seconds: Math.max(0, Math.ceil(FINAL_RESPONSE_LENGTH - world.finalResponseTime)),
+    });
+    world.threatAdvice = t('threat.advice.final');
     return;
   }
 
   const place = hottestCell(world, () => false);
   const where = place && place.heat >= HEAT_KNOWN ? regionName(place.x, place.y) : null;
   const next = nextResponseText(tier, known);
-  world.forecast = label
-    ? `${tierName(tier)} — ${label}${where ? `, worst around ${where}` : ''}. ${next}`
-    : `${tierName(tier)}. ${next}`;
+  if (!label) world.forecast = t('alert.forecast.bare', { tier: tierName(tier), next });
+  else if (where) {
+    world.forecast = t('alert.forecast.withPlace', {
+      tier: tierName(tier),
+      cause: label,
+      place: where,
+      next,
+    });
+  } else {
+    world.forecast = t('alert.forecast.withCause', { tier: tierName(tier), cause: label, next });
+  }
 
   // Threat advice is only promoted into the objective when a live threat sits on the colony's own
   // infrastructure — otherwise it is noise competing with the actual goal.
@@ -377,9 +380,7 @@ function updateForecast(world: World): void {
         const n = r.nodes[i];
         if ((n.x - h.x) ** 2 + (n.y - h.y) ** 2 < (h.radius * 1.6) ** 2) {
           world.threatAdvice =
-            h.kind === 'trap'
-              ? 'A sticky trap is sitting on one of your supply lines — erase that stretch and re-route.'
-              : 'Bait has been put down on one of your lines — steer the trail around it.';
+            h.kind === 'trap' ? t('threat.advice.trapOnRoute') : t('threat.advice.baitOnRoute');
           return;
         }
       }
@@ -387,38 +388,38 @@ function updateForecast(world: World): void {
   }
   for (const s of world.sweeps) {
     if (s.warn > 0) {
-      world.threatAdvice = 'A cleaning pass is starting — the scent it crosses will be gone.';
+      world.threatAdvice = t('threat.advice.sweepIncoming');
       return;
     }
   }
 }
 
 function nextResponseText(tier: number, known: number): string {
-  if (known === 0) return 'They have not worked out where yet.';
+  if (known === 0) return t('threat.next.unknown');
   switch (tier) {
     case 0:
-      return 'Somebody may come through for a look.';
+      return t('threat.next.0');
     case 1:
-      return 'Expect a wipe-down where the traffic is.';
+      return t('threat.next.1');
     case 2:
-      return 'Expect traps on the routes they have noticed.';
+      return t('threat.next.2');
     case 3:
-      return 'Expect bait, and spray if it gets worse.';
+      return t('threat.next.3');
     default:
-      return 'They are ready to exterminate.';
+      return t('threat.next.4');
   }
 }
 
 /** A human-readable place name for a world point, used in the forecast. */
 export function regionName(x: number, y: number): string {
-  if (x < 900 && y < 1700) return 'the sink';
-  if (x < 900 && y < 2100) return 'the dishwasher';
-  if (x < 1050) return 'the pantry';
-  if (x < 2100 && y < 900) return 'the stove';
-  if (x > 2400 && y < 1100) return 'the fridge';
-  if (x > 2600 && y > 1900) return 'the bin corner';
-  if (y > 2100) return 'the floor by the door';
-  return 'the island';
+  if (x < 900 && y < 1700) return t('place.region.sink');
+  if (x < 900 && y < 2100) return t('place.region.dishwasher');
+  if (x < 1050) return t('place.region.pantry');
+  if (x < 2100 && y < 900) return t('place.region.stove');
+  if (x > 2400 && y < 1100) return t('place.region.fridge');
+  if (x > 2600 && y > 1900) return t('place.region.trash');
+  if (y > 2100) return t('place.region.door');
+  return t('place.region.island');
 }
 
 /* ── Outcome ───────────────────────────────────────────────────────────────── */

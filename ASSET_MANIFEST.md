@@ -114,3 +114,82 @@ Statuses below are filled from the final audit (`artifacts/evidence/asset-audit.
 
 `pnpm test:e2e` runs `tests/e2e/asset-audit.spec.ts`, which walks every rendered element class and
 every triggered sound and writes `artifacts/evidence/asset-audit.json`. Temporary-count must be 0.
+
+---
+
+# Quality reboot — asset state as of 2026-08-04
+
+Classification per the contract: **intentional final** / **generated final** / **licensed final** /
+**temporary**. Temporary assets block completion; they are listed honestly rather than quietly
+reclassified.
+
+## Licensed final
+
+| Asset                        | Source                                                                                    | License     | Evidence                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------- |
+| NanumSquareNeo Regular 400   | `hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/` (Naver official static host) | SIL OFL 1.1 | `src/fonts/LICENSE-NanumSquareNeo.txt`, SHA-256 recorded |
+| NanumSquareNeo Bold 700      | same                                                                                      | SIL OFL 1.1 | same                                                     |
+| NanumSquareNeo ExtraBold 800 | same                                                                                      | SIL OFL 1.1 | same                                                     |
+
+Naver's help centre names `NanumSquareNeo` explicitly in the OFL Reserved Font Name list. Bundling,
+redistribution and embedding are permitted; the font may not be sold standalone. The font's own
+OS/2 `fsType = 8` grants editable embedding. Full OFL text ships at `src/fonts/OFL-1.1.txt`.
+
+## Generated final — baked 3D sprites
+
+Produced by `tools/bake/` (three.js in headless Chromium, SwiftShader, deterministic), modelled at
+true millimetre dimensions, rendered through one shared camera and light rig at 16× supersampling,
+packed into `src/art/props.png` + `atlas.json`. **23 frames**, sheet 2030×1482.
+
+| Frame              | Size (px) | Class           |
+| ------------------ | --------- | --------------- |
+| `cabinet-blank`    | 381×933   | generated final |
+| `cabinet-drawer`   | 381×933   | generated final |
+| `cabinet-run`      | 381×933   | generated final |
+| `crumb-a`          | 34×39     | generated final |
+| `crumb-b`          | 29×31     | generated final |
+| `crumb-c`          | 39×45     | generated final |
+| `detergent-bottle` | 148×282   | generated final |
+| `droplet-m`        | 52×53     | generated final |
+| `droplet-s`        | 34×35     | generated final |
+| `floor-tile`       | 489×451   | generated final |
+| `nymph-gait0`      | 46×62     | generated final |
+| `plate-single`     | 310×291   | generated final |
+| `plate-stack`      | 433×436   | generated final |
+| `roach-dead`       | 70×94     | generated final |
+| `scout-gait0`      | 86×113    | generated final |
+| `scout-gait1`      | 81×108    | generated final |
+| `scout-gait2`      | 86×113    | generated final |
+| `scout-gait3`      | 90×116    | generated final |
+| `sink-drain`       | 462×444   | generated final |
+| `sponge`           | 176×135   | generated final |
+| `steel-panel`      | 378×483   | generated final |
+| `worker-carry`     | 69×93     | generated final |
+| `worker-gait0`     | 69×91     | generated final |
+
+## Temporary — BLOCKS COMPLETION
+
+These still render through the old procedural Canvas2D path (`src/render/props.ts`,
+`src/render/solids.ts`, `src/render/atlas.ts`) and are placeholder-grade by the standard of this
+reboot:
+
+- **All kitchen architecture actually drawn in-game.** `cabinet-run`, `cabinet-drawer`,
+  `cabinet-blank`, `floor-tile`, `steel-panel` are baked but **not yet wired into the renderer**,
+  so counters, cabinets, appliances and the floor still draw as flat filled rectangles. This is the
+  user's defect #2 and #3 and it is **not fixed yet**.
+- Prop kinds with no baked art: `pipeElbow`, `dishTowel`, `outlet`, `mug`, `burner`, `panHandle`,
+  `ovenVent`, `fridgeGasket`, `condenserGrille`, `packet`, `jar`, `binBag`, `binWheel`, `petBowl`,
+  `petMat`, `scuffMark`, `baseboardGap` and the rest of the `PropKind` union.
+- Worker colour variants: rows 3 and 4 resolve to the same `worker-gait0` sprite, so the three
+  authored worker colourings are currently two.
+- `roach-dead` does not read as dead — it renders as a live roach at an angle.
+- Carried cargo on `worker-carry` is too bright and reads as popcorn rather than food.
+- Wing-cover (tegmina) seam is too subtle to separate at gameplay zoom.
+- **All audio.** Still fully synthesised at runtime by `src/audio/audio.ts`; no authored or licensed
+  audio asset exists. Unclassified against this contract.
+
+## Removed
+
+- 18 view-space normal maps (`*-n.png`) — baked for the WebGL renderer candidate, deleted with it
+  when Canvas2D won. See `DECISIONS.md`.
+- Procedural surface-texture maps — measured, rejected, removed. See `ART_BIBLE.md`.

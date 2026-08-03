@@ -1,4 +1,5 @@
 import { clamp01, dist2 } from '../core/math.ts';
+import { t } from '../i18n/index.ts';
 import {
   ADOPT_MIN_ALIGN,
   ERASE_RADIUS,
@@ -52,7 +53,7 @@ function newRoute(world: World): Route {
     releaseWorkers(world, victim.id);
     const last = victim.nodes[victim.nodes.length - 1];
     world.events.push({ t: 'routeLost', x: last?.x ?? 0, y: last?.y ?? 0 });
-    world.hint = `Only ${MAX_ROUTES} trails at once — the oldest one dissolved.`;
+    world.hint = t('hint.routeEvicted', { max: MAX_ROUTES });
     world.hintKey = 'evicted';
     world.hintTime = 5;
   }
