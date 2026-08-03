@@ -53,8 +53,31 @@ window.addEventListener('unhandledrejection', (e) => {
 });
 
 const t0 = performance.now();
+
+/**
+ * Nothing that measures or lays out text may run before the webfont is usable.
+ *
+ * The HUD is DOM and the world labels are canvas, and canvas `measureText` caches nothing: if it
+ * runs while NanumSquareNeo is still loading it measures the fallback, and every subsequent layout
+ * is wrong by however much the two fonts differ. That is the layout jump the font gate exists to
+ * prevent, and it is invisible on a warm cache — it only ever hits a first-time player.
+ *
+ * `document.fonts` is guarded because the unit-test environment has no FontFaceSet, and a boot that
+ * throws there would be a worse failure than a mismeasured glyph.
+ */
+const fontT0 = performance.now();
+if (typeof document !== 'undefined' && document.fonts) {
+  try {
+    await document.fonts.ready;
+  } catch (e) {
+    captureError(`font load: ${String(e)}`);
+  }
+}
+const fontMs = Math.round((performance.now() - fontT0) * 100) / 100;
+
 const settings: Settings = loadSettings();
 const telemetry = new Telemetry();
+telemetry.startup.fontMs = fontMs;
 const atlas = buildAtlas(WORLD_W, WORLD_H, 0xb00c);
 telemetry.startup.atlasMs = atlas.buildMs;
 

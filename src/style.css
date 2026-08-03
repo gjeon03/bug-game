@@ -1,5 +1,42 @@
 /* Baseboard Empire — UI chrome. Canvas draws the world; this file draws everything the player reads. */
 
+/*
+ * NanumSquareNeo, vendored locally under SIL Open Font License 1.1.
+ * Copyright (c) 2022 NAVER Corp., designed by Sandoll Inc. See src/fonts/LICENSE-NanumSquareNeo.txt.
+ * 이 게임에는 네이버에서 제공한 나눔스퀘어 네오 글꼴이 적용되어 있습니다.
+ *
+ * The files live in src/, not public/, on purpose. Vite copies public/ verbatim and leaves a
+ * root-absolute url() untouched, which 404s under the /bug-game/ repository subpath; importing them
+ * from src/ makes Vite fingerprint each file and emit a RELATIVE url, which is what keeps the build
+ * subpath-safe. scripts/check-subpath.mjs enforces this.
+ *
+ * Three explicit weights, no synthetic bolding: a browser asked to fake-bold Hangul thickens the
+ * strokes until the counters inside dense glyphs close up, which is unreadable at HUD sizes.
+ * `font-display: block` rather than `swap` — the canvas measures text once fonts are ready, and a
+ * swap mid-measure is precisely the layout jump the font gate forbids.
+ */
+@font-face {
+  font-family: 'NanumSquareNeo';
+  src: url('./fonts/NanumSquareNeo-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'NanumSquareNeo';
+  src: url('./fonts/NanumSquareNeo-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'NanumSquareNeo';
+  src: url('./fonts/NanumSquareNeo-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: block;
+}
+
 :root {
   --ink: #05070b;
   --slate: #131c24;
@@ -17,10 +54,17 @@
   --text: #cfdcea;
   --text-dim: #8698aa;
 
+  /* Fallbacks are Korean-capable by design: if NanumSquareNeo ever fails, the player must still get
+   * Hangul, not tofu. Apple SD Gothic Neo (macOS/iOS), Malgun Gothic (Windows) and Noto Sans KR
+   * cover every desktop target before the generic sans-serif is reached. */
   --sans:
-    ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, 'Helvetica Neue',
-    Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+    'NanumSquareNeo', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', ui-sans-serif,
+    system-ui, sans-serif;
+  /* Numerals and meters previously used a Latin monospace, which has no Hangul and would drop any
+   * Korean in those slots to a fallback mid-string. NanumSquareNeo leads here too; the monospace
+   * families remain only for digits. */
+  --mono:
+    'NanumSquareNeo', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 
   --gap: 14px;
   --radius: 10px;
@@ -40,6 +84,21 @@ body {
   color: var(--text);
   font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
+
+  /*
+   * The single highest-impact rule in the Korean port, and it inherits, so it is set once here.
+   *
+   * Browsers treat every Hangul syllable as its own break opportunity, so by default a line wraps
+   * in the MIDDLE of a word — '박멸' becomes '박' / '멸' across two lines. `keep-all` forbids that
+   * and breaks at spaces instead, which is how Korean is actually set. Without it the quality of
+   * the catalog is irrelevant, because every multi-line string reads as broken.
+   *
+   * `overflow-wrap: anywhere` is the escape hatch: keep-all alone would let a single unbroken
+   * token overflow its container rather than wrap, so this keeps a pathological string inside the
+   * box instead of spilling across the HUD.
+   */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 #app {
@@ -174,17 +233,20 @@ body {
 .meter .label {
   grid-area: 1 / 2 / 2 / 4;
   font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.02em;
   color: var(--text-dim);
   margin-bottom: 2px;
 }
 
-/* A critical reserve is signalled by motion and shape as well as colour. */
+/* A critical reserve is signalled by motion and shape as well as colour.
+ *
+ * The word itself comes from the catalog via a data attribute, not from CSS `content`. Text baked
+ * into a stylesheet is invisible to the localization sweep and was shipping the English word
+ * "CRITICAL" straight into the Korean HUD. Anything a player reads belongs to src/i18n. */
 .meter.critical .label::after {
-  content: ' ⚠ CRITICAL';
+  content: ' ⚠ ' attr(data-critical);
   color: var(--danger);
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .meter.critical .track {
@@ -241,8 +303,7 @@ body {
 #suspicion .tier-name {
   font-size: 12px;
   font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 #suspicion .pips {
@@ -422,8 +483,7 @@ kbd {
 
 #phase .op {
   font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.02em;
   color: var(--bone);
   margin-bottom: 6px;
 }
@@ -507,8 +567,7 @@ kbd {
 
 .choice-head {
   font-size: 13px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--warm);
   margin-bottom: 10px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
@@ -639,8 +698,7 @@ kbd {
   margin: 0 0 14px;
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--amber);
 }
 
@@ -679,8 +737,7 @@ kbd {
 
 .stat .k {
   font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.02em;
   color: var(--text-dim);
 }
 
