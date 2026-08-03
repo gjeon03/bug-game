@@ -101,6 +101,24 @@ jobs:
             };
             for (const s of r.suites ?? []) walk(s);
             if (found === 0) console.log("::error::Reporter recorded no failing spec; the runner itself failed.");
+
+            // fullrun 09 writes a decision tally precisely so a CI/local disagreement can be read as
+            // "starved of time" vs "stood still". That file lives in the artifact, which needs auth,
+            // so the tally is surfaced here too — otherwise the diagnostic the test author built is
+            // unreachable exactly when it is needed.
+            const prog = "artifacts/evidence/run-progress.json";
+            if (fs.existsSync(prog)) {
+              const g = JSON.parse(fs.readFileSync(prog, "utf8"));
+              const st = g.stats ?? {};
+              console.log("::error::run-progress: op=" + g.operation + " completed=" + st.operationsCompleted +
+                " status=" + g.status + " lose=" + g.loseCause +
+                " deliveries=" + st.deliveries + " routines=" + st.routinesExploited +
+                " pop=" + (g.colony && g.colony.population) + " food=" + Math.round((g.colony && g.colony.food) || 0) +
+                " zonesHeld=" + (Array.isArray(g.zones) ? g.zones.filter((z) => z.held).length : "?") +
+                " decisions=" + esc(JSON.stringify(g.decisions ?? {})) +
+                " discardedTime=" + ((g.peakPerf && g.peakPerf.discardedTime) ?? "?") +
+                " overloadFrames=" + ((g.peakPerf && g.peakPerf.overloadFrames) ?? "?"));
+            }
           '
 
       - name: Upload evidence
