@@ -42,7 +42,7 @@ export class Hud {
         <div class="panel" id="suspicion">
           <div class="head">
             ${ICONS.eye}
-            <span class="tier-name" data-el="tierName">Unnoticed</span>
+            <span class="tier-name" data-el="tierName">${t('alert.tier.0')}</span>
             <span class="pips">
               <span class="pip" data-el="pip0"></span><span class="pip" data-el="pip1"></span
               ><span class="pip" data-el="pip2"></span><span class="pip" data-el="pip3"></span>
@@ -55,8 +55,8 @@ export class Hud {
             ).join('')}</div>
             <div class="floor" data-el="suspFloor" style="left:0%"></div>
           </div>
-          <div class="cause" data-el="cause">No evidence yet.</div>
-          <div class="next" data-el="next">Nobody has noticed anything yet.</div>
+          <div class="cause" data-el="cause">${t('hud.evidence.none')}</div>
+          <div class="next" data-el="next">${t('alert.response.0')}</div>
           <div class="counter hidden" data-el="counter"></div>
         </div>
       </div>
@@ -65,7 +65,7 @@ export class Hud {
         <div class="panel">
           ${meter('stam', t('hud.meter.sprint'), ICONS.stamina, 'f-stam')}
           ${meter('pher', t('hud.meter.pheromone'), ICONS.pheromone, 'f-pher')}
-          <div class="statusline" data-el="scoutState">Scout ready</div>
+          <div class="statusline" data-el="scoutState">${t('hud.scout.ready')}</div>
         </div>
       </div>
 
@@ -81,7 +81,7 @@ export class Hud {
 
       <div class="corner br">
         <div class="panel" id="phase">
-          <div class="op" data-el="opTitle">Operation 1 — Establish the nest</div>
+          <div class="op" data-el="opTitle">${t('op.title', { index: 1, title: t('op.1.title') })}</div>
           <ul class="checklist" data-el="checklist"></ul>
           <div class="unlock" data-el="nextUnlock"></div>
           <div id="perf" class="hidden" data-el="perf"></div>
@@ -179,7 +179,7 @@ export class Hud {
       'cause',
       susp.lastCause
         ? `<span class="rowicon">◂</span><span>${CAUSE_LABELS[susp.lastCause]}</span>`
-        : `<span class="rowicon">◂</span><span>No evidence yet.</span>`,
+        : `<span class="rowicon">◂</span><span>${t('hud.evidence.none')}</span>`,
     );
     // The forecast is the household's own reasoning, not a generic tier label: what it noticed,
     // roughly where, and what it is likely to do about it.
@@ -209,18 +209,18 @@ export class Hud {
     if (showToast) this.setHtml('toast', world.hint);
 
     if (showPrompt && target) {
-      const cost =
-        target.costFood > 0 || target.costWater > 0
-          ? ` — ${target.costFood > 0 ? `${target.costFood} food` : ''}${
-              target.costFood > 0 && target.costWater > 0 ? ', ' : ''
-            }${target.costWater > 0 ? `${target.costWater} moisture` : ''}`
-          : '';
+      // Cost fragments come from the catalog so the resource nouns and their order are the
+      // translator's decision, not the layout's.
+      const parts: string[] = [];
+      if (target.costFood > 0) parts.push(t('unit.food', { amount: target.costFood }));
+      if (target.costWater > 0) parts.push(t('unit.water', { amount: target.costWater }));
+      const cost = parts.length ? t('hud.prompt.costSuffix', { cost: parts.join(', ') }) : '';
       const label =
         target.kind === 'claim' || target.kind === 'fit' || target.kind === 'repair'
           ? `<kbd>E</kbd> ${target.label}${cost}`
           : target.kind === 'sealed'
             ? `<kbd>E</kbd> ${target.label}`
-            : `<kbd>E</kbd> Inspect ${target.label}`;
+            : `<kbd>E</kbd> ${t('hud.prompt.inspect', { label: target.label })}`;
       this.setHtml('prompt', label);
       this.toggle('prompt', true);
       this.el.prompt?.classList.toggle('blocked', !target.affordable);
@@ -238,7 +238,10 @@ export class Hud {
       )
       .join('');
     this.setHtml('checklist', list);
-    this.set('nextUnlock', world.finalResponse ? t('hud.theyAreComing') : `Next: ${h.nextUnlock}`);
+    this.set(
+      'nextUnlock',
+      world.finalResponse ? t('hud.theyAreComing') : t('hud.next', { unlock: h.nextUnlock }),
+    );
     this.el.phase?.classList.toggle('warn', world.finalResponse);
 
     this.toggle('blocker', h.blocker !== null);
