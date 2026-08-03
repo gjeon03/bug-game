@@ -116,3 +116,86 @@ pheromone route and a delivery.
 The E2E suite is served from `/bug-game/` rather than from the site root, so every gameplay spec is
 also a subpath test: an absolute asset URL fails the whole suite rather than one deploy-specific
 spec.
+
+---
+
+## Deployment attempt 2026-08-04 — FAILED, site NOT updated
+
+**Do not read this section as a successful deployment. It was not one.**
+
+### What happened
+
+`main` was fast-forwarded `368d1b0..691b259` and pushed (no force-push, no rewritten history).
+The Pages workflow ran and **failed**, so the `Deploy` job was skipped and GitHub Pages continues
+to serve the previous build.
+
+Verified by polling the live URL for 60 minutes: `https://gjeon03.github.io/bug-game/` still
+returns `lang="en"` and `<title>Baseboard Empire</title>` — i.e. the pre-reboot build.
+
+### Exact failure
+
+Run: https://github.com/gjeon03/bug-game/actions/runs/30847369461 (sha `691b259`, conclusion
+`failure`).
+
+Every step passed except one:
+
+| Step                             | Result   |
+| -------------------------------- | -------- |
+| Install (frozen lockfile)        | pass     |
+| Format check                     | pass     |
+| Lint                             | pass     |
+| Typecheck                        | pass     |
+| Unit tests                       | pass     |
+| Production build                 | pass     |
+| Assert the build is subpath-safe | pass     |
+| Install Playwright Chromium      | pass     |
+| **Browser tests (nested path)**  | **FAIL** |
+| Upload Pages artifact            | skipped  |
+| Deploy                           | skipped  |
+
+### Why the cause is not yet identified
+
+The same suite passes locally at **17/17, exit 0** (`artifacts/evidence/quality-reboot-final/logs/e2e-final.log`).
+`playwright.config.ts` has no CI-conditional branches — same `workers: 1`, `retries: 0`,
+`timeout: 180_000`, same production build served from the same nested path — so the difference is
+the runner environment, not the configuration.
+
+Fetching the CI job log to identify the failing spec returns **HTTP 403**:
+
+```
+GET https://api.github.com/repos/gjeon03/bug-game/actions/jobs/91798855448/logs  ->  403
+gh auth status -> "You are not logged into any GitHub hosts."
+```
+
+Downloading the uploaded `evidence` artifact requires the same authentication.
+
+A plausible-but-unconfirmed hypothesis is runner slowness against the long specs' own overrides
+(`fullrun 09` uses `test.setTimeout(1_500_000)` and took 4.4 min locally; `perf 14` uses
+`test.setTimeout(1_200_000)` and took 13.1 min locally). **This is a hypothesis, not a diagnosis** —
+it is recorded here so nobody mistakes it for one.
+
+### The single external action required
+
+Authenticate the GitHub CLI so the CI log and evidence artifact become readable:
+
+```
+gh auth login
+gh run view 30847369461 --log-failed
+gh run download 30847369461 -n evidence
+```
+
+Or simply open the run URL above in a browser and read the failing step.
+
+Once the failing spec is known it can be fixed and `main` pushed again; the workflow will then
+deploy on its own.
+
+### What IS verified
+
+The deployable artifact is finished and verified locally under the real subpath:
+
+- `node scripts/check-subpath.mjs dist` — 26 files checked, build is subpath-safe.
+- Full E2E suite served from `/bug-game/`: **17/17 pass**.
+- Production build boots at `http://127.0.0.1:PORT/bug-game/` with **zero page errors and zero
+  failed requests**, Korean UI, NanumSquareNeo loaded and in use.
+
+The blocker is CI observability, not the artifact.
