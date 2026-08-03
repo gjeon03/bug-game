@@ -3,3 +3,4 @@ lint=0
 typecheck=0
 unit=0
 build=0
+e2e=1

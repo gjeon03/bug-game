@@ -1,12 +1,12 @@
 {
   "config": {
     "argv": [
-      "/Users/jeongyeong-yeon/.asdf/installs/nodejs/23.5.0/bin/node",
-      "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/node_modules/@playwright/test/cli.js",
+      "/Users/jeongyeong-yeon/.asdf/installs/nodejs/21.7.2/bin/node",
+      "/Users/jeongyeong-yeon/Documents/bug-game/node_modules/@playwright/test/cli.js",
       "test"
     ],
-    "configFile": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/playwright.config.ts",
-    "rootDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e",
+    "configFile": "/Users/jeongyeong-yeon/Documents/bug-game/playwright.config.ts",
+    "rootDir": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -22,7 +22,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results",
+        "outputDir": "/Users/jeongyeong-yeon/Documents/bug-game/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -30,7 +30,7 @@
         },
         "id": "",
         "name": "",
-        "testDir": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e",
+        "testDir": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -100,12 +100,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5987,
+                      "duration": 7326,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T00:55:32.698Z",
+                      "startTime": "2026-08-03T17:02:58.857Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -134,12 +134,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 4790,
+                      "duration": 5281,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T00:55:38.793Z",
+                      "startTime": "2026-08-03T17:03:06.396Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -168,12 +168,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 13720,
+                      "duration": 16725,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T00:55:43.587Z",
+                      "startTime": "2026-08-03T17:03:11.683Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -205,7 +205,7 @@
           "specs": [
             {
               "title": "09 a careful run drives itself through the operations by achieving them",
-              "ok": true,
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -218,18 +218,53 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1186096,
-                      "errors": [],
+                      "status": "failed",
+                      "duration": 381155,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m3\u001b[39m\nReceived:    \u001b[31m2\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m3\u001b[39m\nReceived:    \u001b[31m2\u001b[39m\n    at /Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts:291:27",
+                        "location": {
+                          "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts",
+                          "column": 27,
+                          "line": 291
+                        },
+                        "snippet": "  289 |     // The claim: a real browser, driving the real input layer, moved the run forward by *doing*\n  290 |     // things — and every advance is attributable to a completed checklist.\n> 291 |     expect(end.operation).toBeGreaterThanOrEqual(3);\n      |                           ^\n  292 |     expect(end.stats.operationsCompleted).toBeGreaterThanOrEqual(2);\n  293 |     expect(end.stats.deliveries).toBeGreaterThan(20);\n  294 |     expect(end.stats.routinesExploited).toBeGreaterThanOrEqual(2);"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts",
+                            "column": 27,
+                            "line": 291
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: >= \u001b[32m3\u001b[39m\nReceived:    \u001b[31m2\u001b[39m\n\n  289 |     // The claim: a real browser, driving the real input layer, moved the run forward by *doing*\n  290 |     // things — and every advance is attributable to a completed checklist.\n> 291 |     expect(end.operation).toBeGreaterThanOrEqual(3);\n      |                           ^\n  292 |     expect(end.stats.operationsCompleted).toBeGreaterThanOrEqual(2);\n  293 |     expect(end.stats.deliveries).toBeGreaterThan(20);\n  294 |     expect(end.stats.routinesExploited).toBeGreaterThanOrEqual(2);\n    at /Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts:291:27"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T00:55:57.319Z",
+                      "startTime": "2026-08-03T17:03:28.434Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/jeongyeong-yeon/Documents/bug-game/test-results/fullrun-complete-runs-09-a-65249-perations-by-achieving-them/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/jeongyeong-yeon/Documents/bug-game/test-results/fullrun-complete-runs-09-a-65249-perations-by-achieving-them/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/fullrun.spec.ts",
+                        "column": 27,
+                        "line": 291
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
               "id": "10e71ebee97db66b31a0-ad72a8dd547c897996c2",
@@ -250,15 +285,15 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 0,
+                      "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 225040,
+                      "duration": 229972,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T01:15:43.422Z",
+                      "startTime": "2026-08-03T17:09:53.838Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -301,15 +336,15 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 0,
+                      "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1720,
+                      "duration": 2477,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T01:19:28.487Z",
+                      "startTime": "2026-08-03T17:13:43.930Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -335,15 +370,15 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 0,
+                      "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3099,
+                      "duration": 3985,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T01:19:30.212Z",
+                      "startTime": "2026-08-03T17:13:46.414Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -358,68 +393,7 @@
             },
             {
               "title": "03 closes the loop: scout route → worker acquisition → delivery → colony growth",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 180000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 317491,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts",
-                            "column": 14,
-                            "line": 218
-                          },
-                          "message": "TimeoutError: page.waitForFunction: Timeout 60000ms exceeded.\n\n   at driver.ts:218\n\n  216 | ): Promise<number> {\n  217 |   const start = await state(page);\n> 218 |   await page.waitForFunction(\n      |              ^\n  219 |     ({ src, a }) => {\n  220 |       const fn = new Function('s', 'arg', `return (${src})(s, arg)`) as (\n  221 |         s: StateSnapshot,\n    at waitForState (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:218:14)\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/gameplay.spec.ts:113:5"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-02T01:19:33.315Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/gameplay-core-play-03-clos-1d66b--→-delivery-→-colony-growth/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/gameplay-core-play-03-clos-1d66b--→-delivery-→-colony-growth/trace.zip"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "a8475ef9564cfbc88065-d8ae6a51afd285817943",
-              "file": "gameplay.spec.ts",
-              "line": 76,
-              "column": 3
-            },
-            {
-              "title": "04 route geometry changes risk: a covered route and an open-floor route differ measurably",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -432,55 +406,28 @@
                     {
                       "workerIndex": 1,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 1072463,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts",
-                            "column": 15,
-                            "line": 90
-                          },
-                          "message": "Error: page.evaluate: Test timeout of 180000ms exceeded.\n\n   at driver.ts:90\n\n  88 |   opts: { lay?: boolean; sprint?: boolean; timeout?: number; arrive?: number } = {},\n  89 | ): Promise<DriveResult> {\n> 90 |   return page.evaluate(\n     |               ^\n  91 |     (args) =>\n  92 |       new Promise<DriveResult>((resolve) => {\n  93 |         const api = window.__roach;\n    at driveTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:90:15)\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/gameplay.spec.ts:143:11"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 35232,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T01:24:53.043Z",
+                      "startTime": "2026-08-03T17:13:50.404Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/gameplay-core-play-04-rout-84616-oor-route-differ-measurably/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/gameplay-core-play-04-rout-84616-oor-route-differ-measurably/trace.zip"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
-              "id": "a8475ef9564cfbc88065-4f056dd79438d4f5d188",
+              "id": "a8475ef9564cfbc88065-d8ae6a51afd285817943",
               "file": "gameplay.spec.ts",
-              "line": 130,
+              "line": 76,
               "column": 3
             },
             {
-              "title": "05 inspect reports a resource and refuses an unaffordable claim with a reason",
-              "ok": false,
+              "title": "04 route geometry changes risk: a covered route and an open-floor route differ measurably",
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -491,47 +438,54 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 2,
+                      "workerIndex": 1,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 987278,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts",
-                            "column": 14,
-                            "line": 236
-                          },
-                          "message": "Error: page.evaluate: Test timeout of 180000ms exceeded.\n\n   at driver.ts:236\n\n  234 |   await page.evaluate(() => window.__roach.input.press('interact'));\n  235 |   await page.waitForTimeout(120);\n> 236 |   await page.evaluate(() => window.__roach.input.release('interact'));\n      |              ^\n  237 | }\n  238 |\n  239 | export async function shot(page: Page, name: string): Promise<void> {\n    at tapInteract (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:236:14)\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/gameplay.spec.ts:179:5"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 32292,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T01:42:46.122Z",
+                      "startTime": "2026-08-03T17:14:25.641Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/gameplay-core-play-05-insp-afa31-ordable-claim-with-a-reason/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/gameplay-core-play-05-insp-afa31-ordable-claim-with-a-reason/trace.zip"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
+                }
+              ],
+              "id": "a8475ef9564cfbc88065-4f056dd79438d4f5d188",
+              "file": "gameplay.spec.ts",
+              "line": 130,
+              "column": 3
+            },
+            {
+              "title": "05 inspect reports a resource and refuses an unaffordable claim with a reason",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6327,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T17:14:57.938Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
                 }
               ],
               "id": "a8475ef9564cfbc88065-0208bd3c28e5321e3a4a",
@@ -569,44 +523,52 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 3,
+                      "workerIndex": 1,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 2054482,
+                      "status": "failed",
+                      "duration": 782901,
                       "error": {
-                        "message": "\u001b[31mTest timeout of 1200000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 1200000ms exceeded.\u001b[39m"
+                        "message": "Error: peak-load p50 49.8 ms against an idle floor of 33.4 ms on this host\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m43.42\u001b[39m\nReceived:    \u001b[31m49.8\u001b[39m",
+                        "stack": "Error: peak-load p50 49.8 ms against an idle floor of 33.4 ms on this host\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m43.42\u001b[39m\nReceived:    \u001b[31m49.8\u001b[39m\n    at /Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts:246:9",
+                        "location": {
+                          "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts",
+                          "column": 9,
+                          "line": 246
+                        },
+                        "snippet": "  244 |         win!.p50,\n  245 |         `${win!.label} p50 ${win!.p50} ms against an idle floor of ${baseline!.p50} ms on this host`,\n> 246 |       ).toBeLessThanOrEqual(baseline!.p50 * LOAD_RATIO_BUDGET);\n      |         ^\n  247 |\n  248 |       // ── Presented-interval budgets.\n  249 |       //"
                       },
                       "errors": [
                         {
-                          "message": "\u001b[31mTest timeout of 1200000ms exceeded.\u001b[39m"
-                        },
-                        {
                           "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts",
-                            "column": 15,
-                            "line": 90
+                            "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts",
+                            "column": 9,
+                            "line": 246
                           },
-                          "message": "Error: page.evaluate: Test timeout of 1200000ms exceeded.\n\n   at driver.ts:90\n\n  88 |   opts: { lay?: boolean; sprint?: boolean; timeout?: number; arrive?: number } = {},\n  89 | ): Promise<DriveResult> {\n> 90 |   return page.evaluate(\n     |               ^\n  91 |     (args) =>\n  92 |       new Promise<DriveResult>((resolve) => {\n  93 |         const api = window.__roach;\n    at driveTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:90:15)\n    at walkTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:299:18)\n    at layLine (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:311:3)\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/perf.spec.ts:111:5"
+                          "message": "Error: peak-load p50 49.8 ms against an idle floor of 33.4 ms on this host\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m43.42\u001b[39m\nReceived:    \u001b[31m49.8\u001b[39m\n\n  244 |         win!.p50,\n  245 |         `${win!.label} p50 ${win!.p50} ms against an idle floor of ${baseline!.p50} ms on this host`,\n> 246 |       ).toBeLessThanOrEqual(baseline!.p50 * LOAD_RATIO_BUDGET);\n      |         ^\n  247 |\n  248 |       // ── Presented-interval budgets.\n  249 |       //\n    at /Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts:246:9"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T01:59:14.047Z",
+                      "startTime": "2026-08-03T17:15:04.282Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/perf-performance-14-active-43944-nside-the-frame-time-budget/error-context.md"
+                          "path": "/Users/jeongyeong-yeon/Documents/bug-game/test-results/perf-performance-14-active-43944-nside-the-frame-time-budget/error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/perf-performance-14-active-43944-nside-the-frame-time-budget/trace.zip"
+                          "path": "/Users/jeongyeong-yeon/Documents/bug-game/test-results/perf-performance-14-active-43944-nside-the-frame-time-budget/trace.zip"
                         }
-                      ]
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e/perf.spec.ts",
+                        "column": 9,
+                        "line": 246
+                      }
                     }
                   ],
                   "status": "unexpected"
@@ -636,7 +598,7 @@
           "specs": [
             {
               "title": "11 five consecutive restarts leak no state and stay playable",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -647,47 +609,20 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 4,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 1025223,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 420000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 420000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 420000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts",
-                            "column": 15,
-                            "line": 90
-                          },
-                          "message": "Error: page.evaluate: Test timeout of 420000ms exceeded.\n\n   at driver.ts:90\n\n  88 |   opts: { lay?: boolean; sprint?: boolean; timeout?: number; arrive?: number } = {},\n  89 | ): Promise<DriveResult> {\n> 90 |   return page.evaluate(\n     |               ^\n  91 |     (args) =>\n  92 |       new Promise<DriveResult>((resolve) => {\n  93 |         const api = window.__roach;\n    at driveTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:90:15)\n    at walkTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:299:18)\n    at layLine (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:312:3)\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/restart.spec.ts:36:7"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 42257,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T02:33:29.215Z",
+                      "startTime": "2026-08-03T17:28:16.406Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/restart-restart-and-lifecy-15211--no-state-and-stay-playable/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/restart-restart-and-lifecy-15211--no-state-and-stay-playable/trace.zip"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "62be28aa61e216d7fcc8-76809402866f48bee505",
@@ -697,7 +632,7 @@
             },
             {
               "title": "12 losing focus suspends the run instead of fast-forwarding it",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -708,47 +643,20 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 5,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 933368,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 420000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 420000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 420000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/restart.spec.ts",
-                            "column": 16,
-                            "line": 127
-                          },
-                          "message": "Error: page.waitForTimeout: Test timeout of 420000ms exceeded.\n\n  125 |       document.dispatchEvent(new Event('visibilitychange'));\n  126 |     });\n> 127 |     await page.waitForTimeout(400);\n      |                ^\n  128 |     const after = await state(page);\n  129 |\n  130 |     // Also survive a genuine background/foreground cycle of the real tab.\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/restart.spec.ts:127:16"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 8699,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T02:50:35.082Z",
+                      "startTime": "2026-08-03T17:28:58.778Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/restart-restart-and-lifecy-d20ed-stead-of-fast-forwarding-it/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/restart-restart-and-lifecy-d20ed-stead-of-fast-forwarding-it/trace.zip"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "62be28aa61e216d7fcc8-1c6f563668484987b7a2",
@@ -758,7 +666,7 @@
             },
             {
               "title": "13 pause stops the simulation and the settings survive a restart",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -769,47 +677,20 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 6,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 885549,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 420000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 420000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 420000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/restart.spec.ts",
-                            "column": 16,
-                            "line": 170
-                          },
-                          "message": "Error: page.waitForTimeout: Test timeout of 420000ms exceeded.\n\n  168 |     await page.locator('input[data-set=\"reducedShake\"]').check();\n  169 |     await page.keyboard.press('KeyR');\n> 170 |     await page.waitForTimeout(600);\n      |                ^\n  171 |     await page.keyboard.press('Escape');\n  172 |     await expect(page.locator('input[data-set=\"reducedShake\"]')).toBeChecked();\n  173 |     await page.keyboard.press('Escape');\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/restart.spec.ts:170:16"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 5958,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T03:06:09.023Z",
+                      "startTime": "2026-08-03T17:29:07.482Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/restart-restart-and-lifecy-19970--settings-survive-a-restart/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/restart-restart-and-lifecy-19970--settings-survive-a-restart/trace.zip"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "62be28aa61e216d7fcc8-0fe713c8162095ca985d",
@@ -836,7 +717,7 @@
           "specs": [
             {
               "title": "06 standing in the fridge light raises suspicion and pulls a response tier",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -847,47 +728,20 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 7,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 1054312,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts",
-                            "column": 15,
-                            "line": 90
-                          },
-                          "message": "Error: page.evaluate: Test timeout of 300000ms exceeded.\n\n   at driver.ts:90\n\n  88 |   opts: { lay?: boolean; sprint?: boolean; timeout?: number; arrive?: number } = {},\n  89 | ): Promise<DriveResult> {\n> 90 |   return page.evaluate(\n     |               ^\n  91 |     (args) =>\n  92 |       new Promise<DriveResult>((resolve) => {\n  93 |         const api = window.__roach;\n    at driveTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:90:15)\n    at loiter (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/threats.spec.ts:47:15)\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/threats.spec.ts:55:5"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 79930,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T03:20:55.219Z",
+                      "startTime": "2026-08-03T17:29:13.455Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/threats-household-response-6e6b1-n-and-pulls-a-response-tier/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/threats-household-response-6e6b1-n-and-pulls-a-response-tier/trace.zip"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "c10e1de0146a6e946067-cdb8309487f22c28eab6",
@@ -897,7 +751,7 @@
             },
             {
               "title": "07 a footfall is telegraphed, lethal, and survivable by leaving the marked ground",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -908,47 +762,20 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 8,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 915267,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts",
-                            "column": 15,
-                            "line": 90
-                          },
-                          "message": "Error: page.evaluate: Test timeout of 300000ms exceeded.\n\n   at driver.ts:90\n\n  88 |   opts: { lay?: boolean; sprint?: boolean; timeout?: number; arrive?: number } = {},\n  89 | ): Promise<DriveResult> {\n> 90 |   return page.evaluate(\n     |               ^\n  91 |     (args) =>\n  92 |       new Promise<DriveResult>((resolve) => {\n  93 |         const api = window.__roach;\n    at driveTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:90:15)\n    at walkTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:299:18)\n    at layLine (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:312:3)\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/threats.spec.ts:93:5"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 44861,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T03:38:30.190Z",
+                      "startTime": "2026-08-03T17:30:33.389Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/threats-household-response-ba291-y-leaving-the-marked-ground/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/threats-household-response-ba291-y-leaving-the-marked-ground/trace.zip"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "c10e1de0146a6e946067-19005c594d337d8860c2",
@@ -958,7 +785,7 @@
             },
             {
               "title": "08 losing the scout costs a body and the colony provides a replacement",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -969,47 +796,20 @@
                   "projectName": "",
                   "results": [
                     {
-                      "workerIndex": 9,
+                      "workerIndex": 2,
                       "parallelIndex": 0,
-                      "status": "timedOut",
-                      "duration": 909464,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts",
-                            "column": 15,
-                            "line": 90
-                          },
-                          "message": "Error: page.evaluate: Test timeout of 300000ms exceeded.\n\n   at driver.ts:90\n\n  88 |   opts: { lay?: boolean; sprint?: boolean; timeout?: number; arrive?: number } = {},\n  89 | ): Promise<DriveResult> {\n> 90 |   return page.evaluate(\n     |               ^\n  91 |     (args) =>\n  92 |       new Promise<DriveResult>((resolve) => {\n  93 |         const api = window.__roach;\n    at driveTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:90:15)\n    at walkTo (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:299:18)\n    at layLine (/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/driver.ts:312:3)\n    at /Users/jeongyeong-yeon/Documents_LOCAL/bug-game/tests/e2e/threats.spec.ts:140:5"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 33910,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-02T03:53:46.050Z",
+                      "startTime": "2026-08-03T17:31:18.255Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/threats-household-response-7187e-lony-provides-a-replacement/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/Users/jeongyeong-yeon/Documents_LOCAL/bug-game/test-results/threats-household-response-7187e-lony-provides-a-replacement/trace.zip"
-                        }
-                      ]
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "c10e1de0146a6e946067-8b17f6964a8da9601e1d",
@@ -1024,11 +824,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-02T00:55:29.377Z",
-    "duration": 11606340.904,
-    "expected": 7,
+    "startTime": "2026-08-03T17:02:56.341Z",
+    "duration": 1733807.621,
+    "expected": 15,
     "skipped": 0,
-    "unexpected": 10,
+    "unexpected": 2,
     "flaky": 0
   }
 }

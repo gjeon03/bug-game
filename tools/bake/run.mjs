@@ -22,7 +22,10 @@ const OUT_DIR = path.join(ROOT, 'public', 'art');
 const ORIGIN = 'https://bake.local';
 
 /** Prop families to bake, in atlas order. */
-const FAMILIES = [{ module: '/tools/bake/props/sink.mjs', registry: 'SINK_PROPS' }];
+const FAMILIES = [
+  { module: '/tools/bake/props/sink.mjs', registry: 'SINK_PROPS' },
+  { module: '/tools/bake/props/roach.mjs', registry: 'ROACH_PROPS' },
+];
 
 const PAGE_HTML = `<!doctype html>
 <html><head><meta charset="utf-8">
@@ -48,9 +51,9 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const REGISTRY = Object.assign({}, ${FAMILIES.map((_, i) => `R${i}`).join(', ')});
 window.__names = () => Object.keys(REGISTRY);
-window.__bake = (name) => {
+window.__bake = (name, pass) => {
   const spec = REGISTRY[name];
-  const info = renderProp(renderer, spec.build(), spec);
+  const info = renderProp(renderer, spec.build(), Object.assign({}, spec, { pass }));
   // Resolve the supersampled framebuffer down to shipping resolution. This downsample IS the
   // antialiasing: 16 rendered samples collapse into every output pixel.
   const out = document.createElement('canvas');
@@ -122,8 +125,19 @@ async function main() {
       path.join(OUT_DIR, file),
       Buffer.from(r.png.replace(/^data:image\/png;base64,/, ''), 'base64'),
     );
+    // View-space normal map, used only by the renderer bake-off's WebGL candidate. If that
+    // candidate loses, these are deleted along with it — two production renderers is not a thing
+    // this project will maintain.
+    const nrm = await page.evaluate((n) => window.__bake(n, 'normal'), name);
+    const normalFile = `${name}-n.png`;
+    fs.writeFileSync(
+      path.join(OUT_DIR, normalFile),
+      Buffer.from(nrm.png.replace(/^data:image\/png;base64,/, ''), 'base64'),
+    );
+
     atlas.props[name] = {
       file,
+      normalFile,
       w: r.w,
       h: r.h,
       anchorX: Math.round(r.anchorX * 100) / 100,

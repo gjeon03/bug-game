@@ -1,6 +1,6 @@
 {
   "counts": {
-    "workers": 8,
+    "workers": 7,
     "workersOutbound": 0,
     "workersInbound": 0,
     "workersCarrying": 0,
@@ -13,10 +13,10 @@
     "hazards": 0,
     "patrols": 1,
     "sprays": 0,
-    "footfalls": 1,
+    "footfalls": 2,
     "pheromoneNodes": 116
   },
-  "time": 38.71666666666575,
+  "time": 39.833333333332355,
   "operation": 1,
   "forecast": "Something's off — A roach was seen in the light, worst around the fridge. Expect a wipe-down where the traffic is.",
   "counterplay": "Stay under cabinetry — a torch beam only finds roaches on open floor.",

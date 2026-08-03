@@ -4,6 +4,7 @@
   "props": {
     "plate-single": {
       "file": "plate-single.png",
+      "normalFile": "plate-single-n.png",
       "w": 310,
       "h": 291,
       "anchorX": 154.57,
@@ -11,6 +12,7 @@
     },
     "plate-stack": {
       "file": "plate-stack.png",
+      "normalFile": "plate-stack-n.png",
       "w": 433,
       "h": 436,
       "anchorX": 219.37,
@@ -18,6 +20,7 @@
     },
     "sink-drain": {
       "file": "sink-drain.png",
+      "normalFile": "sink-drain-n.png",
       "w": 462,
       "h": 444,
       "anchorX": 230.64,
@@ -25,6 +28,7 @@
     },
     "sponge": {
       "file": "sponge.png",
+      "normalFile": "sponge-n.png",
       "w": 176,
       "h": 135,
       "anchorX": 87.71,
@@ -32,6 +36,7 @@
     },
     "detergent-bottle": {
       "file": "detergent-bottle.png",
+      "normalFile": "detergent-bottle-n.png",
       "w": 148,
       "h": 282,
       "anchorX": 72.86,
@@ -39,6 +44,7 @@
     },
     "crumb-a": {
       "file": "crumb-a.png",
+      "normalFile": "crumb-a-n.png",
       "w": 34,
       "h": 39,
       "anchorX": 16.86,
@@ -46,6 +52,7 @@
     },
     "crumb-b": {
       "file": "crumb-b.png",
+      "normalFile": "crumb-b-n.png",
       "w": 29,
       "h": 31,
       "anchorX": 14.2,
@@ -53,6 +60,7 @@
     },
     "crumb-c": {
       "file": "crumb-c.png",
+      "normalFile": "crumb-c-n.png",
       "w": 39,
       "h": 45,
       "anchorX": 18.17,
@@ -60,6 +68,7 @@
     },
     "droplet-s": {
       "file": "droplet-s.png",
+      "normalFile": "droplet-s-n.png",
       "w": 34,
       "h": 35,
       "anchorX": 16.88,
@@ -67,10 +76,75 @@
     },
     "droplet-m": {
       "file": "droplet-m.png",
+      "normalFile": "droplet-m-n.png",
       "w": 52,
       "h": 53,
       "anchorX": 25.94,
       "anchorY": 23.98
+    },
+    "scout-gait0": {
+      "file": "scout-gait0.png",
+      "normalFile": "scout-gait0-n.png",
+      "w": 86,
+      "h": 113,
+      "anchorX": 40.7,
+      "anchorY": 53.76
+    },
+    "scout-gait1": {
+      "file": "scout-gait1.png",
+      "normalFile": "scout-gait1-n.png",
+      "w": 81,
+      "h": 108,
+      "anchorX": 38.34,
+      "anchorY": 48.51
+    },
+    "scout-gait2": {
+      "file": "scout-gait2.png",
+      "normalFile": "scout-gait2-n.png",
+      "w": 86,
+      "h": 113,
+      "anchorX": 40.7,
+      "anchorY": 53.76
+    },
+    "scout-gait3": {
+      "file": "scout-gait3.png",
+      "normalFile": "scout-gait3-n.png",
+      "w": 90,
+      "h": 116,
+      "anchorX": 40.9,
+      "anchorY": 56.87
+    },
+    "worker-gait0": {
+      "file": "worker-gait0.png",
+      "normalFile": "worker-gait0-n.png",
+      "w": 69,
+      "h": 91,
+      "anchorX": 32.93,
+      "anchorY": 43.76
+    },
+    "worker-carry": {
+      "file": "worker-carry.png",
+      "normalFile": "worker-carry-n.png",
+      "w": 69,
+      "h": 93,
+      "anchorX": 32.93,
+      "anchorY": 43.76
+    },
+    "nymph-gait0": {
+      "file": "nymph-gait0.png",
+      "normalFile": "nymph-gait0-n.png",
+      "w": 46,
+      "h": 62,
+      "anchorX": 22.42,
+      "anchorY": 29.31
+    },
+    "roach-dead": {
+      "file": "roach-dead.png",
+      "normalFile": "roach-dead-n.png",
+      "w": 70,
+      "h": 94,
+      "anchorX": 37.85,
+      "anchorY": 45.88
     }
   }
 }
