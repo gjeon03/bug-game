@@ -1,27 +1,27 @@
 {
   "counts": {
-    "workers": 5,
-    "workersOutbound": 2,
-    "workersInbound": 1,
-    "workersCarrying": 2,
+    "workers": 6,
+    "workersOutbound": 0,
+    "workersInbound": 0,
+    "workersCarrying": 0,
     "workersPanicking": 0,
     "workersTrapped": 0,
     "workersQueued": 0,
     "sweeps": 0,
     "routines": 0,
     "corpses": 2,
-    "hazards": 3,
-    "patrols": 1,
-    "sprays": 0,
-    "footfalls": 1,
-    "pheromoneNodes": 25
+    "hazards": 1,
+    "patrols": 0,
+    "sprays": 1,
+    "footfalls": 0,
+    "pheromoneNodes": 17
   },
   "forecast": "박멸 — 불빛 속에서 바퀴를 봤다, 식기세척기 쪽이 제일 심하다. 박멸할 준비가 끝났다.",
-  "counterplay": "수납장 밑으로 붙어라 — 불빛은 맨바닥의 바퀴만 찾아낸다.",
+  "counterplay": "전부 차지한 틈 안으로. 살충제는 벽 안까지 못 닿는다.",
   "nextResponse": "다음: 살충제를 꺼내 둥지를 노린다.",
   "heat": {
-    "known": 3,
-    "total": 3.1512948593881447,
-    "hottest": 1
+    "known": 4,
+    "total": 3.858513775106985,
+    "hottest": 0.9177528619766235
   }
 }

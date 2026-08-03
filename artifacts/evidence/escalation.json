@@ -1,13 +1,13 @@
 {
   "suspicion": {
-    "value": 50.49237032956522,
+    "value": 52.798684599920925,
     "tier": 2,
-    "peak": 50.78403699623162,
-    "floor": 27.931220347927393,
+    "peak": 53.09368459992066,
+    "floor": 29.201526529956364,
     "lastCause": "seen"
   },
   "counts": {
-    "workers": 5,
+    "workers": 4,
     "workersOutbound": 0,
     "workersInbound": 0,
     "workersCarrying": 0,
@@ -17,12 +17,12 @@
     "sweeps": 0,
     "routines": 0,
     "corpses": 0,
-    "hazards": 0,
+    "hazards": 2,
     "patrols": 0,
     "sprays": 0,
     "footfalls": 0,
     "pheromoneNodes": 0
   },
   "nextResponse": "다음: 제일 붐비는 길에 끈끈이가 깔린다.",
-  "scoutDeaths": 4
+  "scoutDeaths": 5
 }

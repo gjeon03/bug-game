@@ -74,6 +74,17 @@ Three of the four inspected zones are identifiable without labels. That is real 
 defects 2 and 3 but it is **not** the whole gate: the gate asks for the kitchen, not three of its
 zones, and 14 prop kinds remain procedural. Recorded as blocking in `ASSET_MANIFEST.md`.
 
+## FINAL E2E RESULT: 17 / 17 pass (exit 0)
+
+`logs/e2e-final.log` — full suite, 26.4 min, no failures, no skips. Baseline was 2 of 17 failing.
+
+```
+17 passed (26.4m)
+```
+
+Includes `perf 14` (13.1 min) and `fullrun 09` (4.4 min), the two gates that failed at baseline.
+Neither budget value nor threshold was altered to achieve this.
+
 ## E2E gate suite — both baseline failures now pass
 
 Baseline was 2 of 17 failing. Current run:

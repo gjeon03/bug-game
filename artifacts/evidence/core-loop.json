@@ -1,7 +1,7 @@
 {
-  "firstMoveAt": 0.5166666666666666,
-  "firstTrailAt": 1.1333333333333342,
-  "firstDeliveryAt": 16.63333333333367,
+  "firstMoveAt": 0.55,
+  "firstTrailAt": 1.183333333333334,
+  "firstDeliveryAt": 16.766666666666996,
   "deliveries": 12,
   "population": 9,
   "hatched": 3,
@@ -10,16 +10,16 @@
       "id": 1,
       "nodes": 25,
       "linked": true,
-      "exposure": 0.15398213548909095,
+      "exposure": 0.15627765061214782,
       "traffic": 2,
       "resourceId": "dishCrumbs",
       "nestId": "home"
     },
     {
       "id": 2,
-      "nodes": 37,
+      "nodes": 38,
       "linked": true,
-      "exposure": 0.06529461208791164,
+      "exposure": 0.0628932450459742,
       "traffic": 6,
       "resourceId": "sinkDrip",
       "nestId": "home"

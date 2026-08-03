@@ -3,9 +3,7 @@
     "argv": [
       "/Users/jeongyeong-yeon/.asdf/installs/nodejs/21.7.2/bin/node",
       "/Users/jeongyeong-yeon/Documents/bug-game/node_modules/@playwright/test/cli.js",
-      "test",
-      "--grep",
-      "05 inspect reports a resource|06 standing in the fridge light"
+      "test"
     ],
     "configFile": "/Users/jeongyeong-yeon/Documents/bug-game/playwright.config.ts",
     "rootDir": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e",
@@ -74,6 +72,210 @@
   },
   "suites": [
     {
+      "title": "deploy.spec.ts",
+      "file": "deploy.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "static deployment",
+          "file": "deploy.spec.ts",
+          "line": 28,
+          "column": 6,
+          "specs": [
+            {
+              "title": "15 the production build runs from a nested repository subpath",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7332,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:05:50.924Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6f1c9f8fe7e196043de3-bfa7b33896b84172ce92",
+              "file": "deploy.spec.ts",
+              "line": 29,
+              "column": 3
+            },
+            {
+              "title": "16 no runtime request leaves the origin and no asset path is absolute",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5364,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:05:58.362Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6f1c9f8fe7e196043de3-1532bd0ee8bbfb22055e",
+              "file": "deploy.spec.ts",
+              "line": 48,
+              "column": 3
+            },
+            {
+              "title": "17 every visible and audible element is a shipping asset, not a placeholder",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16555,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:06:03.734Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6f1c9f8fe7e196043de3-79d1dbd703c5beffe686",
+              "file": "deploy.spec.ts",
+              "line": 91,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "fullrun.spec.ts",
+      "file": "fullrun.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "complete runs",
+          "file": "fullrun.spec.ts",
+          "line": 164,
+          "column": 6,
+          "specs": [
+            {
+              "title": "09 a careful run drives itself through the operations by achieving them",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 1500000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 261065,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:06:20.322Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "10e71ebee97db66b31a0-ad72a8dd547c897996c2",
+              "file": "fullrun.spec.ts",
+              "line": 167,
+              "column": 3
+            },
+            {
+              "title": "10 reaching the last operation summons the extermination, and the card names the outcome",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 1500000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 187097,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:10:41.378Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "10e71ebee97db66b31a0-8126389548113141957e",
+              "file": "fullrun.spec.ts",
+              "line": 300,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
       "title": "gameplay.spec.ts",
       "file": "gameplay.spec.ts",
       "column": 0,
@@ -86,6 +288,142 @@
           "line": 29,
           "column": 6,
           "specs": [
+            {
+              "title": "01 loads clean and reaches a playable scout",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2602,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:13:48.478Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8475ef9564cfbc88065-40dacb8b466491415ae0",
+              "file": "gameplay.spec.ts",
+              "line": 30,
+              "column": 3
+            },
+            {
+              "title": "02 onboarding teaches movement, and movement responds to real input",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4127,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:13:51.086Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8475ef9564cfbc88065-132a5c2ce0f5e6c2bc4b",
+              "file": "gameplay.spec.ts",
+              "line": 57,
+              "column": 3
+            },
+            {
+              "title": "03 closes the loop: scout route → worker acquisition → delivery → colony growth",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 35297,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:13:55.219Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8475ef9564cfbc88065-d8ae6a51afd285817943",
+              "file": "gameplay.spec.ts",
+              "line": 77,
+              "column": 3
+            },
+            {
+              "title": "04 route geometry changes risk: a covered route and an open-floor route differ measurably",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 180000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 32481,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:14:30.519Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8475ef9564cfbc88065-4f056dd79438d4f5d188",
+              "file": "gameplay.spec.ts",
+              "line": 131,
+              "column": 3
+            },
             {
               "title": "05 inspect reports a resource and refuses an unaffordable claim with a reason",
               "ok": true,
@@ -102,12 +440,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6489,
+                      "duration": 6404,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-03T19:03:58.877Z",
+                      "startTime": "2026-08-03T19:15:03.007Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -118,6 +456,176 @@
               "id": "a8475ef9564cfbc88065-0208bd3c28e5321e3a4a",
               "file": "gameplay.spec.ts",
               "line": 174,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "perf.spec.ts",
+      "file": "perf.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "performance",
+          "file": "perf.spec.ts",
+          "line": 95,
+          "column": 6,
+          "specs": [
+            {
+              "title": "14 active play and peak load stay inside the frame-time budget",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 1200000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 785165,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:15:09.427Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "73ed389be8d3d6a89cdb-0a46d2da8f43d33554af",
+              "file": "perf.spec.ts",
+              "line": 98,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "restart.spec.ts",
+      "file": "restart.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "restart and lifecycle",
+          "file": "restart.spec.ts",
+          "line": 25,
+          "column": 6,
+          "specs": [
+            {
+              "title": "11 five consecutive restarts leak no state and stay playable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 420000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 41959,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:28:14.558Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "62be28aa61e216d7fcc8-76809402866f48bee505",
+              "file": "restart.spec.ts",
+              "line": 28,
+              "column": 3
+            },
+            {
+              "title": "12 losing focus suspends the run instead of fast-forwarding it",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 420000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8841,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:28:56.520Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "62be28aa61e216d7fcc8-1c6f563668484987b7a2",
+              "file": "restart.spec.ts",
+              "line": 105,
+              "column": 3
+            },
+            {
+              "title": "13 pause stops the simulation and the settings survive a restart",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 420000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6046,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:29:05.367Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "62be28aa61e216d7fcc8-0fe713c8162095ca985d",
+              "file": "restart.spec.ts",
+              "line": 154,
               "column": 3
             }
           ]
@@ -153,12 +661,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 79961,
+                      "duration": 100410,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-03T19:04:05.498Z",
+                      "startTime": "2026-08-03T19:29:11.428Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -170,6 +678,74 @@
               "file": "threats.spec.ts",
               "line": 46,
               "column": 3
+            },
+            {
+              "title": "07 a footfall is telegraphed, lethal, and survivable by leaving the marked ground",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 300000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 45053,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:30:52.152Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c10e1de0146a6e946067-19005c594d337d8860c2",
+              "file": "threats.spec.ts",
+              "line": 111,
+              "column": 3
+            },
+            {
+              "title": "08 losing the scout costs a body and the colony provides a replacement",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 300000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 33988,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-03T19:31:37.212Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c10e1de0146a6e946067-8b17f6964a8da9601e1d",
+              "file": "threats.spec.ts",
+              "line": 158,
+              "column": 3
             }
           ]
         }
@@ -178,9 +754,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-03T19:03:57.614Z",
-    "duration": 87907.624,
-    "expected": 2,
+    "startTime": "2026-08-03T19:05:49.671Z",
+    "duration": 1581802.1060000001,
+    "expected": 17,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
