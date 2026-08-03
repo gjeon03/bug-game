@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import { specById } from '../sim/adaptations.ts';
 import { operationSpec } from '../sim/operations.ts';
 import { CAUSE_LABELS, tierName, topCause } from '../sim/suspicion.ts';
@@ -6,12 +7,12 @@ import type { DeathCause } from '../sim/types.ts';
 
 /** Plain-language cause of death for the debrief. */
 const DEATH_LABELS: Record<DeathCause, string> = {
-  foot: 'crushed underfoot',
-  trap: 'caught on sticky traps',
-  spray: 'killed by spray',
-  bait: 'poisoned by bait',
-  starve: 'starved — the larder ran dry',
-  thirst: 'died of thirst — no moisture reached them',
+  foot: t('outcome.death.foot'),
+  trap: t('outcome.death.trap'),
+  spray: t('outcome.death.spray'),
+  bait: t('outcome.death.bait'),
+  starve: t('outcome.death.starve'),
+  thirst: t('outcome.death.thirst'),
 };
 import type { World } from '../sim/world.ts';
 import { loadBestRun, type Settings } from './settings.ts';
@@ -26,13 +27,15 @@ export interface OverlayCallbacks {
 }
 
 const CONTROLS: [string, string][] = [
-  ['W A S D', 'Move the scout'],
-  ['Hold LMB / SPACE', 'Lay a pheromone trail'],
-  ['Hold RMB / X', 'Rub out a trail · tap to recall'],
-  ['E', 'Inspect · claim a crack'],
-  ['SHIFT', 'Sprint (loud, and it shows)'],
-  ['ESC / P', 'Pause'],
-  ['R', 'Restart'],
+  ['W A S D', t('control.move')],
+  // The key-cap column is legends, not prose — except these two, which carry the English word
+  // "Hold". The catalog has no key for them yet; `t()` flags them in MISSING_KEYS until it does.
+  [t('control.key.lay'), t('control.lay')],
+  [t('control.key.erase'), t('control.erase')],
+  ['E', t('control.interact')],
+  ['SHIFT', t('control.sprint')],
+  ['ESC / P', t('control.pause')],
+  ['R', t('control.restart')],
 ];
 
 /**
@@ -101,15 +104,19 @@ export class Overlays {
     this.show(
       'pause',
       `<div class="card">
-        <h2>Paused</h2>
-        <h1>Baseboard Empire</h1>
-        <p class="lede">${world.hud.operation} · ${tierName(world.suspicion.tier)} · ${world.colony.population} roaches</p>
+        <h2>${t('pause.heading')}</h2>
+        <h1>${t('pause.wordmark')}</h1>
+        <p class="lede">${t('pause.lede', {
+          operation: world.hud.operation,
+          tier: tierName(world.suspicion.tier),
+          population: world.colony.population,
+        })}</p>
         ${this.settingsHtml()}
-        <h2 style="margin-top:22px">Controls</h2>
+        <h2 style="margin-top:22px">${t('pause.controlsHeading')}</h2>
         <div class="keys">${CONTROLS.map(([k, d]) => `<div><kbd>${k}</kbd><span class="d">${d}</span></div>`).join('')}</div>
         <div class="row">
-          <button class="primary" data-act="resume">Resume</button>
-          <button data-act="restart">Restart run</button>
+          <button class="primary" data-act="resume">${t('pause.resume')}</button>
+          <button data-act="restart">${t('pause.restart')}</button>
         </div>
       </div>`,
     );
@@ -119,13 +126,13 @@ export class Overlays {
     this.show(
       'help',
       `<div class="card">
-        <h2>How this works</h2>
-        <h1>You are the scout, not the swarm</h1>
-        <p class="lede">Workers never take orders. They read the pheromone you secrete with your own body — so the only route they can use is a route you personally walked.</p>
-        <p>Link a <strong>claimed nest</strong> at one end to <strong>food or moisture</strong> at the other and the colony starts hauling. Both ends pulse warm when a route is live.</p>
-        <p>Every metre of open tile you route across is evidence. Evidence raises suspicion, suspicion brings feet, traps and finally spray. Suspicion never returns to zero — you are choosing how much risk to carry, not grinding it away.</p>
+        <h2>${t('pause.help.heading')}</h2>
+        <h1>${t('pause.help.title')}</h1>
+        <p class="lede">${t('pause.help.lede')}</p>
+        <p>${t('pause.help.linking')}</p>
+        <p>${t('pause.help.evidence')}</p>
         <div class="keys">${CONTROLS.map(([k, d]) => `<div><kbd>${k}</kbd><span class="d">${d}</span></div>`).join('')}</div>
-        <div class="row"><button class="primary" data-act="resume">Back</button></div>
+        <div class="row"><button class="primary" data-act="resume">${t('pause.help.back')}</button></div>
       </div>`,
     );
   }
@@ -143,7 +150,7 @@ export class Overlays {
     this.show(
       'operation',
       `<div class="card">
-        <h2>Operation ${spec.index}</h2>
+        <h2>${t('op.cardTitle', { index: spec.index })}</h2>
         <h1>${spec.title}</h1>
         <p class="lede">${spec.brief}</p>
         <ul class="criteria">
@@ -151,14 +158,14 @@ export class Overlays {
         </ul>
         <p>${world.hud.forecast}</p>
         ${statsHtml([
-          ['Colony', `${c.population}`],
-          ['Food', `${Math.floor(c.food)}/${c.foodCap}`],
-          ['Moisture', `${Math.floor(c.water)}/${c.waterCap}`],
-          ['Adaptations', `${world.adaptations.taken.length}`],
-          ['Deliveries', `${world.stats.deliveries}`],
-          ['Lost', `${world.stats.workersLost}`],
+          [t('op.card.stat.colony'), `${c.population}`],
+          [t('op.card.stat.food'), `${Math.floor(c.food)}/${c.foodCap}`],
+          [t('op.card.stat.water'), `${Math.floor(c.water)}/${c.waterCap}`],
+          [t('op.card.stat.adaptations'), `${world.adaptations.taken.length}`],
+          [t('op.card.stat.deliveries'), `${world.stats.deliveries}`],
+          [t('op.card.stat.lost'), `${world.stats.workersLost}`],
         ])}
-        <div class="row"><button class="primary" data-act="continue">Get to work</button></div>
+        <div class="row"><button class="primary" data-act="continue">${t('op.card.continue')}</button></div>
       </div>`,
     );
   }
@@ -169,20 +176,22 @@ export class Overlays {
     const top = topCause(world);
     const cause = world.loseCause;
     const title = won
-      ? 'The kitchen is yours'
+      ? t('outcome.win.title')
       : cause === 'collapse'
-        ? 'Colony collapsed'
+        ? t('outcome.lose.collapse.title')
         : cause === 'nestDestroyed'
-          ? 'Nest destroyed'
-          : 'Exterminated';
+          ? t('outcome.lose.nestDestroyed.title')
+          : t('outcome.lose.exterminated.title');
     const held = world.finalTally?.zones ?? [];
     const lede = won
-      ? `The can is empty and you are still here. ${held.length > 0 ? `You hold ${held.join(', ')}.` : ''} They will never get all of you now.`
+      ? t('outcome.win.lede', {
+          zones: held.length > 0 ? t('outcome.win.ledeZones', { zones: held.join(', ') }) : '',
+        })
       : cause === 'collapse'
-        ? 'Nothing left to send out. The last of the brood died in the dark.'
+        ? t('outcome.lose.collapse.lede')
         : cause === 'nestDestroyed'
-          ? 'They found the home crack and emptied a can into it.'
-          : 'The sweep finished, and it finished you. The kitchen is quiet.';
+          ? t('outcome.lose.nestDestroyed.lede')
+          : t('outcome.lose.exterminated.lede');
 
     const best = loadBestRun();
     const tally = world.finalTally ?? {
@@ -203,18 +212,28 @@ export class Overlays {
     this.show(
       won ? 'win' : 'lose',
       `<div class="card ${won ? 'win' : 'lose'}">
-        <h2>${won ? 'Victory' : 'Run over'} · operation ${tally.operations} of 4</h2>
+        <h2>${t('outcome.subheading', {
+          heading: won ? t('outcome.win.heading') : t('outcome.lose.heading'),
+          operation: tally.operations,
+        })}</h2>
         <h1>${title}</h1>
         <p class="lede">${lede}</p>
         ${
           !won
             ? `<p>${
                 tally.topDeath
-                  ? `<strong>What killed them:</strong> ${DEATH_LABELS[tally.topDeath.cause as DeathCause] ?? tally.topDeath.cause} — ${tally.topDeath.count} roach${tally.topDeath.count === 1 ? '' : 'es'}.`
-                  : '<strong>What killed them:</strong> nothing reached them — the colony simply ran out.'
+                  ? t('outcome.killedBy', {
+                      cause:
+                        DEATH_LABELS[tally.topDeath.cause as DeathCause] ?? tally.topDeath.cause,
+                      count: tally.topDeath.count,
+                    })
+                  : t('outcome.killedByNothing')
               }${
                 top
-                  ? ` <strong>Biggest evidence source:</strong> ${CAUSE_LABELS[top.cause]} (${Math.round(top.amount)} suspicion).`
+                  ? t('outcome.topEvidence', {
+                      cause: CAUSE_LABELS[top.cause],
+                      amount: Math.round(top.amount),
+                    })
                   : ''
               }</p>`
             : ''
@@ -226,31 +245,43 @@ export class Overlays {
             .map((st) => {
               const z = ZONES.find((zz: { id: string; name: string }) => zz.id === st.id);
               const pct = Math.round(st.hold * 100);
-              return critLine(pct >= 80, `Hold ${z ? z.name : st.id}`, `${pct}%`);
+              return critLine(
+                pct >= 80,
+                t('outcome.zoneLine', { zone: z ? z.name : st.id }),
+                `${pct}%`,
+              );
             })
             .join('')}
         </ul>
         ${
           world.adaptations.taken.length > 0
-            ? `<p><strong>This colony became:</strong> ${world.adaptations.taken
-                .map((id) => specById(id)?.name ?? id)
-                .join(' · ')}. A different set is a different run.</p>`
-            : '<p>This colony never specialised. Adaptations open at 11, 17, 24 and 30 roaches.</p>'
+            ? `<p>${t('outcome.became', {
+                list: world.adaptations.taken.map((id) => specById(id)?.name ?? id).join(' · '),
+              })}</p>`
+            : `<p>${t('outcome.neverSpecialised')}</p>`
         }
         ${statsHtml([
-          ['Run time', formatTime(world.stats.runSeconds)],
-          ['Deliveries', `${world.stats.deliveries}`],
-          ['Hatched', `${c.hatched}`],
-          ['Lost', `${world.stats.workersLost}`],
-          ['Scout deaths', `${world.stats.scoutDeaths}`],
-          ['Peak suspicion', `${Math.round(world.suspicion.peak)}`],
-          ['Traps sprung', `${world.stats.trapsSprung}`],
-          ['Peak colony', `${world.stats.peakPopulation}`],
+          [t('outcome.stat.runTime'), formatTime(world.stats.runSeconds)],
+          [t('outcome.stat.deliveries'), `${world.stats.deliveries}`],
+          [t('outcome.stat.hatched'), `${c.hatched}`],
+          [t('outcome.stat.lost'), `${world.stats.workersLost}`],
+          [t('outcome.stat.scoutDeaths'), `${world.stats.scoutDeaths}`],
+          [t('outcome.stat.peakSuspicion'), `${Math.round(world.suspicion.peak)}`],
+          [t('outcome.stat.trapsSprung'), `${world.stats.trapsSprung}`],
+          [t('outcome.stat.peakColony'), `${world.stats.peakPopulation}`],
         ])}
-        ${best ? `<p style="color:var(--text-dim);font-size:12.5px">Best run: ${best.won ? 'survived' : 'lost'} · ${best.population} roaches · ${formatTime(best.seconds)}</p>` : ''}
+        ${
+          best
+            ? `<p style="color:var(--text-dim);font-size:12.5px">${t('outcome.best', {
+                result: best.won ? t('outcome.best.survived') : t('outcome.best.lost'),
+                population: best.population,
+                time: formatTime(best.seconds),
+              })}</p>`
+            : ''
+        }
         <div class="row">
-          <button class="primary" data-act="restart">Run it again <kbd>R</kbd></button>
-          <button data-act="help">How this works</button>
+          <button class="primary" data-act="restart">${t('outcome.restart')} <kbd>R</kbd></button>
+          <button data-act="help">${t('outcome.help')}</button>
         </div>
       </div>`,
     );
@@ -265,14 +296,14 @@ export class Overlays {
     const toggle = (key: keyof Settings, label: string): string =>
       `<label class="toggle"><input type="checkbox" data-set="${key}" ${s[key] ? 'checked' : ''} /> ${label}</label>`;
     return `<div class="settings">
-        ${slider('master', 'Master volume')}
-        ${slider('music', 'Ambience')}
-        ${slider('sfx', 'Effects')}
-        ${toggle('muted', 'Mute everything')}
-        ${toggle('reducedShake', 'Reduced screen shake')}
-        ${toggle('reducedFlash', 'Reduced flashes')}
-        ${toggle('highContrast', 'Brighter kitchen (readability)')}
-        ${toggle('showPerf', 'Show performance readout')}
+        ${slider('master', t('settings.master'))}
+        ${slider('music', t('settings.music'))}
+        ${slider('sfx', t('settings.sfx'))}
+        ${toggle('muted', t('settings.muted'))}
+        ${toggle('reducedShake', t('settings.reducedShake'))}
+        ${toggle('reducedFlash', t('settings.reducedFlash'))}
+        ${toggle('highContrast', t('settings.highContrast'))}
+        ${toggle('showPerf', t('settings.showPerf'))}
       </div>`;
   }
 }

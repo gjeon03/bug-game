@@ -6,6 +6,7 @@ import {
   PURCHASE_BUFFER_WATER,
   specById,
 } from './adaptations.ts';
+import { t } from '../i18n/index.ts';
 import { MAX_ROUTES } from './constants.ts';
 import { activeRoutine, specFor } from './routines.ts';
 import {
@@ -146,11 +147,8 @@ const nearestUnclaimedNest = (world: World) => {
   return best;
 };
 
-/** Region names are authored lower-case ("the sink run"); this starts a sentence with one. */
 /** Onboarding step index at which the lay key has been shown. */
 const LAY_TAUGHT_STEP = 2;
-
-const sentence = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** An unclaimed, currently-claimable crack inside this region, if there is one. */
 const crackIn = (world: World, zone: { x: number; y: number; w: number; h: number }) =>
@@ -172,25 +170,28 @@ const functioningFootholds = (world: World): number =>
 
 const supplyGate = (kind: 'food' | 'water', need: number): OperationGate => ({
   id: `${kind}Line`,
-  label: kind === 'food' ? `${need} food line${need > 1 ? 's' : ''}` : 'A moisture line',
+  label:
+    kind === 'food'
+      ? t('op.gate.foodLine', { count: need })
+      : t('op.gate.waterLine', { count: need }),
   progress: (w) => ({ have: linkedRoutes(w, kind), need }),
   action: (w) => {
     const target = nearestResource(w, kind);
-    const noun = kind === 'food' ? 'food' : 'moisture';
-    if (!target) return `Find a ${noun} source — scout away from the crack.`;
+    const noun = t(kind === 'food' ? 'unit.foodNoun' : 'unit.waterNoun');
+    if (!target) return t('op.action.findSource', { noun });
     // The tutorial names the lay key at ~11 s. Until it has, the objective describes the *action*
     // rather than a key the player has not been shown, so the primary instruction is never
     // unexecutable.
     return w.onboarding.step >= LAY_TAUGHT_STEP
-      ? `Walk to ${target.label}, then walk home holding the lay key to leave a trail.`
-      : `Walk to ${target.label} — then bring the scent home.`;
+      ? t('op.action.layTrail', { label: target.label })
+      : t('op.action.bringScentHome', { label: target.label });
   },
   blocker: (w) => {
     if (w.routes.length >= MAX_ROUTES && linkedRoutes(w, kind) < need) {
-      return `All ${MAX_ROUTES} trails are in use — erase one before laying another.`;
+      return t('op.blocker.routesFull', { max: MAX_ROUTES });
     }
     const half = w.routes.find((r) => !r.linked && r.nodes.length > 4);
-    if (half) return 'Your last trail does not reach both a source and a nest — finish the walk.';
+    if (half) return t('op.blocker.trailUnfinished');
     return null;
   },
   target: (w) => nearestResource(w, kind),
@@ -198,16 +199,16 @@ const supplyGate = (kind: 'food' | 'water', need: number): OperationGate => ({
 
 const populationGate = (need: number): OperationGate => ({
   id: `pop${need}`,
-  label: `${need} roaches`,
+  label: t('op.gate.population', { count: need }),
   progress: (w) => ({ have: w.colony.population, need }),
-  action: () => 'Keep both reserves flowing — the colony grows on food and moisture together.',
+  action: () => t('op.action.keepBothFlowing'),
   blocker: (w) => {
     const c = w.colony;
     if (c.population >= c.capacity) {
-      return `Nest capacity is full at ${c.capacity}. Claim a foothold or take a brood adaptation to raise it.`;
+      return t('op.blocker.capacityFull', { capacity: c.capacity });
     }
-    if (c.water < 12) return 'Moisture is too low to raise brood. Get a moisture line running.';
-    if (c.food < 20) return 'Food is too low to raise brood. Get a food line running.';
+    if (c.water < 12) return t('op.blocker.waterTooLow');
+    if (c.food < 20) return t('op.blocker.foodTooLow');
     return null;
   },
   target: (w) => {
@@ -220,36 +221,42 @@ const populationGate = (need: number): OperationGate => ({
 export const OPERATIONS: readonly OperationSpec[] = [
   {
     index: 1,
-    title: 'Establish the nest',
-    brief:
-      'Get out of the wall. Find something to eat and something to drink, and connect both to home.',
-    nextUnlock: 'The household starts its night routines — and those are opportunities.',
+    title: t('op.1.title'),
+    brief: t('op.1.brief'),
+    nextUnlock: t('op.1.unlock'),
     softTime: 165,
     gates: [supplyGate('food', 1), supplyGate('water', 1), populationGate(12)],
   },
   {
     index: 2,
-    title: 'Infiltrate the routines',
-    brief:
-      'The house is awake in bursts. Be standing where the crumbs land, and get out before the light does.',
-    nextUnlock: 'Adaptations: the colony starts specialising, and you choose how.',
+    title: t('op.2.title'),
+    brief: t('op.2.brief'),
+    nextUnlock: t('op.2.unlock'),
     softTime: 235,
     gates: [
       {
         id: 'routines',
-        label: 'Exploit 2 household routines',
+        label: t('op.gate.routines', { count: 2 }),
         progress: (w) => ({ have: w.stats.routinesExploited, need: 2 }),
         action: (w) => {
           const r = activeRoutine(w);
-          if (!r) return 'Wait for the house to move — then get a trail onto whatever it drops.';
+          if (!r) return t('op.action.waitForRoutine');
           const spec = specFor(r.kind);
-          if (r.phase === 'incoming') return `${spec.title} incoming — ${spec.counterplay}`;
-          return `${spec.title} is open for ${Math.ceil(r.timer)}s — run a trail to it now.`;
+          if (r.phase === 'incoming') {
+            return t('op.action.routineIncoming', {
+              title: spec.title,
+              counter: spec.counterplay,
+            });
+          }
+          return t('op.action.routineOpen', {
+            title: spec.title,
+            seconds: Math.ceil(r.timer),
+          });
         },
         blocker: (w) => {
           const r = activeRoutine(w);
           if (r && r.phase === 'active' && !r.exploited && w.routes.length >= MAX_ROUTES) {
-            return `All ${MAX_ROUTES} trails are in use — erase one to reach the spill in time.`;
+            return t('op.blocker.routesFullSpill', { max: MAX_ROUTES });
           }
           return null;
         },
@@ -261,22 +268,28 @@ export const OPERATIONS: readonly OperationSpec[] = [
       },
       {
         id: 'foothold1',
-        label: 'Claim a satellite foothold',
+        label: t('op.gate.foothold', { count: 1 }),
         progress: (w) => ({ have: claimedSatellites(w), need: 1 }),
         action: (w) => {
           const n = nearestUnclaimedNest(w);
-          return n
-            ? `Walk to ${n.label} and press E to claim it.`
-            : 'Scout the baseboards for a crack.';
+          return n ? t('op.action.claimNest', { label: n.label }) : t('op.action.scoutForCrack');
         },
         blocker: (w) => {
           const n = w.nests.find((x) => !x.claimed && !x.home && x.unlockOp <= w.operation);
           if (!n) return null;
           if (w.colony.food < n.costFood) {
-            return `${n.label} needs ${n.costFood} food — you have ${Math.floor(w.colony.food)}.`;
+            return t('op.blocker.nestCostFood', {
+              label: n.label,
+              need: n.costFood,
+              have: Math.floor(w.colony.food),
+            });
           }
           if (w.colony.water < n.costWater) {
-            return `${n.label} needs ${n.costWater} moisture — you have ${Math.floor(w.colony.water)}.`;
+            return t('op.blocker.nestCostWater', {
+              label: n.label,
+              need: n.costWater,
+              have: Math.floor(w.colony.water),
+            });
           }
           return null;
         },
@@ -295,30 +308,35 @@ export const OPERATIONS: readonly OperationSpec[] = [
   },
   {
     index: 3,
-    title: 'Specialise the infestation',
-    brief:
-      'Colonies that survive are colonies that commit. Pick what your roaches become — you cannot have all of it.',
-    nextUnlock: 'The kitchen itself: hold three regions and ride out what the household sends.',
+    title: t('op.3.title'),
+    brief: t('op.3.brief'),
+    nextUnlock: t('op.3.unlock'),
     softTime: 280,
     gates: [
       {
         id: 'adapt3',
-        label: 'Choose 3 adaptations',
+        label: t('op.gate.adaptations', { count: 3 }),
         progress: (w) => ({ have: w.adaptations.taken.length, need: 3 }),
         action: (w) => {
-          if (w.adaptations.offer.length > 0) return 'Pick an adaptation — press 1, 2 or 3.';
+          if (w.adaptations.offer.length > 0) return t('op.action.pickAdaptation');
           const next = MILESTONE_POPULATION[w.adaptations.milestonesUsed];
           return next
-            ? `Grow to ${next} roaches to open the next adaptation.`
-            : 'Keep the colony growing.';
+            ? t('op.action.growToMilestone', { count: next })
+            : t('op.action.keepGrowing');
         },
         blocker: (w) => {
           const offer = cheapestOffer(w);
           if (offer && w.colony.food < offer.costFood) {
-            return `The cheapest adaptation costs ${offer.costFood} food — you have ${Math.floor(w.colony.food)}.`;
+            return t('op.blocker.adaptCostFood', {
+              need: offer.costFood,
+              have: Math.floor(w.colony.food),
+            });
           }
           if (offer && w.colony.water < offer.costWater) {
-            return `The cheapest adaptation costs ${offer.costWater} moisture — you have ${Math.floor(w.colony.water)}.`;
+            return t('op.blocker.adaptCostWater', {
+              need: offer.costWater,
+              have: Math.floor(w.colony.water),
+            });
           }
           return null;
         },
@@ -326,22 +344,32 @@ export const OPERATIONS: readonly OperationSpec[] = [
       },
       {
         id: 'functions2',
-        label: 'Install 2 foothold functions',
+        label: t('op.gate.functions', { count: 2 }),
         progress: (w) => ({ have: functioningFootholds(w), need: 2 }),
         action: (w) => {
           const n = w.nests.find((x) => x.claimed && !x.home && x.fn === null);
-          if (n) return `Stand in ${n.label} and press E to fit it out.`;
+          if (n) return t('op.action.fitOutHere', { label: n.label });
           const un = nearestUnclaimedNest(w);
-          return un ? `Claim ${un.label} first, then fit it out.` : 'Claim another crack.';
+          return un
+            ? t('op.action.claimThenFit', { label: un.label })
+            : t('op.action.claimAnother');
         },
         blocker: (w) => {
           const n = w.nests.find((x) => x.claimed && !x.home && x.fn === null);
           if (!n) return null;
           if (w.colony.food < n.fitFood) {
-            return `Fitting out ${n.label} needs ${n.fitFood} food — you have ${Math.floor(w.colony.food)}.`;
+            return t('op.blocker.fitCostFood', {
+              label: n.label,
+              need: n.fitFood,
+              have: Math.floor(w.colony.food),
+            });
           }
           if (w.colony.water < n.fitWater) {
-            return `Fitting out ${n.label} needs ${n.fitWater} moisture — you have ${Math.floor(w.colony.water)}.`;
+            return t('op.blocker.fitCostWater', {
+              label: n.label,
+              need: n.fitWater,
+              have: Math.floor(w.colony.water),
+            });
           }
           return null;
         },
@@ -363,20 +391,20 @@ export const OPERATIONS: readonly OperationSpec[] = [
   },
   {
     index: 4,
-    title: 'Claim the kitchen',
-    brief: 'Three regions, held at once, while they come for you. This is the part they remember.',
-    nextUnlock: 'The kitchen is yours.',
+    title: t('op.4.title'),
+    brief: t('op.4.brief'),
+    nextUnlock: t('op.4.unlock'),
     softTime: 320,
     gates: [
       {
         id: 'zones',
-        label: `Hold ${ZONES_TO_WIN} regions at once`,
+        label: t('op.gate.zones', { count: ZONES_TO_WIN }),
         progress: (w) => ({ have: heldZones(w).length, need: ZONES_TO_WIN }),
         action: (w) => {
           const next = nextZoneToHold(w);
-          if (!next) return 'Hold what you have.';
+          if (!next) return t('op.action.holdWhatYouHave');
           if (w.finalResponse && heldZones(w).length >= ZONES_TO_WIN) {
-            return `Hold. They will break a region if they can — a fourth is insurance.`;
+            return t('op.action.holdInsurance');
           }
           const pct = Math.round(next.state.hold * 100);
           // The strongest move in the final operation is to own a crack in the region: a claimed
@@ -384,18 +412,21 @@ export const OPERATIONS: readonly OperationSpec[] = [
           // from a hold percentage, so the objective says it outright.
           const crack = crackIn(w, next.spec);
           if (crack) {
-            return `Claim ${crack.label} — a crack you own holds ${next.spec.name} even while the colony is hiding.`;
+            return t('op.action.claimCrackInZone', {
+              label: crack.label,
+              zone: next.spec.name,
+            });
           }
           if (!next.state.routed)
-            return `Run a trail through ${next.spec.name} — it holds at ${pct}%.`;
+            return t('op.action.routeZone', { zone: next.spec.name, percent: pct });
           if (next.state.workers === 0)
-            return `${sentence(next.spec.name)} has a trail but nobody on it (${pct}%).`;
-          return `Keep roaches working ${next.spec.name} — ${pct}% held.`;
+            return t('op.action.zoneEmpty', { zone: next.spec.name, percent: pct });
+          return t('op.action.zoneStaff', { zone: next.spec.name, percent: pct });
         },
         blocker: (w) => {
           const next = nextZoneToHold(w);
           if (next?.state.contested) {
-            return `${sentence(next.spec.name)} is being worked by the household — hold is falling while they are there.`;
+            return t('op.blocker.zoneContested', { zone: next.spec.name });
           }
           return null;
         },
@@ -426,19 +457,19 @@ export const OPERATIONS: readonly OperationSpec[] = [
       },
       {
         id: 'survive',
-        label: 'Survive the extermination',
+        label: t('op.gate.survive'),
         progress: (w) => ({
           have: w.finalResponse ? Math.min(1, w.finalResponseTime / FINAL_RESPONSE_LENGTH) : 0,
           need: 1,
         }),
         action: (w) =>
           w.finalResponse
-            ? `Get everyone into claimed cracks — ${Math.ceil(FINAL_RESPONSE_LENGTH - w.finalResponseTime)}s left.`
-            : 'Hold three regions to trigger the household’s last answer.',
+            ? t('op.action.shelterNow', {
+                seconds: Math.ceil(FINAL_RESPONSE_LENGTH - w.finalResponseTime),
+              })
+            : t('op.action.triggerFinal'),
         blocker: (w) =>
-          w.finalResponse && claimedSatellites(w) === 0
-            ? 'Only the home crack can shelter anyone — a second claimed crack would split the risk.'
-            : null,
+          w.finalResponse && claimedSatellites(w) === 0 ? t('op.blocker.noShelter') : null,
         target: () => null,
       },
     ],
@@ -521,8 +552,8 @@ export function resolveHud(world: World): Hud {
   });
 
   const base: Hud = {
-    operation: `Operation ${spec.index} — ${spec.title}`,
-    objective: gate ? gate.action(world) : 'Operation complete.',
+    operation: t('op.title', { index: spec.index, title: spec.title }),
+    objective: gate ? gate.action(world) : t('op.complete'),
     blocker: gate ? gate.blocker(world) : null,
     nextUnlock: spec.nextUnlock,
     forecast: world.forecast,
@@ -556,24 +587,37 @@ export function resolveHud(world: World): Hud {
     }
 
     if (hitZone) {
-      base.objective = `The spray is on ${zoneName(hitZone.id)} — get them into a crack until it passes.`;
+      base.objective = t('objective.final.sprayOnZone', { zone: zoneName(hitZone.id) });
       base.target = { x: cloud!.x, y: cloud!.y, label: zoneName(hitZone.id) };
     } else if (held.length < ZONES_TO_WIN) {
       const next = nextZoneToHold(world);
       base.objective = next
-        ? `Holding ${held.length} of ${ZONES_TO_WIN} — get bodies back into ${zoneName(next.state.id)}. ${left}s.`
-        : `Holding ${held.length} of ${ZONES_TO_WIN} with ${left}s left.`;
+        ? t('objective.final.regain', {
+            held: held.length,
+            need: ZONES_TO_WIN,
+            zone: zoneName(next.state.id),
+            seconds: left,
+          })
+        : t('objective.final.holding', {
+            held: held.length,
+            need: ZONES_TO_WIN,
+            seconds: left,
+          });
       base.target = next
         ? { x: next.spec.x, y: next.spec.y, label: zoneName(next.state.id) }
         : null;
     } else if (slipping) {
       const spec = ZONES.find((z) => z.id === slipping.id) ?? null;
-      base.objective = `All ${ZONES_TO_WIN} still yours, but ${zoneName(slipping.id)} is slipping — ${left}s.`;
+      base.objective = t('objective.final.slipping', {
+        need: ZONES_TO_WIN,
+        zone: zoneName(slipping.id),
+        seconds: left,
+      });
       base.target = spec ? { x: spec.x, y: spec.y, label: zoneName(spec.id) } : base.target;
     } else {
       base.objective =
         world.threatAdvice ??
-        `${left}s. Keep all ${ZONES_TO_WIN} regions and stay out of the open.`;
+        t('objective.final.stayHidden', { seconds: left, need: ZONES_TO_WIN });
     }
     base.source = 'final';
     return base;
@@ -589,16 +633,28 @@ export function resolveHud(world: World): Hud {
   const offer = cheapestOffer(world);
   const affordable = offer !== null && canAffordSafely(world, offer);
   if (offer && affordable) {
-    base.objective = 'Choose an adaptation — press 1, 2 or 3.';
+    base.objective = t('objective.adaptation.choose');
     base.source = 'adaptation:offer';
     return base;
   }
   const offerBlocker = offer
-    ? `${offer.name} is waiting on ${
-        world.colony.food < offer.costFood + PURCHASE_BUFFER_FOOD
-          ? `${Math.max(1, Math.ceil(offer.costFood + PURCHASE_BUFFER_FOOD - world.colony.food))} more food`
-          : `${Math.max(1, Math.ceil(offer.costWater + PURCHASE_BUFFER_WATER - world.colony.water))} more moisture`
-      }.`
+    ? t('op.blocker.adaptationSaving', {
+        name: offer.name,
+        shortfall:
+          world.colony.food < offer.costFood + PURCHASE_BUFFER_FOOD
+            ? t('op.blocker.shortfallFood', {
+                amount: Math.max(
+                  1,
+                  Math.ceil(offer.costFood + PURCHASE_BUFFER_FOOD - world.colony.food),
+                ),
+              })
+            : t('op.blocker.shortfallWater', {
+                amount: Math.max(
+                  1,
+                  Math.ceil(offer.costWater + PURCHASE_BUFFER_WATER - world.colony.water),
+                ),
+              }),
+      })
     : null;
 
   if (offerBlocker) base.blocker = base.blocker ?? offerBlocker;
@@ -616,13 +672,23 @@ export function resolveHud(world: World): Hud {
   if (routine && routineWorthChasing && !needsSupply) {
     const rs = specFor(routine.kind);
     if (routine.phase === 'incoming') {
-      base.objective = `${rs.title} in ${Math.ceil(routine.timer)}s — ${rs.counterplay}`;
+      base.objective = t('objective.routine.incoming', {
+        title: rs.title,
+        seconds: Math.ceil(routine.timer),
+        counter: rs.counterplay,
+      });
       base.source = 'routine:incoming';
     } else if (!routine.exploited) {
-      base.objective = `${rs.title}: ${Math.ceil(routine.timer)}s to get a trail onto it.`;
+      base.objective = t('objective.routine.active', {
+        title: rs.title,
+        seconds: Math.ceil(routine.timer),
+      });
       base.source = 'routine:active';
     } else {
-      base.objective = `${rs.title} is paying out — ${Math.ceil(routine.timer)}s left.`;
+      base.objective = t('objective.routine.harvesting', {
+        title: rs.title,
+        seconds: Math.ceil(routine.timer),
+      });
       base.source = 'routine:harvesting';
     }
     base.target = { x: routine.x, y: routine.y, label: rs.title };
@@ -633,12 +699,11 @@ export function resolveHud(world: World): Hud {
   //    now, in which case the spill *is* the answer and priority 2 already said so.
   if (world.shortage) {
     const kind = world.shortage;
-    const noun = kind === 'food' ? 'Food' : 'Moisture';
-    base.objective = `${noun} is running low — get another ${kind === 'food' ? 'food' : 'moisture'} line running.`;
+    base.objective = t(kind === 'food' ? 'objective.shortage.food' : 'objective.shortage.water');
     base.blocker =
       linkedRoutes(world, kind) === 0
-        ? `No ${kind === 'food' ? 'food' : 'moisture'} line is connected at all.`
-        : `Your ${kind === 'food' ? 'food' : 'moisture'} line is not keeping up — add a second source.`;
+        ? t(kind === 'food' ? 'objective.shortage.noFoodLine' : 'objective.shortage.noWaterLine')
+        : t(kind === 'food' ? 'objective.shortage.foodBehind' : 'objective.shortage.waterBehind');
     base.target = nearestResource(world, kind);
     base.source = 'shortage';
     return base;
@@ -655,8 +720,10 @@ export function resolveHud(world: World): Hud {
   if (gate?.shortfall) {
     const short = gate.shortfall(world);
     if (short) {
-      const noun = short.kind === 'food' ? 'food' : 'moisture';
-      base.objective = `${Math.ceil(short.amount)} more ${noun} needed — get another ${noun} line running.`;
+      base.objective = t(
+        short.kind === 'food' ? 'objective.saving.food' : 'objective.saving.water',
+        { amount: Math.ceil(short.amount) },
+      );
       base.target = nearestResource(world, short.kind) ?? base.target;
       base.source = `gate:${gate.id}:saving`;
       return base;
@@ -668,7 +735,14 @@ export function resolveHud(world: World): Hud {
   if (capped && offer && !affordable) {
     // A reserve at its ceiling while an offer is unaffordable means the *other* reserve is the
     // bottleneck; say so rather than telling the player to spend what they have plenty of.
-    base.objective = `${offerBlocker} Get another ${world.colony.food < offer.costFood ? 'food' : 'moisture'} line running.`;
+    base.objective = t(
+      world.colony.food < offer.costFood
+        ? 'objective.saving.forAdaptFood'
+        : 'objective.saving.forAdaptWater',
+      // `offer` is non-null in this branch, so `offerBlocker` is too; the fallback only satisfies
+      // the type system.
+      { blocker: offerBlocker ?? '' },
+    );
     base.target = nearestResource(world, world.colony.food < offer.costFood ? 'food' : 'water');
     base.source = 'adaptation:saving';
     return base;
@@ -698,14 +772,23 @@ export function cappedAdvice(
   const foodFull = c.food >= c.foodCap - 2;
   const waterFull = c.water >= c.waterCap - 2;
   if (!foodFull && !waterFull) return null;
-  const noun =
-    foodFull && waterFull ? 'Both reserves are' : foodFull ? 'The larder is' : 'Moisture is';
+  const subject = t(
+    foodFull && waterFull
+      ? 'objective.capped.subjectBoth'
+      : foodFull
+        ? 'objective.capped.subjectFood'
+        : 'objective.capped.subjectWater',
+  );
 
   // Something to buy right now?
   const offer = cheapestOffer(world);
   if (offer && canAffordSafely(world, offer)) {
     return {
-      text: `${noun} full — spend it: ${offer.name} costs ${offer.costFood} food.`,
+      text: t('objective.capped.adaptation', {
+        subject,
+        name: offer.name,
+        cost: offer.costFood,
+      }),
       source: 'capped:adaptation',
       target: null,
     };
@@ -716,7 +799,14 @@ export function cappedAdvice(
   );
   if (claimable) {
     return {
-      text: `${noun} full — claim ${claimable.label} (${claimable.costFood} food, ${claimable.costWater} moisture). It raises your caps.`,
+      text: t('objective.capped.claim', {
+        subject,
+        label: claimable.label,
+        cost: t('unit.costBothProse', {
+          food: claimable.costFood,
+          water: claimable.costWater,
+        }),
+      }),
       source: 'capped:claim',
       target: { x: claimable.x, y: claimable.y, label: claimable.label },
     };
@@ -726,7 +816,11 @@ export function cappedAdvice(
   );
   if (fittable) {
     return {
-      text: `${noun} full — fit out ${fittable.label} (${fittable.fitFood} food, ${fittable.fitWater} moisture) to raise your ceiling.`,
+      text: t('objective.capped.fit', {
+        subject,
+        label: fittable.label,
+        cost: t('unit.costBothProse', { food: fittable.fitFood, water: fittable.fitWater }),
+      }),
       source: 'capped:fit',
       target: { x: fittable.x, y: fittable.y, label: fittable.label },
     };
@@ -734,7 +828,7 @@ export function cappedAdvice(
   const damaged = world.nests.find((n) => n.claimed && n.integrity < 0.98);
   if (damaged && c.water > 20) {
     return {
-      text: `${noun} full — press E at ${damaged.label} to repair it with moisture.`,
+      text: t('objective.capped.repair', { subject, label: damaged.label }),
       source: 'capped:repair',
       target: { x: damaged.x, y: damaged.y, label: damaged.label },
     };
@@ -751,11 +845,16 @@ export function cappedAdvice(
     );
     const need = n
       ? n.claimed
-        ? `${n.fitFood} food and ${n.fitWater} moisture`
-        : `${n.costFood} food and ${n.costWater} moisture`
+        ? t('unit.costBothProse', { food: n.fitFood, water: n.fitWater })
+        : t('unit.costBothProse', { food: n.costFood, water: n.costWater })
       : '';
     return {
-      text: `${noun} full and the nest is full at ${c.capacity}. Capacity is the bottleneck — ${n?.label} needs ${need}.`,
+      text: t('objective.capped.capacity', {
+        subject,
+        capacity: c.capacity,
+        label: n ? n.label : '',
+        cost: need,
+      }),
       source: 'capped:capacity',
       target: n ? { x: n.x, y: n.y, label: n.label } : null,
     };
@@ -763,7 +862,7 @@ export function cappedAdvice(
   const next = MILESTONE_POPULATION[world.adaptations.milestonesUsed];
   if (next && c.population < next) {
     return {
-      text: `${noun} full — the reserve is the point: at ${next} roaches you unlock a choice you will need it for.`,
+      text: t('objective.capped.milestone', { subject, count: next }),
       source: 'capped:milestone',
       target: null,
     };
@@ -771,7 +870,7 @@ export function cappedAdvice(
   const zone = world.operation >= 4 ? nextZoneToHold(world) : null;
   if (zone) {
     return {
-      text: `${noun} full. Reserves are no longer the bottleneck — territory is. Push a line into ${zone.spec.name}.`,
+      text: t('objective.capped.territory', { subject, zone: zone.spec.name }),
       source: 'capped:territory',
       target: {
         x: zone.spec.x + zone.spec.w / 2,
@@ -781,7 +880,7 @@ export function cappedAdvice(
     };
   }
   return {
-    text: `${noun} full — hold what you have and ride out the response.`,
+    text: t('objective.capped.hold', { subject }),
     source: 'capped:hold',
     target: null,
   };
