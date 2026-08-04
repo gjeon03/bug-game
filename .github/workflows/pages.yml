@@ -110,8 +110,10 @@ jobs:
             // repo, so reporting it when the failure happened BEFORE the browser step (a format or
             // lint failure, say) prints a stale healthy-looking run and points the reader at the
             // wrong thing entirely — which is exactly what it did once.
-            // Perf failures need the worst frame's phase breakdown, not just its total. Without it
-            // the only recourse is guessing at subsystems, which cost five wrong hypotheses.
+            // Perf failures need the phase breakdown of the worst frame, not just its total. Without
+            // it the only recourse is guessing at subsystems, which cost five wrong hypotheses.
+            // NOTE: no apostrophes anywhere in this script — it is shell single-quoted, and one in a
+            // comment ended the string early and failed the step with exit 126.
             const perf = "artifacts/evidence/perf/perf.json";
             if (found > 0 && fs.existsSync(perf)) {
               const pf = JSON.parse(fs.readFileSync(perf, "utf8"));
