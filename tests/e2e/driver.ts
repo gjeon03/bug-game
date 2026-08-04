@@ -333,3 +333,134 @@ export async function chooseSlot(page: Page, slot: 1 | 2 | 3): Promise<void> {
   await page.keyboard.press(`Digit${slot}`);
   await page.waitForTimeout(150);
 }
+
+/* ── Guided player ──────────────────────────────────────────────────────────
+ *
+ * Lives here rather than in a spec because two specs now need it: the local full run and the
+ * deployed-build run. Importing it from a spec file would re-register that spec's tests inside the
+ * importer, so the shared driver is the only correct home for it.
+ */
+export const HOME_MOUTH = { x: HOME.x + 30, y: HOME.y };
+/**
+ * The guided player.
+ *
+ * It acts only on what the HUD is showing: `hud.source` says what kind of thing to do and
+ * `hud.target` says where. That makes each spec run a test of the guidance as much as of the game —
+ * if a run cannot be finished by following the objective line, the objective line is not good enough.
+ *
+ * It replaces a hand-written routine that maintained exactly one line per reserve and always pressed
+ * the first choice. That player was measured three times and starved three times: 33 roaches and no
+ * food, then 33 and no water, then 23 and no water. Every failure was the same mistake — a colony
+ * that outgrows its supply lines needs more supply lines, and the objective line says so while the
+ * hand-written player was not reading it.
+ */
+export async function guidedStep(page: Page): Promise<string> {
+  const s = await state(page);
+  if (s.status !== 'playing') return `end:${s.status}`;
+
+  // A one-of-three choice, answered by key. Spread across families rather than stacking one: three
+  // brood adaptations is capacity 73 on an economy that cannot feed it.
+  if (s.adaptations.offer.length > 0) {
+    const counts = [0, 0, 0];
+    for (const id of s.adaptations.taken) {
+      counts[id.startsWith('brood') ? 0 : id.startsWith('forage') ? 1 : 2]++;
+    }
+    let slot: 1 | 2 | 3 = 1;
+    let fewest = Infinity;
+    for (let i = 0; i < s.adaptations.offer.length; i++) {
+      const id = s.adaptations.offer[i];
+      const family = id.startsWith('brood') ? 0 : id.startsWith('forage') ? 1 : 2;
+      const affordable =
+        s.adaptations.offers[i] && s.adaptations.offers[i].costFood + 14 <= s.colony.food;
+      if (affordable && counts[family] < fewest) {
+        fewest = counts[family];
+        slot = (i + 1) as 1 | 2 | 3;
+      }
+    }
+    // An offer it cannot safely afford must NOT short-circuit the step. Returning here spun the
+    // loop with no wait and no action, burning all 120 iterations in seconds — the same mistake the
+    // game's own objective hierarchy had, where an unaffordable offer pinned the objective while the
+    // colony starved. An offer never expires: fall through and go earn it.
+    if (fewest !== Infinity) {
+      await chooseSlot(page, slot);
+      return 'adapt';
+    }
+  }
+  if (s.pendingFit) {
+    await chooseSlot(page, s.colony.population >= s.colony.capacity - 3 ? 1 : 2);
+    return 'fit';
+  }
+
+  const src = s.hud.source;
+  const target = s.hud.target;
+
+  // Stand somewhere and press E.
+  if (
+    src.startsWith('gate:foothold') ||
+    src.startsWith('gate:functions') ||
+    src.startsWith('capped:claim') ||
+    src.startsWith('capped:fit') ||
+    src.startsWith('capped:repair') ||
+    src.startsWith('gate:zones')
+  ) {
+    if (!target) {
+      await page.waitForTimeout(2500);
+      return 'wait';
+    }
+    await driveTo(page, target.x, target.y, { timeout: 40_000, arrive: 50 });
+    await tapInteract(page);
+    await page.waitForTimeout(400);
+    const after = await state(page);
+    if (after.pendingFit) {
+      await chooseSlot(page, after.colony.population >= after.colony.capacity - 3 ? 1 : 2);
+    }
+    return `interact:${target.label}`;
+  }
+
+  // Run a line to whatever the objective is pointing at — unless it is already served, in which case
+  // a fresh lay would only evict one of the player's own working lines.
+  //
+  // "Already served" is not a reason to ignore a *shortage*, though. A shortage means the lines that
+  // exist are not keeping up, and its blocker says so in as many words: add a second source. Treating
+  // the existing line as an answer is how this player lost a colony on a slow CI host — it spent
+  // 89 % of a 320 s run standing at the crack being told moisture was running low, laid 62 trail
+  // nodes all run, and starved twenty-three roaches at alert tier 0.
+  const supplyUrgent = src === 'shortage' || src.endsWith(':saving');
+  if (target) {
+    const servedBy = (tx: number, ty: number): boolean =>
+      s.routes.some((r) => {
+        if (!r.linked || !r.resourceId) return false;
+        const res = s.resources.find((x) => x.id === r.resourceId);
+        return !!res && Math.hypot(res.x - tx, res.y - ty) < 120;
+      });
+
+    let go: { x: number; y: number; label: string } | null = servedBy(target.x, target.y)
+      ? null
+      : target;
+
+    // Under a shortage, if the objective's own target is served, go find one that is not.
+    if (!go && supplyUrgent && s.routes.length < 6) {
+      const kind = /moisture|water/i.test(s.hud.objective) ? 'water' : 'food';
+      let bestD = Infinity;
+      for (const res of s.resources) {
+        if (res.kind !== kind || res.depleted || res.unlockOp > s.operation) continue;
+        if (servedBy(res.x, res.y)) continue;
+        const d = Math.hypot(res.x - s.scout.x, res.y - s.scout.y);
+        if (d < bestD) {
+          bestD = d;
+          go = { x: res.x, y: res.y, label: res.id };
+        }
+      }
+    }
+
+    if (go) {
+      await layLine(page, HOME_MOUTH, { x: go.x, y: go.y });
+      await page.waitForTimeout(1500);
+      return `line:${go.label}`;
+    }
+  }
+
+  await driveTo(page, HOME_MOUTH.x, HOME_MOUTH.y, { timeout: 25_000 });
+  await page.waitForTimeout(4000);
+  return `hold:${src}`;
+}

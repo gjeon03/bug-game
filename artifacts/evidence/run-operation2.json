@@ -1,20 +1,20 @@
 {
-  "time": 119.08333333332786,
+  "time": 142.91666666667254,
   "operation": 2,
   "colony": {
-    "food": 64.8763999999976,
-    "water": 26.46172500000134,
-    "foodCap": 210,
-    "waterCap": 160,
-    "population": 20,
+    "food": 100.39133333332403,
+    "water": 29.826375000004255,
+    "foodCap": 300,
+    "waterCap": 220,
+    "population": 21,
     "capacity": 31,
-    "brood": 0.18288333333335963,
-    "hatched": 12,
-    "lost": 2,
-    "totalFood": 286.49999999999983,
-    "totalWater": 144,
+    "brood": 0.7492500000000065,
+    "hatched": 11,
+    "lost": 0,
+    "totalFood": 356.69999999999976,
+    "totalWater": 170.25,
     "nurseries": 0,
-    "caches": 1,
+    "caches": 2,
     "boltholes": 0
   },
   "nests": [
@@ -29,7 +29,7 @@
       "id": "crackSink",
       "home": false,
       "claimed": true,
-      "fn": null,
+      "fn": "cache",
       "integrity": 1
     },
     {
@@ -71,15 +71,15 @@
     "offers": []
   },
   "heat": {
-    "known": 2,
-    "total": 1.8644824186640108,
-    "hottest": 1
+    "known": 3,
+    "total": 2.1241709851601627,
+    "hottest": 0.9719187021255493
   },
   "suspicion": {
-    "value": 27.871805708449706,
+    "value": 39.53454745729217,
     "tier": 1,
-    "peak": 27.87347237511637,
-    "floor": 15.330409806314005,
-    "lastCause": "seen"
+    "peak": 40.05352359558943,
+    "floor": 22.02943797757419,
+    "lastCause": "trap"
   }
 }

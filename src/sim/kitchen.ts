@@ -326,10 +326,55 @@ export const LIGHTS: readonly LightSource[] = [
   //
   // Four overlapping emitters rather than one wide radius: a single circle reads as a lamp, and a
   // strip has to be long and shallow.
-  { id: 'underCabA', x: 300, y: 372, radius: 190, intensity: 0.2, warmth: 0.12 },
-  { id: 'underCabB', x: 820, y: 372, radius: 190, intensity: 0.2, warmth: 0.12 },
-  { id: 'underCabC', x: 1980, y: 372, radius: 190, intensity: 0.18, warmth: 0.12 },
-  { id: 'underCabD', x: 2400, y: 372, radius: 190, intensity: 0.18, warmth: 0.12 },
+  //
+  // `surfaceOnly` is what finally resolved this, and the intensity is back up because of it.
+  //
+  // Chasing the number was the wrong approach and the measurements say so: at 0.38 a reckless run
+  // died instantly; at 0.20 `fullrun 09` passed once (9.1 min) then collapsed; at 0.09 it still
+  // passed only 1 of 2, while removing the strip entirely passed 2 of 2. Every failure carried the
+  // same signature — `water=0, routines=0`, a cautious colony dying of thirst.
+  //
+  // The cause was never brightness. It was that a strip mounted under a wall cabinet was raising
+  // exposure on the FLOOR, because the light model has no occluders. Marking these `surfaceOnly`
+  // removes them from the exposure field while the renderer still draws them, so the counter reads
+  // and the colony's route to water is no longer lit by a lamp that does not physically shine
+  // there. With gameplay decoupled, intensity is set for legibility rather than for balance.
+  {
+    id: 'underCabA',
+    x: 300,
+    y: 372,
+    radius: 190,
+    intensity: 0.24,
+    warmth: 0.12,
+    surfaceOnly: true,
+  },
+  {
+    id: 'underCabB',
+    x: 820,
+    y: 372,
+    radius: 190,
+    intensity: 0.24,
+    warmth: 0.12,
+    surfaceOnly: true,
+  },
+  {
+    id: 'underCabC',
+    x: 1980,
+    y: 372,
+    radius: 190,
+    intensity: 0.22,
+    warmth: 0.12,
+    surfaceOnly: true,
+  },
+  {
+    id: 'underCabD',
+    x: 2400,
+    y: 372,
+    radius: 190,
+    intensity: 0.22,
+    warmth: 0.12,
+    surfaceOnly: true,
+  },
 ];
 
 export interface ResourceSpec {

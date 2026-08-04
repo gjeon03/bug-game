@@ -192,6 +192,9 @@ export function staticLightAt(x: number, y: number): number {
   let total = 0;
   for (let i = 0; i < LIGHTS.length; i++) {
     const l = LIGHTS[i];
+    // Surface-mounted lights illuminate a worktop, not the floor below it. The model has no
+    // occluders, so this is where that geometry is accounted for. See `LightSource.surfaceOnly`.
+    if (l.surfaceOnly) continue;
     const dx = x - l.x;
     const dy = y - l.y;
     const d2 = dx * dx + dy * dy;

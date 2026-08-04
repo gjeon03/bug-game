@@ -129,6 +129,24 @@ export interface LightSource {
   intensity: number;
   /** 0 = cold, 1 = warm — drives both the render tint and nothing else. */
   warmth: number;
+  /**
+   * Lights a raised surface only, and must not raise exposure on the floor beneath it.
+   *
+   * This exists to compensate for a missing feature, not to cheat. The light model is radial with
+   * no occluders, so a source is equally bright above and below whatever it is mounted to. That is
+   * fine for the fridge seam or the hallway spill, which genuinely wash across the floor — but an
+   * under-cabinet strip physically lights the WORKTOP while the floor in front of it sits in the
+   * cabinet's own shadow, which is exactly where the colony travels.
+   *
+   * Without this flag the strip made `fullrun 09` intermittently fail with `water=0, routines=0`:
+   * a cautious colony dying of thirst because the route to its water had been lit by a lamp that,
+   * in the real kitchen, does not shine there. Measured — 2/2 passes with the strip removed, 1/2
+   * with it present at two different intensities.
+   *
+   * The renderer still draws these. "What you see is what the humans see" is preserved for every
+   * light that actually reaches the floor; this marks the ones that do not.
+   */
+  surfaceOnly?: boolean;
 }
 
 export interface ResourceNode {
