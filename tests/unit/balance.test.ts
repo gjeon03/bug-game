@@ -486,3 +486,44 @@ describe('the debrief cannot contradict itself', () => {
     expect(world.finalTally!.runSeconds).toBe(tally!.runSeconds);
   }, 30_000);
 });
+
+describe('household routines are opportunities, not requirements', () => {
+  /**
+   * A colony that never exploits a routine must still survive on its standing supply lines.
+   *
+   * This exists because CI's `fullrun 09` fails intermittently with a very specific signature:
+   * `routines=0, lose=collapse, pop=0`. Passing runs exploit two to four routines; failing runs
+   * exploit none and starve. That leaves two very different possibilities, and they call for
+   * opposite responses:
+   *
+   *   - the guided player was merely unlucky on a slow host (a fragile TEST), or
+   *   - the base economy cannot sustain the colony without routine income (an unfair GAME).
+   *
+   * The brief is explicit that a cautious strategy should feel tension without being unfairly
+   * defeated, so the second would be a real defect. This settles it deterministically, with no
+   * browser and no wall clock: run a plain two-line colony that never chases a routine, and see
+   * whether it lives.
+   */
+  it('a two-line colony that never chases a routine still survives and grows', () => {
+    const world = createWorld(20260801);
+    const opts: PlayerOptions = { style: 'covered' };
+
+    layLine(world, pt(HOME), pt(firstResource('food')), opts);
+    layLine(world, pt(HOME), pt(firstResource('water')), opts);
+
+    const start = world.colony.population;
+    // Four minutes of simulated time — longer than the window in which CI's failures collapse.
+    playFor(world, 240, opts);
+
+    const note =
+      `pop ${world.colony.population} food ${Math.round(world.colony.food)} ` +
+      `water ${Math.round(world.colony.water)} status ${world.status} ` +
+      `lose ${world.loseCause} routines ${world.stats.routinesExploited}`;
+
+    expect(world.stats.routinesExploited, note).toBe(0);
+    expect(world.status, note).not.toBe('lost');
+    expect(world.colony.population, note).toBeGreaterThanOrEqual(start);
+    expect(world.colony.food, note).toBeGreaterThan(0);
+    expect(world.colony.water, note).toBeGreaterThan(0);
+  });
+});
