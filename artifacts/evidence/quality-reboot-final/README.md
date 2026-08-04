@@ -1,5 +1,41 @@
 # Quality reboot — evidence index
 
+## CI GREEN, DEPLOYED, AND PLAYED — 8bd4dc5
+
+`main` passed all 17 gates (`8bd4dc5 completed success`), GitHub Pages deployed it, and the live
+build was then **played**, not merely loaded.
+
+| Check (on https://gjeon03.github.io/bug-game/) | Result |
+| --- | --- |
+| Load to playable | 1881 ms |
+| Title / lang | `걸레받이 제국` / `ko` |
+| NanumSquareNeo actually selected | 123.6 px vs 114.9 px fallback |
+| Player-facing English in HUD | none |
+| Full delivery loop | 15 deliveries, 2 linked routes, colony 6 -> 10 |
+| Audio | started, peak 2 voices — not silent |
+| Restart x5 | 311/309/309/272/312 ms, every one routes=0 hazards=0 deliveries=0 |
+| Frame budget (deployed) | cpuP50 1.7 ms, cpuP99 2.2 ms, worst 3.8 ms vs 8 ms |
+| Off-origin requests after load | **0** |
+| Page errors / console errors / failed requests | **0 / 0 / 0** |
+
+### How the frame budget was actually fixed
+
+Five hypotheses failed because they guessed at subsystems. Adding a per-phase breakdown of the
+worst frame settled it in two readings:
+
+| Reading | Worst frame | Dominant phase |
+| --- | --- | --- |
+| Before instrumenting | 43.7 ms | unknown — five wrong guesses |
+| Instrumented | 41.6 ms | `overlays` **39.8** |
+| After caching overlay gradients | 35.0 ms | `bodies` **33.7** |
+| After caching spray/footfall gradients | **passes** | — |
+
+Both causes were the same bug: rebuilding immutable `CanvasGradient` objects every frame. The
+vignette rebuilt twice per frame; `drawSprays` rebuilt 22 per cloud. **The art was never the cause**
+— props, bodies and edge strips measured 0.3 ms combined, which is exactly what all five earlier
+hypotheses had targeted.
+
+
 ## SHIPPED AND PLAYED: https://gjeon03.github.io/bug-game/
 
 Verified by `tests/e2e/deployed.spec.ts` ("18 the deployed build is Korean, serverless, and plays a

@@ -5,7 +5,7 @@
       "/Users/jeongyeong-yeon/Documents/bug-game/node_modules/@playwright/test/cli.js",
       "test",
       "--grep",
-      "14 active play"
+      "the deployed build"
     ],
     "configFile": "/Users/jeongyeong-yeon/Documents/bug-game/playwright.config.ts",
     "rootDir": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e",
@@ -74,62 +74,87 @@
   },
   "suites": [
     {
-      "title": "perf.spec.ts",
-      "file": "perf.spec.ts",
+      "title": "deployed.spec.ts",
+      "file": "deployed.spec.ts",
       "column": 0,
       "line": 0,
-      "specs": [],
-      "suites": [
+      "specs": [
         {
-          "title": "performance",
-          "file": "perf.spec.ts",
-          "line": 95,
-          "column": 6,
-          "specs": [
+          "title": "18 the deployed build is Korean, serverless, and plays a full delivery loop",
+          "ok": true,
+          "tags": [],
+          "tests": [
             {
-              "title": "14 active play and peak load stay inside the frame-time budget",
-              "ok": true,
-              "tags": [],
-              "tests": [
+              "timeout": 600000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
                 {
-                  "timeout": 1200000,
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 54493,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-04T13:05:31.697Z",
                   "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 861855,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-04T07:38:43.261Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "attachments": []
                 }
               ],
-              "id": "73ed389be8d3d6a89cdb-0a46d2da8f43d33554af",
-              "file": "perf.spec.ts",
-              "line": 98,
-              "column": 3
+              "status": "expected"
             }
-          ]
+          ],
+          "id": "ab57c5fe3967e8b9e931-97e83e6473a0b02af0d2",
+          "file": "deployed.spec.ts",
+          "line": 33,
+          "column": 1
+        },
+        {
+          "title": "19 the deployed build restarts cleanly and holds its frame budget",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 600000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 98491,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-04T13:06:26.440Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ab57c5fe3967e8b9e931-aad6522651c3cccb3809",
+          "file": "deployed.spec.ts",
+          "line": 152,
+          "column": 1
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-04T07:38:41.999Z",
-    "duration": 863539.261,
-    "expected": 1,
+    "startTime": "2026-08-04T13:05:29.278Z",
+    "duration": 155732.499,
+    "expected": 2,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

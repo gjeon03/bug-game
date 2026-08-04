@@ -2,7 +2,7 @@
   "url": "https://gjeon03.github.io/bug-game/",
   "restarts": [
     {
-      "restartMs": 321,
+      "restartMs": 311,
       "routes": 0,
       "workers": 6,
       "hazards": 0,
@@ -10,7 +10,7 @@
       "deliveries": 0
     },
     {
-      "restartMs": 327,
+      "restartMs": 309,
       "routes": 0,
       "workers": 6,
       "hazards": 0,
@@ -18,7 +18,7 @@
       "deliveries": 0
     },
     {
-      "restartMs": 319,
+      "restartMs": 309,
       "routes": 0,
       "workers": 6,
       "hazards": 0,
@@ -26,7 +26,7 @@
       "deliveries": 0
     },
     {
-      "restartMs": 325,
+      "restartMs": 272,
       "routes": 0,
       "workers": 6,
       "hazards": 0,
@@ -34,7 +34,7 @@
       "deliveries": 0
     },
     {
-      "restartMs": 287,
+      "restartMs": 312,
       "routes": 0,
       "workers": 6,
       "hazards": 0,
@@ -44,49 +44,49 @@
   ],
   "perf": {
     "label": "deployed-active-play",
-    "frames": 1011,
-    "durationMs": 40754.80000000447,
+    "frames": 1053,
+    "durationMs": 40694.70000000298,
     "p50": 33.4,
-    "p95": 50.2,
+    "p95": 50.1,
     "p99": 51.6,
     "worst": 52,
-    "mean": 40.31,
-    "over16": 1011,
-    "over33": 952,
-    "over50": 106,
+    "mean": 38.65,
+    "over16": 1053,
+    "over33": 994,
+    "over50": 98,
     "over100": 0,
-    "over50Pct": 10.485,
-    "cpuP50": 1.8,
-    "cpuP95": 2.2,
-    "cpuP99": 2.5,
-    "cpuWorst": 3.7,
+    "over50Pct": 9.307,
+    "cpuP50": 1.7,
+    "cpuP95": 2,
+    "cpuP99": 2.2,
+    "cpuWorst": 3.8,
     "peak": {
       "roaches": 12,
       "workers": 11,
       "hazards": 0,
-      "particles": 40,
+      "particles": 29,
       "voices": 6,
-      "drawCalls": 236,
+      "drawCalls": 244,
       "pheromoneNodes": 164
     }
   },
   "colonyAtEnd": {
-    "food": 93.8815999999975,
-    "water": 39.4333999999997,
+    "food": 94.09279999999818,
+    "water": 34.55219999999988,
     "foodCap": 120,
     "waterCap": 100,
     "population": 11,
     "capacity": 13,
-    "brood": 0.5154999999999118,
+    "brood": 0.40749999999991227,
     "hatched": 5,
     "lost": 0,
     "totalFood": 96,
-    "totalWater": 29.999999999999996,
+    "totalWater": 25,
     "nurseries": 0,
     "caches": 0,
     "boltholes": 0
   },
-  "deliveries": 22,
+  "deliveries": 21,
   "pageErrors": [],
   "consoleErrors": [],
   "failedRequests": []
