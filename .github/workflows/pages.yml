@@ -110,6 +110,18 @@ jobs:
             // repo, so reporting it when the failure happened BEFORE the browser step (a format or
             // lint failure, say) prints a stale healthy-looking run and points the reader at the
             // wrong thing entirely — which is exactly what it did once.
+            // Perf failures need the worst frame's phase breakdown, not just its total. Without it
+            // the only recourse is guessing at subsystems, which cost five wrong hypotheses.
+            const perf = "artifacts/evidence/perf/perf.json";
+            if (found > 0 && fs.existsSync(perf)) {
+              const pf = JSON.parse(fs.readFileSync(perf, "utf8"));
+              for (const w of pf.windows ?? []) {
+                console.log("::error::perf[" + w.label + "] cpuP50=" + w.cpuP50 + " cpuP99=" + w.cpuP99 +
+                  " cpuWorst=" + w.cpuWorst + " frames=" + w.frames +
+                  " worstFrame=" + esc(JSON.stringify(w.worstFrame ?? pf.worstFrame ?? {})));
+              }
+            }
+
             const prog = "artifacts/evidence/run-progress.json";
             if (found > 0 && fs.existsSync(prog)) {
               const g = JSON.parse(fs.readFileSync(prog, "utf8"));

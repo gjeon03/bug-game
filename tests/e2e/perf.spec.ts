@@ -120,6 +120,7 @@ test.describe('performance', () => {
     }
     await releaseAll(page);
     const active = await page.evaluate(() => window.__roach.endPerf());
+    const activeWorst = await page.evaluate(() => window.__roach.assetAudit().worstFrame);
     expect(active).not.toBeNull();
 
     // ── Grow into the second operation and claim a foothold, so the peak window has a real colony
@@ -168,6 +169,7 @@ test.describe('performance', () => {
     }
     await releaseAll(page);
     const peak = await page.evaluate(() => window.__roach.endPerf());
+    const peakWorst = await page.evaluate(() => window.__roach.assetAudit().worstFrame);
     await shot(page, '14-peak-load');
 
     const tele = await page.evaluate(() => window.__roach.telemetry());
@@ -182,7 +184,13 @@ test.describe('performance', () => {
         hardwareConcurrency: await page.evaluate(() => navigator.hardwareConcurrency),
       },
       budget: BUDGET,
-      windows: [baseline, active, peak],
+      // The worst frame's phase breakdown, so a spike can be attributed to a subsystem rather than
+      // guessed at. A total with no breakdown is what turned one regression into five wrong fixes.
+      windows: [
+        baseline,
+        active ? { ...active, worstFrame: activeWorst } : active,
+        peak ? { ...peak, worstFrame: peakWorst } : peak,
+      ],
       budgets: {
         frame: BUDGET,
         cpuMs: CPU_BUDGET_MS,

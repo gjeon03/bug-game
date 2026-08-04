@@ -107,6 +107,13 @@ export class Renderer {
   /** Cabinet-edge sprites drawn last frame. Reported by the asset audit so 'is the joinery
    *  actually rendering?' is a measurement rather than a squint at a screenshot. */
   edgeDraws = 0;
+  /**
+   * Phase breakdown of the most expensive frame seen so far.
+   *
+   * Reported through the asset audit so a CI-only frame spike can be attributed to a subsystem
+   * instead of guessed at. Reset by `resetWorstFrame()` when a measurement window opens.
+   */
+  worstPhases: Record<string, number> = { total: 0 };
   private spritesComposited = false;
   /** Composed-once edge strips, keyed by solid id. `null` means this fixture has no edge. */
   private edgeStrips = new Map<
@@ -163,6 +170,11 @@ export class Renderer {
     // allocation lands on a rendered frame when nymphs, corpses or worker variants first appear.
     // Nothing else in the world rotates, so nothing else needs a cutout.
     warmCutouts(ROTATED_SPRITES);
+  }
+
+  /** Clear the worst-frame record so a perf window measures only its own frames. */
+  resetWorstFrame(): void {
+    this.worstPhases = { total: 0 };
   }
 
   resize(cssW: number, cssH: number, dpr: number): void {
@@ -224,26 +236,56 @@ export class Renderer {
     ctx.fillRect(0, 0, this.cssW, this.cssH);
     ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * ox, dpr * oy);
 
+    // Phase timing. Five hypotheses about the peak-load worst frame were tested and rejected by
+    // guessing at candidates; this measures instead. `performance.now()` between phases costs a
+    // few microseconds and the worst frame is the only one whose breakdown is kept, so this is
+    // cheap enough to leave in permanently — and a frame budget without a breakdown is exactly how
+    // an hour disappears into the wrong subsystem.
+    const p0 = performance.now();
     this.drawFloor(b);
     this.drawDebris(b);
     this.drawDecals(b, t);
+    const p1 = performance.now();
     this.drawSolids(b);
+    const p2 = performance.now();
     this.drawProps(b, false);
     this.drawResources(world, t, b);
     this.drawNests(world, t);
+    const p3 = performance.now();
     this.drawPheromone(world, particles, b, dt, t);
+    const p4 = performance.now();
     this.drawHazards(world, t, b);
     this.drawCorpses(world, b);
     this.drawBodies(world, t, b);
     this.drawSprays(world, t);
     this.drawFootfalls(world, t);
+    const p5 = performance.now();
     // Foreground occluders last: a slipper, a broom head, a bottle. The colony visibly passes
     // *underneath* them, which is the only true depth cue a top-down view gets for free.
     this.drawProps(b, true);
     this.drawCalls += particles.draw(ctx, this.atlas, b);
+    const p6 = performance.now();
 
     this.composeLighting(world, cam, settings, t);
+    const p7 = performance.now();
     this.drawOverlays(world, settings, dt);
+    const p8 = performance.now();
+
+    const total = p8 - p0;
+    if (total > this.worstPhases.total) {
+      this.worstPhases = {
+        total: Math.round(total * 10) / 10,
+        floor: Math.round((p1 - p0) * 10) / 10,
+        solids: Math.round((p2 - p1) * 10) / 10,
+        props: Math.round((p3 - p2) * 10) / 10,
+        pheromone: Math.round((p4 - p3) * 10) / 10,
+        bodies: Math.round((p5 - p4) * 10) / 10,
+        foreground: Math.round((p6 - p5) * 10) / 10,
+        lighting: Math.round((p7 - p6) * 10) / 10,
+        overlays: Math.round((p8 - p7) * 10) / 10,
+        drawCalls: this.drawCalls,
+      };
+    }
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }

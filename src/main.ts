@@ -862,6 +862,7 @@ const api: TestApi = {
     );
   },
   markPerf(label: string) {
+    renderer.resetWorstFrame();
     telemetry.beginWindow(label, performance.now());
   },
   endPerf() {
@@ -893,6 +894,7 @@ const api: TestApi = {
       version: VERSION,
       atlasBuildMs: atlas.buildMs,
       cabinetEdgeDraws: renderer.edgeDraws,
+      worstFrame: renderer.worstPhases,
       spriteSheet: sheetInfo(),
       roachAtlas: { w: atlas.roach.width, h: atlas.roach.height },
       floorTile: { w: atlas.floor.width, h: atlas.floor.height },
