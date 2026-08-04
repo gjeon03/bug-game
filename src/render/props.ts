@@ -38,7 +38,7 @@ export interface BakedProp {
  * 26° camera — see `tools/bake/props/`. Kinds absent from this table still draw procedurally and
  * are tracked as remaining work in ASSET_MANIFEST.md.
  */
-const SPRITE_FOR_KIND: Partial<Record<Prop['kind'], string>> = {
+export const SPRITE_FOR_KIND: Partial<Record<Prop['kind'], string>> = {
   drainGrate: 'sink-drain',
   sponge: 'sponge',
   plate: 'plate-single',
@@ -53,7 +53,33 @@ const SPRITE_FOR_KIND: Partial<Record<Prop['kind'], string>> = {
   petBowl: 'pet-bowl',
   condenserGrille: 'condenser-grille',
   slipper: 'slipper',
+  burner: 'burner',
+  ovenVent: 'oven-vent',
+  panHandle: 'pan-handle',
+  pipeElbow: 'pipe-elbow',
+  outlet: 'outlet',
+  fridgeGasket: 'fridge-gasket',
+  binWheel: 'bin-wheel',
+  vent: 'vent',
+  petMat: 'pet-mat',
+  kibble: 'kibble',
+  cableCoil: 'cable-coil',
+  broomHead: 'broom-head',
+  sock: 'sock',
 };
+
+/**
+ * Kinds that stay procedural on purpose.
+ *
+ * `greaseSmear`, `scuffMark` and `baseboardGap` are marks ON a surface, not objects standing on
+ * one. A decal has no silhouette to model and no contact shadow to bake, so the Canvas2D path is
+ * the right tool rather than a gap in the asset set.
+ */
+export const INTENTIONALLY_PROCEDURAL: readonly Prop['kind'][] = [
+  'greaseSmear',
+  'scuffMark',
+  'baseboardGap',
+];
 
 const PAD = 30;
 

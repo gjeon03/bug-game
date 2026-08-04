@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { en } from '../../src/i18n/en.ts';
 import { ko } from '../../src/i18n/ko.ts';
 import { MISSING_KEYS, getLocale, t } from '../../src/i18n/index.ts';
+import { INTENTIONALLY_PROCEDURAL, SPRITE_FOR_KIND } from '../../src/render/props.ts';
+import { PROPS } from '../../src/sim/kitchen.ts';
 
 describe('the shipped locale is Korean', () => {
   it('defaults to ko without anyone selecting it', () => {
@@ -83,5 +85,26 @@ describe('Korean particles follow the sound of the value, not the digit', () => 
       '설거지가',
     );
     expect(t('objective.routine.harvesting', { title: '야식', seconds: 30 })).toContain('야식이');
+  });
+});
+
+describe('every prop kind is accounted for', () => {
+  /**
+   * The asset manifest claims a set of kinds are baked and a set are deliberately procedural. That
+   * claim rotted twice during the reboot — first when props were baked but not wired, then when the
+   * manifest still listed kinds that had since been baked. This turns the claim into an invariant:
+   * add a `PropKind` and forget to classify it, and this fails.
+   */
+  it('is either baked or explicitly listed as intentionally procedural', () => {
+    const kinds = new Set(PROPS.map((p) => p.kind));
+    const unclassified = [...kinds].filter(
+      (k) => !SPRITE_FOR_KIND[k] && !INTENTIONALLY_PROCEDURAL.includes(k),
+    );
+    expect(unclassified).toEqual([]);
+  });
+
+  it('does not claim a kind is procedural while also baking it', () => {
+    const both = INTENTIONALLY_PROCEDURAL.filter((k) => SPRITE_FOR_KIND[k]);
+    expect(both).toEqual([]);
   });
 });

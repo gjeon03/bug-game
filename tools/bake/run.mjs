@@ -47,6 +47,7 @@ const FAMILIES = [
   { module: '/tools/bake/props/roach.mjs', registry: 'ROACH_PROPS' },
   { module: '/tools/bake/props/kitchen.mjs', registry: 'KITCHEN_PROPS' },
   { module: '/tools/bake/props/pantry.mjs', registry: 'PANTRY_PROPS' },
+  { module: '/tools/bake/props/fixtures.mjs', registry: 'FIXTURE_PROPS' },
 ];
 
 const PAGE_HTML = `<!doctype html>

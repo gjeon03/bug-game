@@ -139,7 +139,7 @@ OS/2 `fsType = 8` grants editable embedding. Full OFL text ships at `src/fonts/O
 
 Produced by `tools/bake/` (three.js in headless Chromium, SwiftShader, deterministic), modelled at
 true millimetre dimensions, rendered through one shared camera and light rig at 16× supersampling,
-packed into `src/art/props.png` + `atlas.json`. **31 frames**, sheet 1888×1473.
+packed into `src/art/props.png` + `atlas.json`. **44 frames**, sheet 2040×2128.
 
 | Frame              | Size (px) | Class           |
 | ------------------ | --------- | --------------- |
@@ -210,9 +210,13 @@ Four of six inspected zones read without a label: sink run, dish zone, stove, pa
 partial; `island-edge`, `waste-corner` and `doorway` are unassessed. Evidence:
 `artifacts/evidence/quality-reboot-final/zones/` — 10 captures at 1920x1080, zero page errors.
 
-- Prop kinds with no baked art: `pipeElbow`, `outlet`, `burner`, `panHandle`, `ovenVent`,
-  `fridgeGasket`, `binWheel`, `petMat`, `scuffMark`, `baseboardGap`, `vent`, `greaseSmear` and the
-  remainder of the `PropKind` union.
+- Prop kinds with no baked art: **none remain**. Every `PropKind` used in the world is either baked
+  or explicitly listed as intentionally procedural, and `tests/unit/i18n.test.ts` fails the build if
+  a new kind is added without classifying it.
+
+  `greaseSmear`, `scuffMark` and `baseboardGap` stay procedural on purpose: they are marks ON a
+  surface, not objects standing on one. A decal has no silhouette to model and no contact shadow to
+  bake, so Canvas2D is the right tool rather than a gap.
 - Worker colour variants: rows 3 and 4 resolve to the same `worker-gait0` sprite, so the three
   authored worker colourings are currently two.
 - `roach-dead` does not read as dead — it renders as a live roach at an angle.
