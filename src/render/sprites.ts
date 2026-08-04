@@ -114,6 +114,23 @@ export function loadSprites(): Promise<boolean> {
  */
 export const spriteLoad: Promise<boolean> = loadSprites();
 
+/**
+ * Build every rotated-draw cutout up front.
+ *
+ * `cutout()` is a cache, and a cache that fills lazily fills during rendering. Peak load is exactly
+ * when new body types first appear — nymphs hatch, corpses land, worker variants spawn — so several
+ * first-draws collide in one frame. CI measured a 42.8 ms worst frame-callback against a 19.0 ms
+ * host-scaled budget while the sustained percentiles were fine, which is the signature of an
+ * allocation spike rather than a per-frame cost.
+ *
+ * This is the third one-off cost this renderer has paid on a rendered frame instead of at load.
+ * Same fix each time: do it during boot.
+ */
+export function warmCutouts(): void {
+  if (!sheet) return;
+  for (const [name, f] of Object.entries(atlas.frames)) cutout(name, f);
+}
+
 export function spritesReady(): boolean {
   return sheet !== null;
 }

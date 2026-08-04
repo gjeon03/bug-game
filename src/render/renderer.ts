@@ -22,7 +22,7 @@ import {
 } from './atlas.ts';
 import type { Camera } from './camera.ts';
 import { PAL, rgba } from './palette.ts';
-import { SPRITE_PPU, drawSprite, frame, spritesReady } from './sprites.ts';
+import { SPRITE_PPU, drawSprite, frame, spritesReady, warmCutouts } from './sprites.ts';
 import type { Particles } from './particles.ts';
 import { bakeProps, compositeSprites, type BakedProp } from './props.ts';
 import { bakeSolids, type BakedSolid } from './solids.ts';
@@ -142,6 +142,9 @@ export class Renderer {
     this.spritesComposited = compositeSprites(this.props);
     if (!this.spritesComposited) return;
     for (const s of this.solids) this.edgeStripFor(s.solid);
+    // Rotated bodies read from per-frame cutouts; build them all now so no first-draw allocation
+    // lands on a rendered frame when nymphs, corpses or worker variants first appear.
+    warmCutouts();
   }
 
   resize(cssW: number, cssH: number, dpr: number): void {
