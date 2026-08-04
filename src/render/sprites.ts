@@ -84,6 +84,14 @@ function cutout(name: string, f: Frame): HTMLCanvasElement | null {
  */
 export function loadSprites(): Promise<boolean> {
   if (sheet) return Promise.resolve(true);
+  // No DOM, no sheet. The unit suite runs in Node and imports this module transitively (a test
+  // asserting every PropKind is classified pulls in props.ts, which pulls in this file), so an
+  // unguarded `new Image()` at import time threw inside Vitest. It reported `Errors 1 error`
+  // alongside "159 passed" and exited non-zero — a failure that is easy to read as transient and
+  // is not. The simulation must stay runnable headless; that is the whole reason it is DOM-free.
+  if (typeof document === 'undefined' || typeof Image === 'undefined') {
+    return Promise.resolve(false);
+  }
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
