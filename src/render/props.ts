@@ -1,6 +1,7 @@
 import { PROPS } from '../sim/kitchen.ts';
 import type { Prop } from '../sim/types.ts';
 import { makeCanvas } from './atlas.ts';
+import { SPRITE_PPU, drawSprite, frame, spritesReady } from './sprites.ts';
 
 /**
  * Scenery rendering.
@@ -27,7 +28,7 @@ export interface BakedProp {
    * The procedural canvas stays as the fallback so a prop kind without baked art still renders, and
    * so a failed sheet load degrades to the old look rather than to an empty kitchen.
    */
-  sprite?: string;
+  sprite?: string | undefined;
 }
 
 /**
@@ -784,4 +785,44 @@ function drawProp(g: CanvasRenderingContext2D, p: Prop): void {
     default:
       break;
   }
+}
+
+/**
+ * Draw each prop's baked sprite into its own canvas, once, at final size.
+ *
+ * Called the first frame the sheet is decoded. Before this existed, every prop blitted a scaled
+ * sub-rectangle out of a 2040x2128 atlas on every frame at an arbitrary non-integer scale, and the
+ * measured cost was brutal: `active-play` frame-callback CPU p99 went from 2.5 ms to 32.2 ms
+ * against an 8 ms budget once the full prop set was wired. A per-prop canvas restores the 1:1 blit
+ * the renderer's hot loop was written for, and the scaling happens once instead of sixty times a
+ * second.
+ *
+ * Returns false while the sheet is still loading so the caller can try again next frame.
+ */
+export function compositeSprites(props: BakedProp[]): boolean {
+  if (!spritesReady()) return false;
+  for (const p of props) {
+    if (!p.sprite) continue;
+    const f = frame(p.sprite);
+    if (!f) continue;
+
+    // Size the sprite so its modelled footprint matches the width the simulation reserved, then
+    // give the canvas room for the parts that rise above the ground anchor.
+    const fit = (p.prop.w * SPRITE_PPU) / f.w;
+    const w = Math.max(1, Math.ceil((f.w * fit) / SPRITE_PPU));
+    const h = Math.max(1, Math.ceil((f.h * fit) / SPRITE_PPU));
+    const canvas = makeCanvas(w, h);
+    const g = canvas.getContext('2d');
+    if (!g) continue;
+    // Anchor at the sprite's own ground origin inside the new canvas.
+    drawSprite(g, p.sprite, (f.anchorX * fit) / SPRITE_PPU, (f.anchorY * fit) / SPRITE_PPU, {
+      scale: fit,
+      rotation: p.prop.rot,
+    });
+    p.canvas = canvas;
+    p.ox = p.prop.x - (f.anchorX * fit) / SPRITE_PPU;
+    p.oy = p.prop.y - (f.anchorY * fit) / SPRITE_PPU;
+    p.sprite = undefined;
+  }
+  return true;
 }

@@ -10,6 +10,7 @@ import { TINT } from './render/atlas.ts';
 import { Camera } from './render/camera.ts';
 import { PRIO, Particles } from './render/particles.ts';
 import { Renderer, type RenderSettings } from './render/renderer.ts';
+import { spriteLoad } from './render/sprites.ts';
 import { sheetInfo } from './render/sprites.ts';
 import { WORLD_H, WORLD_W } from './sim/constants.ts';
 import { chooseAdaptation, specById } from './sim/adaptations.ts';
@@ -84,6 +85,15 @@ const atlas = buildAtlas(WORLD_W, WORLD_H, 0xb00c);
 telemetry.startup.atlasMs = atlas.buildMs;
 
 const renderer = new Renderer(canvas, atlas, 0xb00c);
+
+// Decode the sprite sheet and fold it into per-prop canvases before the first frame. Both are real
+// work, and doing either lazily during rendering spends it out of the frame budget instead of out
+// of load time — measured as a 32 ms frame-callback CPU spike when it happened on first draw.
+const spriteT0 = performance.now();
+const spritesOk = await spriteLoad;
+if (!spritesOk) captureError('sprite sheet failed to load; falling back to procedural props');
+renderer.prepareSprites();
+telemetry.startup.spriteMs = Math.round((performance.now() - spriteT0) * 100) / 100;
 telemetry.startup.rendererMs = Math.round((performance.now() - t0) * 100) / 100;
 
 const camera = new Camera();

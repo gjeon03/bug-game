@@ -46,6 +46,36 @@ export const SPRITE_PPU = atlas.ppu;
 let sheet: HTMLImageElement | null = null;
 
 /**
+ * Per-frame cutouts, keyed by sprite name.
+ *
+ * Anything drawn with a rotation cannot be pre-composed into the world — the angle changes every
+ * frame — so it must read from a source every frame. Reading a small sub-rectangle out of the full
+ * 2040x2128 sheet is the last remaining per-frame read, and the sheet more than doubled in height
+ * when the full prop set landed.
+ *
+ * Isolated by controlled comparison rather than guesswork: rebuilding `src/` at the pre-batch
+ * commit and re-running the same spec measured `active-play` frame-callback CPU p99 at 2.0 ms
+ * against 32.3 ms with the batch — a 16x regression that three separate hypotheses had failed to
+ * shift. Cutting each frame into its own small canvas once keeps the rotation while shrinking the
+ * blit source from four megapixels to a few thousand.
+ */
+const cutouts = new Map<string, HTMLCanvasElement>();
+
+function cutout(name: string, f: Frame): HTMLCanvasElement | null {
+  const hit = cutouts.get(name);
+  if (hit) return hit;
+  if (!sheet) return null;
+  const c = document.createElement('canvas');
+  c.width = f.w;
+  c.height = f.h;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  g.drawImage(sheet, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
+  cutouts.set(name, c);
+  return c;
+}
+
+/**
  * Decode the sheet once, before the first frame.
  *
  * Resolves rather than rejects on failure: a missing sheet must degrade to "no props drawn", not to
@@ -128,13 +158,17 @@ export function drawSprite(
       f.h * scale,
     );
   } else {
+    // Rotated draws happen every frame and cannot be pre-composed, so they read from a small
+    // per-frame cutout rather than from the full sheet. See `cutouts`.
+    const src = cutout(name, f);
+    if (!src) return false;
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
     ctx.drawImage(
-      sheet,
-      f.x,
-      f.y,
+      src,
+      0,
+      0,
       f.w,
       f.h,
       -f.anchorX * scale,

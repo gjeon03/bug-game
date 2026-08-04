@@ -24,7 +24,7 @@ import type { Camera } from './camera.ts';
 import { PAL, rgba } from './palette.ts';
 import { SPRITE_PPU, drawSprite, frame, spritesReady } from './sprites.ts';
 import type { Particles } from './particles.ts';
-import { bakeProps, type BakedProp } from './props.ts';
+import { bakeProps, compositeSprites, type BakedProp } from './props.ts';
 import { bakeSolids, type BakedSolid } from './solids.ts';
 
 export interface RenderSettings {
@@ -90,6 +90,12 @@ export class Renderer {
   /** Cabinet-edge sprites drawn last frame. Reported by the asset audit so 'is the joinery
    *  actually rendering?' is a measurement rather than a squint at a screenshot. */
   edgeDraws = 0;
+  private spritesComposited = false;
+  /** Composed-once edge strips, keyed by solid id. `null` means this fixture has no edge. */
+  private edgeStrips = new Map<
+    string,
+    { canvas: HTMLCanvasElement; x: number; y: number } | null
+  >();
 
   dpr = 1;
   cssW = 1280;
@@ -117,6 +123,25 @@ export class Renderer {
       pattern.setTransform(new DOMMatrix([1 / ATLAS_SCALE, 0, 0, 1 / ATLAS_SCALE, 0, 0]));
       this.floorPattern = pattern;
     }
+  }
+
+  /**
+   * Fold every baked sprite into its final per-prop canvas and pre-build the fixture edge strips.
+   *
+   * Called once during boot, deliberately BEFORE the first frame. Doing it lazily on first draw
+   * was measurably wrong: the work is real (40+ props scaled and blitted, five edge strips tiled)
+   * and landing it inside a rendered frame put a ~32 ms spike into `active-play` frame-callback
+   * CPU p99 against an 8 ms budget.
+   *
+   * The giveaway was that the same build measured 32.1 ms over a 1705-frame window and 2.7 ms over
+   * a 12807-frame one — identical code, and the only thing that changed was how far a fixed number
+   * of expensive frames sat from the 99th percentile. That is the signature of a one-off cost, not
+   * a per-frame one, and a one-off cost belongs at load.
+   */
+  prepareSprites(): void {
+    this.spritesComposited = compositeSprites(this.props);
+    if (!this.spritesComposited) return;
+    for (const s of this.solids) this.edgeStripFor(s.solid);
   }
 
   resize(cssW: number, cssH: number, dpr: number): void {
@@ -413,6 +438,9 @@ export class Renderer {
   }
 
   private drawSolids(b: { x0: number; y0: number; x1: number; y1: number }): void {
+    // Normally a no-op: `prepareSprites()` runs at boot. This is the safety net for a sheet that
+    // decodes late, and it must never be the normal path — see `prepareSprites`.
+    if (!this.spritesComposited) this.spritesComposited = compositeSprites(this.props);
     const ctx = this.ctx;
     for (let i = 0; i < this.solids.length; i++) {
       const s = this.solids[i];
@@ -432,50 +460,78 @@ export class Renderer {
   }
 
   /**
-   * Tile a baked cabinet cross-section along a fixture's room-facing edge.
+   * Draw a fixture's room-facing edge from a canvas composed once, not re-tiled every frame.
    *
    * This is the fix for "large blue-black rectangular surfaces dominate the screen". The flat fill
    * behind it stays — it is the worktop, and a worktop genuinely is a large flat surface — but the
-   * edge where the fixture meets the room is now real joinery: worktop lip, shadow reveal, door
-   * face, handle, and the unlit toe-kick void the colony lives in. Six value changes inside ~70
-   * units, repeated along the run, which is what turns a painted rectangle into furniture.
+   * edge where the fixture meets the room is real joinery: worktop lip, shadow reveal, door face,
+   * handle, and the unlit toe-kick void the colony lives in.
    *
-   * Only the `down`-facing edge is drawn, because that is the only face a camera tilted 26° off
-   * vertical can actually see. Drawing all four would put a front elevation on the far side of the
-   * counter, which reads as a floor plan — the exact defect being repaired.
+   * Only the `down`-facing edge exists, because that is the only face a camera tilted 26° off
+   * vertical can see. Drawing all four would put a front elevation on the far side of the counter,
+   * which reads as a floor plan — the exact defect being repaired.
+   *
+   * COMPOSED ONCE. The first version tiled ~45 sprites per fixture per frame, roughly 4.3 million
+   * pixels of blitting for geometry that never moves. It measured 2.5 ms on a fast machine and hid
+   * there; CI's two-core runner reported `active-play frame-callback CPU p99 = 23.1 ms` against an
+   * 8 ms budget. Static art belongs in a baked canvas, which is what `bakeSolids` already does for
+   * the fixtures themselves — this now follows the same rule and costs one `drawImage` per fixture.
    */
+  private edgeStripFor(solid: Solid): { canvas: HTMLCanvasElement; x: number; y: number } | null {
+    const cached = this.edgeStrips.get(solid.id);
+    if (cached !== undefined) return cached;
+
+    const build = (): { canvas: HTMLCanvasElement; x: number; y: number } | null => {
+      if ((solid.facing ?? 'down') !== 'down') return null;
+      const role = solid.role;
+      if (!role || !EDGE_ROLES.has(role)) return null;
+      const name = EDGE_SPRITE[role];
+      const f = name ? frame(name) : undefined;
+      if (!name || !f) return null;
+
+      const tileW = f.w / SPRITE_PPU;
+      const stripH = f.h / SPRITE_PPU;
+      const canvas = makeCanvas(Math.ceil(solid.w), Math.ceil(stripH));
+      const g = canvas.getContext('2d');
+      if (!g) return null;
+
+      // The sprite's pixels rise above its ground anchor because a prop stands out of the floor. A
+      // cabinet face belongs BELOW the fixture's front edge, so the anchor is pushed down by the
+      // sprite's own above-anchor height to put its top lip exactly where joinery meets stone.
+      const anchorY = f.anchorY / SPRITE_PPU;
+      let index = 0;
+      for (let x = 0; x < solid.w; x += tileW, index += 1) {
+        // Alternate the drawer variant so a long run has horizontal rhythm rather than one
+        // silhouette repeated to the horizon.
+        const variant = index % 3 === 1 ? 'cabinet-drawer' : name;
+        drawSprite(g, variant, x + tileW / 2, anchorY, {});
+      }
+      return { canvas, x: solid.x, y: solid.y + solid.h };
+    };
+
+    const built = build();
+    this.edgeStrips.set(solid.id, built);
+    return built;
+  }
+
   private drawSolidEdge(solid: Solid, b: { x0: number; y0: number; x1: number; y1: number }): void {
     if (!spritesReady()) return;
-    if ((solid.facing ?? 'down') !== 'down') return;
-    const role = solid.role;
-    if (!role || !EDGE_ROLES.has(role)) return;
+    const strip = this.edgeStripFor(solid);
+    if (!strip) return;
+    const w = strip.canvas.width;
+    const h = strip.canvas.height;
+    if (strip.x > b.x1 || strip.x + w < b.x0 || strip.y > b.y1 || strip.y + h < b.y0) return;
 
-    const name = EDGE_SPRITE[role];
-    const f = name ? frame(name) : undefined;
-    if (!name || !f) return;
-
-    // A baked sprite's pixels rise ABOVE its ground anchor, because the prop stands up out of the
-    // floor. A cabinet face, though, belongs BELOW the fixture's front edge — between the worktop
-    // and the room. Anchoring straight at the edge therefore laid the cabinet on top of the
-    // counter, where it was invisible against the fill. Pushing the anchor down by the sprite's own
-    // above-anchor height puts its top lip exactly on the edge, which is where joinery meets stone.
-    const edgeY = solid.y + solid.h + f.anchorY / SPRITE_PPU;
-    const tileW = f.w / SPRITE_PPU;
-    if (edgeY < b.y0 - f.h / SPRITE_PPU || edgeY > b.y1) return;
-
-    // Alternate the drawer variant every other tile so a long run has horizontal rhythm rather
-    // than one silhouette repeated to the horizon.
-    const ctx = this.ctx;
-    const start = Math.max(solid.x, b.x0 - tileW);
-    const end = Math.min(solid.x + solid.w, b.x1 + tileW);
-    let index = Math.floor((start - solid.x) / tileW);
-    for (let x = solid.x + index * tileW; x < end; x += tileW, index += 1) {
-      const variant = index % 3 === 1 ? 'cabinet-drawer' : name;
-      if (drawSprite(ctx, variant, x + tileW / 2, edgeY, {})) {
-        this.drawCalls++;
-        this.edgeDraws++;
-      }
-    }
+    // Blit only the visible slice. A counter run is up to 1080 world units wide, so a whole-strip
+    // blit pushes ~2.7 million pixels per frame across the fixtures even when most of that is off
+    // screen — and under software rasterisation that fill cost lands squarely in the frame budget.
+    // Clipping to the camera turns it into a few hundred thousand.
+    const sx = Math.max(0, Math.floor(b.x0 - strip.x));
+    const sw = Math.min(w - sx, Math.ceil(b.x1 - strip.x - sx));
+    if (sw <= 0) return;
+    this.ctx.drawImage(strip.canvas, sx, 0, sw, h, strip.x + sx, strip.y, sw, h);
+    this.drawCalls++;
+    this.edgeDraws++;
   }
 
   // ── World objects ─────────────────────────────────────────────────────────
@@ -495,20 +551,6 @@ export class Renderer {
       const w = p.canvas.width;
       const h = p.canvas.height;
       if (p.ox > b.x1 || p.ox + w < b.x0 || p.oy > b.y1 || p.oy + h < b.y0) continue;
-
-      // Baked art wherever it exists. Drawn at the prop's own authored world position and rotation,
-      // and sized so the sprite's modelled footprint matches the width the simulation reserved for
-      // it — the sim's collision and cover volumes are unchanged, only what fills them.
-      if (p.sprite && spritesReady()) {
-        const f = frame(p.sprite);
-        if (f) {
-          const fit = (p.prop.w * SPRITE_PPU) / f.w;
-          if (drawSprite(ctx, p.sprite, p.prop.x, p.prop.y, { scale: fit, rotation: p.prop.rot })) {
-            this.drawCalls++;
-            continue;
-          }
-        }
-      }
 
       ctx.drawImage(p.canvas, p.ox, p.oy);
       this.drawCalls++;
