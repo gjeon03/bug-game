@@ -5,7 +5,7 @@
       "/Users/jeongyeong-yeon/Documents/bug-game/node_modules/@playwright/test/cli.js",
       "test",
       "--grep",
-      "09 a careful run"
+      "18 the deployed build"
     ],
     "configFile": "/Users/jeongyeong-yeon/Documents/bug-game/playwright.config.ts",
     "rootDir": "/Users/jeongyeong-yeon/Documents/bug-game/tests/e2e",
@@ -74,61 +74,52 @@
   },
   "suites": [
     {
-      "title": "fullrun.spec.ts",
-      "file": "fullrun.spec.ts",
+      "title": "deployed.spec.ts",
+      "file": "deployed.spec.ts",
       "column": 0,
       "line": 0,
-      "specs": [],
-      "suites": [
+      "specs": [
         {
-          "title": "complete runs",
-          "file": "fullrun.spec.ts",
-          "line": 164,
-          "column": 6,
-          "specs": [
+          "title": "18 the deployed build is Korean, serverless, and plays a full delivery loop",
+          "ok": true,
+          "tags": [],
+          "tests": [
             {
-              "title": "09 a careful run drives itself through the operations by achieving them",
-              "ok": true,
-              "tags": [],
-              "tests": [
+              "timeout": 600000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
                 {
-                  "timeout": 1500000,
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 52639,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-04T01:51:08.495Z",
                   "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "",
-                  "projectName": "",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 546509,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-08-04T00:17:30.597Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
+                  "attachments": []
                 }
               ],
-              "id": "10e71ebee97db66b31a0-ad72a8dd547c897996c2",
-              "file": "fullrun.spec.ts",
-              "line": 167,
-              "column": 3
+              "status": "expected"
             }
-          ]
+          ],
+          "id": "ab57c5fe3967e8b9e931-97e83e6473a0b02af0d2",
+          "file": "deployed.spec.ts",
+          "line": 31,
+          "column": 1
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-04T00:17:28.103Z",
-    "duration": 549376.055,
+    "startTime": "2026-08-04T01:51:07.119Z",
+    "duration": 54168.686,
     "expected": 1,
     "skipped": 0,
     "unexpected": 0,

@@ -1,5 +1,26 @@
 # Quality reboot — evidence index
 
+## SHIPPED AND PLAYED: https://gjeon03.github.io/bug-game/
+
+Verified by `tests/e2e/deployed.spec.ts` ("18 the deployed build is Korean, serverless, and plays a
+full delivery loop") running against the **public URL**, not a local server. Evidence in
+`deployed/`.
+
+| Measurement | Value |
+| --- | --- |
+| Load to playable | 1202 ms |
+| Title / lang | `걸레받이 제국` / `ko` |
+| NanumSquareNeo | 400 + 700 `loaded`, and **in use** — Korean measures 123.6 px vs 114.9 px on the fallback stack |
+| Player-facing English in HUD | none |
+| Deliveries completed | 15, across 2 linked routes |
+| Colony | 6 → 10 roaches |
+| Off-origin requests after load | **0** (serverless contract holds) |
+| Page errors / console errors / failed requests | **0 / 0 / 0** |
+
+`deployed/04-first-delivery.png` shows the loop closed on the live site: workers carrying food in
+their mandibles along the pheromone trail, both operation-1 objectives struck through.
+
+
 Generated 2026-08-04. Every claim below points at a file in this directory or at
 `artifacts/evidence/quality-reboot-baseline/`.
 
