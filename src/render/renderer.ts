@@ -60,6 +60,23 @@ const EDGE_SPRITE: Partial<Record<FixtureRole, string>> = {
   stove: 'steel-panel',
 };
 const EDGE_ROLES = new Set(Object.keys(EDGE_SPRITE) as FixtureRole[]);
+
+/**
+ * Every sprite that is ever drawn with a rotation — i.e. the bodies, and only the bodies.
+ *
+ * Props are composed into the world once at their authored angle; fixtures never rotate. Keeping
+ * this list exact is what stops the cutout cache from allocating canvases nothing reads.
+ */
+const ROTATED_SPRITES: readonly string[] = [
+  'scout-gait0',
+  'scout-gait1',
+  'scout-gait2',
+  'scout-gait3',
+  'worker-gait0',
+  'worker-carry',
+  'nymph-gait0',
+  'roach-dead',
+];
 /** Worker atlas rows, one per colouring. A worker's `variant` picks its row for life. */
 const WORKER_ROWS = [1, 3, 4] as const;
 /** Antennae are drawn procedurally for at most this many bodies per frame. */
@@ -142,9 +159,10 @@ export class Renderer {
     this.spritesComposited = compositeSprites(this.props);
     if (!this.spritesComposited) return;
     for (const s of this.solids) this.edgeStripFor(s.solid);
-    // Rotated bodies read from per-frame cutouts; build them all now so no first-draw allocation
-    // lands on a rendered frame when nymphs, corpses or worker variants first appear.
-    warmCutouts();
+    // Rotated bodies read from per-frame cutouts; build exactly those now, so no first-draw
+    // allocation lands on a rendered frame when nymphs, corpses or worker variants first appear.
+    // Nothing else in the world rotates, so nothing else needs a cutout.
+    warmCutouts(ROTATED_SPRITES);
   }
 
   resize(cssW: number, cssH: number, dpr: number): void {

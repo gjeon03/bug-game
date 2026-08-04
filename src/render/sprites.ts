@@ -123,12 +123,18 @@ export const spriteLoad: Promise<boolean> = loadSprites();
  * host-scaled budget while the sustained percentiles were fine, which is the signature of an
  * allocation spike rather than a per-frame cost.
  *
- * This is the third one-off cost this renderer has paid on a rendered frame instead of at load.
- * Same fix each time: do it during boot.
+ * Only the frames that are ACTUALLY drawn rotated get a cutout. The first version warmed all 44,
+ * which allocated 36 canvases nothing ever reads — including large ones like the 752x326 pan
+ * handle — for no benefit. On a two-core shared runner that mattered: the worst frame stayed at
+ * ~41 ms against a 4.1 ms idle worst, a ratio that reads as a garbage-collection pause rather than
+ * draw cost. Only bodies rotate; everything else is composed into the world at a fixed angle.
  */
-export function warmCutouts(): void {
+export function warmCutouts(names: readonly string[]): void {
   if (!sheet) return;
-  for (const [name, f] of Object.entries(atlas.frames)) cutout(name, f);
+  for (const name of names) {
+    const f = atlas.frames[name];
+    if (f) cutout(name, f);
+  }
 }
 
 export function spritesReady(): boolean {
