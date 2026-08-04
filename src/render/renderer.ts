@@ -114,6 +114,8 @@ export class Renderer {
    * instead of guessed at. Reset by `resetWorstFrame()` when a measurement window opens.
    */
   worstPhases: Record<string, number> = { total: 0 };
+  /** Full-screen gradients, keyed by viewport size. Cleared on resize. */
+  private gradientCache = new Map<string, CanvasGradient>();
   private spritesComposited = false;
   /** Composed-once edge strips, keyed by solid id. `null` means this fixture has no edge. */
   private edgeStrips = new Map<
@@ -178,6 +180,7 @@ export class Renderer {
   }
 
   resize(cssW: number, cssH: number, dpr: number): void {
+    this.gradientCache.clear();
     this.cssW = cssW;
     this.cssH = cssH;
     this.dpr = dpr;
@@ -1708,30 +1711,37 @@ export class Renderer {
 
   // ── Screen space ──────────────────────────────────────────────────────────
 
-  private drawOverlays(world: World, settings: RenderSettings, dt: number): void {
-    const ctx = this.ctx;
-    const w = this.cssW;
-    const h = this.cssH;
+  /**
+   * The screen-edge darkening, built once per viewport size.
+   *
+   * Colour stops are at full strength; callers modulate with `globalAlpha`. That is what allows one
+   * gradient object to serve every exposure level instead of one per frame.
+   */
+  private vignette(w: number, h: number): CanvasGradient {
+    const key = `${w}x${h}`;
+    let g = this.gradientCache.get(`vig:${key}`);
+    if (!g) {
+      g = this.ctx.createRadialGradient(
+        w / 2,
+        h / 2,
+        Math.min(w, h) * 0.32,
+        w / 2,
+        h / 2,
+        Math.max(w, h) * 0.72,
+      );
+      g.addColorStop(0, 'rgba(2,4,8,0)');
+      g.addColorStop(1, 'rgba(2,4,8,1)');
+      this.gradientCache.set(`vig:${key}`, g);
+    }
+    return g;
+  }
 
-    // Vignette: always present, deepening with exposure so danger is felt at the frame edge.
-    const exposure = world.scout.alive ? world.scout.exposure : 0;
-    const vig = ctx.createRadialGradient(
-      w / 2,
-      h / 2,
-      Math.min(w, h) * 0.32,
-      w / 2,
-      h / 2,
-      Math.max(w, h) * 0.72,
-    );
-    vig.addColorStop(0, 'rgba(0,0,0,0)');
-    vig.addColorStop(1, `rgba(2,4,8,${0.42 + exposure * 0.2})`);
-    ctx.fillStyle = vig;
-    ctx.fillRect(0, 0, w, h);
-    this.drawCalls++;
-
-    if (world.scout.spotted > 0.2 && !settings.reducedFlash) {
-      const a = (world.scout.spotted - 0.2) * 0.34;
-      const grad = ctx.createRadialGradient(
+  /** The red wash that says a human is looking straight at you. Cached for the same reason. */
+  private spottedWash(w: number, h: number): CanvasGradient {
+    const key = `${w}x${h}`;
+    let g = this.gradientCache.get(`spot:${key}`);
+    if (!g) {
+      g = this.ctx.createRadialGradient(
         w / 2,
         h / 2,
         Math.min(w, h) * 0.3,
@@ -1739,10 +1749,38 @@ export class Renderer {
         h / 2,
         Math.max(w, h) * 0.7,
       );
-      grad.addColorStop(0, 'rgba(255,80,50,0)');
-      grad.addColorStop(1, `rgba(255,80,50,${a})`);
-      ctx.fillStyle = grad;
+      g.addColorStop(0, 'rgba(255,80,50,0)');
+      g.addColorStop(1, 'rgba(255,80,50,1)');
+      this.gradientCache.set(`spot:${key}`, g);
+    }
+    return g;
+  }
+
+  private drawOverlays(world: World, settings: RenderSettings, dt: number): void {
+    const ctx = this.ctx;
+    const w = this.cssW;
+    const h = this.cssH;
+
+    // Vignette: always present, deepening with exposure so danger is felt at the frame edge.
+    //
+    // Both washes below reuse a cached gradient and vary their strength with `globalAlpha`, rather
+    // than rebuilding the gradient object every frame. Measured, not assumed: CI reported a 41.6 ms
+    // worst frame of which `overlays` was 39.8 ms, while every art subsystem this session was
+    // suspected of causing it — props, bodies, edge strips — totalled 0.3 ms. A full-screen radial
+    // gradient across 1600x900 is expensive under software rasterisation, and peak load is exactly
+    // when the scout is being seen and a SECOND one appears on top of the first.
+    const exposure = world.scout.alive ? world.scout.exposure : 0;
+    ctx.globalAlpha = 0.42 + exposure * 0.2;
+    ctx.fillStyle = this.vignette(w, h);
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = 1;
+    this.drawCalls++;
+
+    if (world.scout.spotted > 0.2 && !settings.reducedFlash) {
+      ctx.globalAlpha = (world.scout.spotted - 0.2) * 0.34;
+      ctx.fillStyle = this.spottedWash(w, h);
       ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1;
       this.drawCalls++;
     }
 
