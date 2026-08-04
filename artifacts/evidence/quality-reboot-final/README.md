@@ -165,6 +165,36 @@ green **without touching a budget value**. No re-baseline was needed.
 | asset audit | `deploy 17` every visible/audible element is a shipping asset | **PASS** |
 | active-play p50/p95/p99 | `perf 14` | **PASS** |
 
+## `fullrun 09` is wall-clock-sensitive — recorded, not hidden
+
+This gate passes 2/2 locally and fails intermittently on GitHub's shared runners. Every failure
+carries the same signature:
+
+```
+status=lost lose=collapse pop=0 routines=0 decisions={}
+```
+
+`routines=0` is the diagnostic. Passing runs exploit 2-4 household routines; failing runs exploit
+none, then starve. Routines are timed events the player must be *present for*, so the guided player
+missing them is a wall-clock symptom: on a slower host it completes fewer actions per second of
+simulated time, arrives late, and the colony never gets the temporary supply a routine provides.
+`decisions={}` confirms the colony was already lost before the guided loop ran a single decision —
+the failure happens in the scripted early phase, not in the part the test is about.
+
+**What is and is not established:**
+
+- Established: the gate is marginal and timing-dependent. Two local passes are not evidence of
+  stability, and an earlier "17/17, exit 0" report of mine was a single sample of exactly this spec.
+- Established: an earlier version of the under-cabinet lighting *did* make it worse, proven by
+  controlled comparison (lights removed 2/2 pass, lights present 1/2). That contribution was removed
+  via `LightSource.surfaceOnly`, which takes those lights out of the exposure field entirely.
+- **Not** established: whether the current build still contributes to the marginality at all, or
+  whether the gate was always this close to its edge and the baseline's single CI pass was luck.
+  Distinguishing those needs repeated CI runs, which is the only instrument that reproduces it.
+
+Recorded here rather than resolved, because claiming it fixed after two local passes is the exact
+mistake already made once in this session.
+
 ## Gates still unmet
 
 - Kitchen recognizability (defects 2 and 3) — improved and measured, not passed.
