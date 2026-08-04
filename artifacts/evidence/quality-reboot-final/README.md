@@ -17,6 +17,30 @@ full delivery loop") running against the **public URL**, not a local server. Evi
 | Off-origin requests after load | **0** (serverless contract holds) |
 | Page errors / console errors / failed requests | **0 / 0 / 0** |
 
+### Restart and frame budget, also measured on the live site
+
+`deployed/restart-perf.json` (spec 19).
+
+| Restart | Time | routes | workers | hazards | patrols | deliveries |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 321 ms | 0 | 6 | 0 | 0 | 0 |
+| 2 | 327 ms | 0 | 6 | 0 | 0 | 0 |
+| 3 | 319 ms | 0 | 6 | 0 | 0 | 0 |
+| 4 | 325 ms | 0 | 6 | 0 | 0 | 0 |
+| 5 | 287 ms | 0 | 6 | 0 | 0 | 0 |
+
+Each run was dirtied with a linked route and hauling workers *before* restarting — restarting a
+pristine world would prove nothing.
+
+Frame budget, `deployed-active-play`, 1011 frames: **cpuP50 1.8 ms, cpuP99 2.5 ms, cpuWorst
+3.7 ms** against a 16.7 ms budget — 6.7x headroom.
+
+**Read the presented-frame numbers carefully.** `p50 33.4 / p95 50.2 / p99 51.6` is *headless
+Chromium's compositor cap*, not the game: the idle baseline on this host measures the same 33.4
+while doing nothing. That is exactly why `perf.spec.ts` enforces presented-frame budgets only on
+hosts whose idle window proves they can present at 60 Hz, and enforces frame-callback CPU on every
+host. The game's own per-frame cost is the 2.5 ms figure.
+
 `deployed/04-first-delivery.png` shows the loop closed on the live site: workers carrying food in
 their mandibles along the pheromone trail, both operation-1 objectives struck through.
 

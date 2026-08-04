@@ -1,0 +1,93 @@
+{
+  "url": "https://gjeon03.github.io/bug-game/",
+  "restarts": [
+    {
+      "restartMs": 321,
+      "routes": 0,
+      "workers": 6,
+      "hazards": 0,
+      "patrols": 0,
+      "deliveries": 0
+    },
+    {
+      "restartMs": 327,
+      "routes": 0,
+      "workers": 6,
+      "hazards": 0,
+      "patrols": 0,
+      "deliveries": 0
+    },
+    {
+      "restartMs": 319,
+      "routes": 0,
+      "workers": 6,
+      "hazards": 0,
+      "patrols": 0,
+      "deliveries": 0
+    },
+    {
+      "restartMs": 325,
+      "routes": 0,
+      "workers": 6,
+      "hazards": 0,
+      "patrols": 0,
+      "deliveries": 0
+    },
+    {
+      "restartMs": 287,
+      "routes": 0,
+      "workers": 6,
+      "hazards": 0,
+      "patrols": 0,
+      "deliveries": 0
+    }
+  ],
+  "perf": {
+    "label": "deployed-active-play",
+    "frames": 1011,
+    "durationMs": 40754.80000000447,
+    "p50": 33.4,
+    "p95": 50.2,
+    "p99": 51.6,
+    "worst": 52,
+    "mean": 40.31,
+    "over16": 1011,
+    "over33": 952,
+    "over50": 106,
+    "over100": 0,
+    "over50Pct": 10.485,
+    "cpuP50": 1.8,
+    "cpuP95": 2.2,
+    "cpuP99": 2.5,
+    "cpuWorst": 3.7,
+    "peak": {
+      "roaches": 12,
+      "workers": 11,
+      "hazards": 0,
+      "particles": 40,
+      "voices": 6,
+      "drawCalls": 236,
+      "pheromoneNodes": 164
+    }
+  },
+  "colonyAtEnd": {
+    "food": 93.8815999999975,
+    "water": 39.4333999999997,
+    "foodCap": 120,
+    "waterCap": 100,
+    "population": 11,
+    "capacity": 13,
+    "brood": 0.5154999999999118,
+    "hatched": 5,
+    "lost": 0,
+    "totalFood": 96,
+    "totalWater": 29.999999999999996,
+    "nurseries": 0,
+    "caches": 0,
+    "boltholes": 0
+  },
+  "deliveries": 22,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "failedRequests": []
+}
