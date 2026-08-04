@@ -1,13 +1,13 @@
 {
-  "time": 25.066666666666524,
+  "time": 25.58333333333316,
   "colony": {
-    "food": 63.32506666666414,
-    "water": 24.49534999999935,
+    "food": 63.25893333333083,
+    "water": 24.458149999999325,
     "foodCap": 120,
     "waterCap": 100,
     "population": 8,
     "capacity": 13,
-    "brood": 0.255999999999965,
+    "brood": 0.302499999999965,
     "hatched": 2,
     "lost": 0,
     "totalFood": 36,
@@ -21,7 +21,7 @@
       "id": 1,
       "nodes": 25,
       "linked": true,
-      "exposure": 0.16004832931954535,
+      "exposure": 0.16395846685562468,
       "traffic": 7,
       "resourceId": "dishCrumbs",
       "nestId": "home"
@@ -30,7 +30,7 @@
       "id": 2,
       "nodes": 37,
       "linked": true,
-      "exposure": 0.06310205925980647,
+      "exposure": 0.06620472702533635,
       "traffic": 0,
       "resourceId": "sinkDrip",
       "nestId": "home"
