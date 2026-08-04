@@ -106,8 +106,12 @@ jobs:
             // "starved of time" vs "stood still". That file lives in the artifact, which needs auth,
             // so the tally is surfaced here too — otherwise the diagnostic the test author built is
             // unreachable exactly when it is needed.
+            // Only meaningful when a spec actually failed. `run-progress.json` is committed to the
+            // repo, so reporting it when the failure happened BEFORE the browser step (a format or
+            // lint failure, say) prints a stale healthy-looking run and points the reader at the
+            // wrong thing entirely — which is exactly what it did once.
             const prog = "artifacts/evidence/run-progress.json";
-            if (fs.existsSync(prog)) {
+            if (found > 0 && fs.existsSync(prog)) {
               const g = JSON.parse(fs.readFileSync(prog, "utf8"));
               const st = g.stats ?? {};
               console.log("::error::run-progress: op=" + g.operation + " completed=" + st.operationsCompleted +

@@ -217,6 +217,7 @@ partial; `island-edge`, `waste-corner` and `doorway` are unassessed. Evidence:
   `greaseSmear`, `scuffMark` and `baseboardGap` stay procedural on purpose: they are marks ON a
   surface, not objects standing on one. A decal has no silhouette to model and no contact shadow to
   bake, so Canvas2D is the right tool rather than a gap.
+
 - Worker colour variants: rows 3 and 4 resolve to the same `worker-gait0` sprite, so the three
   authored worker colourings are currently two.
 - `roach-dead` does not read as dead — it renders as a live roach at an angle.
