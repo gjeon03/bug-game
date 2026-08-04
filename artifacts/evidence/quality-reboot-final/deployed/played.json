@@ -1,6 +1,6 @@
 {
   "url": "https://gjeon03.github.io/bug-game/",
-  "loadMs": 1202,
+  "loadMs": 1204,
   "boot": {
     "title": "걸레받이 제국",
     "lang": "ko",
@@ -14,13 +14,13 @@
     "hud": "먹이\n45/120\n수분\n33/100\n군체\n6/13\n부화\n13%\n조용함 · 0\n◂\n아직 남긴 흔적이 없다.\n▸\n조용함. 아직 어딘지는 못 짚었다.\n질주\n100\n페로몬\n100 · 0/6\n정찰병 대기\nWASD — 틈 밖으로.\n세척기 부스러기까지 걸어가라 — 그리고 냄새를 본거지로 데려와라.\n작전 1 — 둥지를 세운다\n먹이 길 1개\n0/1\n수분 길 1개\n0/1\n바퀴 12마리\n6/12\n다음: 집이 밤 일과를 시작한다 — 그게 곧 기회다."
   },
   "before": {
-    "food": 45.82399999999963,
-    "water": 33.90099999999984,
+    "food": 45.827199999999635,
+    "water": 33.90279999999984,
     "foodCap": 120,
     "waterCap": 100,
     "population": 6,
     "capacity": 13,
-    "brood": 0.16500000000000012,
+    "brood": 0.16200000000000012,
     "hatched": 0,
     "lost": 0,
     "totalFood": 0,
@@ -32,13 +32,13 @@
   "firstDelivery": {
     "deliveries": 1,
     "colony": {
-      "food": 41.86506666666555,
-      "water": 28.799099999999413,
+      "food": 41.736266666665685,
+      "water": 28.72664999999946,
       "foodCap": 120,
       "waterCap": 100,
       "population": 7,
       "capacity": 13,
-      "brood": 0.8584999999999698,
+      "brood": 0.9619999999999661,
       "hatched": 1,
       "lost": 0,
       "totalFood": 6,
@@ -51,13 +51,13 @@
   "after": {
     "deliveries": 15,
     "colony": {
-      "food": 61.55173333333168,
-      "water": 44.372849999999474,
+      "food": 61.34106666666375,
+      "water": 44.25434999999986,
       "foodCap": 120,
       "waterCap": 100,
       "population": 10,
       "capacity": 13,
-      "brood": 0.6274999999999253,
+      "brood": 0.7459999999999211,
       "hatched": 4,
       "lost": 0,
       "totalFood": 54,
@@ -67,6 +67,10 @@
       "boltholes": 0
     },
     "routes": 2
+  },
+  "audio": {
+    "started": true,
+    "peakVoices": 2
   },
   "offOriginRequests": [],
   "pageErrors": [],

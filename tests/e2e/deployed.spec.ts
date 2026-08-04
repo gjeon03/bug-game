@@ -77,14 +77,33 @@ test('18 the deployed build is Korean, serverless, and plays a full delivery loo
   expect(latin).toEqual([]);
 
   // ── Play it. Same driver the rest of the suite uses, on the public URL.
+  //
+  // The click is not decoration: browsers refuse to start an AudioContext without a gesture, so
+  // without it every "is the game silent?" measurement below would read zero for the wrong reason.
   await page.mouse.click(960, 540);
   const before = await state(page);
 
+  // Sample audio while playing. "Core interactions cannot remain silent" is a stated gate, and a
+  // designed audio engine is not the same claim as an audible one — this measures voices actually
+  // allocated on the deployed build rather than trusting that the triggers exist.
+  let peakVoices = 0;
+  let audioStarted = false;
+  const sampleAudio = async (): Promise<void> => {
+    const a = await page.evaluate(() => ({
+      voices: window.__roach.telemetry().audioVoices,
+      started: Boolean(window.__roach.assetAudit().audioStarted),
+    }));
+    peakVoices = Math.max(peakVoices, a.voices);
+    audioStarted ||= a.started;
+  };
+
   await driveTo(page, firstFood.x, firstFood.y, { timeout: 60_000 });
+  await sampleAudio();
   await page.screenshot({ path: path.join(OUT, '02-at-the-crumbs.png') });
   await driveTo(page, HOME.x, HOME.y, { lay: true, timeout: 60_000 });
   await driveTo(page, firstWater.x, firstWater.y, { timeout: 60_000 });
   await driveTo(page, HOME.x, HOME.y, { lay: true, timeout: 60_000 });
+  await sampleAudio();
   await page.screenshot({ path: path.join(OUT, '03-two-lines-laid.png') });
 
   // Workers only move once a line links a source to a claimed nest; give them room to run it.
@@ -92,10 +111,12 @@ test('18 the deployed build is Korean, serverless, and plays a full delivery loo
     timeout: 120_000,
   });
   const firstDelivery = await state(page);
+  await sampleAudio();
   await page.screenshot({ path: path.join(OUT, '04-first-delivery.png') });
 
   await page.waitForTimeout(30_000);
   const after = await state(page);
+  await sampleAudio();
   await page.screenshot({ path: path.join(OUT, '05-colony-grown.png') });
 
   writeJson(`${OUT}/played.json`, {
@@ -109,6 +130,7 @@ test('18 the deployed build is Korean, serverless, and plays a full delivery loo
       colony: after.colony,
       routes: after.routes.length,
     },
+    audio: { started: audioStarted, peakVoices },
     offOriginRequests: [...new Set(offOrigin)],
     pageErrors: w.pageErrors,
     consoleErrors: w.consoleErrors,
@@ -116,6 +138,9 @@ test('18 the deployed build is Korean, serverless, and plays a full delivery loo
   });
 
   expect(after.stats.deliveries).toBeGreaterThan(0);
+  // The game must not be silent while it is being played.
+  expect(audioStarted, 'the AudioContext never started').toBe(true);
+  expect(peakVoices, 'no audio voice was ever allocated during play').toBeGreaterThan(0);
   expect(after.colony.population).toBeGreaterThanOrEqual(before.colony.population);
   // Serverless is the platform contract: after load, nothing may leave the origin.
   expect([...new Set(offOrigin)]).toEqual([]);

@@ -185,6 +185,25 @@ reboot:
   45 draws measured across the zone sweep — but worktop and appliance faces are still flat fills.
   Defects #2 and #3 are improved, not closed.
 
+## Audio — intentional final (runtime synthesis)
+
+`src/audio/audio.ts` synthesises every sound with the Web Audio API. There is no sample file, and
+that is a decision rather than an omission: synthesis ships zero bytes, needs no licence, and is
+the only approach that stays serverless without vendoring audio.
+
+It is not a stub. Twenty-four distinct triggers exist — `routineWarn`, `routineStart`,
+`routineTaken`, `routineEnd`, `sweepWarn`, `sweepPass`, `adapt`, `fitOut`, `repair`, `zoneHeld`,
+`zoneLost`, `operationCard`, `finalResponse`, `skitter`, `workerSkitter`, `sprint`, `layTick`,
+`routeLinked`, `routeLost` and the ambient beds — with a voice cap and bussed master/music/sfx/ui
+gain.
+
+**Verified audible on the deployed build**, not merely present in source: playing
+`https://gjeon03.github.io/bug-game/` reports `audioStarted: true` and `peakVoices: 2` while the
+colony runs its lines (`deployed/played.json`). A designed audio engine and an audible one are
+different claims; this is the second.
+
+Remaining audio work is mixing and coverage breadth, not asset production.
+
 ## Zone recognizability — measured, not asserted
 
 Four of six inspected zones read without a label: sink run, dish zone, stove, pantry. `fridge` is
