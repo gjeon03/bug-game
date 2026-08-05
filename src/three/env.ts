@@ -103,6 +103,8 @@ export interface KitchenLights {
   readonly warmFill: THREE.DirectionalLight;
   /** Night sky through the window. */
   readonly sky: THREE.HemisphereLight;
+  /** Floor bounce into the toe-kick recess. See `buildLights` for why it is not decoration. */
+  readonly floorBounce: THREE.DirectionalLight;
 }
 
 /**
@@ -142,7 +144,36 @@ export function buildLights(scene: THREE.Scene, shadowReach: number): KitchenLig
   const sky = new THREE.HemisphereLight(0x9fc2e8, 0x0a0f16, 0.55);
   scene.add(sky);
 
-  return { key, warmFill, sky };
+  /*
+   * Floor bounce into the toe-kick recess.
+   *
+   * MEASURED CORRECTION (proof-16). Giving the cabinet laminate albedo, normal and roughness maps
+   * raised its surface structure 4.8x — but its MEAN LUMINANCE FELL, 0.169 to 0.098. A surface too
+   * dark to show the texture it has is flat again by a different route, and "uniform darkness" is on
+   * the banned list beside "large unbroken rectangles".
+   *
+   * The motivated source is real: a pale tiled floor throws the under-cabinet LED spill back up into
+   * the recess, which is exactly why a real toe-kick is dim rather than black. Aimed upward and
+   * backward, weak, and casting nothing — a bounce that cast shadows would be inventing a light
+   * fixture that is not in the room.
+   */
+  /*
+   * MEASURED CORRECTION (proof-17). The first attempt used `multiplyScalar(-600)`, which put the
+   * light at (-49, +488, -351) — ABOVE and BEHIND. A directional light there shines downward, so it
+   * lit the worktop and left the cabinet front exactly as dark as before: the cabinet patch was
+   * identical to seven significant figures while 4.5 % of the frame changed elsewhere.
+   *
+   * A surface is lit when the vector to the light has a positive dot product with its normal. The
+   * cabinet front faces +Z, so the light must sit at positive Z; to arrive from below it must sit at
+   * negative Y. Hence a POSITIVE scalar on (0.1, -1, 0.72). Same class of sign error as the legs and
+   * the antennae — and found the same way, by evaluating the vector instead of trusting the number.
+   */
+  const floorBounce = new THREE.DirectionalLight(0xb9c9d6, 1.4);
+  floorBounce.position.set(0.1, -1, 0.72).normalize().multiplyScalar(600);
+  scene.add(floorBounce);
+  scene.add(floorBounce.target);
+
+  return { key, warmFill, sky, floorBounce };
 }
 
 /**

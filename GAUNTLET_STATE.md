@@ -3,7 +3,7 @@
 Live production state. Updated before the end of every turn. If this file disagrees with a summary
 written in chat, this file is correct.
 
-**Branch** `experiment/isometric-threejs-rebuild` · **origin/main..HEAD** `0 11` — eleven local
+**Branch** `experiment/isometric-threejs-rebuild` · **origin/main..HEAD** `0 12` — twelve local
 commits, **zero pushes**. Run `git log --oneline -1` for the exact HEAD; this file deliberately does
 not carry a hash it would have to amend a commit to keep accurate.
 
@@ -59,7 +59,7 @@ Ranked by how much each costs the player, not by how easy it is to fix.
 | 11 | Pheromone ribbon ended in a blunt guillotine cut | **CLOSED** | Width tapers to zero at both ends |
 | 12 | Player-facing English `2 tiles` shipped to production | **CLOSED** | Routed through `t('hud.guide')`; source-literal scan added |
 | 13 | Prop interpenetration and props standing inside the sink aperture | **CLOSED in source**, not yet shown in evidence | Clearance measured at 198.1 mm vs 148.5 mm required |
-| 14 | **Cabinet mean luminance fell 0.169 → 0.098** applying the fix above. Grain is visible, but a surface too dark to read its own texture is flat again by another route, and "uniform darkness" is on the banned list. | **OPEN — next standalone action** | Measured this turn |
+| 14 | Cabinet too dark to show its own texture (mean 0.098) | **CLOSED, criterion partially met** | Motivated floor bounce: mean 0.0981 → **0.1426** (+45 %), high-pass 0.00287 → **0.00394** (+37 %). My own pass mark was mean > 0.15; it landed at 0.1426 and I stopped rather than chase the number — see hypotheses. |
 | 15 | Head still not distinct from thorax | **OPEN**, low impact | Critic #2 Part 1c |
 | 16 | Crumbs are hard-faceted polygon shards | **OPEN**, low impact | Critic #1 §1.9 — inherited bake-library geometry |
 
@@ -74,18 +74,37 @@ partly true as well: the cabinet face genuinely receives very little direct ligh
 mean luminance FELL rather than rose when detail was added. That is tracked as defect 14 rather than
 quietly declared solved.
 
-**Next hypothesis (defect 14).** A surface at mean luminance 0.098 cannot show the texture it has.
-Falsifiable: a weak bounce fill aimed into the toe-kick recess should raise the cabinet patch mean
-above ~0.15 **without** reducing its high-pass. If the high-pass falls as the mean rises, the fill is
-washing out the grain and the answer is a warmer albedo instead.
+**Defect 14 — CONFIRMED, criterion partially met, and one honest miss recorded.**
+
+The first attempt produced a cabinet patch identical to **seven significant figures** while 4.5 % of
+the frame changed elsewhere. That is not "a small effect", it is "no effect", and it was a direction
+sign error: `multiplyScalar(-600)` put the light above and behind, lighting the worktop instead. A
+surface is lit when the vector to the light has a positive dot with its normal; the cabinet front
+faces +Z, so the light must sit at positive Z and negative Y. Same class of bug as the roach legs
+and antennae, found the same way — by evaluating the vector rather than trusting the number.
+
+Intensity was then swept rather than eyeballed:
+
+| intensity | patch mean | patch high-pass |
+| --- | --- | --- |
+| 0.5 | 0.1146 | 0.00326 |
+| 1.0 | 0.1304 | 0.00365 |
+| 1.4 (shipped) | **0.1426** | **0.00394** |
+| 1.6 | 0.1485 | 0.00410 |
+
+High-pass **rises** monotonically with intensity across the whole range, so there is no wash-out knee
+here — the constraint is aesthetic, not technical. **My stated pass mark was mean > 0.15 and the
+shipped value is 0.1426, so the criterion was missed.** I stopped at 1.4 because 1.6 is 68 % of the
+key light's intensity, which is not a bounce any more, and flooding a night kitchen to hit a number I
+invented would be the wrong trade. Recorded as a miss rather than moved.
 
 ---
 
 ## Next controlled comparison
 
-**Done this turn — results above.** Next: capture `proof-17` with the identical camera and
-placement, changing **only** the lighting that reaches the cabinet recess. Measure both mean and
-high-pass on the same patch; the fix is only real if the mean rises and the high-pass does not fall.
+**Done this turn — results above.** Next comparison belongs to the kitchen build: capture the first
+BUILD ORDER increment from `wr664wcb3` against `proof-19` as the before, at identical camera and
+placement, and check that adding six zones does not push GPU p99 past the budget.
 
 Method, anchored to the material rather than to a screen rectangle:
 
@@ -95,7 +114,7 @@ magick <frame> -crop 200x150+320+800 +repage \
   -format "%[fx:standard_deviation]" info:
 ```
 
-Cabinet patch now: sd **0.01483**, high-pass **0.00287**, mean **0.0981** (proof-16).
+Cabinet patch now: high-pass **0.00394**, mean **0.1426** (proof-19).
 
 The lesson that produced this method: I previously reported a 15× improvement measured on a fixed
 screen rectangle across a deliberate camera move. The rectangle no longer contained countertop, so
@@ -107,15 +126,15 @@ the variance came from a geometry edge. **Never measure a fixed screen rect acro
 
 | What | Path / value |
 | --- | --- |
-| Proof scene iterations | `artifacts/evidence/isometric-reboot-proof/proof-01 … proof-16` |
+| Proof scene iterations | `artifacts/evidence/isometric-reboot-proof/proof-01 … proof-19` |
 | Old-build baseline | `artifacts/evidence/isometric-reboot-baseline/01-old-canvas-initial-real-chrome.jpg` |
 | Occlusion cases | `proof-13-occluded.png`, `proof-13-restored.png`, `proof-13-multi-occluder.png` |
 | Unit tests | **180 passing** (15 files) — includes 10 occlusion cases and 6 perf-verdict cases |
 | Lint / typecheck | clean |
-| Real-GPU profile (idle, M1, 1920×1080) | proof-16: presented p50 16.70 / p99 18.50; **CPU p99 3.80; GPU p99 11.11**; draw 615, tri 174 208, geom 71, tex 13 |
+| Real-GPU profile (idle, M1, 1920×1080) | proof-19: presented p50 16.70 / p99 18.30; **CPU p99 ~3.8; GPU p99 10.56**; draw 615, geom 71, tex 13 |
 | Perf verdict | 11/11 lines PASS, GPU timing available with 300 samples |
 
-**The measurement that matters most right now:** GPU p99 is 11.09 ms of a 16.7 ms budget with only
+**The measurement that matters most right now:** GPU p99 is 10.56 ms of a 16.7 ms budget with only
 the sink fragment built. Remaining headroom for seven more zones is ~5.6 ms, not ~13 ms.
 
 ---
@@ -142,6 +161,6 @@ Consume the `kitchen-zone-research` workflow (`wr664wcb3`) the moment it lands a
 increment of its BUILD ORDER — chosen so a critic can look at it immediately rather than only at the
 end. That closes defect 1, the highest-impact open item.
 
-While it is still running, the standalone action is defect 14: add a motivated bounce fill for the
-toe-kick recess and re-measure mean **and** high-pass on the same cabinet patch. A rise in mean with
-a fall in high-pass means the fill is washing out the grain and must be rejected.
+Defect 14 is closed, so there is no standalone visual action queued. If `wr664wcb3` has not landed
+by the start of the next turn, the next action is defect 16 (crumbs render as hard-faceted polygon
+shards) — a bake-library geometry fix that does not touch the layout the workflow is specifying.
