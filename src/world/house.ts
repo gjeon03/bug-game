@@ -42,6 +42,31 @@ export const REGIONS: readonly RegionSpec[] = [KITCHEN, HALLWAY, LIVING, BATHROO
  * how a real infestation leaves a kitchen, and which is also why the bathroom, sharing that chase,
  * later becomes a shortcut rather than a dead end.
  */
+/*
+ * A NOTE ON THESE COSTS — a tuning attempt that was measured and rejected.
+ *
+ * These numbers produce a run the automated player wins in 24.5 minutes, but with all five gates
+ * opened inside the first three minutes and the remaining twenty spent accumulating toward the
+ * victory condition. That is the wrong SHAPE for the 25-35 minute chapter structure, so the costs
+ * were raised roughly 2.5x to spread the chapters out.
+ *
+ * The raised costs were then measured on the same seed and REVERTED, because they did not merely
+ * slow the run down — they broke it:
+ *
+ *   |               | these costs   | raised 2.5x       |
+ *   | result        | WON, 24.5 min | not won at 45 min |
+ *   | gates opened  | 5             | 3                 |
+ *   | sightings     | 9             | 183               |
+ *   | workers lost  | 52            | 99                |
+ *   | end population| 39            | 0                 |
+ *
+ * The colony spent so long at each gate that it out-scouted its own moisture supply and starved
+ * (final food 404, final moisture 0). Pacing cannot be fixed by making requirements larger while
+ * the store ceiling and source amounts stay where they are; it needs the economy re-derived
+ * alongside. That work is not done, and shipping an unwinnable run to get a nicer chapter curve
+ * would be the wrong trade. The known-winnable numbers stand, and the pacing defect is recorded
+ * in GAUNTLET_STATE.md as open rather than quietly left in the code.
+ */
 export const GATES: readonly Gate[] = [
   {
     id: 'gate.kitchen.hallway',
@@ -53,9 +78,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.kitchen.hallway',
     descriptionKey: 'gate.kitchen.hallway.desc',
     requires: {
-      workers: 7,
-      food: 68,
-      moisture: 44,
+      workers: 4,
+      food: 26,
+      moisture: 18,
       footholds: ['kitchen.undersink'],
       maxAlert: 2,
     },
@@ -84,12 +109,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.hallway.living',
     descriptionKey: 'gate.hallway.living.desc',
     requires: {
-      workers: 15,
-      food: 145,
-      moisture: 92,
-      // The living-room door is the first operation that needs a *working relay*, not just a
-      // balance. This is what makes the hallway a logistics chapter rather than a corridor.
-      suppliedFoothold: 'hallway.shoeskirt',
+      workers: 8,
+      food: 40,
+      moisture: 26,
       maxAlert: 2,
     },
     workSeconds: 11,
@@ -116,7 +138,7 @@ export const GATES: readonly Gate[] = [
     kind: 'pipe',
     labelKey: 'gate.hallway.bathroom',
     descriptionKey: 'gate.hallway.bathroom.desc',
-    requires: { workers: 12, moisture: 88, maxAlert: 3 },
+    requires: { workers: 6, moisture: 22, maxAlert: 3 },
     workSeconds: 8,
     opens: [
       {
@@ -142,7 +164,7 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.bathroom.kitchen',
     descriptionKey: 'gate.bathroom.kitchen.desc',
     // The riser is already there — the work is clearing the dried silicone at the kitchen end.
-    requires: { workers: 12, moisture: 105, footholds: ['kitchen.undersink'] },
+    requires: { workers: 6, moisture: 30, footholds: ['kitchen.undersink'] },
     workSeconds: 10,
     opens: [
       {
@@ -170,9 +192,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.hallway.bedroom',
     descriptionKey: 'gate.hallway.bedroom.desc',
     requires: {
-      workers: 26,
-      food: 235,
-      moisture: 155,
+      workers: 14,
+      food: 60,
+      moisture: 40,
       adaptation: 'any',
       maxAlert: 2,
     },

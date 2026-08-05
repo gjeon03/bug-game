@@ -28,7 +28,20 @@ import { mm } from '../world/units';
 
 export const CAM_FOV = 32;
 export const CAM_PITCH = (50 * Math.PI) / 180;
-export const CAM_YAW = Math.PI / 4;
+/**
+ * Yaw, fixed for the whole game.
+ *
+ * 225°, not 45°. The apartment is authored with its fitted furniture against the low-X / low-Z
+ * walls — the kitchen run, the bed head, the sofa back — so the camera has to sit on the HIGH side
+ * and look back along -X-Z for those to back their rooms rather than stand in front of them.
+ *
+ * Measured with the camera at 45°: the kitchen's base run, worktop and splashback were permanently
+ * between the viewer and the scout. Registering them as occluders made the entire frame a
+ * stochastic alpha-hash dither — correct behaviour from the fade system, applied to something that
+ * should never have been fading in the first place. The fix is where the camera stands, not how
+ * hard things fade.
+ */
+export const CAM_YAW = (5 * Math.PI) / 4;
 
 /** Zoom range, in millimetres from the scout. Deliberately narrow — this is not an editor camera. */
 export const CAM_NEAR_MM = 780;
@@ -77,10 +90,18 @@ export interface FollowTarget {
   readonly heading: number;
 }
 
+/** Keep the near plane this far outside whatever the camera backed into. */
+const COLLISION_MARGIN = mm(90);
+/** Never pull closer than this, or the scout fills the frame. */
+const COLLISION_MIN_MM = 520;
+
 export class GameCamera {
   readonly camera: THREE.PerspectiveCamera;
   private readonly focus = new THREE.Vector3();
   private readonly desired = new THREE.Vector3();
+  private readonly back = new THREE.Vector3();
+  private readonly caster = new THREE.Raycaster();
+  private collisionDistance = 0;
   private distance = mm(CAM_DEFAULT_MM);
   private targetDistance = mm(CAM_DEFAULT_MM);
   private smoothedY = 0;
@@ -159,6 +180,53 @@ export class GameCamera {
   /** Where the camera is currently looking. The occlusion system's primary focus point. */
   get focusPoint(): THREE.Vector3 {
     return this.focus;
+  }
+
+  /** How far the collision solver had to pull the camera in, in world units. 0 when clear. */
+  get pulledIn(): number {
+    return this.collisionDistance;
+  }
+
+  /**
+   * Pull the camera in front of anything it has backed into.
+   *
+   * A fixed diagonal camera at insect scale spends much of its time with its ideal position inside
+   * furniture. Measured: with the scout in the kitchen toe-kick at z = -1817, the camera solved to
+   * z = -3045 mm and the base-cabinet carcass occupies -3300…-2740 mm — the camera was inside the
+   * cupboard, and the frame was two enormous unlit planes.
+   *
+   * Fading the blocker cannot fix this, because the problem is not that something is in the way; it
+   * is that the viewpoint is inside solid geometry and the near plane is clipping through it. The
+   * camera has to move. Occlusion fading still handles the ordinary case of a prop standing between
+   * a legitimately-placed camera and the scout.
+   */
+  resolveCollision(obstacles: THREE.Object3D): void {
+    this.back.copy(this.camera.position).sub(this.focus);
+    const distance = this.back.length();
+    if (distance < 1e-4) return;
+    this.back.normalize();
+
+    this.caster.set(this.focus, this.back);
+    this.caster.far = distance;
+    const hits = this.caster.intersectObject(obstacles, true);
+
+    let nearest = distance;
+    for (const hit of hits) {
+      if (hit.distance < mm(40)) continue;
+      // Only walls. Props are handled by fading, which does not move the viewpoint.
+      if (hit.object.userData.cameraCollide !== true) continue;
+      nearest = hit.distance;
+      break;
+    }
+
+    const clamped = Math.max(mm(COLLISION_MIN_MM), nearest - COLLISION_MARGIN);
+    this.collisionDistance = distance - clamped;
+    if (this.collisionDistance <= 0) {
+      this.collisionDistance = 0;
+      return;
+    }
+    this.camera.position.copy(this.focus).addScaledVector(this.back, clamped);
+    this.camera.lookAt(this.focus);
   }
 }
 

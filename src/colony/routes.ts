@@ -90,6 +90,7 @@ function repair(run: Run, drawn: readonly DrawnPoint[]): NavPoint[] {
   const dense = densify(drawn);
   const out: NavPoint[] = [];
   let gapStart: NavPoint | null = null;
+  let lastLegal: NavPoint | null = null;
 
   for (const point of dense) {
     if (!isWalkable(run.nav, point.surface, point.x, point.z)) {
@@ -104,9 +105,30 @@ function repair(run: Run, drawn: readonly DrawnPoint[]): NavPoint[] {
       gapStart = null;
     }
 
+    lastLegal = { surface: point.surface, x: point.x, z: point.z };
     const last = out[out.length - 1];
     if (!last || last.surface !== point.surface || dist(last, point) >= MIN_SPACING) {
-      out.push({ surface: point.surface, x: point.x, z: point.z });
+      out.push(lastLegal);
+    }
+  }
+
+  /*
+   * Always keep the end of the drawing.
+   *
+   * The last legal point the player's hand visited is what decides which source this route serves,
+   * so thinning must never be allowed to discard it. Without this, a drag whose final stretch is
+   * under the 70 mm spacing threshold ends the route short of where the player released, and it
+   * would bind to the wrong source or to none.
+   *
+   * Honest note on provenance: this was written while chasing a "route drawn, nothing happened"
+   * symptom that turned out to have a different cause entirely — the automated capture had moved
+   * the camera so the drag landed off-screen. The guard is kept because the reasoning above stands
+   * on its own, but it is NOT the fix for that symptom and was never measured to be.
+   */
+  if (lastLegal) {
+    const last = out[out.length - 1];
+    if (!last || last.surface !== lastLegal.surface || dist(last, lastLegal) > 1e-4) {
+      out.push(lastLegal);
     }
   }
 

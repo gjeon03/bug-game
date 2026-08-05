@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mm } from '../world/units';
+import { MM_PER_UNIT, mm } from '../world/units';
 import type { LightSpec, RegionSpec } from '../world/types';
 
 /**
@@ -20,14 +20,33 @@ import type { LightSpec, RegionSpec } from '../world/types';
  * boot; routine lights simply sit at zero intensity until their routine runs.
  */
 
+/**
+ * Luminous intensity is a UNIT, and it has to be converted like every other unit.
+ *
+ * three.js point and spot lights are physical: the irradiance a surface receives is
+ * `intensity / distance²`, with distance in WORLD UNITS. One world unit here is 1.346 mm, so a
+ * ceiling light 1.4 m above a floor is ~1040 units away and an authored intensity of 1.5 delivers
+ * 1.5/1040² ≈ 1.4e-6 — nothing.
+ *
+ * That is not a tuning error, it is a missing conversion, and it produced a completely black scene
+ * while 2 760 draw calls and 322 160 triangles were being submitted every frame. A control test
+ * with a bright clear colour proved the geometry was rendering and simply receiving no light.
+ *
+ * Intensities in `LightSpec` are therefore authored in "per square metre" terms, as if the world
+ * were metres, and scaled here by (units per metre)². Lengths convert with `mm()`; intensities
+ * convert with this.
+ */
+const UNITS_PER_METRE = 1000 / MM_PER_UNIT;
+const CANDELA_SCALE = UNITS_PER_METRE * UNITS_PER_METRE;
+
 /** Baseline so a room is never pure black. Deliberately tiny and cool — this is night. */
-const NIGHT_AMBIENT = 0.055;
+const NIGHT_AMBIENT = 0.16;
 const NIGHT_AMBIENT_COLOUR = 0x22303f;
 
 /** Hemisphere fill standing in for bounce off ceiling and floor. */
 const SKY_COLOUR = 0x33465c;
 const GROUND_COLOUR = 0x271f18;
-const HEMI_INTENSITY = 0.2;
+const HEMI_INTENSITY = 0.34;
 
 export interface RegionLights {
   readonly group: THREE.Group;
@@ -61,8 +80,20 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
     for (const spec of region.lights) {
       const light = makeLight(spec);
       if (!light) continue;
-      AUTHORED.set(light, spec.intensity);
+      AUTHORED.set(light, light.intensity);
       group.add(light);
+      /*
+       * A SpotLight aims at `light.target`, and three.js only reads that target's WORLD matrix —
+       * which is never updated unless the target is in the scene graph. Setting `target.position`
+       * without adding the target leaves every spot pointing at the world origin.
+       *
+       * Measured: the whole apartment was lit by a single bright patch in the kitchen's north-west
+       * floor corner — the origin — while every other surface, including all five floors, received
+       * nothing. It reads as "the scene is too dark"; it is actually "every light is aimed at the
+       * same wrong point".
+       */
+      const target = (light as THREE.SpotLight).target;
+      if (target && target.isObject3D) group.add(target);
       disposables.push(light);
       count++;
 
@@ -94,7 +125,12 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
 
 function makeLight(spec: LightSpec): THREE.Light | null {
   if (spec.kind === 'point') {
-    const light = new THREE.PointLight(spec.colour, spec.intensity, spec.distance ?? mm(1400), 1.6);
+    const light = new THREE.PointLight(
+      spec.colour,
+      spec.intensity * CANDELA_SCALE,
+      spec.distance ?? mm(1400),
+      1.6,
+    );
     light.position.set(spec.at.x, spec.at.y, spec.at.z);
     // Point lights are the expensive ones to shadow; only the few that are load-bearing do.
     light.castShadow = spec.castShadow === true;
@@ -105,7 +141,7 @@ function makeLight(spec: LightSpec): THREE.Light | null {
   if (spec.kind === 'spot') {
     const light = new THREE.SpotLight(
       spec.colour,
-      spec.intensity,
+      spec.intensity * CANDELA_SCALE,
       spec.distance ?? mm(2400),
       0.7,
       0.5,
@@ -126,7 +162,14 @@ function makeLight(spec: LightSpec): THREE.Light | null {
    */
   const width = spec.width ?? mm(600);
   const height = spec.height ?? mm(600);
-  const light = new THREE.SpotLight(spec.colour, spec.intensity, mm(4200), 1.05, 0.85, 1.25);
+  const light = new THREE.SpotLight(
+    spec.colour,
+    spec.intensity * CANDELA_SCALE,
+    mm(4200),
+    1.05,
+    0.85,
+    1.25,
+  );
   light.position.set(spec.at.x, spec.at.y, spec.at.z);
   // Aim into the room: down, and along whichever axis the aperture is narrower on.
   const horizontal = width >= height ? 0 : mm(400);
@@ -181,7 +224,7 @@ export function updateRoutineLights(
 export function configureRenderer(renderer: THREE.WebGLRenderer): void {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.25;
+  renderer.toneMappingExposure = 0.62;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 }

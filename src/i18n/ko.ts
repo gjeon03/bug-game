@@ -170,8 +170,8 @@ export const ko = {
   'blocker.adaptation': '적응을 하나 정해야 한다',
   'blocker.goThere': '{gate} 앞으로 가서 E를 눌러라',
   'blocker.holdRegion': '아직 거점이 없는 구역이 있다',
-  'blocker.population': '군체가 더 커져야 한다 — 일꾼 24마리',
-  'blocker.stores': '비축이 모자라다 — 먹이 60, 수분 40',
+  'blocker.population': '군체가 더 커져야 한다 — 일꾼 12마리',
+  'blocker.stores': '비축이 모자라다 — 먹이 30, 수분 20',
 
   /* ── adaptations ──────────────────────────────────────────────────────── */
   'adaptation.brood.1': '번식 강화',

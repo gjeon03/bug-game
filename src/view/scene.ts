@@ -214,6 +214,10 @@ function buildWall(kit: Kit, wall: WallSpec): THREE.Object3D[] {
     panel.rotation.y = angle - Math.PI / 2;
     panel.castShadow = !cut;
     panel.receiveShadow = true;
+    // Walls are the only thing the camera treats as solid. Everything else in the flat is a prop,
+    // and props FADE rather than shove the viewpoint around — a camera that lurches every time the
+    // scout walks past a cupboard is worse than one that can see through the cupboard.
+    panel.userData.cameraCollide = true;
     out.push(panel);
 
     // The baseboard survives the cut. It is the single most important 90 mm in the game — the

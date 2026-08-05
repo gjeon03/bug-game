@@ -35,7 +35,17 @@ import * as THREE from 'three';
  */
 
 /** Reduced coverage, not disappearance — the silhouette has to survive so depth is not destroyed. */
-export const DEFAULT_FADE_FLOOR = 0.38;
+export const DEFAULT_FADE_FLOOR = 0.42;
+
+/**
+ * The lowest coverage any occluder may reach.
+ *
+ * Alpha hashing dithers stochastically, so coverage IS the fraction of pixels kept. Below about a
+ * third, the result stops reading as "I can see through this" and starts reading as television
+ * static — observed at 0.22 across a whole frame. Clamping here means an over-eager authored
+ * `fadeFloor` cannot produce that.
+ */
+export const MIN_FADE_FLOOR = 0.34;
 
 /** Seconds for a full fade in or out. The contract mandates 150–300 ms. */
 export const DEFAULT_FADE_SECONDS = 0.22;
@@ -158,7 +168,7 @@ export class OcclusionSystem {
       materials,
       meshes,
       castShadowWas,
-      floor: options.floor ?? DEFAULT_FADE_FLOOR,
+      floor: Math.max(MIN_FADE_FLOOR, options.floor ?? DEFAULT_FADE_FLOOR),
       current: 1,
       target: 1,
     });

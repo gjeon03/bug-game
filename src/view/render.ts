@@ -37,6 +37,8 @@ export interface RenderStats {
   readonly occluderTests: number;
   readonly fading: number;
   readonly visibleRoaches: number;
+  /** How far camera collision had to pull the view in, world units. */
+  readonly cameraPulledIn: number;
   readonly missingProps: readonly string[];
 }
 
@@ -49,11 +51,23 @@ export interface GameRenderer {
   render(run: Run, dt: number, alpha: number): void;
   /** Snap the camera and clear per-run visual state. Called on boot and on restart. */
   reset(run: Run): void;
+  /**
+   * Rebuild the world for a new run, reusing the WebGL context.
+   *
+   * Restart must NOT construct a second `WebGLRenderer` on the same canvas. `dispose()` calls
+   * `forceContextLoss()`, after which `canvas.getContext('webgl2')` returns null and the new
+   * renderer throws `Cannot read properties of null (reading 'precision')` — which is exactly what
+   * a real-browser restart capture caught. The GL context is created once and lives as long as the
+   * page; only scene contents are rebuilt.
+   */
+  rebuild(run: Run): void;
   stats(): RenderStats;
+  /** Names and distances of everything between the camera and its focus. Diagnostics only. */
+  probeView(): readonly { name: string; distance: number }[];
   dispose(): void;
 }
 
-export function createRenderer(canvas: HTMLCanvasElement, run: Run): GameRenderer {
+export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRenderer {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
@@ -73,10 +87,10 @@ export function createRenderer(canvas: HTMLCanvasElement, run: Run): GameRendere
    */
   scene.fog = new THREE.Fog(0x070a10, mm(1800), mm(9000));
 
-  const built: BuiltScene = buildScene(run.house);
+  let built: BuiltScene = buildScene(initial.house);
   scene.add(built.root);
 
-  const lights: RegionLights = buildLighting(run.house.regions);
+  let lights: RegionLights = buildLighting(initial.house.regions);
   scene.add(lights.group);
 
   const roaches: RoachView = createRoachView(WORKER_CAP);
@@ -137,6 +151,10 @@ export function createRenderer(canvas: HTMLCanvasElement, run: Run): GameRendere
         heading: run.scout.heading,
       });
 
+      // The camera's ideal position is often inside furniture at this scale; pull it clear before
+      // anything else reads its transform.
+      camera.resolveCollision(built.root);
+
       // Occlusion focus: the scout first, then nearby route segments the player may be reading.
       focusPoints.length = 0;
       focusPoints.push(roaches.scoutPosition);
@@ -158,6 +176,19 @@ export function createRenderer(canvas: HTMLCanvasElement, run: Run): GameRendere
       profiler.endRender();
     },
 
+    rebuild(run) {
+      // Scene contents only. The renderer, its context, the camera and the profiler survive.
+      scene.remove(built.root);
+      scene.remove(lights.group);
+      built.dispose();
+      lights.dispose();
+      built = buildScene(run.house);
+      scene.add(built.root);
+      lights = buildLighting(run.house.regions);
+      scene.add(lights.group);
+      this.reset(run);
+    },
+
     reset(run) {
       openedSeen.clear();
       for (const id of run.openGates) openedSeen.add(id);
@@ -171,6 +202,19 @@ export function createRenderer(canvas: HTMLCanvasElement, run: Run): GameRendere
         speed: 0,
         heading: run.scout.heading,
       });
+    },
+
+    probeView() {
+      const caster = new THREE.Raycaster();
+      const focus = camera.focusPoint;
+      const dir = camera.camera.position.clone().sub(focus);
+      const far = dir.length();
+      caster.set(focus, dir.normalize());
+      caster.far = far;
+      return caster
+        .intersectObject(built.root, true)
+        .slice(0, 8)
+        .map((h) => ({ name: h.object.name || h.object.parent?.name || '?', distance: Math.round(h.distance) }));
     },
 
     stats() {
@@ -190,6 +234,7 @@ export function createRenderer(canvas: HTMLCanvasElement, run: Run): GameRendere
         occluderTests: occ.tests,
         fading: occ.fading,
         visibleRoaches: roachStats.visible,
+        cameraPulledIn: camera.pulledIn,
         missingProps: built.stats.missingProps,
       };
     },

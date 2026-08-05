@@ -1,9 +1,9 @@
 {
-  "name": "baseboard-empire",
+  "name": "whole-home-infestation",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Baseboard Empire — a top-down macro-noir strategy-action game about growing a cockroach colony inside a hostile human kitchen.",
+  "description": "집 전체를 점거하라 — a 3D strategy-action game about expanding a cockroach colony through an occupied Korean apartment.",
   "license": "MIT",
   "packageManager": "pnpm@10.13.1",
   "engines": {
@@ -21,13 +21,9 @@
     "precommit": "pnpm format && pnpm lint && pnpm typecheck && pnpm test",
     "test:watch": "vitest",
     "serve:nested": "node scripts/serve-nested.mjs",
-    "test:e2e": "playwright test --grep-invert \"18 the deployed build\"",
-    "test:e2e:headed": "vite build && playwright test --headed",
-    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e && pnpm evidence:pack && pnpm evidence:report",
-    "evidence:pack": "node scripts/pack-evidence.mjs",
-    "evidence:report": "node scripts/report.mjs",
-    "verify:live": "node scripts/verify-live.mjs",
-    "test:deployed": "playwright test --grep \"18 the deployed build\""
+    "test:e2e": "node scripts/capture.mjs",
+    "capture": "node scripts/capture.mjs",
+    "review": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm capture"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -49,7 +45,6 @@
     "vite": "^6.0.7",
     "vitest": "^2.1.8"
   },
-  "homepage": "https://gjeon03.github.io/bug-game/",
   "repository": {
     "type": "git",
     "url": "https://github.com/gjeon03/bug-game.git"

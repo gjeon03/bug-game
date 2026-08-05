@@ -1,152 +1,133 @@
 # GAUNTLET_STATE
 
-**Live production state for the whole-home rebuild.** Updated before the end of every turn. If this
-file disagrees with anything written in chat, **this file is correct**. It is written to survive
-context compaction: read it first, act from it, then update it.
+**Live production state.** Updated before the end of every turn. If this file disagrees with
+anything written in chat, **this file is correct**.
 
-**Branch** `experiment/whole-home-infestation-3d` (created from `df9db36`) · **0 pushes, 0 merges,
-0 PRs, 0 deployments.** Verify with `git rev-parse --abbrev-ref HEAD`.
-
----
-
-## 0. What this build is
-
-A 25-35 minute single-run 3-D strategy-action game. A scout cockroach starts in the void under a
-Korean apartment kitchen sink and opens the whole flat: **kitchen -> hallway -> living room ->
-bedroom**, with the **bathroom** as an optional high-risk shortcut. Progression is spatial - every
-chapter ends by physically opening a route in the world.
-
-Superseded: the Canvas2D kitchen game (`main`) and the kitchen-only three.js proof (`df9db36`).
-Full disposition of inherited code: `CANCELLED_GOAL_HANDOFF_AUDIT.md`.
+**Branch** `experiment/whole-home-infestation-3d` · **0 pushes, 0 merges, 0 PRs, 0 deployments.**
+Verify with `git rev-parse --abbrev-ref HEAD`.
 
 ---
 
-## 1. Architecture (target)
+## 0. What exists right now
+
+A playable 3-D whole-home game that boots in a real browser. The colony starts under the kitchen
+sink and opens the flat by physically breaching sealed passages. Five authored regions, 187 props,
+a deterministic fixed-step simulation, a Korean-only UI on locally vendored NanumSquareNeo.
+
+Run it: `pnpm build && pnpm preview` → <http://127.0.0.1:4273/>. See `LOCAL_REVIEW.md`.
+
+Inherited-code disposition: `CANCELLED_GOAL_HANDOFF_AUDIT.md`.
+
+---
+
+## 1. Architecture
 
 ```
-src/
-  world/      units.ts types.ts house.ts regions/{kitchen,hallway,living,bathroom,bedroom}.ts
-              - authored apartment data. Pure data + assembly. No THREE, no DOM.
-  colony/     state, workers, pheromone routes, resources, progression, director, routines,
-              threats, adaptations, rng. Deterministic fixed step. No THREE, no DOM.
-  view/       scene, camera, occlusion, lighting, materials, props/*, roach, fx.
-              - reads colony state, never writes it.
-  ui/         hud, panels, css. DOM overlay. Reads keys+params, resolves via t().
-  audio/      audio.ts (retained verbatim from the old build) + new sound families.
-  i18n/       index.ts (retained verbatim) + rewritten ko.ts / en.ts.
-  game/       boot.ts, loop.ts - the only entry point.
+src/world/   authored apartment: units, types, nav grid + A*, house assembly, 5 region files
+src/colony/  deterministic simulation: state, scout, workers, routes, household, progression, step
+src/view/    three.js: scene, camera, lighting, materials, shapes, props/ (5 files, 175 builders),
+             roaches, routes, occlusion, profiler, surfaces, render facade
+src/ui/      hud.ts + styles.css — the ONLY place t() is called
+src/i18n/    index.ts (retained) + ko.ts (242 keys) + en.ts (key-echo dev locale)
+src/game/    boot.ts, input.ts, loop.ts — one entry point
 ```
 
-**Hard rule carried from the old build's worst defect:** simulation state carries **keys + params**,
-never rendered player-facing strings. `t()` is called only in `src/ui/` and `src/view/`. This makes
-the section-4 English-leak defect structurally impossible rather than test-detectable.
+**Hard rule:** simulation state carries catalog **keys + params**, never rendered strings. `t()` is
+called only in `src/ui/`. The previous build's English leak is structurally impossible here.
 
-**Scale anchor:** 1 world unit = 35/26 mm = 1.346 mm (`src/world/units.ts`). Everything is authored
-in millimetres and converted exactly once, at the point of authorship.
+**Scale anchor:** 1 world unit = 35/26 mm. Authored in millimetres, converted once.
 
-**Apartment plan (millimetres, X east / Z south / Y up):**
+**Camera:** FOV 32°, pitch 50°, **yaw 225° fixed**. Because the yaw never changes, the walls between
+viewer and room are known at load and built as 320 mm stubs — a static cut, so there is no per-frame
+wall fading and no transparency-sorting class of defect. Props fade (alpha hash); walls collide.
 
-| Region | x | z |
+---
+
+## 2. Verified in a real browser
+
+`artifacts/evidence/whole-home-reboot-final/` + `runtime-report.json`, produced by `pnpm capture`.
+
+| Check | Result |
+| --- | --- |
+| Boots and plays | yes — 187 props, 2 073 meshes, 26 lights |
+| Console errors | **0** |
+| Failed requests | **0** |
+| External network requests | **0** |
+| Missing prop builders | **0** of 175 |
+| Five restarts identical | **yes** |
+| Korean at 1920x1080 / 1440x900 / 1280x720 / DPR2 | no tofu, no clipping |
+| Routes draw, workers deliver | 27 deliveries in the first 45 s |
+| Unit tests | `house.test.ts` 62/62 |
+| typecheck / lint / build | clean · clean · 777 kB (213 kB gzip) |
+
+---
+
+## 3. Defects found and fixed this session (all by measurement, not inspection)
+
+| # | Defect | How found | Evidence |
+| --- | --- | --- | --- |
+| 1 | **Exposure field entirely inert.** `buildGrid` copied base→live before zones were painted, so every authored exposure zone in the flat was discarded. The hallway's whole "fast route vs safe route" mechanic did not exist. | grid histogram | uniform `0.43 x 4428` → `0.43:656 0.52:1148 0.55:984 0.9:1640` |
+| 2 | **Blocker rasterisation ate the gameplay gaps.** `ceil()` grew every blocker by up to one 60 mm cell, closing the 100 mm toe-kick — the colony's home corridor. | cell flag probe | pipe mouth `flags=1` → `0`; bathroom shortcut 4641 mm → 2474 mm |
+| 3 | **Economy structurally net-negative.** ~0.04 units/s produced vs ~0.049 consumed. Every colony starved regardless of play. | differential: moisture survived at 41.5 while food hit 0, and food upkeep was higher | 122 deliveries, final population 0 → `CARGO_VALUE 3.1`, upkeep 0.011/0.008 |
+| 4 | **No cooldown after a sighting.** Standing in light produced a fresh sighting every 2.4 s forever. | sighting counter | 377 → 56 → **9** per run |
+| 5 | **Evidence floor capped above the alert-3 threshold.** Five sightings pinned a region at "alarmed" permanently, so it never stopped spawning lethal responses — regional loss was unrecoverable. | alert trace | cap 0.80 → 0.33; workers lost 121 → 52 |
+| 6 | **Restart crashed.** `dispose()` force-loses the GL context, then a new `WebGLRenderer` on the same canvas got `null` from `getContext`. | real-browser restart | `Cannot read properties of null (reading 'precision')` → renderer now reused, scene rebuilt |
+| 7 | **Luminous intensity was never unit-converted.** Lengths were converted to world units; intensity was not. three.js irradiance is `intensity/distance²` in world units, so a light 1 m away delivered ~1.4e-6. **Whole scene black** while 2 760 draw calls ran. | control test with a bright clear colour proved geometry was rendering | centre luminance 0.040 → 0.189 |
+| 8 | **Every spot light aimed at the world origin.** `light.target.position` was set but the target was never added to the scene, so its world matrix never updated. | camera/obstruction probe + light pattern | centre luminance 0.033 → **0.491** |
+| 9 | **Camera sat inside the furniture.** No collision; at the toe-kick the camera solved to z = −3045 mm inside a carcass spanning −3300…−2740 mm. | camera position readout | added wall-only camera collision |
+| 10 | **Fixed yaw was 180° wrong for the layout.** Fitted furniture is authored against low-X/low-Z walls, so at 45° it stood permanently between viewer and scout; registering it as an occluder turned the entire frame into alpha-hash static. | screenshot | yaw 45° → 225°; run no longer occludes |
+| 11 | Fog far plane 2827 mm — shorter than one room's diagonal. | inherited-code audit | → 12 000 mm |
+
+---
+
+## 4. Open defects, ranked by player impact
+
+| # | Defect | State |
 | --- | --- | --- |
-| KITCHEN | 0 .. 3800 | -3300 .. -300 |
-| HALLWAY | -200 .. 9600 | -300 .. 1300 |
-| BATHROOM | 200 .. 2600 | 1300 .. 3700 |
-| LIVING | 3400 .. 8000 | 1300 .. 5500 |
-| BEDROOM | 5200 .. 9600 | -3500 .. -300 |
-
-A double-loaded corridor: every room touches the hallway, which is what makes the hallway a real
-logistics spine rather than a corridor with a door at each end.
-
-**Camera looks toward +X and +Z.** Walls with `outward` of `{0,-1}` or `{-1,0}` stand between the
-viewer and the room and are built as 320 mm stubs at load time - a static cut, so there is no
-per-frame wall fading and no artifact class to debug. Walls with `outward` `{1,0}` / `{0,1}` stay
-full height and are each room's visual backing.
+| A | **No audio.** `src/audio/audio.ts` is retained, functional, and **not wired** to the new simulation's cue stream. The game is silent. Core interactions being silent is an explicit completion blocker. | **OPEN — largest gap** |
+| B | **Chapter pacing is front-loaded.** All five gates fall inside ~3 minutes; the remaining ~20 are spent accumulating toward the victory condition. A 2.5× cost increase was tried, measured, and **reverted** because it broke winnability outright (see the note above `GATES` in `src/world/house.ts`: won 24.5 min → not won at 45 min, 5 gates → 3, sightings 9 → 183, end population 39 → 0). Fixing this needs the economy re-derived alongside the costs, not just larger numbers. | **OPEN, documented, not papered over** |
+| C | **No real-hardware performance measurement.** All browser evidence is headless SwiftShader — deterministic and useless for frame time. 2 239–2 760 draw calls and ~260–322 k triangles are high and unmeasured on the M1. | **OPEN** |
+| D | **Visual finish is uneven.** The apartment is built and lit, but only the kitchen has been looked at by a human. Four regions have never been seen. | **OPEN** |
+| E | **No independent critics have reviewed this build.** Visual, gameplay, camera, Korean-UX and technical review are all unrun. | **OPEN** |
+| F | Occlusion fade is implemented and unit-tested but **not visually verified in scene** for the multi-blocker case. | **OPEN** |
 
 ---
 
-## 2. Retained from the previous build (verified, not assumed)
+## 5. Verified environment facts (re-run 2026-08-05)
 
-| Module | Status |
-| --- | --- |
-| `src/i18n/index.ts` | **RETAIN unchanged** - `t()` computes Korean particles from the *sound* of the value (`{n?이/가}`). Exactly what section 4a demands. |
-| `src/audio/audio.ts` | **RETAIN, extend** - 659 lines, pure WebAudio, zero imports, 4 buses, 24-voice cap, ~40 sounds from 2 primitives. |
-| `src/three/profiler.ts` | **RETAIN** -> `src/view/` - GPU timer queries, discards disjoint batches, refuses to pass an unmeasured GPU. |
-| `src/three/roach.ts` | **RETAIN, extend** -> `src/view/` - needs a surface-normal argument for climbing. |
-| `src/three/surfaces.ts` | **RETAIN** -> `src/view/` - seeded procedural wear. WARNING: `applyWear` mutates and is **not idempotent**. |
-| `src/three/occlusion.ts` | **REFACTOR** -> keep alpha hashing; add per-region active set + distance reject. |
-| `src/three/env.ts` | **REFACTOR** - `configureRenderer` kept; the light rig is one-kitchen. |
-| `tools/bake/**` | **HARVEST** - millimetre-anchored parametric prop shapes/materials, ported to typed builders. |
+Blender 5.2.0 LTS headless with working glTF export (rigged+animated GLB re-verified). ffmpeg 8.1.2,
+ImageMagick 7.1.2-29, draco 1.5.7, Node 21.7.2, pnpm 9.15.9, three 0.185.1, Playwright 1.62.1.
+Reference machine: MacBookPro17,1 · M1 8-core · 16 GB · Metal 4.
 
-**Deleted when the new entry point is playable:** `src/render/**`, `src/main.ts`, `src/art/**`,
-`src/testapi.ts`, `src/sim/**`, `src/three/{room,counter}.ts`, `src/proof/**`, `proof.html`, and the
-17 unit + 8 e2e specs that test the deleted game.
+**Unavailable:** KTX2/Basis (not a Homebrew formula) · any image or 3-D generation tool, local or
+remote (no credentials) · glTF optimiser CLI. **All art in this build is procedural three.js
+geometry authored in millimetres** — no external asset was downloaded or required.
 
----
-
-## 3. Verified environment facts (re-run 2026-08-05, not inherited)
-
-| Tool | Verified |
-| --- | --- |
-| Blender | **5.2.0 LTS**, headless, embedded Python 3.13.13 + numpy 2.3.4. End-to-end rigged+animated GLB export re-verified today: magic `glTF`, version 2, skins 1, animations 1, generator `Khronos glTF Blender I/O v5.2.39`. Cycles 512px/64spp = **1.91 s CPU-only** (no Metal compute device). |
-| ffmpeg 8.1.2 / ImageMagick 7.1.2-29 / draco 1.5.7 / librsvg 2.60.0 | present |
-| Node 21.7.2 / pnpm 9.15.9 / three 0.185.1 / Playwright 1.62.1 | present |
-| Reference machine | MacBookPro17,1 / Apple M1 8-core (4P+4E) / 16 GB / Metal 4 / 2560x1600 |
-| **KTX2 / Basis** | **UNAVAILABLE** - not a Homebrew formula. PNG/WebP only; control texture memory by resolution and atlas discipline. |
-| **Image / 3-D generation** | **UNAVAILABLE** - no local tool, no provider credentials. **All art is Blender procedural + ImageMagick.** |
-| **glTF optimizer CLI** | **UNAVAILABLE** - no gltf-transform/gltfpack/meshopt. Draco via `draco_encoder` or Blender's exporter only. |
-| **Headless Playwright** | renders through **ANGLE / SwiftShader software Vulkan**. Valid for screenshots and logic. **INVALID for frame-time evidence.** Real Chrome on the M1 is the only perf target. |
-| `gh` | unauthenticated - irrelevant here, nothing may be pushed. |
-| pnpm drift | installed 9.15.9 vs `packageManager: pnpm@10.13.1`. Works because corepack is not enforcing; a corepack-strict environment would fail. |
-
----
-
-## 4. Defects found in the inherited code (recorded, mostly fixed by deletion)
-
-| # | Defect | Disposition |
-| --- | --- | --- |
-| A | `scene.fog` far = 2100 units = **2827 mm**, shorter than a single room's 5027 mm diagonal - any whole-home sightline renders as flat fog. | Fixed by construction in the new renderer. **Must verify.** |
-| B | `counter.ts` builds its own floor 38 mm below `room.ts`'s and overhanging it ~270 mm W / ~1340 mm N. | Both modules obsolete - recorded, not repaired. |
-| C | `proof/main.ts` has **no dispose path**; cannot pass a five-restart leak gate. | Obsolete. New boot has an explicit teardown. |
-| D | Hardcoded English in `src/ui/hud.ts` `choicePanel()` while correct Korean keys sit unused - survived all 29 localization tests. | Structurally prevented: sim carries keys, not strings. |
-| E | `occlusion.update()` is O(focus x 5 probes x occluders) with a full recursive `intersectObject` and no broadphase. | Refactor before the prop count rises. |
-| F | Old sim bakes locale at module import (`ZONES`, `ROUTINE_SPECS`, `ADAPTATIONS` all call `t()` at top level). | Design rejected; see section 1 hard rule. |
-
----
-
-## 5. Progress
-
-| Step | State |
-| --- | --- |
-| Branch created + boundary recorded in `CLAUDE.md` section 0 | **DONE** |
-| `CANCELLED_GOAL_HANDOFF_AUDIT.md` | **DONE** |
-| `src/world/units.ts`, `src/world/types.ts` | **DONE** |
-| `src/world/regions/kitchen.ts` | **DONE** - reference region |
-| `src/world/regions/{hallway,living,bathroom,bedroom}.ts` | **IN PROGRESS** - parallel authoring |
-| `src/world/house.ts` (assembly, nav grid, gate graph) | TODO - next |
-| `src/colony/**` (sim) | TODO |
-| `src/view/**` (renderer, camera, occlusion, props) | TODO |
-| `src/ui/**` + Korean catalog rewrite | TODO |
-| Old-runtime deletion + test replacement | TODO |
-| Real-browser playtest + evidence + critics | TODO |
+**Headless Playwright renders through ANGLE/SwiftShader.** Valid for screenshots and logic. Invalid
+for frame time. Real Chrome on the M1 is the only perf target.
 
 ---
 
 ## 6. Exact next executable action
 
-Assemble `src/world/house.ts`: import the five regions, place the inter-region gates
-(kitchen->hallway toe-kick, hallway->living door sweep, hallway->bathroom pipe sleeve,
-hallway->bedroom door sweep, plus the bathroom<->kitchen pipe shortcut), build the merged navigation
-grid at 60 mm cells with the exposure field baked in, and export a single `HOUSE` the colony sim and
-the renderer both read. Then typecheck - that is the first hard proof the five authored regions
-actually tile.
+Wire `src/audio/audio.ts` to `run.cues`, which `boot.ts` already drains every frame and currently
+discards. The cue kinds the simulation already emits are: `route.laid`, `route.erased`,
+`worker.born`, `worker.died`, `worker.pickup`, `worker.deliver`, `worker.recover`, `scout.seen`,
+`scout.found`, `scout.climb`, `foothold.claimed`, `gate.opened`, `adaptation.chosen`,
+`routine.incoming`, `routine.active`, and `threat.<kind>.telegraph` / `.start`. That closes the
+largest open gate (A) with no new systems.
+
+Then (C): capture a profile in real Chrome on the M1 and set budgets from it.
 
 ---
 
-## 7. Method (non-negotiable, this is what worked before)
+## 7. Method (non-negotiable — it found every defect in §3)
 
-Record the observable symptom -> identify the exact scenario -> separate symptom from assumed cause
--> form falsifiable hypotheses -> **instrument or build a control** -> run the controlled comparison
--> confirm or reject -> fix the confirmed cause -> replay the identical seed and camera -> compare
-against baseline -> run regressions.
+Record the observable symptom → separate symptom from assumed cause → form a falsifiable hypothesis
+→ **instrument or build a control** → run the controlled comparison → confirm or reject → fix the
+confirmed cause → re-measure the same seed and camera.
 
-Never measure a fixed screen rectangle across a camera change. Anchor measurements to the material.
+Defect 7 is the case for this: "the scene is too dark" was the symptom, and three plausible causes
+(exposure, camera, materials) were all wrong. Setting the clear colour bright — a control that costs
+one minute — proved geometry was rendering and pointed straight at lighting. Two of the fixes in §3
+were reverted after measurement showed they made things worse; guessing would have shipped both.

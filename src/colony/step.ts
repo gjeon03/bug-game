@@ -138,8 +138,8 @@ function heldRegions(run: Run): Set<RegionId> {
 function holdProgress(run: Run): number {
   const held = heldRegions(run);
   const main = MAIN_REGIONS.filter((r) => held.has(r)).length / MAIN_REGIONS.length;
-  const strength = Math.min(1, run.colony.population / 24);
-  const stores = Math.min(1, (run.colony.food / 60 + run.colony.moisture / 40) / 2);
+  const strength = Math.min(1, run.colony.population / 12);
+  const stores = Math.min(1, (run.colony.food / 30 + run.colony.moisture / 20) / 2);
   const specialised = run.colony.adaptations.length > 0 ? 1 : 0;
   return (main + strength + stores + specialised) / 4;
 }
@@ -151,7 +151,7 @@ function holdBlocker(run: Run): string | null {
     if (!held.has(region)) return 'blocker.holdRegion';
   }
   if (run.colony.adaptations.length === 0) return 'blocker.adaptation';
-  if (run.colony.population < 24) return 'blocker.population';
-  if (run.colony.food < 60 || run.colony.moisture < 40) return 'blocker.stores';
+  if (run.colony.population < 12) return 'blocker.population';
+  if (run.colony.food < 30 || run.colony.moisture < 20) return 'blocker.stores';
   return null;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { DEFAULT_FADE_FLOOR, OcclusionSystem } from '../../src/view/occlusion';
+import { DEFAULT_FADE_FLOOR, MIN_FADE_FLOOR, OcclusionSystem } from '../../src/view/occlusion';
 
 /**
  * Occlusion is tested against a synthetic scene rather than against the game's prop layout.
@@ -106,11 +106,32 @@ describe('occlusion fading', () => {
     const system = new OcclusionSystem();
     const camera = makeCamera();
     const cabinet = makeBlocker(400, 260);
-    system.register(cabinet, { floor: 0.15 });
+    const mug = makeBlocker(60, 260);
+    system.register(cabinet, { floor: 0.38 });
+    system.register(mug, { floor: 0.7 });
 
     settle(system, camera, new THREE.Vector3(0, 0, 0));
 
-    expect(coverageOf(cabinet)).toBeCloseTo(0.15, 5);
+    expect(coverageOf(cabinet)).toBeCloseTo(0.38, 5);
+    expect(coverageOf(mug)).toBeCloseTo(0.7, 5);
+    expect(coverageOf(cabinet)).toBeLessThan(coverageOf(mug));
+  });
+
+  it('refuses to fade anything into television static', () => {
+    /*
+     * Alpha hashing dithers stochastically, so coverage IS the fraction of pixels kept. Below about
+     * a third it stops reading as transparency and starts reading as noise — observed at 0.22
+     * across a whole frame during a real-browser capture. An authored floor below the clamp is an
+     * authoring error, and the system must not honour it.
+     */
+    const system = new OcclusionSystem();
+    const camera = makeCamera();
+    const wall = makeBlocker(400, 260);
+    system.register(wall, { floor: 0.05 });
+
+    settle(system, camera, new THREE.Vector3(0, 0, 0));
+
+    expect(coverageOf(wall)).toBeCloseTo(MIN_FADE_FLOOR, 5);
   });
 
   it('fades several simultaneous blockers, not just the nearest', () => {

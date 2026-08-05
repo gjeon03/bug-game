@@ -60,6 +60,27 @@ function orient<T extends THREE.Object3D>(node: T, axis: string, depthMm: number
   return group(at(rot(node, 0, -Math.PI / 2, 0), depthMm, 0, 0));
 }
 
+/**
+ * `roundedBox` inflates its cross-section: three.js `bevelSize` grows the extruded profile outward,
+ * so a 418 mm box with a 20 mm bevel measures 458 mm. Measured, not assumed — a rice cooker asked
+ * for at 418 mm came back 40 mm too wide and broke its own footprint.
+ *
+ * Every number in this file is a real millimetre measurement of a real object, so all of them go
+ * through here and the bevel is taken out of the requested size rather than added to it.
+ */
+function bevelledBox(
+  kit: Kit,
+  widthMm: number,
+  heightMm: number,
+  depthMm: number,
+  material: Parameters<typeof roundedBox>[4],
+  bevelMm: number,
+): THREE.Mesh {
+  // A sixth keeps the helper's own 0.32 clamp from kicking in and quietly changing the bevel.
+  const bevel = Math.min(bevelMm, widthMm / 6, heightMm / 6, depthMm / 3);
+  return roundedBox(kit, widthMm - bevel * 2, heightMm - bevel * 2, depthMm, material, bevel);
+}
+
 /** How many doors a run of this length gets. Real units are 600 mm wide give or take a corner. */
 function doorCount(lengthMm: number): number {
   return Math.max(1, Math.round(lengthMm / TARGET_DOOR_WIDTH_MM));
@@ -73,9 +94,9 @@ function doorCount(lengthMm: number): number {
  * every door two silhouette edges and a shadow line that moves with the camera.
  */
 function cabinetDoor(kit: Kit, widthMm: number, heightMm: number): THREE.Group {
-  const slab = roundedBox(kit, widthMm, heightMm, DOOR_THICK_MM, 'cabinetDoor', 2);
+  const slab = bevelledBox(kit, widthMm, heightMm, DOOR_THICK_MM, 'cabinetDoor', 2);
   const panel = at(
-    roundedBox(kit, widthMm - 84, heightMm - 84, 7, 'cabinetDoor', 3),
+    bevelledBox(kit, widthMm - 84, heightMm - 84, 7, 'cabinetDoor', 3),
     0,
     0,
     DOOR_THICK_MM / 2 + 2,
@@ -273,7 +294,7 @@ export const KITCHEN_PROPS: PropRegistry = {
       ),
       // Diffuser under the front lip: the visible source of the sink light.
       at(
-        roundedBox(kit, lengthMm - 30, 26, 90, 'plasticWhite', 4),
+        bevelledBox(kit, lengthMm - 30, 26, 90, 'plasticWhite', 4),
         lengthMm / 2,
         -13,
         depthMm - 55,
@@ -373,7 +394,7 @@ export const KITCHEN_PROPS: PropRegistry = {
    */
   'kitchen.dishRack': (kit) => {
     const parts: THREE.Object3D[] = [
-      at(roundedBox(kit, 366, 16, 306, 'plasticWhite', 5), 0, 8, 0),
+      at(bevelledBox(kit, 366, 16, 306, 'plasticWhite', 5), 0, 8, 0),
       at(box(kit, 366, 14, 10, 'plasticWhite'), 0, 20, -148),
       at(box(kit, 366, 14, 10, 'plasticWhite'), 0, 20, 148),
       at(box(kit, 10, 14, 306, 'plasticWhite'), -178, 20, 0),
@@ -405,7 +426,7 @@ export const KITCHEN_PROPS: PropRegistry = {
     const foam = kit.materials.clone('plasticWhite', 0xd8c05a);
     return shadows(
       group(
-        at(roundedBox(kit, 128, 8, 92, 'steelBrushed', 3), 0, 6, 0),
+        at(bevelledBox(kit, 128, 8, 92, 'steelBrushed', 3), 0, 6, 0),
         at(rot(ring(kit, 62, 3, 'steelBrushed'), Math.PI / 2, 0, 0), 0, 11, 0),
         tube(
           kit,
@@ -431,8 +452,8 @@ export const KITCHEN_PROPS: PropRegistry = {
           'steelBrushed',
           10,
         ),
-        at(roundedBox(kit, 94, 26, 60, foam, 7), 4, 23, 0),
-        at(roundedBox(kit, 90, 9, 57, 'plasticGreen', 3), 4, 40, 0),
+        at(bevelledBox(kit, 94, 26, 60, foam, 7), 4, 23, 0),
+        at(bevelledBox(kit, 90, 9, 57, 'plasticGreen', 3), 4, 40, 0),
         at(blob(kit, 64, 0.014, 'water', 10), 6, 11, 4),
       ),
     );
@@ -462,19 +483,20 @@ export const KITCHEN_PROPS: PropRegistry = {
     const panel = kit.materials.clone('plasticWhite', 0xcfd2d4);
     return shadows(
       group(
-        at(roundedBox(kit, 418, 196, 338, panel, 20), 0, 98, 0),
-        at(box(kit, 424, 8, 344, 'grime'), 0, 200, 0),
-        at(roundedBox(kit, 430, 78, 350, 'plasticWhite', 26), 0, 243, 0),
+        at(bevelledBox(kit, 450, 220, 340, panel, 12), 0, 110, 0),
+        at(box(kit, 456, 8, 346, 'grime'), 0, 222, 0),
+        at(bevelledBox(kit, 464, 82, 348, 'plasticWhite', 14), 0, 262, 0),
         // Hinge boss at the back and the steam vent — the two things that say "this cooks".
-        at(roundedBox(kit, 150, 46, 40, 'plasticBlack', 8), 0, 250, -172),
-        at(cylinder(kit, 24, 30, 30, 'plasticBlack', 12), 96, 292, -62),
-        at(cylinder(kit, 16, 18, 12, 'steelBrushed', 10), 96, 310, -62),
-        at(roundedBox(kit, 250, 104, 10, 'plasticBlack', 5), 0, 128, 168),
+        at(bevelledBox(kit, 162, 52, 36, 'plasticBlack', 8), 0, 268, -176),
+        at(cylinder(kit, 24, 30, 22, 'plasticBlack', 12), 100, 312, -60),
+        at(cylinder(kit, 16, 18, 12, 'steelBrushed', 10), 100, 328, -60),
+        at(bevelledBox(kit, 260, 114, 10, 'plasticBlack', 5), 0, 128, 168),
         at(box(kit, 206, 66, 5, 'screenOff'), 0, 134, 175),
-        at(roundedBox(kit, 96, 26, 12, 'plasticBlack', 4), 0, 66, 168),
-        // Carry handle, folded back over the lid.
-        at(rot(ring(kit, 118, 9, 'steelBrushed', Math.PI), 0, Math.PI / 2, 0), 0, 282, 0),
-        at(cylinder(kit, 12, 14, 20, 'plasticBlack', 10), 0, 288, 118),
+        at(bevelledBox(kit, 104, 34, 12, 'plasticBlack', 4), 0, 62, 168),
+        // Carry handle folded flat onto the lid, which is where it lives between meals — standing
+        // it up would put a wire arch above the room's cleanest silhouette.
+        at(rot(ring(kit, 110, 8, 'steelBrushed', Math.PI), Math.PI / 2, 0, 0), 0, 306, -30),
+        at(cylinder(kit, 12, 14, 16, 'plasticBlack', 10), 0, 306, 82),
       ),
     );
   },
@@ -514,29 +536,30 @@ export const KITCHEN_PROPS: PropRegistry = {
         spout,
         handle,
         // Water window. Half full, left over from tea.
-        at(roundedBox(kit, 22, 120, 10, 'plasticClear', 4), 78, 106, 30),
+        at(bevelledBox(kit, 22, 120, 10, 'plasticClear', 4), 78, 106, 30),
       ),
     );
   },
 
   /** Chopping board propped flat with the evening's trimmings still on it. */
   'kitchen.cuttingBoard': (kit) => {
+    // 310 × 205 rather than a full chef's board: the placement sits 140 mm from the counter's front
+    // edge and the world turns it 0.2 rad, which swings a bigger board's corner out over thin air.
     const parts: THREE.Object3D[] = [
-      at(roundedBox(kit, 362, 20, 246, 'wood', 5), 0, 10, 0),
-      at(rot(ring(kit, 150, 3, 'woodDark'), Math.PI / 2, 0, 0), 0, 20, 0),
-      at(roundedBox(kit, 66, 14, 66, 'wood', 4), 214, 8, 0),
-      // Knife laid across it — a hard bright line that stops the board reading as a mat.
-      at(rot(box(kit, 172, 4, 30, 'steelPolished'), 0, 0.22, 0), -20, 22, -46),
-      at(rot(roundedBox(kit, 82, 16, 22, 'woodDark', 4), 0, 0.22, 0), 116, 28, -70),
+      at(bevelledBox(kit, 310, 20, 205, 'wood', 5), 0, 10, 0),
+      at(rot(ring(kit, 122, 3, 'woodDark'), Math.PI / 2, 0, 0), 0, 20, 0),
+      // Knife laid along it — a hard bright line that stops the board reading as a mat.
+      at(rot(box(kit, 148, 4, 26, 'steelPolished'), 0, 0.14, 0), -28, 22, -28),
+      at(rot(bevelledBox(kit, 76, 16, 22, 'woodDark', 4), 0, 0.14, 0), 84, 28, -40),
     ];
     // Spring-onion trimmings. Three is a detail; thirty would be a mess.
     for (let i = 0; i < 3; i++) {
       parts.push(
         at(
           rot(cylinder(kit, 6, 6, 22, 'plasticGreen', 8), 0, 0, Math.PI / 2),
-          -60 + kit.rand() * 130,
+          -50 + kit.rand() * 110,
           26,
-          40 + kit.rand() * 40,
+          20 + kit.rand() * 40,
         ),
       );
     }
@@ -551,9 +574,10 @@ export const KITCHEN_PROPS: PropRegistry = {
         at(ceramicBowl(kit, 96 - i * 3, 62), kit.rand() * 6 - 3, i * 26, kit.rand() * 6 - 3),
       );
     }
-    // Two plates face down beside the stack, so the group has a low horizontal to read against.
-    parts.push(at(cylinder(kit, 106, 110, 9, 'porcelain', 20), 128, 4.5, 38));
-    parts.push(at(cylinder(kit, 104, 108, 9, 'porcelain', 20), 132, 13, 42));
+    // Two plates face down beside the stack, on the west side — the draining rack owns the counter
+    // to the east and a plate laid that way would grow straight through its tray.
+    parts.push(at(cylinder(kit, 106, 110, 9, 'porcelain', 20), -122, 4.5, 34));
+    parts.push(at(cylinder(kit, 104, 108, 9, 'porcelain', 20), -126, 13, 38));
     return shadows(group(...parts));
   },
 
@@ -575,16 +599,16 @@ export const KITCHEN_PROPS: PropRegistry = {
 
     return shadows(
       group(
-        at(roundedBox(kit, carcassW, h, d, shell, 8), -doorThick / 2, h / 2, 0),
+        at(bevelledBox(kit, carcassW, h, d, shell, 8), -doorThick / 2, h / 2, 0),
         // Freezer over fridge, the common Korean two-door. The gap between them is a real slot.
         at(
-          roundedBox(kit, doorThick, upperH, d - 16, shell, 10),
+          bevelledBox(kit, doorThick, upperH, d - 16, shell, 10),
           w / 2 - doorThick / 2,
           h - 40 - upperH / 2,
           0,
         ),
         at(
-          roundedBox(kit, doorThick, lowerH, d - 16, shell, 10),
+          bevelledBox(kit, doorThick, lowerH, d - 16, shell, 10),
           w / 2 - doorThick / 2,
           74 + lowerH / 2,
           0,
@@ -617,10 +641,10 @@ export const KITCHEN_PROPS: PropRegistry = {
         at(rot(ring(kit, 202, 9, shell), Math.PI / 2, 0, 0), 0, 470, 0),
         // Lid tipped open a few degrees. That gap is the smell, and the smell is the gameplay.
         at(rot(cylinder(kit, 188, 206, 46, shell, 20), 0.14, 0, 0), 0, 500, 6),
-        at(roundedBox(kit, 78, 22, 34, 'plasticBlack', 4), 0, 528, -160),
+        at(bevelledBox(kit, 78, 22, 34, 'plasticBlack', 4), 0, 528, -160),
         // Liner pinched under the rim.
         at(rot(ring(kit, 194, 7, 'plasticWhite'), Math.PI / 2, 0, 0), 0, 466, 0),
-        at(roundedBox(kit, 130, 16, 62, 'plasticBlack', 5), 0, 26, 214),
+        at(bevelledBox(kit, 130, 16, 62, 'plasticBlack', 5), 0, 26, 214),
         at(cylinder(kit, 7, 7, 430, 'steelBrushed', 6), 176, 230, 130),
         at(patch(kit, 520, 520, 'grime'), 0, 0.6, 20),
       ),
@@ -630,14 +654,16 @@ export const KITCHEN_PROPS: PropRegistry = {
   /** Recycling stacked by the doorway — a box, bottles, a can, and a bagged bundle on top. */
   'kitchen.recycling': (kit) => {
     const parts: THREE.Object3D[] = [
-      at(roundedBox(kit, 416, 292, 296, 'cardboard', 5), 0, 146, 0),
+      at(bevelledBox(kit, 416, 292, 296, 'cardboard', 5), 0, 146, 0),
       // Flaps folded out; the open top is what stops it reading as a solid crate.
       at(rot(box(kit, 416, 8, 140, 'cardboard'), -1.05, 0, 0), 0, 320, -148),
       at(rot(box(kit, 416, 8, 140, 'cardboard'), 1.15, 0, 0), 0, 314, 150),
-      at(rot(bottle(kit, 300, 44, 'plasticClear', 'plasticBlue'), 0, 0, 0.26), -104, 292, -40),
-      at(rot(bottle(kit, 262, 40, 'plasticClear', 'plasticGreen'), 0, 0, -0.34), 84, 292, 46),
+      // Bottles stand *in* the box with their shoulders above the rim, which is what makes the flaps
+      // read as open rather than as two boards glued to a crate.
+      at(rot(bottle(kit, 300, 44, 'plasticClear', 'plasticBlue'), 0, 0, 0.26), -104, 150, -40),
+      at(rot(bottle(kit, 262, 40, 'plasticClear', 'plasticGreen'), 0, 0, -0.34), 84, 168, 46),
       at(rot(cylinder(kit, 33, 33, 122, 'foil', 14), Math.PI / 2, 0, 0.4), 150, 326, -110),
-      at(drape(kit, 300, 220, 26, 'plasticWhite', 8), -40, 400, 30),
+      at(drape(kit, 260, 196, 22, 'plasticWhite', 8), -46, 300, 34),
     ];
     return shadows(group(...parts));
   },
@@ -667,8 +693,8 @@ export const KITCHEN_PROPS: PropRegistry = {
         run,
         at(rot(ring(kit, 62, 6, 'cable'), Math.PI / 2, 0, 0), -36, 7, 18),
         at(rot(ring(kit, 48, 6, 'cable'), Math.PI / 2, 0.4, 0), -30, 19, 26),
-        at(roundedBox(kit, 48, 30, 36, 'plasticWhite', 4), 44, 15, 12),
-        at(roundedBox(kit, 22, 16, 10, 'plasticWhite', 3), 6, topMm * 0.62, -6),
+        at(bevelledBox(kit, 48, 30, 36, 'plasticWhite', 4), 44, 15, 12),
+        at(bevelledBox(kit, 22, 16, 10, 'plasticWhite', 3), 6, topMm * 0.62, -6),
       ),
     );
   },
@@ -683,7 +709,12 @@ export const KITCHEN_PROPS: PropRegistry = {
     const count = 22 + (Math.abs(Math.round(seed)) % 9);
     const field = scatter(kit, count, radiusMm, () => {
       const size = 2.2 + kit.rand() * 4.6;
-      return at(roundedBox(kit, size * 1.6, size, size * 1.2, 'crumb', size * 0.3), 0, size / 2, 0);
+      return at(
+        bevelledBox(kit, size * 1.6, size, size * 1.2, 'crumb', size * 0.3),
+        0,
+        size / 2,
+        0,
+      );
     });
     const larger = scatter(kit, 3, radiusMm * 0.7, () =>
       at(blob(kit, 7 + kit.rand() * 4, 0.55, 'crumb', 8), 0, 3, 0),

@@ -414,8 +414,8 @@ export function evaluateRun(run: Run): void {
 
   if (!holdsMain) return;
   if (run.colony.adaptations.length === 0) return;
-  if (run.colony.population < 24) return;
-  if (run.colony.food < 60 || run.colony.moisture < 40) return;
+  if (run.colony.population < 12) return;
+  if (run.colony.food < 30 || run.colony.moisture < 20) return;
 
   run.status = 'won';
   logEvent(run, 'log.won', 'good', {});

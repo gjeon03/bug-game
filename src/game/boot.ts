@@ -160,10 +160,18 @@ export async function boot(): Promise<void> {
     return null;
   }
 
+  /**
+   * Start a fresh run.
+   *
+   * The renderer is REUSED, not rebuilt. Constructing a second `WebGLRenderer` on a canvas whose
+   * context has been force-lost throws, and a real-browser capture caught exactly that. The GL
+   * context is created once per page load; `rebuild` swaps the world inside it.
+   */
   function restart(): void {
-    session.renderer.dispose();
     hud.hideCurtain();
-    session = start(canvas, seed);
+    const run = createRun(seed);
+    session = { run, renderer: session.renderer };
+    session.renderer.rebuild(run);
     paused = false;
     stamina = 1;
     finalPressure = 0;
@@ -308,6 +316,34 @@ export async function boot(): Promise<void> {
       get pressure() {
         return finalPressure;
       },
+      /**
+       * World position to CSS pixels.
+       *
+       * Exposed so an automated playtest can drag between two things that actually exist rather
+       * than between arbitrary screen coordinates — the difference between testing route drawing
+       * and testing whether a blind drag happens to land on something.
+       */
+      project(x: number, y: number, z: number) {
+        const v = new THREE.Vector3(x, y, z).project(session.renderer.camera.camera);
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: rect.left + ((v.x + 1) / 2) * rect.width,
+          y: rect.top + ((1 - v.y) / 2) * rect.height,
+        };
+      },
+      /** Read-only camera diagnostics, for evidence capture and defect triage. */
+      get camera() {
+        const c = session.renderer.camera;
+        const p = c.camera.position;
+        const f = c.focusPoint;
+        return {
+          pos: { x: Math.round(p.x), y: Math.round(p.y), z: Math.round(p.z) },
+          focus: { x: Math.round(f.x), y: Math.round(f.y), z: Math.round(f.z) },
+          pulledIn: Math.round(c.pulledIn),
+        };
+      },
+      /** What lies between the focus point and the camera right now, nearest first. */
+      probe: () => session.renderer.probeView(),
       profile: () => session.renderer.profiler.end(),
       beginProfile: (label: string) => session.renderer.profiler.begin(label),
       restart,
