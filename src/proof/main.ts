@@ -129,7 +129,7 @@ const CAM_OFFSET = cameraOffset();
  * slab, `repeat` left at 1, so there is no period for a grid to form on. It carries no colour, only
  * roughness, so it reads as where the cloth has and has not been rather than as a pattern.
  */
-function worktopWear(): THREE.CanvasTexture {
+function worktopWearCanvas(): HTMLCanvasElement {
   /*
    * MEASURED CORRECTION (proof-11, independent critique). The first attempt filled the canvas with
    * mid-grey and drew ±0.15 blotches, which multiplied against a 0.42 base roughness into a
@@ -207,15 +207,83 @@ function worktopWear(): THREE.CanvasTexture {
     ctx.stroke();
   }
 
-  const texture = new THREE.CanvasTexture(canvas);
+  return canvas;
+}
+
+/**
+ * Turn a height-ish greyscale canvas into a tangent-space normal map with a Sobel filter.
+ *
+ * MEASURED CORRECTION (proof-12, independent verification). The wear map was applied as
+ * `roughnessMap` only, and the verifier proved it never reached the eye: an auto-levelled high-pass
+ * of the whole frame is **black on every countertop pixel**, and like-for-like countertop patches
+ * measure 0.0021 after versus 0.0022 before. Roughness alone cannot show under a soft environment
+ * against a 0.42 base — there is no hard light to break up.
+ *
+ * (The 0.0460 figure I reported was a measurement artifact. The camera framing changed between the
+ * two captures, so the fixed screen rectangle I compared no longer contained countertop — it
+ * straddled the silhouette edge between the cabinet face and the worktop. Measuring a fixed screen
+ * rect across a deliberate camera change is not a valid before/after; the measurement has to be
+ * anchored to the material.)
+ *
+ * A normal map gives the key light actual slope to catch, and an albedo variation survives even
+ * where the light does not reach. Roughness stays as the third layer.
+ */
+function normalMapFrom(source: HTMLCanvasElement, strength: number): THREE.CanvasTexture {
+  const size = source.width;
+  const src = source.getContext('2d');
+  if (!src) throw new Error('2D context unavailable for normal map');
+  const height = src.getImageData(0, 0, size, size).data;
+
+  const out = document.createElement('canvas');
+  out.width = size;
+  out.height = size;
+  const ctx = out.getContext('2d');
+  if (!ctx) throw new Error('2D context unavailable for normal map');
+  const image = ctx.createImageData(size, size);
+
+  const at = (x: number, y: number): number => {
+    const cx = Math.min(size - 1, Math.max(0, x));
+    const cy = Math.min(size - 1, Math.max(0, y));
+    return height[(cy * size + cx) * 4] ?? 0;
+  };
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const dx = (at(x + 1, y) - at(x - 1, y)) / 255;
+      const dy = (at(x, y + 1) - at(x, y - 1)) / 255;
+      // Normalise (-dx*strength, -dy*strength, 1) into the 0..255 encoding three.js expects.
+      const nx = -dx * strength;
+      const ny = -dy * strength;
+      const len = Math.hypot(nx, ny, 1);
+      const i = (y * size + x) * 4;
+      image.data[i] = ((nx / len) * 0.5 + 0.5) * 255;
+      image.data[i + 1] = ((ny / len) * 0.5 + 0.5) * 255;
+      image.data[i + 2] = ((1 / len) * 0.5 + 0.5) * 255;
+      image.data[i + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
+  const texture = new THREE.CanvasTexture(out);
   texture.wrapS = THREE.ClampToEdgeWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
-  texture.anisotropy = 8;
   return texture;
 }
 
+const wearCanvas = worktopWearCanvas();
 const worktopMaterial = counterStone() as THREE.MeshStandardMaterial;
-worktopMaterial.roughnessMap = worktopWear();
+const wearTexture = new THREE.CanvasTexture(wearCanvas);
+wearTexture.wrapS = THREE.ClampToEdgeWrapping;
+wearTexture.wrapT = THREE.ClampToEdgeWrapping;
+wearTexture.anisotropy = 8;
+
+worktopMaterial.roughnessMap = wearTexture;
+// `map` multiplies the base colour, so the near-white canvas both tints and varies it. The base is
+// lifted to compensate for the map's average, keeping the counter's authored value.
+worktopMaterial.map = wearTexture;
+worktopMaterial.color.multiplyScalar(1.18);
+worktopMaterial.normalMap = normalMapFrom(wearCanvas, 2.2);
+worktopMaterial.normalScale = new THREE.Vector2(0.55, 0.55);
 
 /*
  * MEASURED CORRECTION (proof-08 -> proof-09).

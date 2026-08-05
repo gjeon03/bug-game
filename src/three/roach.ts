@@ -43,13 +43,34 @@ const REFERENCE_BODY_MM = 35;
  */
 const LEG_THICK_MM = 1.35;
 const TIBIA_THICK_MM = 1.0;
+const TARSUS_THICK_MM = 0.8;
 const ANTENNA_THICK_MM = 1.05;
+
+/** How far the foot folds forward from the tibia. Enough to read as a foot, not a kink. */
+const TARSUS_PITCH = 1.15;
 
 export type RoachPalette = 'scout' | 'workerDark' | 'workerPale' | 'nymph';
 
+interface RoachPaletteSpec {
+  readonly shell: number;
+  readonly dark: number;
+  readonly limb: number;
+  readonly mark: number;
+}
+
+/**
+ * Where the pronotal shield starts and ends, as a fraction along the body (0 = tail, 1 = snout).
+ *
+ * On a 35 mm animal that is roughly z = +3.5 mm to +14.5 mm — the thorax. Everything behind it is
+ * abdomen under wing cases; everything in front is the head, which a cockroach carries tucked
+ * underneath and which is barely visible from above.
+ */
+const PRONOTUM_BACK = 0.6;
+const PRONOTUM_FRONT = 0.92;
+
 /** `mark` is the pale pronotal ground the scout's two dark stripes sit on. */
-const PALETTES: Record<RoachPalette, { shell: number; dark: number; limb: number; mark: number }> = {
-  scout: { shell: 0x8a5524, dark: 0x3d2209, limb: 0x6d431c, mark: 0xc09453 },
+const PALETTES: Record<RoachPalette, RoachPaletteSpec> = {
+  scout: { shell: 0x8a5524, dark: 0x3d2209, limb: 0x6d431c, mark: 0xd8a24e },
   workerDark: { shell: 0x6b3f18, dark: 0x331d09, limb: 0x53331a, mark: 0x8a6236 },
   workerPale: { shell: 0x9c6a34, dark: 0x5a3616, limb: 0x7a5228, mark: 0xb98d52 },
   nymph: { shell: 0x6d4a24, dark: 0x3a2410, limb: 0x55381b, mark: 0x9e7a45 },
@@ -98,10 +119,20 @@ interface LegPlan {
  * the abdomen. Moving the coxae forward is what makes the abdomen trail behind the leg cluster
  * instead of sitting in the middle of it, and that is the single strongest blattid cue.
  */
+/*
+ * MEASURED CORRECTION (proof-12, independent verification). My previous commit claimed the legs had
+ * moved onto the thorax. The verifier measured the actual constants and the claim was false: hips
+ * sat 24 % / 35 % / 47 % back from the head, so only the front pair was inside the front third.
+ *
+ * The thorax of a 35 mm cockroach runs roughly z = +3.5 mm to +14.5 mm. Coxae now sit at 11.0 /
+ * 7.5 / 4.0 mm, which is 19 % / 29 % / 39 % back — the hind pair lands at the thorax-abdomen
+ * junction, which is where a real one attaches. The abdomen now genuinely trails behind the leg
+ * cluster instead of sitting in the middle of it.
+ */
 const LEG_PLAN: readonly LegPlan[] = [
-  { hipZ: 9.0, hipX: 3.6, femurMm: 6.0, tibiaMm: 5.6, splayDeg: 58, strideMm: 5.0 },
-  { hipZ: 5.2, hipX: 4.2, femurMm: 7.6, tibiaMm: 7.0, splayDeg: -4, strideMm: 6.4 },
-  { hipZ: 1.2, hipX: 4.0, femurMm: 9.0, tibiaMm: 9.6, splayDeg: -56, strideMm: 7.6 },
+  { hipZ: 11.0, hipX: 3.4, femurMm: 6.0, tibiaMm: 5.6, splayDeg: 58, strideMm: 5.0 },
+  { hipZ: 7.5, hipX: 4.0, femurMm: 7.6, tibiaMm: 7.0, splayDeg: -4, strideMm: 6.4 },
+  { hipZ: 4.0, hipX: 4.0, femurMm: 9.0, tibiaMm: 9.6, splayDeg: -56, strideMm: 7.6 },
 ];
 
 /**
@@ -210,10 +241,8 @@ function solveLeg(leg: Leg, footLocal: THREE.Vector3): void {
   leg.knee.rotation.set(Math.PI - kneeInterior, 0, 0);
 }
 
+/** Parts every roach shares regardless of palette. The carapace is per-palette; see below. */
 interface BodyGeometries {
-  readonly carapace: THREE.BufferGeometry;
-  readonly pronotum: THREE.BufferGeometry;
-  readonly seam: THREE.BufferGeometry;
   readonly head: THREE.BufferGeometry;
   readonly segment: THREE.BufferGeometry;
   readonly cargo: THREE.BufferGeometry;
@@ -256,120 +285,108 @@ function heightProfile(t: number): number {
 }
 
 /**
- * The carapace: ONE continuous flattened teardrop shell.
+ * The carapace: ONE continuous flattened teardrop shell, with every marking painted into its own
+ * vertex colours.
  *
- * MEASURED CORRECTION (proof-10, independent visual critique). The body was previously three
- * stacked ellipsoids — abdomen, wing case, pronotum — and the critic's verdict was unambiguous:
- * "the body is two separate ellipsoids joined at a visible waist… a two-lobe body with legs
- * radiating from the wide part is the canonical spider/tick read."
+ * MEASURED CORRECTION (proof-12, independent verification). Two of the previous fixes were wrong in
+ * the same way, and the verifier caught both:
  *
- * A cockroach has no waist. It is a single flattened shield, and the abdomen is completely covered
- * by the tegmina, so the outline from head to tail is one unbroken curve. That is why a real roach
- * can vanish into a 3 mm crack and why its silhouette is unmistakable even in a photograph taken
- * from directly above.
+ * - The tegminal seam and the scout's pronotal stripes were separate boxes floating 0.2–0.5 mm above
+ *   the shell. At gameplay magnification they rendered as **broken, stair-stepped dashed lines** —
+ *   textbook z-fighting, and a rendering fault the player would report as a bug. My "fix" had
+ *   introduced a defect that did not exist before it.
+ * - The pronotum was a separate box 0.71 mm wider per side than the shell beneath it and standing
+ *   2.2 mm proud, with vertical side walls catching the key light. The verifier's phrase was exact:
+ *   *"the waist has been relocated to the shoulder."* A cockroach's pronotum is a colour boundary
+ *   and a shallow ridge, not a solid sitting on the animal's back.
  *
- * Built by deforming a sphere rather than by assembling parts, because any assembly of parts
- * reintroduces the seam this exists to remove. The cross-section is elliptical (flat), and the
- * underside is flatter still — a roach's belly is nearly planar, which is what lets it lie flush
- * against a surface.
+ * Both are now colour on the shell itself. Nothing is coplanar with anything, so z-fighting is not
+ * merely reduced — it is structurally impossible. The shield keeps a slight ridge in the height
+ * profile so it still catches light, but it can never exceed the silhouette because it IS the
+ * silhouette.
+ *
+ * The cost is one geometry per palette instead of one shared geometry. At five palettes that is five
+ * geometries for the whole colony, against the 2,743 the pose-swapping build produced — the sharing
+ * that matters is unaffected.
  */
-function buildCarapace(): THREE.BufferGeometry {
-  const geometry = new THREE.SphereGeometry(1, 44, 26);
+function buildCarapace(palette: RoachPaletteSpec, isScout: boolean): THREE.BufferGeometry {
+  const geometry = new THREE.SphereGeometry(1, 48, 28);
   const position = geometry.attributes.position as THREE.BufferAttribute;
 
   const halfLength = mm(BODY_LENGTH_MM) / 2;
   const halfWidth = mm(BODY_WIDTH_MM) / 2;
   const halfHeight = mm(BODY_HEIGHT_MM) / 2;
 
+  const colours = new Float32Array(position.count * 3);
+  const shell = new THREE.Color(palette.shell);
+  const dark = new THREE.Color(palette.dark);
+  const mark = new THREE.Color(palette.mark);
+  const belly = new THREE.Color(palette.dark).multiplyScalar(0.7);
+  const swatch = new THREE.Color();
+
   for (let i = 0; i < position.count; i++) {
     const x = position.getX(i);
     const y = position.getY(i);
     const z = position.getZ(i);
 
-    // The sphere's own cross-section radius at this z; used to recover a unit direction.
     const ring = Math.hypot(x, y);
     const t = (z + 1) / 2;
 
-    const w = widthProfile(t);
-    const h = heightProfile(t);
-
     if (ring < 1e-6) {
-      // Pole vertex: collapse it onto the axis at the profile's endpoint.
       position.setXYZ(i, 0, 0, z * halfLength);
+      swatch.copy(t > PRONOTUM_FRONT ? dark : shell);
+      swatch.toArray(colours, i * 3);
       continue;
     }
 
     const nx = x / ring;
     const ny = y / ring;
+    const w = widthProfile(t);
+    // The pronotum reads as a shallow raised shield rather than as a separate solid.
+    const ridge = t > PRONOTUM_BACK && t < PRONOTUM_FRONT ? 1.1 : 1;
+    const h = heightProfile(t) * ridge;
     // The belly is nearly flat; only the back is domed.
     const vertical = ny < 0 ? 0.42 : 1;
 
-    position.setXYZ(i, nx * w * halfWidth, ny * h * halfHeight * vertical, z * halfLength);
-  }
+    const px = nx * w * halfWidth;
+    position.setXYZ(i, px, ny * h * halfHeight * vertical, z * halfLength);
 
-  position.needsUpdate = true;
-  geometry.computeVertexNormals();
-  return geometry;
-}
+    /* ---- markings, painted rather than modelled ---- */
+    const lateral = Math.abs(px) / Math.max(1e-6, w * halfWidth); // 0 at the spine, 1 at the flank
+    const onBack = ny > -0.15;
 
-/**
- * The pronotal shield.
- *
- * Sized and placed to hug the carapace it sits on, so it reads as a plate overlapping the animal's
- * shoulders rather than as a second body segment. It must overlap the head — from directly above a
- * cockroach you see shield and antennae, and barely any face at all.
- */
-function buildPronotum(): THREE.BufferGeometry {
-  const geometry = new THREE.SphereGeometry(1, 30, 16);
-  const position = geometry.attributes.position as THREE.BufferAttribute;
-
-  const halfLength = mm(9.5) / 2;
-  const halfWidth = mm(11.6) / 2;
-  const halfHeight = mm(2.6) / 2;
-
-  for (let i = 0; i < position.count; i++) {
-    const x = position.getX(i);
-    const y = position.getY(i);
-    const z = position.getZ(i);
-    const ring = Math.hypot(x, y);
-    const t = (z + 1) / 2;
-    // Trapezoidal: narrow at the front, broad at the shoulders.
-    const w = 0.62 + 0.38 * Math.sin(Math.PI * Math.min(1, t * 0.85 + 0.1));
-
-    if (ring < 1e-6) {
-      position.setXYZ(i, 0, 0, z * halfLength);
-      continue;
+    if (!onBack) {
+      swatch.copy(belly);
+    } else if (t > PRONOTUM_BACK && t < PRONOTUM_FRONT) {
+      // Blattella germanica carries two dark longitudinal stripes on a pale pronotum. Giving that
+      // real marking to the scout is both anatomically honest and the most readable identifier
+      // available — a large high-contrast area rather than an outline.
+      const striped = isScout && lateral > 0.2 && lateral < 0.52;
+      swatch.copy(isScout ? (striped ? dark : mark) : dark);
+    } else if (t <= PRONOTUM_BACK && lateral < 0.07) {
+      // The tegminal seam, where the two forewings meet down the back.
+      swatch.copy(dark);
+    } else {
+      swatch.copy(shell);
     }
-    const nx = x / ring;
-    const ny = y / ring;
-    position.setXYZ(i, nx * w * halfWidth, ny * halfHeight * (ny < 0 ? 0.3 : 1), z * halfLength);
+    swatch.toArray(colours, i * 3);
   }
 
   position.needsUpdate = true;
+  geometry.setAttribute('color', new THREE.BufferAttribute(colours, 3));
   geometry.computeVertexNormals();
   return geometry;
 }
 
 function buildBodyGeometries(): BodyGeometries {
-  const carapace = buildCarapace();
-  const pronotum = buildPronotum();
-
-  /*
-   * The tegminal seam — where the two forewings meet down the animal's back.
-   *
-   * A thin dark wedge rather than a painted line, so it catches the key light along one edge and
-   * actually reads at gameplay distance. Without it the back is a blank dome and the eye has
-   * nothing to identify the wing cases by.
-   */
-  const seam = new THREE.BoxGeometry(mm(0.7), mm(0.5), mm(19));
-
-  // Mostly hidden under the shield; only the front margin and the mouthparts show from above.
+  // Tucked under the leading edge of the shield and pointing at the floor, which is where a
+  // cockroach actually carries its head. From directly above you see pronotum and antennae.
   const head = new THREE.SphereGeometry(mm(2.3), 14, 10);
   head.scale(1.0, 0.5, 0.85);
 
   /*
-   * One tapered unit segment, reused for every femur, tibia and antenna joint. It hangs downward
-   * from its origin so a joint can simply rotate it.
+   * One tapered unit segment, reused for every femur, tibia, tarsus and antenna joint. It hangs
+   * downward from its origin so a joint can simply rotate it.
    *
    * MEASURED CORRECTION (proof-11): the radii were `(0.34, 0.62)` — top thin, bottom thick — so
    * every limb got FATTER toward the joint below it. A femur is thick where it meets the body and
@@ -381,7 +398,7 @@ function buildBodyGeometries(): BodyGeometries {
   const cargo = new THREE.SphereGeometry(mm(2.1), 10, 8);
   cargo.scale(1.1, 0.85, 1.0);
 
-  return { carapace, pronotum, seam, head, segment, cargo };
+  return { head, segment, cargo };
 }
 
 /**
@@ -409,18 +426,52 @@ export function createRoachAssets(): RoachAssets {
     return made;
   };
 
+  /**
+   * One carapace per (palette, isScout) pair.
+   *
+   * Markings are baked into vertex colours, so a palette cannot share geometry with another palette.
+   * Five variants for the whole colony is a rounding error against the 2,743 geometries the
+   * pose-swapping build produced, and the sharing that actually matters — one shell for every worker
+   * of a given kind, however many there are — is unaffected.
+   */
+  const carapaceCache = new Map<string, THREE.BufferGeometry>();
+  const carapaceFor = (paletteName: RoachPalette, isScout: boolean): THREE.BufferGeometry => {
+    const key = `${paletteName}${isScout ? ':scout' : ''}`;
+    const existing = carapaceCache.get(key);
+    if (existing) return existing;
+    const made = buildCarapace(PALETTES[paletteName], isScout);
+    carapaceCache.set(key, made);
+    return made;
+  };
+
+  /** One material for every roach body: the markings live in the geometry, not in the material. */
+  let vertexColourMat: THREE.MeshStandardMaterial | null = null;
+  const vertexColourMaterial = (): THREE.MeshStandardMaterial => {
+    if (!vertexColourMat) {
+      vertexColourMat = new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        roughness: 0.38,
+        metalness: 0.12,
+      });
+    }
+    return vertexColourMat;
+  };
+
   function build(options: RoachOptions): Roach {
     const bodyMm = options.bodyMm ?? REFERENCE_BODY_MM;
     const paletteName = options.palette ?? 'scout';
     const palette = PALETTES[paletteName];
     const scale = bodyMm / REFERENCE_BODY_MM;
 
-    // The shell highlight is the most important cue separating a living roach from a drawn oval, so
-    // chitin keeps a little metalness and a tight roughness.
-    const shell = material(`${paletteName}-shell`, palette.shell, 0.38, 0.12);
+    /*
+     * The shell highlight is the most important cue separating a living roach from a drawn oval, so
+     * chitin keeps a little metalness and a tight roughness. One material for the whole body: every
+     * marking comes from the geometry's vertex colours, so the shield and the seam cost no extra
+     * draw call and cannot z-fight.
+     */
+    const shellMat = vertexColourMaterial();
     const dark = material(`${paletteName}-dark`, palette.dark, 0.45, 0.1);
     const limb = material(`${paletteName}-limb`, palette.limb, 0.6, 0.05);
-    const mark = material(`${paletteName}-mark`, palette.mark, 0.42, 0.08);
     const cargoMat = material('cargo', 0xc09a5e, 0.86, 0.0);
 
     const root = new THREE.Group();
@@ -442,39 +493,14 @@ export function createRoachAssets(): RoachAssets {
       return mesh;
     };
 
-    // One continuous shell from snout to tail. No waist, no stacked lobes — see buildCarapace.
-    const carapace = addMesh(geo.carapace, shell, body);
-    carapace.scale.setScalar(scale);
-
-    // The tegminal seam sits a hair proud of the back so it catches the key light along one edge.
-    const seam = addMesh(geo.seam, dark, body);
-    seam.position.set(0, mm(2.28) * scale, mm(-4.5) * scale);
-    seam.scale.setScalar(scale);
-
     /*
-     * Pronotum, and the player's identifier.
-     *
-     * Blattella germanica — the species that actually lives in Korean apartment kitchens — carries
-     * two dark longitudinal stripes on a PALE pronotum. Giving that real marking to the scout and a
-     * plain dark shield to the workers is both anatomically honest and the most readable
-     * differentiator available: a large high-contrast area rather than an outline.
-     *
-     * MEASURED CORRECTION (proof-10, independent critique): the previous tell resolved to "a 1–2
-     * pixel outline against a dark brown body on a mid-blue ground — invisible… the player cannot
-     * find themselves." Size alone cannot carry it either, because perspective makes a nearer
-     * worker just as large on screen as the scout.
+     * One mesh carries the whole animal above the legs: shell, wing-case seam, pronotal shield and
+     * — on the scout — the two dark stripes, all painted into vertex colours rather than modelled as
+     * overlapping solids. See `buildCarapace` for why: coplanar geometry was z-fighting into dashed
+     * lines, and a separately-modelled shield relocated the very waist the shell exists to remove.
      */
-    const pronotum = addMesh(geo.pronotum, options.isScout ? mark : dark, body);
-    pronotum.position.set(0, mm(0.9) * scale, mm(10.0) * scale);
-    pronotum.scale.setScalar(scale);
-
-    if (options.isScout) {
-      for (const side of [-1, 1]) {
-        const stripe = addMesh(geo.seam, dark, body);
-        stripe.position.set(mm(1.8) * side * scale, mm(2.1) * scale, mm(10.0) * scale);
-        stripe.scale.set(scale * 1.2, scale, scale * 0.42);
-      }
-    }
+    const carapace = addMesh(carapaceFor(paletteName, options.isScout === true), shellMat, body);
+    carapace.scale.setScalar(scale);
 
     // Tucked low and mostly under the leading edge of the shield, which is where a cockroach
     // actually carries its head — from above you see pronotum and antennae, barely any face.
@@ -511,6 +537,26 @@ export function createRoachAssets(): RoachAssets {
 
         const tibia = addMesh(geo.segment, limb, knee);
         tibia.scale.set(mm(TIBIA_THICK_MM) * scale, tibiaLength, mm(TIBIA_THICK_MM) * scale);
+
+        /*
+         * The tarsus — the foot.
+         *
+         * MEASURED CORRECTION (proof-12, independent verification): "legs end in blunt flat-cut
+         * cylinders in mid-air… the tibia tips terminate in a visible flat disc a few pixels above
+         * the counter. Reads as unfinished geometry." A limb that stops dead has no contact with the
+         * world; a limb that folds forward into a foot is standing on it.
+         *
+         * Rigid rather than IK-driven: a tarsus is compliant in reality, but at gameplay scale its
+         * job is to close the silhouette and give the leg somewhere to end.
+         */
+        const ankle = new THREE.Object3D();
+        ankle.position.y = -tibiaLength;
+        ankle.rotation.x = -TARSUS_PITCH;
+        knee.add(ankle);
+
+        const tarsus = addMesh(geo.segment, limb, ankle);
+        const tarsusLength = mm(plan.tibiaMm * 0.34) * scale;
+        tarsus.scale.set(mm(TARSUS_THICK_MM) * scale, tarsusLength, mm(TARSUS_THICK_MM) * scale);
 
         const azimuth = THREE.MathUtils.degToRad(plan.splayDeg);
         legs.push({
@@ -637,11 +683,18 @@ export function createRoachAssets(): RoachAssets {
 
   return {
     build,
-    stats: () => ({ geometries: geometries.length, materials: materialCache.size }),
+    stats: () => ({
+      geometries: geometries.length + carapaceCache.size,
+      materials: materialCache.size + (vertexColourMat ? 1 : 0),
+    }),
     dispose: () => {
       for (const g of geometries) g.dispose();
+      for (const g of carapaceCache.values()) g.dispose();
+      carapaceCache.clear();
       for (const m of materialCache.values()) m.dispose();
       materialCache.clear();
+      vertexColourMat?.dispose();
+      vertexColourMat = null;
     },
   };
 }
