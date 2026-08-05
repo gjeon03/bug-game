@@ -210,3 +210,78 @@ real movement, collision and pheromone code — not a scripted state machine.
   `tests/**` authoring, evidence collection under `artifacts/**`, and the three independent critique
   passes (visual / gameplay / technical), which are **read-only** and report findings rather than
   editing gameplay.
+
+---
+
+# Amendment — the 3D reboot (2026-08-05)
+
+## What the audit established
+
+An exhaustive read of `src/` classified every module. The headline: **the simulation is genuinely
+renderer-agnostic.** A grep of all 8,071 lines under `src/sim/` for `render/` imports, `document`,
+`window`, `Canvas`, `ImageData`, `devicePixelRatio`, `getContext`, `requestAnimationFrame`,
+`localStorage` and `navigator` returns **two hits, both the English word "window" inside prose
+comments.** Dependency direction is one-way: `render/` imports from `sim/`, never the reverse.
+
+| Class | Modules | Lines |
+| --- | --- | ---: |
+| REUSE-AS-IS | `core/*` (clock, rng, math, spatial, storage, telemetry), `sim/sim`, `sim/suspicion`, `sim/colony`, `sim/adaptations`, `sim/operations`, `sim/onboarding`, `i18n/*`, `ui/settings`, `ui/icons`, `audio/audio` | ~4,527 |
+| REUSE-WITH-SURGERY | `sim/world`, `sim/constants`, `sim/types`, `sim/kitchen`, `sim/heat`, `sim/territory`, `sim/pheromone`, `sim/workers`, `sim/scout`, `sim/director`, `sim/threats`, `sim/routines`, `testapi` | ~6,144 |
+| REWRITE | `sim/field`, `sim/exposure`, `render/camera`, `ui/hud`, `ui/overlays`, `main`, `style.css` | ~2,893 |
+| DELETE | `render/renderer`, `render/atlas`, `render/props`, `render/solids`, `render/sprites`, `render/particles`, `render/palette`, `art/*` | ~4,766 |
+
+Roughly **59 % of the TypeScript survives**, and the surgery is unusually well localised.
+
+## The three real 3D blockers
+
+They are geometry, not architecture — about 1,334 lines, most of it data needing re-authoring rather
+than logic needing rethinking.
+
+1. **`sim/field.ts`** — circle-vs-AABB collision with a four-way shallowest-escape, plus radial
+   lighting with **no occluders**. `LightSource.surfaceOnly` exists purely to hand-patch that missing
+   occlusion; real shadows make the hack both wrong and unnecessary.
+2. **`sim/kitchen.ts`** — 26 solids as `{x,y,w,h}` with no height, floor-projected decals, and
+   `Prop.lift` as a 2.5D pseudo-height read only by the old renderer.
+3. **`sim/heat.ts` + `sim/territory.ts`** — a 12×9 uniform grid and eight axis-aligned zone rects.
+   The decay, peak-floor, hold and hysteresis logic is pure; only the four indexing functions and one
+   `inside()` predicate are 2D-bound.
+
+`sim/exposure.ts` is a REWRITE for the same reason: `isWatched` fakes line of sight with a
+cone-intensity threshold because there was no occlusion query to ask. The *meter* is worth keeping
+verbatim; the sampling underneath it becomes a real 3D visibility test.
+
+## New module layout
+
+```
+src/three/      the 3D runtime — owned sequentially, never edited by parallel agents
+  env.ts        environment map + light rig + renderer colour contract
+  counter.ts    the counter run: worktop with a real sink aperture, basin, drain, toe-kick
+  roach.ts      shared-geometry rigid roach hierarchy + analytic two-bone IK tripod gait
+  (planned) camera.ts, occlusion.ts, kitchen.ts, routes.ts, props/*.ts
+src/proof/      the proof-scene entry point; folded into the game once it passes
+```
+
+`src/render/` is deleted when the 3D path carries the game. **Prerequisite:**
+`tests/unit/i18n.test.ts:5` imports `src/render/props.ts` at module scope, so deleting that file
+takes down all 25 tests in the file including 23 genuine locale invariants. Split first.
+
+## The real restart-correctness risk
+
+The simulation restarts by **full reconstruction** — `createWorld()` builds a fresh object literal
+with a fresh `Rng` and fresh scratch buffers, and the authored `NESTS`/`RESOURCES` are `.map()`-copied
+rather than mutated, so no run can dirty them. That half needs no care.
+
+The **presentation** half is reset by twelve hand-maintained imperative calls in `startRun()`
+(`particles.clear()`, `clock.reset()`, `renderer.setOutcome()`, `camera.snapTo()`, `audio.resetMix()`
+and so on). Every one of those must be re-enumerated for a three.js scene graph, and the leak set
+grows: `renderer.info.memory.geometries`, `.textures`, scene child count and material clones must all
+return to their cold values after a restart.
+
+## Test seams — preserve verbatim
+
+`window.__roach` is the single global. Its design invariant is worth more than its convenience:
+*there is no way to set colony values, teleport the scout or force an outcome, so an E2E test cannot
+fake a passing run.* `placeScout` is the one narrow exception and is documented as camera-only.
+Members actually exercised: `ready`, `newRun(seed)`, `state()`, `input.{press,release,releaseAll}`,
+`telemetry()`, `markPerf`/`endPerf`, `assetAudit()`. There are no query parameters; seeding happens
+only through `newRun`.

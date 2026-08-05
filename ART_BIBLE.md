@@ -297,3 +297,58 @@ shared camera and light rig**, and packs the results into a single sprite sheet 
 | Procedural texture maps on flat surfaces | Invisible at `roughnessMap` only; invisible as albedo because `ExtrudeGeometry` emits world-unit UVs, not 0..1; visible as a repeating **grid** once the repeat was corrected — a banned artefact — and grew the sheet 321 kB → 1155 kB. Removed. |
 | Full-height cabinet geometry             | At 26° a 760 mm carcass projects to a 662-unit flat slab: a larger version of the rectangle it was meant to replace. Replaced with a ~210 mm edge profile.                                                                                        |
 | WebGL + normal-mapped dynamic lighting   | Lost the renderer bake-off. Identical object recognition, and its one unique capability read _worse_ than a composited light cone. See `DECISIONS.md`.                                                                                            |
+
+---
+
+# Amendment — the 3D reboot (2026-08-05)
+
+The art direction above is **kept**: stylized physical believability, the material vocabulary, real
+millimetres, mandatory environment map for metal, contact shadows, and every banned artefact. What
+changes is that none of it is flattened any more.
+
+## Rescinded
+
+- **"Sprites are placed by their baked ground anchor."** There is no sprite and no anchor. Props are
+  meshes standing on a floor; depth sorting is the depth buffer's job.
+- **"The simulation stays strictly 2D."** Presentation is genuinely 3D and the world has real height.
+  The simulation is still authored on the XZ plane, but `lift` as a 2.5D pseudo-height is gone.
+- **"Contact shadows are baked in."** They are cast, per frame, by a real light. That is why a faded
+  occluder must also stop casting — a see-through object with a solid shadow reads as a bug.
+- **"Full-height cabinet geometry" negative result.** That failure was a projection artefact of a 26°
+  near-top-down camera; a 46°-pitched perspective camera shows a carcass as a carcass. A full-height
+  cabinet is now correct and required.
+
+## New rules earned by measurement in the reboot
+
+**Readability dimensions are not anatomical dimensions.** A real cockroach femur on a 35 mm body is
+under a millimetre across, which at the gameplay camera is **0.7 px** — every leg and both antennae
+were antialiased out of existence and the animal rendered as a bare brown oval. Limb thickness is
+therefore chosen so the thinnest limb survives at roughly three pixels at the framing the game is
+actually played at. Body proportions stay honest; only the sticks are exaggerated. **If the camera
+framing changes, re-derive these — do not tweak them by eye.**
+
+**Silhouette is set by sweep, not by part count.** Six legs arranged radially around a compact body is
+a *spider*. A cockroach's legs rake backward — front pair reaching past the head, hind pair trailing
+behind the abdomen — and the body is long rather than round. This is the difference between passing
+and failing the "reads as a cockroach" gate.
+
+**A recess must be a hole, not a decal.** The drain is recognizable because the surrounding surface
+falls away into it. Any fixture that is an inset in real life must be an inset in geometry.
+
+**Verify rotations against the rest vector, never by eye.** Three separate limb defects in this
+rebuild — legs folded under the body, antennae buried beneath the abdomen, a pronotum that was a dome
+instead of a shield — were all sign errors, found by evaluating `Rx(θ)·(0,−1,0)` and comparing it
+with the intended direction. Guessing at the number took several attempts each time; solving for it
+took one.
+
+**Metalness is a lighting decision, not a material label.** `metalness > 0.9` has almost no diffuse
+response, so such a surface is lit only by what it reflects. Inside a sink bowl, what it reflects is
+the environment map's lower hemisphere, which in a night kitchen is nearly black. Physically correct,
+and it rendered the bowl as a void. Interior surfaces that must stay readable take a lower metalness.
+
+## Untiled detail replaces tiled detail
+
+The negative result above still stands: a tiled canvas texture's own seams line up and produce the
+banned grid. The escape is to **not tile** — one texture stretched across a whole slab with `repeat`
+left at 1 has no period for a grid to form on. Roughness-only, carrying no colour, so it reads as
+where the cloth has and has not been.

@@ -156,3 +156,85 @@ Multiplayer, accounts, backend, cloud saves, procedural campaigns, multiple kitc
 large tech tree, crafting, inventory, dialogue, cinematics, UGC, monetisation, live service, RTS unit
 selection, per-worker micromanagement, idle/clicker progression, tower-defence lanes, a fully
 animated human body.
+
+---
+
+# Amendment — the 3D reboot (2026-08-05)
+
+Everything above still describes the game's **design**: the fantasy, the differentiator, the four
+operations, territory, the economy, adaptations, household pressure, routines, win and lose. That
+design survives the reboot intact and is not being rewritten.
+
+What changes is that the game is no longer flat. The sections below **supersede** the corresponding
+parts above where they disagree.
+
+## The player is embodied, not a commander
+
+The player is a **lead scout cockroach** in a physically convincing insect-scale world, not a
+logistics mind hovering over a floor plan. The target feeling:
+
+> "I am tiny, fast, vulnerable, and clever. Every object in this home is enormous. Every successful
+> supply route makes my colony stronger, but it also teaches the humans where to strike."
+
+## Space is three-dimensional
+
+The kitchen is no longer one plane. Three traversal bands, connected by **authored** climb
+transitions — pipe, cable, towel, cabinet seam, appliance back, wall crack:
+
+| Band                       | What it offers                                                                  |
+| -------------------------- | -------------------------------------------------------------------------------- |
+| **Floor**                  | Open tile, appliance gaps, trash, human footsteps, cleaning hazards               |
+| **Baseboard / under-unit** | Safer travel, cracks, cables, pipe access, satellite footholds, hidden shortcuts  |
+| **Counter and sink**       | High-value food and moisture, dishwashing events, exposed bright routes           |
+
+The scout may use every authored transition. **Workers use only established, validated logistics
+links** — verticality is a planning decision, not decoration. No arbitrary wall-crawling: a surface
+becomes climbable only if it can meet the animation, collision, camera and AI gates.
+
+## Controls gain one verb
+
+`Space` — contextual climb or gap traversal, where an authored transition is in reach. The command
+count stays deliberately low; every other verb in the table above is unchanged.
+
+Movement is camera-relative on the ground plane, and must deliver the full chain:
+
+input → immediate acceleration → body response → leg cadence → antenna response → contact shadow →
+skitter audio → nearby worker reaction → subtle camera response.
+
+Floaty character-controller defaults are a defect, not a tuning preference.
+
+## The camera is part of the contract
+
+Low-FOV perspective (~28–38° vertical), pitched ~40–55° down, yawed ~30–50°, damped follow, stable
+world orientation, limited zoom, **no free orbit during play**. It must read as a composed
+strategy-action camera, never as an editor camera.
+
+**Foreground objects may never permanently hide the player.** Occlusion fading is a production
+system with its own gates, not a nicety — see `CLAUDE.md` §3.
+
+## Growth is physical
+
+Growth may never be only a HUD number. Eggs, nymph movement, stored food, moisture deposits, nest
+material, occupied wall cracks, worker traffic, gnawed packaging, disturbed household objects,
+darkened safe routes, satellite nests, rising colony sound, human countermeasures and abandoned
+compromised routes are the readout. **Identical starting and victory camera shots must make it
+obvious the player changed the house.**
+
+## Budgets that change
+
+| Metric                           | Was      | Now                                                                     |
+| -------------------------------- | -------- | ----------------------------------------------------------------------- |
+| First successful worker delivery | ≤ 45 s   | ≤ 60 s (a 3D approach costs real travel time)                           |
+| Production JS bundle (gzip)      | ≤ 150 kB | superseded — three.js is now a runtime dependency; budget set on measure |
+| p99 frame time                   | ≤ 33 ms  | unchanged, but **CPU-only measurement is no longer valid** — see below   |
+
+**The old `cpuP99 ≤ 8 ms` gate cannot be trusted under WebGL.** `gl.draw*` returns immediately, so a
+CPU-callback budget goes green while the game gets slower. Any 3D perf gate needs GPU timing or
+`renderer.info.render` ceilings alongside the CPU figure. Recorded in `DECISIONS.md`.
+
+## Scope boundary that changes
+
+**In:** one kitchen, now with eight recognizable zones across three traversal bands and authored
+climb transitions between them.
+
+**Still out:** every non-goal listed above, unchanged.

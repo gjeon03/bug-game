@@ -231,3 +231,55 @@ partial; `island-edge`, `waste-corner` and `doorway` are unassessed. Evidence:
 - 18 view-space normal maps (`*-n.png`) — baked for the WebGL renderer candidate, deleted with it
   when Canvas2D won. See `DECISIONS.md`.
 - Procedural surface-texture maps — measured, rejected, removed. See `ART_BIBLE.md`.
+
+---
+
+# 3D reboot — asset state as of 2026-08-05
+
+The sprite sheet is no longer the product. `tools/bake/props/` modelled every prop as real-millimetre
+three.js geometry and then flattened it; the reboot renders that geometry live and deletes the
+flattening step. **Most of this table is therefore promoted, not re-made.**
+
+## Authored final — first-party code geometry
+
+| Asset | Source | Method | Notes |
+| --- | --- | --- | --- |
+| Counter run (worktop, sink aperture, basin, drain, splashback, cabinet, toe-kick, floor) | `src/three/counter.ts` | Real-millimetre box and torus geometry. The worktop is four slabs around a genuine aperture. | Replaces the sprite-era `sink-drain` prop, which carried its own steel deck and rendered in 3D as a flat dark rectangle. |
+| Cockroach (scout, worker, nymph, carrying) | `src/three/roach.ts` | Shared-geometry rigid hierarchy: 6 geometries and 10 materials for every roach in the game, animated by analytic two-bone IK on an alternating tripod. | Replaces ten baked gait poses per roach. Measured: scene geometries 2,743 → 79. |
+| Night-kitchen environment map and light rig | `src/three/env.ts` | Procedurally painted equirect → `PMREMGenerator`; key/fill/hemisphere motivated by real fixtures. | Load-bearing, not decoration: metals have no diffuse response and go black without it. |
+| Worktop wear | `src/proof/main.ts` | One 512² roughness-only canvas stretched across the whole slab, `repeat` left at 1. | Deliberately untiled — see the negative result in `tools/bake/lib/materials.mjs`. |
+| Pheromone route ribbon | `src/proof/main.ts` | Surface-conforming triangle strip along a Catmull-Rom spline, normal blending. | Additive blending was tried first and washed to white over the dark worktop. |
+| Favicon | `proof.html` | Inline SVG data URI. | A file would have needed a root-absolute path; a data URI cannot break the subpath contract. |
+
+## Generated final — promoted from the bake pipeline
+
+The 44 parametric props in `tools/bake/props/` (`sink.mjs`, `kitchen.mjs`, `pantry.mjs`,
+`fixtures.mjs`) and the 20 material presets in `tools/bake/lib/materials.mjs`, now instantiated as
+live scene geometry rather than rendered to sprites. Modelled in true millimetres through
+`MM_PER_UNIT = 35/26`. Licence MIT, © this repository — the generator source is the asset.
+
+## Licensed final
+
+NanumSquareNeo Regular 400 / Bold 700 / ExtraBold 800 — unchanged from the table above. SIL OFL 1.1,
+vendored at `src/fonts/`, no CDN.
+
+## Temporary — BLOCKS COMPLETION
+
+Listed honestly rather than quietly reclassified.
+
+| Item | Why it is temporary |
+| --- | --- |
+| **The kitchen is a fragment.** | One counter run with a sink. Eight zones, three traversal bands and authored climb transitions do not exist yet. |
+| **Prop library reached through a `@ts-expect-error` seam.** | `src/proof/main.ts` imports `tools/bake/props/*.mjs` as untyped JS. Porting to TypeScript under `src/three/props/` is production work; the directive is the honest marker that it has not happened. |
+| **Korean copy hardcoded in the proof scene.** | `objectiveEl.textContent` is a literal. Every string must move to `src/i18n/`. This is the exact class of defect that shipped `2 tiles` to production. |
+| **No audio in the 3D build.** | `src/audio/audio.ts` is classified REUSE-AS-IS but is not wired; its `panOf` needs a 3D camera basis. Core interactions are currently silent. |
+| **Dish towel reads as stacked slabs.** | The baked `dish-towel` prop was authored for a top-down sprite and has no cloth drape in the round. |
+| **Old Canvas2D renderer still present.** | `src/render/` (4,473 lines) and `index.html` still exist alongside `proof.html`. Two production renderers may not ship. |
+| **`roach-dead` still reads as a live roach at an angle.** | Inherited from the previous audit; unaddressed in 3D. |
+
+## Superseded
+
+The "Generated final — baked 3D sprites" table above (44 frames, `src/art/props.png`, sheet
+2040×2128) is **superseded**. The sheet, `atlas.json` and the whole `src/render/` sprite path are
+deleted when the proof scene becomes the game. The geometry that produced them survives; the flat
+output does not.
