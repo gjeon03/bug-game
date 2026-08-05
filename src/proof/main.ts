@@ -21,6 +21,7 @@ import { SINK_PROPS } from '../../tools/bake/props/sink.mjs';
 import { counterStone, laminate, steelBrushed, steelPolished } from '../../tools/bake/lib/materials.mjs';
 import { createRoachAssets, type Roach } from '../three/roach';
 import { buildCounter } from '../three/counter';
+import { OcclusionSystem } from '../three/occlusion';
 
 interface PropSpec {
   build: () => THREE.Object3D;
@@ -78,53 +79,14 @@ function cameraOffset(): THREE.Vector3 {
 
 /* --------------------------------------------------------------- occlusion */
 
-/**
- * A prop that may be faded when it stands between the camera and the scout.
+/*
+ * Occlusion fading is now a production system in `src/three/occlusion.ts`, not scene scaffolding.
  *
- * Fading is per logical prop, never per mesh: a cabinet whose door fades while its carcass stays
- * opaque reads as a rendering fault. Materials are cloned on registration so two instances of the
- * same prop fade independently and the shared library material is never mutated.
+ * It moved out of this file when it grew the behaviours the contract actually requires: alpha
+ * hashing instead of transparency (so blockers cannot mis-sort against each other), per-group
+ * fading, shadow suppression while faded, honest restoration, and a reset for restart and camera
+ * teleport.
  */
-interface Occluder {
-  readonly root: THREE.Object3D;
-  readonly materials: THREE.Material[];
-  readonly meshes: THREE.Mesh[];
-  /** 1 = fully opaque, 0 = fully faded. Eased toward `target` every frame. */
-  current: number;
-  target: number;
-}
-
-/**
- * Reduced opacity, not disappearance — the silhouette has to survive so depth is not destroyed.
- *
- * MEASURED CORRECTION (proof-03): 0.22 was low enough that the mug and the plate stack read as
- * glassware rather than as faded ceramic, and because they went on casting a fully opaque shadow
- * the result looked like a rendering fault instead of an affordance. A faded occluder now stops
- * casting too — you cannot see through an object and still see its solid shadow without the eye
- * calling it a bug.
- */
-const FADE_FLOOR = 0.38;
-/** Seconds for a full fade in or out. CLAUDE.md §3 mandates 150–300 ms. */
-const FADE_SECONDS = 0.22;
-
-function registerOccluder(root: THREE.Object3D): Occluder {
-  const materials: THREE.Material[] = [];
-  const meshes: THREE.Mesh[] = [];
-  root.traverse((node) => {
-    const mesh = node as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    const cloned = Array.isArray(mesh.material)
-      ? mesh.material.map((m) => m.clone())
-      : mesh.material.clone();
-    mesh.material = cloned;
-    for (const m of Array.isArray(cloned) ? cloned : [cloned]) {
-      m.transparent = true;
-      materials.push(m);
-    }
-    meshes.push(mesh);
-  });
-  return { root, materials, meshes, current: 1, target: 1 };
-}
 
 /* ------------------------------------------------------------------- scene */
 
@@ -343,7 +305,7 @@ const PLACEMENTS: readonly Placement[] = [
   { registry: SINK, name: 'crumb-b', x: mm(396), z: mm(246), spin: -70 },
 ];
 
-const occluders: Occluder[] = [];
+const occlusion = new OcclusionSystem();
 
 for (const p of PLACEMENTS) {
   const spec = p.registry[p.name];
@@ -360,7 +322,7 @@ for (const p of PLACEMENTS) {
     mesh.receiveShadow = true;
   });
   scene.add(object);
-  if (p.occludes) occluders.push(registerOccluder(object));
+  if (p.occludes) occlusion.register(object);
 }
 
 /* ------------------------------------------------------------------ roaches */
@@ -546,7 +508,6 @@ addEventListener('blur', () => held.clear());
 const SCOUT_SPEED = mm(150);
 const SCOUT_SPRINT = 2.1;
 
-const raycaster = new THREE.Raycaster();
 const camTarget = new THREE.Vector3().copy(scout.root.position);
 let scoutHeading = 0;
 let scoutPhase = 0;
@@ -660,47 +621,6 @@ function updateWorkers(dt: number): void {
   }
 }
 
-/**
- * Fade whatever stands between the camera and the scout.
- *
- * Three rays rather than one: a single centre ray pops on and off as a thin object's silhouette
- * crosses the scout's centre, and popping is explicitly disallowed. Sampling a small volume around
- * the body makes the transition follow the actual overlap.
- */
-function updateOcclusion(dt: number): void {
-  for (const o of occluders) o.target = 1;
-
-  const probes = [
-    new THREE.Vector3(0, mm(4), 0),
-    new THREE.Vector3(mm(12), mm(4), 0),
-    new THREE.Vector3(-mm(12), mm(4), 0),
-  ];
-  for (const probe of probes) {
-    const point = scout.root.position.clone().add(probe);
-    const dir = point.clone().sub(camera.position);
-    const distance = dir.length();
-    raycaster.set(camera.position, dir.normalize());
-    raycaster.far = distance;
-    for (const o of occluders) {
-      if (o.target < 1) continue;
-      if (raycaster.intersectObject(o.root, true).length > 0) o.target = FADE_FLOOR;
-    }
-  }
-
-  const step = dt / FADE_SECONDS;
-  for (const o of occluders) {
-    if (o.current < o.target) o.current = Math.min(o.target, o.current + step);
-    else if (o.current > o.target) o.current = Math.max(o.target, o.current - step);
-    const opaque = o.current >= 0.999;
-    for (const m of o.materials) {
-      m.opacity = o.current;
-      // Only pay the transparency sorting cost while actually faded.
-      m.depthWrite = opaque;
-    }
-    for (const mesh of o.meshes) mesh.castShadow = opaque;
-  }
-}
-
 function frame(now: number): void {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
@@ -723,7 +643,7 @@ function frame(now: number): void {
   camera.position.copy(camTarget).add(CAM_OFFSET);
   camera.lookAt(camTarget);
 
-  updateOcclusion(dt);
+  occlusion.update(dt, camera, [scout.root.position]);
   renderer.render(scene, camera);
 
   frames++;
@@ -767,6 +687,15 @@ objectiveEl.textContent = '싱크대 배수구까지 길을 내라. 접시 더�
  */
 interface ProofApi {
   ready: boolean;
+  /**
+   * Put the scout somewhere, in millimetres on the worktop plane.
+   *
+   * Evidence-only, and deliberately narrow: it moves the body and nothing else. Occlusion has to be
+   * verifiable from a KNOWN geometric relationship — "walk right for 1.5 s and hope a mug ends up in
+   * the way" is not a test, it is a coincidence. The old build's `TestApi` carries the same seam
+   * under the same restriction.
+   */
+  placeScout: (xMm: number, zMm: number) => void;
   stats: () => {
     fps: number;
     drawCalls: number;
@@ -780,6 +709,10 @@ interface ProofApi {
 
 const proofApi: ProofApi = {
   ready: false,
+  placeScout: (xMm, zMm) => {
+    scout.root.position.set(mm(xMm), 0, mm(zMm));
+    camTarget.copy(scout.root.position);
+  },
   stats: () => ({
     fps: lastFps,
     drawCalls: renderer.info.render.calls,
@@ -787,7 +720,7 @@ const proofApi: ProofApi = {
     geometries: renderer.info.memory.geometries,
     textures: renderer.info.memory.textures,
     programs: renderer.info.programs?.length ?? 0,
-    occludersFading: occluders.filter((o) => o.current < 0.999).length,
+    occludersFading: occlusion.stats().fading,
   }),
 };
 (window as unknown as { __proof: ProofApi }).__proof = proofApi;
