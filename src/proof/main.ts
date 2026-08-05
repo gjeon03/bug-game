@@ -168,37 +168,87 @@ const CAM_OFFSET = cameraOffset();
  * roughness, so it reads as where the cloth has and has not been rather than as a pattern.
  */
 function worktopWear(): THREE.CanvasTexture {
-  const SIZE = 512;
+  /*
+   * MEASURED CORRECTION (proof-11, independent critique). The first attempt filled the canvas with
+   * mid-grey and drew ±0.15 blotches, which multiplied against a 0.42 base roughness into a
+   * variation too small to survive a soft environment. The critic measured the result: **53.9 % of
+   * the frame within 6 % of one colour, and a 500×260 patch with a standard deviation of 0.0030.**
+   * "The absence of incident doesn't read as clean, it reads as untextured. It also destroys scale:
+   * with nothing at millimetre resolution to compare against, the roaches float free of size."
+   *
+   * Three families now, at three frequencies, so the key light has something to break up on:
+   * directional grain along the counter's long axis, broad wear where hands and cloths go, and a
+   * few dried water rings. 1024 px across ~920 world units is roughly 1.2 mm per texel — genuinely
+   * millimetre-scale detail, which is the scale reference the scene was missing.
+   *
+   * Still no tiling. `repeat` stays at 1, so there is no period for the banned grid to form on.
+   */
+  const SIZE = 1024;
   const canvas = document.createElement('canvas');
   canvas.width = SIZE;
   canvas.height = SIZE;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('2D context unavailable for worktop wear');
 
-  ctx.fillStyle = '#6b6b6b';
-  ctx.fillRect(0, 0, SIZE, SIZE);
-
-  // Deterministic blotches — a bake must be reproducible, so no Math.random.
+  // Deterministic — evidence has to be reproducible, so no Math.random anywhere in here.
   let seed = 0x9e3779b9;
   const rand = (): number => {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 0x100000000;
   };
-  for (let i = 0; i < 90; i++) {
+
+  // Bright base: roughnessMap multiplies, so near-white keeps the material's authored roughness and
+  // lets every mark below read as a departure from it rather than as a global darkening.
+  ctx.fillStyle = '#d8d8d8';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Broad wear — where cloths and forearms actually pass.
+  for (let i = 0; i < 70; i++) {
     const x = rand() * SIZE;
     const y = rand() * SIZE;
-    const r = 40 + rand() * 150;
-    const light = rand() > 0.5;
+    const r = 90 + rand() * 260;
+    const lighter = rand() > 0.45;
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, light ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.14)');
+    g.addColorStop(0, lighter ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.26)');
     g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g;
     ctx.fillRect(x - r, y - r, r * 2, r * 2);
   }
 
+  // Directional grain along the counter's long axis. Manufactured surfaces are anisotropic, and
+  // that anisotropy is most of what tells the eye a surface was made rather than generated.
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  for (let i = 0; i < 900; i++) {
+    const y = rand() * SIZE;
+    const x = rand() * SIZE;
+    const len = 60 + rand() * 340;
+    ctx.strokeStyle = rand() > 0.5 ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.18)';
+    ctx.lineWidth = rand() < 0.85 ? 1 : 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + len, y + (rand() - 0.5) * 3);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Dried water rings — a glass or a wet mug stood here and evaporated. Darker roughness reads as
+  // the polished halo mineral deposits leave behind.
+  for (let i = 0; i < 5; i++) {
+    const x = rand() * SIZE;
+    const y = rand() * SIZE;
+    const r = 26 + rand() * 46;
+    ctx.strokeStyle = 'rgba(0,0,0,0.30)';
+    ctx.lineWidth = 2 + rand() * 3;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, r * (0.9 + rand() * 0.2), rand() * Math.PI, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.ClampToEdgeWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.anisotropy = 8;
   return texture;
 }
 
@@ -255,28 +305,42 @@ interface Placement {
  * `steel-panel` is gone. It rendered as a flat dark quad, which is the exact defect this rebuild
  * exists to kill.
  */
+/*
+ * MEASURED CORRECTION (proof-10, independent critique). Two faults, both from placing props while
+ * the sink was still solid counter:
+ *
+ * 1. The detergent bottle's centre sat 55 mm from the plate stack's — well inside a 220 mm plate —
+ *    so the bottle's label band and the plate rim passed straight through each other. The critic
+ *    ranked it "the single most unshipped thing in the frame after the debug HUD", and it is:
+ *    interpenetration is the classic tell that nothing was hand-placed.
+ * 2. The sponge, jar, towel and every droplet stood inside the bowl footprint, which is now a
+ *    105 mm-deep recess rather than solid worktop.
+ *
+ * The bowl occupies x ∈ [-380, 0] mm, z ∈ [-225, 105] mm. Nothing may stand there.
+ */
 const PLACEMENTS: readonly Placement[] = [
-  // The sink surround — the hero of this shot.
-  // The drain is no longer a prop — it is part of the counter's real aperture. See counter.ts.
-  { registry: SINK, name: 'droplet-m', x: mm(-88), z: mm(-6) },
-  { registry: SINK, name: 'droplet-s', x: mm(-118), z: mm(34) },
-  { registry: SINK, name: 'droplet-s', x: mm(-60), z: mm(62), spin: 60 },
-  { registry: SINK, name: 'sponge', x: mm(-58), z: mm(96), spin: 34 },
+  // Drying crockery, right of the bowl.
+  { registry: SINK, name: 'plate-stack', x: mm(230), z: mm(-150), spin: 12, occludes: true },
+  { registry: SINK, name: 'plate-single', x: mm(448), z: mm(-244), spin: -24 },
+  { registry: SINK, name: 'mug', x: mm(330), z: mm(58), spin: -40, occludes: true },
+  { registry: SINK, name: 'detergent-bottle', x: mm(74), z: mm(-272), occludes: true },
 
-  // Washed-up crockery, stacked away from the wet zone.
-  { registry: SINK, name: 'plate-stack', x: mm(96), z: mm(-176), spin: 12, occludes: true },
-  { registry: SINK, name: 'plate-single', x: mm(-16), z: mm(-208), spin: -24 },
-  { registry: SINK, name: 'mug', x: mm(196), z: mm(-24), spin: -40, occludes: true },
-  { registry: SINK, name: 'jar', x: mm(-268), z: mm(-186), occludes: true },
-  { registry: SINK, name: 'detergent-bottle', x: mm(150), z: mm(-186), occludes: true },
-  { registry: SINK, name: 'dish-towel', x: mm(-282), z: mm(104), spin: 18 },
+  // Cleaning kit, left of the bowl.
+  { registry: SINK, name: 'jar', x: mm(-486), z: mm(-182), occludes: true },
+  { registry: SINK, name: 'dish-towel', x: mm(-500), z: mm(158), spin: 18 },
 
-  // Crumbs where somebody stood and ate — the colony's reason to cross open ground.
-  { registry: SINK, name: 'crumb-a', x: mm(18), z: mm(104) },
-  { registry: SINK, name: 'crumb-b', x: mm(56), z: mm(138), spin: 40 },
-  { registry: SINK, name: 'crumb-c', x: mm(-8), z: mm(156), spin: -20 },
-  { registry: SINK, name: 'crumb-a', x: mm(92), z: mm(80), spin: 110 },
-  { registry: SINK, name: 'crumb-b', x: mm(128), z: mm(126), spin: -70 },
+  // The wet zone on the front lip of the bowl, where water actually gets flicked.
+  { registry: SINK, name: 'sponge', x: mm(-96), z: mm(196), spin: 34 },
+  { registry: SINK, name: 'droplet-m', x: mm(18), z: mm(158) },
+  { registry: SINK, name: 'droplet-s', x: mm(64), z: mm(202) },
+  { registry: SINK, name: 'droplet-s', x: mm(-24), z: mm(244), spin: 60 },
+
+  // Crumbs on the open counter — the colony's reason to cross exposed ground.
+  { registry: SINK, name: 'crumb-a', x: mm(216), z: mm(208) },
+  { registry: SINK, name: 'crumb-b', x: mm(286), z: mm(252), spin: 40 },
+  { registry: SINK, name: 'crumb-c', x: mm(174), z: mm(268), spin: -20 },
+  { registry: SINK, name: 'crumb-a', x: mm(338), z: mm(184), spin: 110 },
+  { registry: SINK, name: 'crumb-b', x: mm(396), z: mm(246), spin: -70 },
 ];
 
 const occluders: Occluder[] = [];
@@ -315,8 +379,8 @@ for (const p of PLACEMENTS) {
 const roachAssets = createRoachAssets();
 
 const scout = roachAssets.build({ bodyMm: 35, palette: 'scout', isScout: true });
-// Starts on open ground between the crumbs and the drain, so the opening shot frames the sink.
-scout.root.position.set(mm(30), 0, mm(60));
+// On the open counter between the crumbs and the bowl, so the opening shot frames the sink.
+scout.root.position.set(mm(150), 0, mm(210));
 scene.add(scout.root);
 
 /* ------------------------------------------------------------ pheromone route */
@@ -328,13 +392,14 @@ scene.add(scout.root);
  * that dominate the environment, and a scent trace should look like something left behind on the
  * counter, not like a UI element floating above it.
  */
+// From the wet lip of the bowl out to the crumbs — the two things worth walking between.
 const ROUTE_POINTS = [
-  new THREE.Vector3(mm(-150), 0, mm(-70)),
-  new THREE.Vector3(mm(-120), 0, mm(20)),
-  new THREE.Vector3(mm(-52), 0, mm(96)),
-  new THREE.Vector3(mm(30), 0, mm(138)),
-  new THREE.Vector3(mm(112), 0, mm(122)),
-  new THREE.Vector3(mm(176), 0, mm(58)),
+  new THREE.Vector3(mm(-70), 0, mm(150)),
+  new THREE.Vector3(mm(10), 0, mm(196)),
+  new THREE.Vector3(mm(96), 0, mm(232)),
+  new THREE.Vector3(mm(188), 0, mm(238)),
+  new THREE.Vector3(mm(272), 0, mm(224)),
+  new THREE.Vector3(mm(348), 0, mm(198)),
 ];
 const routeCurve = new THREE.CatmullRomCurve3(ROUTE_POINTS);
 /** Arc length in world units, so a worker's `t` rate can be converted into real travel speed. */
@@ -353,10 +418,19 @@ function buildRouteRibbon(curve: THREE.CatmullRomCurve3): THREE.Mesh {
     const t = i / SEGMENTS;
     const point = curve.getPointAt(t);
     const tangent = curve.getTangentAt(t);
+    /*
+     * Taper the width to almost nothing at both ends.
+     *
+     * MEASURED CORRECTION (proof-10, independent critique): the ribbon "terminates in a blunt
+     * straight cut… at 100% opacity, mid-counter, attached to nothing — it reads as a clipped UV
+     * quad or a strip of masking tape, not a scent." A trace that stops dead has an author; a trace
+     * that thins out was left behind.
+     */
+    const taper = Math.min(1, Math.sin(Math.PI * t) * 2.6);
     const side = new THREE.Vector3()
       .crossVectors(tangent, up)
       .normalize()
-      .multiplyScalar(HALF_WIDTH);
+      .multiplyScalar(HALF_WIDTH * taper);
     // Lifted a hair off the worktop so it never z-fights with the surface it is painted on.
     const y = mm(0.4);
     positions.push(point.x - side.x, y, point.z - side.z);
@@ -442,8 +516,25 @@ scene.add(shadowCaster);
 
 /* ------------------------------------------------------------------- input */
 
+/*
+ * The technical readout is a DEVELOPER overlay and defaults to hidden.
+ *
+ * MEASURED CORRECTION (proof-10, independent critique): the first thing the critic said about the
+ * frame was "a debug overlay is burned into the frame… nothing else in the image needs to be read
+ * to classify this as a prototype." CLAUDE.md §7 already forbade it; I had shipped it into every
+ * evidence capture anyway. F3 toggles it for development; evidence frames are captured without it.
+ */
+let readoutVisible = false;
+readoutEl.style.display = 'none';
+
 const held = new Set<string>();
 addEventListener('keydown', (e) => {
+  if (e.code === 'F3') {
+    readoutVisible = !readoutVisible;
+    readoutEl.style.display = readoutVisible ? '' : 'none';
+    e.preventDefault();
+    return;
+  }
   held.add(e.code);
   if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ShiftLeft'].includes(e.code)) e.preventDefault();
 });
@@ -472,6 +563,7 @@ let elapsed = 0;
 let last = performance.now();
 let frames = 0;
 let fpsAccum = 0;
+let lastFps = 0;
 
 function resize(): void {
   const w = canvas.clientWidth;
@@ -636,8 +728,11 @@ function frame(now: number): void {
 
   frames++;
   fpsAccum += dt;
+  // The window closes on schedule whether or not anyone is looking, so toggling the overlay on
+  // shows the last half second rather than an average since page load.
   if (fpsAccum >= 0.5) {
     const fps = frames / fpsAccum;
+    lastFps = fps;
     frames = 0;
     fpsAccum = 0;
     const info = renderer.info;
@@ -663,8 +758,43 @@ function frame(now: number): void {
  */
 objectiveEl.textContent = '싱크대 배수구까지 길을 내라. 접시 더미 뒤로 돌면 눈에 덜 띈다.';
 
+/**
+ * Evidence seam.
+ *
+ * The technical numbers have to be readable by a capture script WITHOUT painting a debug overlay
+ * into the frame being captured. Exposing them as data rather than as pixels is the only way to
+ * have both an honest screenshot and a recorded measurement.
+ */
+interface ProofApi {
+  ready: boolean;
+  stats: () => {
+    fps: number;
+    drawCalls: number;
+    triangles: number;
+    geometries: number;
+    textures: number;
+    programs: number;
+    occludersFading: number;
+  };
+}
+
+const proofApi: ProofApi = {
+  ready: false,
+  stats: () => ({
+    fps: lastFps,
+    drawCalls: renderer.info.render.calls,
+    triangles: renderer.info.render.triangles,
+    geometries: renderer.info.memory.geometries,
+    textures: renderer.info.memory.textures,
+    programs: renderer.info.programs?.length ?? 0,
+    occludersFading: occluders.filter((o) => o.current < 0.999).length,
+  }),
+};
+(window as unknown as { __proof: ProofApi }).__proof = proofApi;
+
 // Font readiness gates the first frame: measuring or laying out Korean text before the webfont
 // resolves is exactly the layout jump the font gate forbids.
 void document.fonts.ready.then(() => {
+  proofApi.ready = true;
   requestAnimationFrame(frame);
 });
