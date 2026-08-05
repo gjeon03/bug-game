@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>걸레받이 제국 — 화질 증명 장면</title>
+    <meta name="description" content="three.js 리부트의 최종 화질 증명 장면. 게임 본편이 아니다." />
+  </head>
+  <body>
+    <!--
+      The proof scene is a separate entry point on purpose.
+
+      The brief requires one final-quality scene to exist and be judged BEFORE the whole map is
+      built, and the Canvas2D game must keep running until the three.js path has actually earned
+      the replacement. Two entry points, one production renderer — the old one is deleted when this
+      scene passes, not kept as a second path.
+    -->
+    <canvas id="proof"></canvas>
+
+    <div id="overlay">
+      <div id="objective"></div>
+      <div id="readout"></div>
+    </div>
+
+    <noscript>이 게임은 자바스크립트가 필요합니다.</noscript>
+    <script type="module" src="/src/proof/main.ts"></script>
+  </body>
+</html>

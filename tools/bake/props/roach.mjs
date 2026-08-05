@@ -99,7 +99,20 @@ function antenna({ side, lengthMm = 38, curl = 1, sweepDeg = 26 }) {
  * mid-right and hind-left swing together while the other three plant. Driving both triads from one
  * phase is what makes the walk read as locomotion instead of six independent twitches.
  */
-function roach({ bodyMm = 35, gait = 0, dead = false, carrying = null, palette = 'scout' } = {}) {
+/*
+ * Exported so the live three.js runtime can build a roach at ANY gait phase.
+ *
+ * The bake pipeline only ever needed the four phases named in `ROACH_PROPS` because it was
+ * flattening them into sprite frames. A 3D scene interpolates, so it wants the parametric builder
+ * itself. `ROACH_PROPS` is unchanged — the bake tool is unaffected by this export.
+ */
+export function roach({
+  bodyMm = 35,
+  gait = 0,
+  dead = false,
+  carrying = null,
+  palette = 'scout',
+} = {}) {
   const g = new THREE.Group();
   const s = bodyMm / 35;
   const tone =
