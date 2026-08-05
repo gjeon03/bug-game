@@ -23,6 +23,7 @@ import { createRoachAssets, type Roach } from '../three/roach';
 import { buildCounter } from '../three/counter';
 import { OcclusionSystem } from '../three/occlusion';
 import { applyWear } from '../three/surfaces';
+import { ANCHOR_SHOTS, COUNTER_HEIGHT_MM, ZONES, buildRoom, mm as roomMm } from '../three/room';
 import { Profiler, judge, type ProfileResult, type VerdictLine } from '../three/profiler';
 
 interface PropSpec {
@@ -184,6 +185,38 @@ applyWear(floorMaterial, { grain: 'horizontal', streaks: 500, seed: 0x7d2b8811, 
  * slabs around a hole, a basin hanging below, and the drain at the bottom of the recess. A drain is
  * recognizable because the surface falls away into it, which a decal can never do.
  */
+/*
+ * The greybox room.
+ *
+ * Increment 1 of the build order: eight zones as boxes at real millimetre dimensions, so the eight
+ * anchor frames can be captured from the real gameplay camera and the cut list decided against
+ * actual pixels. Eight parallel researchers specified 188 props of which 121 do not exist yet;
+ * authoring all of them and only then discovering which the camera can never frame would be the most
+ * expensive possible order of operations.
+ */
+const room = buildRoom({
+  floor: floorMaterial,
+  wall: laminate(0x5a6068) as THREE.Material,
+  carcass: cabinetMaterial,
+  appliance: laminate(0x7d848c) as THREE.Material,
+  worktop: worktopMaterial,
+});
+scene.add(room.group);
+
+/*
+ * Everything authored against the sink run keeps its local coordinates.
+ *
+ * `counter.ts` places its worktop plane at y = 0 and the room places the same plane at
+ * COUNTER_HEIGHT above the floor, so one frame Object3D reconciles them. Re-parenting rather than
+ * re-authoring means the props, roaches and route that were tuned against the sink do not move
+ * relative to it.
+ */
+const sinkZone = ZONES.find((z) => z.id === 'sink');
+if (!sinkZone) throw new Error('room is missing the sink zone');
+const counterFrame = new THREE.Group();
+counterFrame.position.set(roomMm(sinkZone.x), roomMm(COUNTER_HEIGHT_MM), roomMm(sinkZone.z));
+scene.add(counterFrame);
+
 const counter = buildCounter({
   stone: worktopMaterial,
   steel: steelBrushed(),
@@ -193,7 +226,7 @@ const counter = buildCounter({
   laminateDark: toeKickMaterial,
   floor: floorMaterial,
 });
-scene.add(counter.group);
+counterFrame.add(counter.group);
 
 /* -------------------------------------------------------------------- props */
 
@@ -261,6 +294,13 @@ const PLACEMENTS: readonly Placement[] = [
 
 const occlusion = new OcclusionSystem();
 
+for (const [id, volume] of room.volumes) {
+  // Large architecture may fade further than a small prop: there is more silhouette left to read at
+  // the same fraction. The pantry column and the fridge are the two that can occlude a third of the
+  // frame, so they get the deepest floor.
+  occlusion.register(volume, { floor: id === 'pantry' || id === 'fridge' ? 0.24 : 0.32 });
+}
+
 for (const p of PLACEMENTS) {
   const spec = p.registry[p.name];
   if (!spec) {
@@ -275,7 +315,7 @@ for (const p of PLACEMENTS) {
     mesh.castShadow = spec.shadow !== false;
     mesh.receiveShadow = true;
   });
-  scene.add(object);
+  counterFrame.add(object);
   if (p.occludes) occlusion.register(object);
 }
 
@@ -297,7 +337,7 @@ const roachAssets = createRoachAssets();
 const scout = roachAssets.build({ bodyMm: 35, palette: 'scout', isScout: true });
 // On the open counter between the crumbs and the bowl, so the opening shot frames the sink.
 scout.root.position.set(mm(150), 0, mm(210));
-scene.add(scout.root);
+counterFrame.add(scout.root);
 
 /* ------------------------------------------------------------ pheromone route */
 
@@ -386,7 +426,7 @@ function buildRouteRibbon(curve: THREE.CatmullRomCurve3): THREE.Mesh {
   return mesh;
 }
 
-scene.add(buildRouteRibbon(routeCurve));
+counterFrame.add(buildRouteRibbon(routeCurve));
 
 interface Worker {
   readonly roach: Roach;
@@ -407,7 +447,7 @@ for (let i = 0; i < 4; i++) {
     palette: carrying ? 'workerPale' : 'workerDark',
   });
   roach.setCargo(carrying);
-  scene.add(roach.root);
+  counterFrame.add(roach.root);
   workers.push({ roach, t: i / 4, speed: 0.055 + i * 0.006, phase: i * 0.37 });
 }
 
@@ -428,7 +468,7 @@ const shadowCaster = new THREE.Mesh(
 );
 shadowCaster.castShadow = true;
 shadowCaster.position.y = mm(360);
-scene.add(shadowCaster);
+counterFrame.add(shadowCaster);
 
 /* ------------------------------------------------------------------- input */
 
@@ -462,7 +502,17 @@ addEventListener('blur', () => held.clear());
 const SCOUT_SPEED = mm(150);
 const SCOUT_SPRINT = 2.1;
 
-const camTarget = new THREE.Vector3().copy(scout.root.position);
+const camTarget = new THREE.Vector3();
+/** Scratch for the scout's world position — the body is a child of the counter frame now. */
+const scoutWorld = new THREE.Vector3();
+/**
+ * When set, the camera looks here instead of following the scout.
+ *
+ * Anchor frames have to be reproducible to the pixel across every future capture, and a camera that
+ * is still easing toward a moving body is not reproducible. Locking is therefore part of the
+ * evidence contract rather than a debug convenience.
+ */
+let lockedTarget: THREE.Vector3 | null = null;
 let scoutHeading = 0;
 let scoutPhase = 0;
 let scoutEffort = 0;
@@ -590,15 +640,19 @@ function frame(now: number): void {
   const sweep = (elapsed % 14) / 14;
   shadowCaster.position.x = THREE.MathUtils.lerp(-mm(1400), mm(1400), sweep);
   shadowCaster.position.z = mm(-40) + Math.sin(sweep * Math.PI) * mm(120);
-  lights.key.target.position.set(scout.root.position.x, 0, scout.root.position.z);
+  const focus = lockedTarget ?? scoutWorld;
+  lights.key.target.position.set(focus.x, focus.y, focus.z);
   lights.key.target.updateMatrixWorld();
-  lights.key.position.set(scout.root.position.x - 260, 620, scout.root.position.z + 190);
+  lights.key.position.set(focus.x - 260, focus.y + 620, focus.z + 190);
 
-  camTarget.lerp(scout.root.position, Math.min(1, dt / CAM_LAG));
+  // A locked anchor shot snaps rather than eases, so the same call always yields the same frame.
+  if (lockedTarget) camTarget.copy(lockedTarget);
+  else camTarget.lerp(focus, Math.min(1, dt / CAM_LAG));
   camera.position.copy(camTarget).add(CAM_OFFSET);
   camera.lookAt(camTarget);
 
-  occlusion.update(dt, camera, [scout.root.position]);
+  scout.root.getWorldPosition(scoutWorld);
+  occlusion.update(dt, camera, [lockedTarget ?? scoutWorld]);
 
   profiler.beginRender();
   renderer.render(scene, camera);
@@ -667,6 +721,8 @@ const SCENE_CEILINGS = {
 
 interface ProofApi {
   ready: boolean;
+  anchorShots: () => { id: string; what: string }[];
+  anchorShot: (id: string | null) => boolean;
   /** Reported rather than assumed: an unavailable GPU timer is an UNMEASURED result, not a pass. */
   gpuTimingAvailable: () => boolean;
   beginProfile: (label: string) => void;
@@ -694,6 +750,19 @@ interface ProofApi {
 
 const proofApi: ProofApi = {
   ready: false,
+  /** Named anchor frames, from `src/three/room.ts`. Returns the ids so a capture script can drive them. */
+  anchorShots: () => ANCHOR_SHOTS.map((a) => ({ id: a.id, what: a.what })),
+  /** Lock the camera onto a named anchor. Pass null to hand it back to the scout. */
+  anchorShot: (id: string | null) => {
+    if (id === null) {
+      lockedTarget = null;
+      return true;
+    }
+    const shot = ANCHOR_SHOTS.find((a) => a.id === id);
+    if (!shot) return false;
+    lockedTarget = new THREE.Vector3(roomMm(shot.x), roomMm(shot.y), roomMm(shot.z));
+    return true;
+  },
   placeScout: (xMm, zMm) => {
     scout.root.position.set(mm(xMm), 0, mm(zMm));
     camTarget.copy(scout.root.position);
@@ -716,6 +785,9 @@ const proofApi: ProofApi = {
 
 // Font readiness gates the first frame: measuring or laying out Korean text before the webfont
 // resolves is exactly the layout jump the font gate forbids.
+scout.root.getWorldPosition(scoutWorld);
+camTarget.copy(scoutWorld);
+
 void document.fonts.ready.then(() => {
   proofApi.ready = true;
   requestAnimationFrame(frame);

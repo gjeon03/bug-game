@@ -3,7 +3,7 @@
 Live production state. Updated before the end of every turn. If this file disagrees with a summary
 written in chat, this file is correct.
 
-**Branch** `experiment/isometric-threejs-rebuild` · **origin/main..HEAD** `0 12` — twelve local
+**Branch** `experiment/isometric-threejs-rebuild` · **origin/main..HEAD** `0 13` — thirteen local
 commits, **zero pushes**. Run `git log --oneline -1` for the exact HEAD; this file deliberately does
 not carry a hash it would have to amend a commit to keep accurate.
 
@@ -26,7 +26,7 @@ are read-only research and criticism only.
 
 | Task ID | What | Status |
 | --- | --- | --- |
-| `wr664wcb3` | Workflow `kitchen-zone-research`: 8 parallel zone researchers → traversal graph → integrated layout spec | **running** |
+| — | none | Workflow `wr664wcb3` landed and was consumed: 188 props specified across 8 zones, 67 already in the bake library, **121 need authoring**. Its integrated-layout return was truncated to the risk section, so the floor plan was decided by the layout owner instead and now lives in `src/three/room.ts`. |
 
 Completed and already consumed:
 
@@ -46,7 +46,9 @@ Ranked by how much each costs the player, not by how easy it is to fix.
 
 | # | Defect | Status | Evidence |
 | --- | --- | --- | --- |
-| 1 | **The frame shows a fragment of a kitchen, not a kitchen.** Drain, jar, towel and 97 % of the detergent bottle are outside the crop; seven of eight zones do not exist. | **OPEN** — blocked on `wr664wcb3` | Critic #2 Part D3 |
+| 1 | **The frame shows a fragment of a kitchen, not a kitchen.** | **IN PROGRESS** — greybox room with all 8 zones at real millimetre dimensions is standing; 7 of 8 zones still have no props | `artifacts/evidence/isometric-reboot-anchors/` (8 frames), `anchor-contact-sheet.png` |
+| 1a | **Anchor framing is wrong.** At a 300-unit view span with the focus at worktop height, seven of the eight anchor frames are a flat plane. The shots have to frame where props WILL be, and the span has to vary per anchor. | **OPEN — next action** | Contact sheet, this turn |
+| 1b | **The floor wear map reads as noise.** 1024 px stretched over 3700 mm is 3.6 mm per texel, so the directional grain authored for a 920 mm worktop becomes visible speckle on the floor — "random procedural noise" is on the banned list. Surfaces need texel density set per surface, not one canvas for all. | **OPEN** | Contact sheet, this turn |
 | 2 | The cabinet face was a flat dark region, 14.7 % of frame at 1.15 levels internal variance | **CLOSED**, controlled comparison | patch sd 0.00429 → 0.01483 (3.5×); high-pass 0.00060 → 0.00287 (4.8×); dominant colour 17.5 % → 15.3 %; unique colours 18 594 → 19 118; GPU cost +0.02 ms |
 | 3 | Worktop carried no material information | **CLOSED**, measured | patch sd 0.00215 → 0.02152; high-pass sd 0.00062 → 0.00526; dominant colour 53.1 % → 17.5 % |
 | 4 | Roaches read as spiders/ticks | **CLOSED** | Critic #2: "definitively not as spiders or ticks any more" |
@@ -131,7 +133,7 @@ the variance came from a geometry edge. **Never measure a fixed screen rect acro
 | Occlusion cases | `proof-13-occluded.png`, `proof-13-restored.png`, `proof-13-multi-occluder.png` |
 | Unit tests | **180 passing** (15 files) — includes 10 occlusion cases and 6 perf-verdict cases |
 | Lint / typecheck | clean |
-| Real-GPU profile (idle, M1, 1920×1080) | proof-19: presented p50 16.70 / p99 18.30; **CPU p99 ~3.8; GPU p99 10.56**; draw 615, geom 71, tex 13 |
+| Real-GPU profile (greybox room, M1, 1920×1080) | presented p50 16.70 / p95 18.20 / p99 18.60; **CPU p99 4.30; GPU p99 10.17**; draw 639, tri 174 476, geom 84, tex 13 |
 | Perf verdict | 11/11 lines PASS, GPU timing available with 300 samples |
 
 **The measurement that matters most right now:** GPU p99 is 10.56 ms of a 16.7 ms budget with only
@@ -143,7 +145,7 @@ the sink fragment built. Remaining headroom for seven more zones is ~5.6 ms, not
 
 | Gate group | State |
 | --- | --- |
-| New identity — zones recognizable without labels, kitchen looks occupied | **FAIL** — one zone exists |
+| New identity — zones recognizable without labels, kitchen looks occupied | **FAIL** — 8 zones exist as greybox volumes; only the sink carries props |
 | Camera and visibility | **PASS in unit tests**, 10 cases; multi-blocker unverified in-scene (layout produces max 1) |
 | Gameplay — first action, first delivery, routes, growth, adaptations, threats | **NOT STARTED** — no loop wired |
 | Cockroaches — reads as cockroach, cargo readable, no stale state | **PARTIAL** — silhouette closed, cargo untested, restart untested |
@@ -161,6 +163,12 @@ Consume the `kitchen-zone-research` workflow (`wr664wcb3`) the moment it lands a
 increment of its BUILD ORDER — chosen so a critic can look at it immediately rather than only at the
 end. That closes defect 1, the highest-impact open item.
 
-Defect 14 is closed, so there is no standalone visual action queued. If `wr664wcb3` has not landed
-by the start of the next turn, the next action is defect 16 (crumbs render as hard-faceted polygon
-shards) — a bake-library geometry fix that does not touch the layout the workflow is specifying.
+Fix defect 1a: give each anchor shot its own view span and a focus point sited where its props will
+stand, then re-capture the contact sheet. Seven flat frames cannot be judged, and the cut list for
+121 props is supposed to be decided against these frames.
+
+Then defect 1b: set texel density per surface. The floor needs roughly a quarter of the counter's
+frequency for the same physical grain size.
+
+Only after both: author zone props in BUILD ORDER, one zone at a time, so the room is always N zones
+finished and 8-N greybox — judgeable — rather than 8 zones half-finished, which is not.
