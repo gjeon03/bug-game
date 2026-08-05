@@ -114,16 +114,26 @@ author's own evidence disproved the author's own claim.
 
 ## 4. Open defects, ranked by player impact
 
-| #   | Defect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | State                                  |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| A   | **No audio.** `src/audio/audio.ts` is retained, functional, and **not wired** to the new simulation's cue stream. The game is silent. Core interactions being silent is an explicit completion blocker.                                                                                                                                                                                                                                                                                  | **OPEN — largest gap**                 |
-| B   | **Chapter pacing is front-loaded.** All five gates fall inside ~3 minutes; the remaining ~20 are spent accumulating toward the victory condition. A 2.5× cost increase was tried, measured, and **reverted** because it broke winnability outright (see the note above `GATES` in `src/world/house.ts`: won 24.5 min → not won at 45 min, 5 gates → 3, sightings 9 → 183, end population 39 → 0). Fixing this needs the economy re-derived alongside the costs, not just larger numbers. | **OPEN, documented, not papered over** |
-| C   | **No real-hardware performance measurement.** All browser evidence is headless SwiftShader — deterministic and useless for frame time. 2 239–2 760 draw calls and ~260–322 k triangles are high and unmeasured on the M1.                                                                                                                                                                                                                                                                | **OPEN**                               |
-| D   | **Visual finish is uneven.** The apartment is built and lit, but only the kitchen has been looked at by a human. Four regions have never been seen.                                                                                                                                                                                                                                                                                                                                      | **OPEN**                               |
-| E   | **No independent critics have reviewed this build.** Visual, gameplay, camera, Korean-UX and technical review are all unrun.                                                                                                                                                                                                                                                                                                                                                             | **OPEN**                               |
-| F   | Occlusion fade is implemented and unit-tested but **not visually verified in scene** for the multi-blocker case.                                                                                                                                                                                                                                                                                                                                                                         | **OPEN**                               |
+Everything closed this session is struck through with its measurement; everything open is named with
+who found it and what they measured, so nothing is quietly retired.
 
----
+| #   | Defect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | State                        |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| A   | **The apartment does not read as an apartment.** The visual critic could not name the room without reading the HUD, and measured 48 % of pixels below luminance 0.04 with 61.2 % of the frame inside one ±6 % band — worse than the 53.9 % figure this project's own code comments cite as the defect they exist to fix. 175 prop builders are on disk; roughly a dozen are ever in frame. Partially improved (camera pulled 1320 → 1900 mm, dark pixels now 12.3 % / 30.9 %), **not solved**. | **OPEN — largest gap**       |
+| A2  | **Occlusion has never executed a raycast.** Technical critic measured `maxTests: 0` over 1 022 frames with 94 occluders registered, standing and walking. The whole system is inert in the shipped build.                                                                                                                                                                                                                                                                                      | **OPEN — blocker**           |
+| A3  | **Threats are never drawn.** `run.threats` is read by exactly one file outside `src/colony/`, and it is the audio bridge. A hazard the player cannot see is not a telegraph.                                                                                                                                                                                                                                                                                                                   | **OPEN — blocker**           |
+| A4  | **Route ribbons leak GL buffers** — 1 386 `createBuffer` / 0 `deleteBuffer` over 462 frames with a single 4-point route. New `BufferAttribute`s every frame.                                                                                                                                                                                                                                                                                                                                   | **OPEN — blocker**           |
+| A5  | **`pnpm test` never completes.** The full-run balance tests take longer than any usable gate. Split into a fast suite and an opt-in slow one.                                                                                                                                                                                                                                                                                                                                                  | **OPEN — blocker**           |
+| B0  | ~~The run is not winnable end-to-end.~~ **CLOSED.** Measured seed 20260805 / brood: **WON in 18.4 min**, all five gates, bedroom gate at **18.2 min**, peak population 67, 36 sightings, 87 workers lost, longest plateau 4.4 s.                                                                                                                                                                                                                                                               | **CLOSED**                   |
+| B   | **Chapter pacing is still front-loaded.** The bedroom gate now lands at 18.2 min — a real 16-minute living-room phase — but the first four gates still fall inside ~2 minutes, and the run is 18.4 min against a 25–35 target. Six measured configurations are tabled in §5a.                                                                                                                                                                                                                  | **OPEN — improved, not met** |
+| B2  | **Adaptation families are scalar multipliers on one loop.** The gameplay critic showed the test that claims two builds diverge cannot discriminate between them.                                                                                                                                                                                                                                                                                                                               | **OPEN**                     |
+| B3  | **The household never passes alert 1** in a measured run, so four of seven response families are unreachable content.                                                                                                                                                                                                                                                                                                                                                                          | **OPEN**                     |
+| B4  | **Player-drawn routes are locked to the scout's own surface**, so sites on other surfaces cannot be routed to by dragging.                                                                                                                                                                                                                                                                                                                                                                     | **OPEN**                     |
+| C   | ~~No real-hardware performance measurement.~~ **CLOSED.** Real Chrome on the M1 via Metal with GPU timer queries, 30 s of active play with a live colony: presented **p50 16.70 / p95 17.80 / p99 18.50 ms**, worst 18.70; CPU 4.20/4.80; GPU 3.97/4.23; **0 frames over 33 ms**; 393 draw calls. Was 50.0 / 51.6 / 83.4 with CPU 47.9 and GPU 43.9 before static baking and the fixed light pool. `performance.json`                                                                          | **CLOSED**                   |
+| C2  | ~~No audio.~~ **CLOSED.** `src/audio/bridge.ts` maps `run.cues` to the retained synthesiser, panned from real world positions against the camera basis. Verified in real Chrome: `audio: started, 2 voices`.                                                                                                                                                                                                                                                                                   | **CLOSED**                   |
+| C3  | ~~No independent criticism.~~ **CLOSED.** Five fresh-context critics, all FAIL, 14 blocker + 21 high findings; seven fixed this session, the rest recorded above. `critics/REPORTS.md`                                                                                                                                                                                                                                                                                                         | **CLOSED**                   |
+| D   | **Visual finish is uneven.** Four of five regions have still never been looked at by a human.                                                                                                                                                                                                                                                                                                                                                                                                  | **OPEN**                     |
+| E   | **Korean:** `log.threat.incoming` is ungrammatical for 4 of 7 threats (`행주질이 온다`), and 51 authored keys — including all seven route-health strings — are never rendered by any code path.                                                                                                                                                                                                                                                                                                | **OPEN**                     |
 
 ## 5. Verified environment facts (re-run 2026-08-05)
 
@@ -140,18 +150,44 @@ for frame time. Real Chrome on the M1 is the only perf target.
 
 ---
 
-## 6. Exact next executable action
+## 5a. The economy sweep, in full
 
-Wire `src/audio/audio.ts` to `run.cues`, which `boot.ts` already drains every frame and currently
-discards. The cue kinds the simulation already emits are: `route.laid`, `route.erased`,
-`worker.born`, `worker.died`, `worker.pickup`, `worker.deliver`, `worker.recover`, `scout.seen`,
-`scout.found`, `scout.climb`, `foothold.claimed`, `gate.opened`, `adaptation.chosen`,
-`routine.incoming`, `routine.active`, and `threat.<kind>.telegraph` / `.start`. That closes the
-largest open gate (A) with no new systems.
+Every configuration measured, seed 20260805 (brood) and 4242 (shadow). This is the record of what
+run length actually responds to, and it is not what it looked like from the armchair.
 
-Then (C): capture a profile in real Chrome on the M1 and set budgets from it.
+| gate costs | source amounts               | systems                            | brood             | note                                                     |
+| ---------- | ---------------------------- | ---------------------------------- | ----------------- | -------------------------------------------------------- |
+| x1         | x1                           | exposure INERT, 5 routines missing | WON 21.4 min      | winnable _because_ things were broken                    |
+| x2.5       | x1                           | same                               | NOT WON at 45 min | starved: food 404, moisture 0                            |
+| x2         | x1.7                         | same                               | WON 6.4 min       | more supply compounds faster than bigger costs hold back |
+| x1.6       | x1                           | same                               | NOT WON at 50 min | food 4, moisture 467 — wrong resource, not no resource   |
+| x1         | x1                           | exposure + routines FIXED          | NOT WON at 50 min | peak 14, food 0, moisture 176                            |
+| x1         | x1, kitchen food x2 + refill | fixed                              | **WON 18.4 min**  | bedroom gate at 18.2 min                                 |
+
+The lesson the numbers actually support: run length is not a constant to sweep. Every failure had
+the same signature — food at zero while moisture overflowed — and the fix was never a multiplier, it
+was **putting enough food where the colony starts**. Once cover zones worked, every route to distant
+food got long, and the map had nothing close by. Nothing in the first four attempts addressed that
+because none of them looked at _which_ resource ran out.
 
 ---
+
+---
+
+## 6. Exact next executable action
+
+**Occlusion has never executed a raycast.** The technical critic measured `maxTests: 0` across
+1 022 frames with 94 occluders registered, both standing still and walking. Either the per-region
+broadphase filter or the bounding spheres computed at registration are wrong — the sphere comes from
+`Box3.setFromObject`, and each occluder group is re-baked into a single child mesh immediately
+before that call, so a bounds/transform mismatch is the likeliest cause. Instrument `candidates`
+versus `tests` per frame and find which of the two rejects everything.
+
+That is top of the list because it means the entire occlusion system — unit-tested, documented, and
+credited in three commit messages — is not running at all in the shipped build.
+
+Then: draw the threats (`run.threats` is read by nothing under `src/view/`), and fix the route
+ribbon GL buffer leak (1 386 `createBuffer` / 0 `deleteBuffer` over 462 frames).
 
 ## 7. Method (non-negotiable — it found every defect in §3)
 

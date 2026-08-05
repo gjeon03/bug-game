@@ -5,17 +5,17 @@
     "timerQuery": true
   },
   "window": {
-    "seconds": 30,
-    "frames": 1835,
-    "measuredSeconds": 30.59859999999404
+    "seconds": 25,
+    "frames": 1516,
+    "measuredSeconds": 25.65319999998808
   },
   "duringCapture": {
-    "time": 75,
+    "time": 70,
     "population": 9,
     "workers": 9,
-    "routes": 2,
+    "routes": 3,
     "threats": 0,
-    "deliveries": 82
+    "deliveries": 50
   },
   "audio": {
     "started": true,
@@ -23,38 +23,38 @@
   },
   "presented": {
     "p50": 16.69999999999709,
-    "p95": 17.80000000000291,
+    "p95": 17.599999999998545,
     "p99": 18.5,
-    "worst": 18.700000000004366
+    "worst": 384
   },
   "cpu": {
-    "p50": 4.200000017881393,
-    "p99": 4.800000011920929
+    "p50": 4.5,
+    "p99": 5.299999982118607
   },
   "gpu": {
-    "p50": 3.967249,
-    "p99": 4.231375,
-    "samples": 1835
+    "p50": 3.964083,
+    "p99": 7.737,
+    "samples": 1516
   },
   "frameTails": {
-    "over16": 605,
-    "over33": 0,
-    "over50": 0,
-    "over100": 0,
-    "over50Pct": 0
+    "over16": 443,
+    "over33": 1,
+    "over50": 1,
+    "over100": 1,
+    "over50Pct": 0.06596306068601583
   },
   "scene": {
     "props": 187,
     "meshes": 2073,
-    "merged": 1943,
-    "geometries": 59,
+    "merged": 1940,
+    "geometries": 71,
     "materials": 228,
     "textures": 21,
-    "drawCalls": 393,
-    "triangles": 60956,
+    "drawCalls": 298,
+    "triangles": 51588,
     "lights": 6,
-    "occluders": 94,
-    "occluderTests": 0,
+    "occluders": 98,
+    "occluderTests": 70,
     "fading": 0,
     "visibleRoaches": 9,
     "cameraPulledIn": 66.85714285714289,

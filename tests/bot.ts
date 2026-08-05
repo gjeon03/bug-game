@@ -99,10 +99,22 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
 
     /* ---- act on whatever is within arm's reach ---- */
     const gate = gateInReach(run);
-    if (gate && !run.scout.working && checkGate(run, gate).ok) beginGateWork(run, gate);
+    /*
+     * `skipBathroom` has to be honoured HERE too, not just when choosing where to walk.
+     * Reach-based auto-work opened the bathroom anyway on a run that was supposed to prove the
+     * bathroom is optional — the measured trace listed `bathroom@1.9` for a bot told to skip it,
+     * so the optionality claim was never actually being tested.
+     */
+    const bathroomGate = gate?.to === 'bathroom' || gate?.from === 'bathroom';
+    if (gate && !(options.skipBathroom && bathroomGate)) {
+      if (!run.scout.working && checkGate(run, gate).ok) beginGateWork(run, gate);
+    }
 
     const foothold = footholdInReach(run);
-    if (foothold) claimFoothold(run, foothold);
+    if (foothold) {
+      const site = run.house.footholds.get(foothold);
+      if (!(options.skipBathroom && site?.region === 'bathroom')) claimFoothold(run, foothold);
+    }
 
     /* ---- steer ---- */
     let moveX = 0;

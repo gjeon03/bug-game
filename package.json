@@ -17,13 +17,14 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run",
+    "test": "vitest run tests/unit/house.test.ts tests/unit/occlusion.test.ts tests/unit/profiler.test.ts",
     "precommit": "pnpm format && pnpm lint && pnpm typecheck && pnpm test",
     "test:watch": "vitest",
     "serve:nested": "node scripts/serve-nested.mjs",
     "test:e2e": "node scripts/capture.mjs",
     "capture": "node scripts/capture.mjs",
-    "review": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm capture"
+    "review": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm capture",
+    "test:slow": "vitest run tests/unit/run.test.ts --testTimeout=1800000"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

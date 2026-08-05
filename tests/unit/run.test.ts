@@ -4,6 +4,13 @@ import { playRun, type BotTrace } from '../bot';
 import type { AdaptationFamily, Run } from '../../src/colony/types';
 
 /**
+ * SLOW SUITE — run with `pnpm test:slow`, not `pnpm test`.
+ *
+ * Each describe block plays a complete run at 60 Hz, so this file takes minutes, not seconds. It
+ * was previously in the default gate and made `pnpm test` never finish, which an independent
+ * technical verifier caught by killing it after 600 s with two workers still pegged at 100 % CPU.
+ * A gate nobody can run to the end is not a gate.
+ *
  * Can the game be played, and does playing it well produce the run the design describes?
  *
  * Every assertion here is driven by a scripted player that uses **only** the functions the input
@@ -87,6 +94,12 @@ describe('a competently played run reaches the end of the apartment', () => {
     expect(played.trace.longestPlateau).toBeLessThan(45);
   });
 
+  it('survives an actual whole-home extermination before it is allowed to win', () => {
+    // Victory used to be strictly dominated by the bedroom gate's own requirements, so the finale
+    // never ran and the win screen congratulated the player for withstanding nothing.
+    expect(played.run.stats.exterminationSweeps).toBeGreaterThanOrEqual(1);
+  });
+
   it('grows a colony that is visible rather than numerical', () => {
     expect(played.trace.peakPopulation).toBeGreaterThanOrEqual(20);
     const claimed = [...played.run.footholds.values()].filter((f) => f.claimed).length;
@@ -114,13 +127,16 @@ describe('the bathroom is optional and a different build still wins', () => {
     expect(families.has('brood')).toBe(false);
   });
 
-  it('produces an observably different network', () => {
-    // A shadow build hugs cover, so its mean route exposure must stay low. If this came out the
-    // same as an unconcealed run, the specialization does nothing visible.
+  it('produces an observably different run from the brood build', () => {
+    // A shadow build hugs cover and is seen far less. Measured: shadow ended with 6 sightings and
+    // 1 worker lost across a 4.3-minute run; the brood build on its own seed ended with 36
+    // sightings and 87 lost across 18.4 minutes. If these converged, the specialization would be
+    // a number with no consequence.
     const mean =
       played.run.routes.reduce((sum, r) => sum + r.exposure, 0) /
       Math.max(1, played.run.routes.length);
     expect(mean).toBeLessThan(0.8);
+    expect(played.run.stats.workersLost).toBeLessThan(30);
   });
 });
 
