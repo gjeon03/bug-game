@@ -1,3 +1,5 @@
+> **STALE — describes the superseded single-kitchen build (branch `main` / commit `df9db36`), not this one.** This document has NOT been rewritten for the whole-home rebuild and parts of it are now wrong. The current, accurate state is `GAUNTLET_STATE.md` (live state, verified measurements, ranked open defects), `CANCELLED_GOAL_HANDOFF_AUDIT.md` (what was inherited and what became of it), and `LOCAL_REVIEW.md` (how to run it). Rewriting this file is outstanding work.
+
 # 품질 리부트 — 한국어 전면화, 오프라인 베이크 아트 파이프라인, 배포 검증
 
 `pre-quality-reboot`(368d1b0) → `main`(8daeab6) · 48 커밋 · 143 파일 · +8488 / −1833

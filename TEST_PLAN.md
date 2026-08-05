@@ -1,3 +1,5 @@
+> **STALE — describes the superseded single-kitchen build (branch `main` / commit `df9db36`), not this one.** This document has NOT been rewritten for the whole-home rebuild and parts of it are now wrong. The current, accurate state is `GAUNTLET_STATE.md` (live state, verified measurements, ranked open defects), `CANCELLED_GOAL_HANDOFF_AUDIT.md` (what was inherited and what became of it), and `LOCAL_REVIEW.md` (how to run it). Rewriting this file is outstanding work.
+
 # TEST_PLAN — Baseboard Empire
 
 ## Layers
