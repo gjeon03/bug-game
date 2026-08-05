@@ -77,6 +77,14 @@ export interface Link {
   readonly from: string;
   readonly to: string;
   readonly at: Vec2;
+  /**
+   * Where the link lands on `to`, when that is not the same XZ as `at`.
+   *
+   * A cable climb comes out directly above where it started, so it needs nothing here. A pipe run
+   * that leaves the bathroom behind the basin and emerges under the kitchen sink four metres away
+   * does — and that asymmetry is the whole value of the bathroom shortcut.
+   */
+  readonly exitAt?: Vec2;
   /** Seconds for one body to traverse. Climbing is slow; that is the cost of height. */
   readonly seconds: number;
   readonly capacity: number;
@@ -113,6 +121,14 @@ export interface Gate {
   readonly requires: GateRequirement;
   /** Seconds of held work by the scout, once the requirements are met. */
   readonly workSeconds: number;
+  /**
+   * The passages this gate creates when it opens.
+   *
+   * Normally one. The links are absent from the navigation graph entirely until the operation
+   * completes, so an unopened region is not merely "blocked" — it is genuinely unreachable, and no
+   * pathfinding query can leak a worker into it.
+   */
+  readonly opens: readonly Link[];
 }
 
 export type GateKind = 'toekick' | 'baseboard' | 'pipe' | 'doorsweep' | 'cableport';
