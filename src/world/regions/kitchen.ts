@@ -309,8 +309,16 @@ export const KITCHEN: RegionSpec = {
       rotY: 0.4,
       occluder: true,
     },
-    { kind: 'kitchen.cuttingBoard', at: { x: mm(3440), y: mm(COUNTER_H), z: mm(-2760) }, rotY: -0.2 },
-    { kind: 'kitchen.bowlStack', at: { x: mm(560), y: mm(COUNTER_H), z: mm(-3020) }, occluder: true },
+    {
+      kind: 'kitchen.cuttingBoard',
+      at: { x: mm(3440), y: mm(COUNTER_H), z: mm(-2760) },
+      rotY: -0.2,
+    },
+    {
+      kind: 'kitchen.bowlStack',
+      at: { x: mm(560), y: mm(COUNTER_H), z: mm(-3020) },
+      occluder: true,
+    },
     {
       kind: 'kitchen.fridge',
       at: { x: mm(X0 + FRIDGE_W / 2), y: 0, z: mm(FRIDGE_Z0 + FRIDGE_D / 2) },
@@ -318,7 +326,12 @@ export const KITCHEN: RegionSpec = {
       fadeFloor: 0.26,
     },
     { kind: 'kitchen.wasteBin', at: { x: mm(3400), y: 0, z: mm(-860) }, occluder: true },
-    { kind: 'kitchen.recycling', at: { x: mm(2810), y: 0, z: mm(-710) }, rotY: 0.3, occluder: true },
+    {
+      kind: 'kitchen.recycling',
+      at: { x: mm(2810), y: 0, z: mm(-710) },
+      rotY: 0.3,
+      occluder: true,
+    },
     {
       kind: 'kitchen.cableDrop',
       at: { x: mm(2960), y: 0, z: mm(NORTH_FACE - 18) },
@@ -334,8 +347,16 @@ export const KITCHEN: RegionSpec = {
       at: { x: mm(760), y: 0, z: mm(-1900) },
       options: { seed: 27, radiusMm: 150 },
     },
-    { kind: 'kitchen.riceSpill', at: { x: mm(2500), y: mm(COUNTER_H), z: mm(-2950) }, options: { seed: 5 } },
-    { kind: 'kitchen.puddle', at: { x: mm(1980), y: 0, z: mm(NORTH_FACE - 55) }, options: { radiusMm: 110 } },
+    {
+      kind: 'kitchen.riceSpill',
+      at: { x: mm(2500), y: mm(COUNTER_H), z: mm(-2950) },
+      options: { seed: 5 },
+    },
+    {
+      kind: 'kitchen.puddle',
+      at: { x: mm(1980), y: 0, z: mm(NORTH_FACE - 55) },
+      options: { radiusMm: 110 },
+    },
   ],
 
   lights: [

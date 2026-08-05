@@ -183,11 +183,11 @@ logistics mind hovering over a floor plan. The target feeling:
 The kitchen is no longer one plane. Three traversal bands, connected by **authored** climb
 transitions — pipe, cable, towel, cabinet seam, appliance back, wall crack:
 
-| Band                       | What it offers                                                                  |
+| Band                       | What it offers                                                                   |
 | -------------------------- | -------------------------------------------------------------------------------- |
-| **Floor**                  | Open tile, appliance gaps, trash, human footsteps, cleaning hazards               |
-| **Baseboard / under-unit** | Safer travel, cracks, cables, pipe access, satellite footholds, hidden shortcuts  |
-| **Counter and sink**       | High-value food and moisture, dishwashing events, exposed bright routes           |
+| **Floor**                  | Open tile, appliance gaps, trash, human footsteps, cleaning hazards              |
+| **Baseboard / under-unit** | Safer travel, cracks, cables, pipe access, satellite footholds, hidden shortcuts |
+| **Counter and sink**       | High-value food and moisture, dishwashing events, exposed bright routes          |
 
 The scout may use every authored transition. **Workers use only established, validated logistics
 links** — verticality is a planning decision, not decoration. No arbitrary wall-crawling: a surface
@@ -224,9 +224,9 @@ obvious the player changed the house.**
 
 ## Budgets that change
 
-| Metric                           | Was      | Now                                                                     |
-| -------------------------------- | -------- | ----------------------------------------------------------------------- |
-| First successful worker delivery | ≤ 45 s   | ≤ 60 s (a 3D approach costs real travel time)                           |
+| Metric                           | Was      | Now                                                                      |
+| -------------------------------- | -------- | ------------------------------------------------------------------------ |
+| First successful worker delivery | ≤ 45 s   | ≤ 60 s (a 3D approach costs real travel time)                            |
 | Production JS bundle (gzip)      | ≤ 150 kB | superseded — three.js is now a runtime dependency; budget set on measure |
 | p99 frame time                   | ≤ 33 ms  | unchanged, but **CPU-only measurement is no longer valid** — see below   |
 

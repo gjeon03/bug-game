@@ -101,7 +101,8 @@ export const ko = {
   'foothold.bathroom.traylip': '샤워 트레이 턱 밑',
   'foothold.bathroom.traylip.desc': '수분은 넘치지만 물을 쓸 때마다 쓸려 나간다.',
   'foothold.bedroom.wardrobeskirt': '장롱 밑 틈',
-  'foothold.bedroom.wardrobeskirt.desc': '침실에서 가장 안전한 자리. 사람은 여기를 들여다보지 않는다.',
+  'foothold.bedroom.wardrobeskirt.desc':
+    '침실에서 가장 안전한 자리. 사람은 여기를 들여다보지 않는다.',
   'foothold.bedroom.bedhead': '침대 머리맡 벽 틈',
   'foothold.bedroom.bedhead.desc': '자는 사람 바로 옆. 위험한 만큼 집 전체 장악의 마지막 조각이다.',
   'foothold.bedroom.architrave': '침실 문틀 뒤',

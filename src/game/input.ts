@@ -111,7 +111,10 @@ export function createInput(target: HTMLElement): Input {
     pointer = { clientX: event.clientX, clientY: event.clientY };
     if (!dragging) return;
     const last = drag[drag.length - 1];
-    if (last && Math.hypot(event.clientX - last.clientX, event.clientY - last.clientY) < DRAG_SPACING) {
+    if (
+      last &&
+      Math.hypot(event.clientX - last.clientX, event.clientY - last.clientY) < DRAG_SPACING
+    ) {
       return;
     }
     drag.push(pointer);

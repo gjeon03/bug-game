@@ -44,29 +44,30 @@ const shot = async (name) => {
   console.log(`  captured ${name}.png`);
 };
 
-const state = () => page.evaluate(() => {
-  const g = window.__game;
-  if (!g) return null;
-  const r = g.run;
-  return {
-    status: r.status,
-    time: Math.round(r.time),
-    chapter: r.chapter,
-    population: r.colony.population,
-    capacity: r.colony.capacity,
-    food: Math.round(r.colony.food),
-    moisture: Math.round(r.colony.moisture),
-    routes: r.routes.length,
-    deliveries: r.stats.deliveries,
-    openGates: [...r.openGates],
-    claimed: [...r.footholds.values()].filter((f) => f.claimed).length,
-    objectiveTitle: r.objective.titleKey,
-    blocker: r.objective.blockerKey,
-    scout: { surface: r.scout.surface, x: Math.round(r.scout.x), z: Math.round(r.scout.z) },
-    stats: g.stats,
-    frame: g.frame,
-  };
-});
+const state = () =>
+  page.evaluate(() => {
+    const g = window.__game;
+    if (!g) return null;
+    const r = g.run;
+    return {
+      status: r.status,
+      time: Math.round(r.time),
+      chapter: r.chapter,
+      population: r.colony.population,
+      capacity: r.colony.capacity,
+      food: Math.round(r.colony.food),
+      moisture: Math.round(r.colony.moisture),
+      routes: r.routes.length,
+      deliveries: r.stats.deliveries,
+      openGates: [...r.openGates],
+      claimed: [...r.footholds.values()].filter((f) => f.claimed).length,
+      objectiveTitle: r.objective.titleKey,
+      blocker: r.objective.blockerKey,
+      scout: { surface: r.scout.surface, x: Math.round(r.scout.x), z: Math.round(r.scout.z) },
+      stats: g.stats,
+      frame: g.frame,
+    };
+  });
 
 console.log(`booting ${BASE}`);
 await page.goto(BASE, { waitUntil: 'load' });
@@ -106,18 +107,23 @@ const drag = await page.evaluate(() => {
     const site = run.house.resources.get(id);
     if (!site || site.surface !== nest.surface) continue;
     const d = Math.hypot(site.at.x - nest.at.x, site.at.z - nest.at.z);
-    if (d < bestD) { bestD = d; best = site; }
+    if (d < bestD) {
+      bestD = d;
+      best = site;
+    }
   }
   if (!best) return null;
   const y = run.house.surfaces.get(nest.surface)?.y ?? 0;
   const steps = [];
   for (let i = 0; i <= 12; i++) {
     const t = i / 12;
-    steps.push(g.project(
-      nest.at.x + (best.at.x - nest.at.x) * t,
-      y,
-      nest.at.z + (best.at.z - nest.at.z) * t,
-    ));
+    steps.push(
+      g.project(
+        nest.at.x + (best.at.x - nest.at.x) * t,
+        y,
+        nest.at.z + (best.at.z - nest.at.z) * t,
+      ),
+    );
   }
   return { target: best.id, steps };
 });
@@ -151,11 +157,9 @@ const long = await page.evaluate(() => {
   const steps = [];
   for (let i = 0; i <= 16; i++) {
     const t = i / 16;
-    steps.push(g.project(
-      nest.at.x + (bin.at.x - nest.at.x) * t,
-      y,
-      nest.at.z + (bin.at.z - nest.at.z) * t,
-    ));
+    steps.push(
+      g.project(nest.at.x + (bin.at.x - nest.at.x) * t, y, nest.at.z + (bin.at.z - nest.at.z) * t),
+    );
   }
   return { steps };
 });
@@ -171,7 +175,11 @@ if (long) {
 }
 
 // Walk, so the camera, gait and occlusion all have something to do.
-for (const [key, ms] of [['KeyW', 800], ['KeyD', 650], ['KeyW', 550]]) {
+for (const [key, ms] of [
+  ['KeyW', 800],
+  ['KeyD', 650],
+  ['KeyW', 550],
+]) {
   await page.keyboard.down(key);
   await page.waitForTimeout(ms);
   await page.keyboard.up(key);
@@ -251,7 +259,11 @@ console.log('\n=== SUMMARY ===');
 console.log('console errors :', errors.length, errors.slice(0, 5));
 console.log('failed requests:', missingRequests.length, missingRequests.slice(0, 5));
 console.log('external reqs  :', externalRequests.length, externalRequests.slice(0, 5));
-console.log('missing props  :', final.stats?.missingProps?.length ?? '?', (final.stats?.missingProps ?? []).slice(0, 10));
+console.log(
+  'missing props  :',
+  final.stats?.missingProps?.length ?? '?',
+  (final.stats?.missingProps ?? []).slice(0, 10),
+);
 console.log('draw calls     :', final.stats?.drawCalls, 'triangles:', final.stats?.triangles);
 console.log('restarts equal :', identical);
 

@@ -307,7 +307,10 @@ export function openGateVisual(seal: THREE.Object3D): void {
   seal.userData.opening = 0;
 }
 
-export function updateGateVisuals(gateProps: ReadonlyMap<string, THREE.Object3D>, dt: number): void {
+export function updateGateVisuals(
+  gateProps: ReadonlyMap<string, THREE.Object3D>,
+  dt: number,
+): void {
   for (const seal of gateProps.values()) {
     const t = seal.userData.opening;
     if (typeof t !== 'number' || t >= 1) continue;

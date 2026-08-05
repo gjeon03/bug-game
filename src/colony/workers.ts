@@ -197,7 +197,13 @@ function speedScale(run: Run): number {
  *
  * Returns the remaining distance to the goal so the caller can decide whether it arrived.
  */
-function moveToward(run: Run, worker: Worker, goalX: number, goalZ: number, budget: number): number {
+function moveToward(
+  run: Run,
+  worker: Worker,
+  goalX: number,
+  goalZ: number,
+  budget: number,
+): number {
   const dx = goalX - worker.x;
   const dz = goalZ - worker.z;
   const distance = Math.hypot(dx, dz);

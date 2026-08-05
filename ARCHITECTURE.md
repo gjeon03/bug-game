@@ -225,12 +225,12 @@ renderer-agnostic.** A grep of all 8,071 lines under `src/sim/` for `render/` im
 `localStorage` and `navigator` returns **two hits, both the English word "window" inside prose
 comments.** Dependency direction is one-way: `render/` imports from `sim/`, never the reverse.
 
-| Class | Modules | Lines |
-| --- | --- | ---: |
-| REUSE-AS-IS | `core/*` (clock, rng, math, spatial, storage, telemetry), `sim/sim`, `sim/suspicion`, `sim/colony`, `sim/adaptations`, `sim/operations`, `sim/onboarding`, `i18n/*`, `ui/settings`, `ui/icons`, `audio/audio` | ~4,527 |
-| REUSE-WITH-SURGERY | `sim/world`, `sim/constants`, `sim/types`, `sim/kitchen`, `sim/heat`, `sim/territory`, `sim/pheromone`, `sim/workers`, `sim/scout`, `sim/director`, `sim/threats`, `sim/routines`, `testapi` | ~6,144 |
-| REWRITE | `sim/field`, `sim/exposure`, `render/camera`, `ui/hud`, `ui/overlays`, `main`, `style.css` | ~2,893 |
-| DELETE | `render/renderer`, `render/atlas`, `render/props`, `render/solids`, `render/sprites`, `render/particles`, `render/palette`, `art/*` | ~4,766 |
+| Class              | Modules                                                                                                                                                                                                       |  Lines |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -----: |
+| REUSE-AS-IS        | `core/*` (clock, rng, math, spatial, storage, telemetry), `sim/sim`, `sim/suspicion`, `sim/colony`, `sim/adaptations`, `sim/operations`, `sim/onboarding`, `i18n/*`, `ui/settings`, `ui/icons`, `audio/audio` | ~4,527 |
+| REUSE-WITH-SURGERY | `sim/world`, `sim/constants`, `sim/types`, `sim/kitchen`, `sim/heat`, `sim/territory`, `sim/pheromone`, `sim/workers`, `sim/scout`, `sim/director`, `sim/threats`, `sim/routines`, `testapi`                  | ~6,144 |
+| REWRITE            | `sim/field`, `sim/exposure`, `render/camera`, `ui/hud`, `ui/overlays`, `main`, `style.css`                                                                                                                    | ~2,893 |
+| DELETE             | `render/renderer`, `render/atlas`, `render/props`, `render/solids`, `render/sprites`, `render/particles`, `render/palette`, `art/*`                                                                           | ~4,766 |
 
 Roughly **59 % of the TypeScript survives**, and the surgery is unusually well localised.
 
@@ -249,7 +249,7 @@ than logic needing rethinking.
    `inside()` predicate are 2D-bound.
 
 `sim/exposure.ts` is a REWRITE for the same reason: `isWatched` fakes line of sight with a
-cone-intensity threshold because there was no occlusion query to ask. The *meter* is worth keeping
+cone-intensity threshold because there was no occlusion query to ask. The _meter_ is worth keeping
 verbatim; the sampling underneath it becomes a real 3D visibility test.
 
 ## New module layout
@@ -282,8 +282,8 @@ return to their cold values after a restart.
 ## Test seams — preserve verbatim
 
 `window.__roach` is the single global. Its design invariant is worth more than its convenience:
-*there is no way to set colony values, teleport the scout or force an outcome, so an E2E test cannot
-fake a passing run.* `placeScout` is the one narrow exception and is documented as camera-only.
+_there is no way to set colony values, teleport the scout or force an outcome, so an E2E test cannot
+fake a passing run._ `placeScout` is the one narrow exception and is documented as camera-only.
 Members actually exercised: `ready`, `newRun(seed)`, `state()`, `input.{press,release,releaseAll}`,
 `telemetry()`, `markPerf`/`endPerf`, `assetAudit()`. There are no query parameters; seeding happens
 only through `newRun`.

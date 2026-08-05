@@ -19,20 +19,20 @@ build is delivered to the user by running it locally — see `LOCAL_REVIEW.md`.
 
 **Never, under any circumstance, and regardless of how well the work is going:**
 
-| Forbidden                          | Includes                                                     |
-| ---------------------------------- | ------------------------------------------------------------ |
-| `git push` (any form)              | `--force`, `-u`, pushing tags, pushing other branches         |
-| `git merge`                        | into or out of this branch                                    |
-| `git rebase` onto another branch   | any history rewrite touching a shared branch                  |
-| `git cherry-pick` into `main`      | any transplant toward a published branch                      |
-| `git switch main` to implement     | inspecting main read-only is fine; **editing there is not**   |
-| Opening a pull request             | `gh pr create`, the web UI, any API call                      |
-| Triggering deployment              | `gh workflow run`, Pages workflow, `gh api` dispatch          |
-| Changing remotes                   | `git remote add/set-url`, credential or auth changes          |
-| Publishing a package               | `npm publish`, `pnpm publish`                                 |
-| Uploading a build                  | any artifact upload to a remote host                          |
-| Modifying production infra         | workflow files that deploy, Pages settings                    |
-| **Claiming anything was deployed** | the deployed URL is **not** evidence for this branch's work   |
+| Forbidden                          | Includes                                                    |
+| ---------------------------------- | ----------------------------------------------------------- |
+| `git push` (any form)              | `--force`, `-u`, pushing tags, pushing other branches       |
+| `git merge`                        | into or out of this branch                                  |
+| `git rebase` onto another branch   | any history rewrite touching a shared branch                |
+| `git cherry-pick` into `main`      | any transplant toward a published branch                    |
+| `git switch main` to implement     | inspecting main read-only is fine; **editing there is not** |
+| Opening a pull request             | `gh pr create`, the web UI, any API call                    |
+| Triggering deployment              | `gh workflow run`, Pages workflow, `gh api` dispatch        |
+| Changing remotes                   | `git remote add/set-url`, credential or auth changes        |
+| Publishing a package               | `npm publish`, `pnpm publish`                               |
+| Uploading a build                  | any artifact upload to a remote host                        |
+| Modifying production infra         | workflow files that deploy, Pages settings                  |
+| **Claiming anything was deployed** | the deployed URL is **not** evidence for this branch's work |
 
 Local checkpoint commits are allowed and encouraged. Committing is safe; **transmitting is not.**
 
@@ -202,17 +202,17 @@ uniform darkness · detached floating dots as cargo · a glowing circle as the p
 A critic may diagnose any system. **Only its owner integrates changes.** Never let parallel agents
 edit a coupled group simultaneously — that is the known failure mode this process exists to avoid.
 
-| Coupled group                                          |
-| ------------------------------------------------------ |
-| camera + occlusion + player visibility                  |
-| lighting + materials + shadows + tone mapping           |
-| scout movement + collision + animation                  |
-| pheromone routes + worker AI + carrying                 |
-| economy + progression + objective pacing                |
-| threat director + telegraphs + damage + recovery        |
-| environment layout + navigation + prop composition      |
-| UI layout + Korean typography + world markers           |
-| renderer + profiling + performance budgets              |
+| Coupled group                                      |
+| -------------------------------------------------- |
+| camera + occlusion + player visibility             |
+| lighting + materials + shadows + tone mapping      |
+| scout movement + collision + animation             |
+| pheromone routes + worker AI + carrying            |
+| economy + progression + objective pacing           |
+| threat director + telegraphs + damage + recovery   |
+| environment layout + navigation + prop composition |
+| UI layout + Korean typography + world markers      |
+| renderer + profiling + performance budgets         |
 
 Parallel agents are for: repository audit · reference research · asset search · license check · prop
 and audio candidate production · localization review · isolated test creation · visual criticism ·
@@ -233,7 +233,7 @@ blocking props fade smoothly · multiple blockers work · restoration works · n
 defect · hazards readable · spatial context preserved.
 
 **Gameplay** — first action ≈10 s · first delivery ≈60 s · pheromone logistics is the differentiator
-· vertical routes create real choices · growth changes capability *and* world presentation · two
+· vertical routes create real choices · growth changes capability _and_ world presentation · two
 adaptation paths produce observably different runs · routines create both opportunity and danger ·
 threats respond to evidence · no unexplained decision plateau > 45 s · victory requires active play ·
 failure is attributable · restart is immediate.
@@ -247,18 +247,19 @@ threshold · no geometry penetration · five restarts leave no stale state.
 
 **Assets and art** — every major object intentionally finished · no default material on a final prop
 · materials read distinctly · lighting motivated · growth visibly transforms the environment · core
-interactions have visual *and* audio feedback · no unintended temporary asset.
+interactions have visual _and_ audio feedback · no unintended temporary asset.
 
 **Technical** — clean install · typecheck · lint · unit + integration · production build · local
 nested-path build · real-browser E2E · zero console errors · zero missing assets · zero runtime
 network dependencies · restart and focus tests · performance tails.
 
 **Performance @ 1080p peak play** — p50 ≤ 16.7 ms · p95 ≤ 20 ms · p99 ≤ 33 ms · no unexplained frame
+
 > 100 ms after load · frames > 50 ms below 1% · zero shader-compilation stalls during validated
 > active play · zero unbounded workers/particles/audio voices/material clones/event listeners · zero
 > restart leakage. **Any revised budget requires measured justification.**
 
-**Repository safety** — work stayed on `experiment/isometric-threejs-rebuild` · no merge · no push ·
+**Repository safety** — work stayed on `experiment/whole-home-infestation-3d` · no merge · no push ·
 no PR · no deployment · no remote configuration change · old branches intact.
 
 ---
@@ -278,13 +279,13 @@ bar is: **stop looking like a prototype, and meet this document's gates.**
 
 The user authorized installing the missing toolchain. **It is installed and proven, not assumed.**
 
-| Tool                | Where                                                        | Proof                            |
-| ------------------- | ------------------------------------------------------------ | -------------------------------- |
-| **Blender 5.2.0 LTS** | `~/Applications/Blender.app`, wrapper `/opt/homebrew/bin/blender` | headless probe, see below   |
-| Blender Python      | **3.13.13** embedded, `io_scene_gltf2` registered              | `EXPORT_OP_EXISTS True`          |
-| ffmpeg / ffprobe    | `/opt/homebrew/bin/`                                          | on PATH                          |
-| ImageMagick         | `/opt/homebrew/bin/magick`                                    | on PATH                          |
-| Draco               | `/opt/homebrew/bin/draco_encoder`, `draco_decoder`            | on PATH                          |
+| Tool                  | Where                                                             | Proof                     |
+| --------------------- | ----------------------------------------------------------------- | ------------------------- |
+| **Blender 5.2.0 LTS** | `~/Applications/Blender.app`, wrapper `/opt/homebrew/bin/blender` | headless probe, see below |
+| Blender Python        | **3.13.13** embedded, `io_scene_gltf2` registered                 | `EXPORT_OP_EXISTS True`   |
+| ffmpeg / ffprobe      | `/opt/homebrew/bin/`                                              | on PATH                   |
+| ImageMagick           | `/opt/homebrew/bin/magick`                                        | on PATH                   |
+| Draco                 | `/opt/homebrew/bin/draco_encoder`, `draco_decoder`                | on PATH                   |
 
 **Proven capability (run 2026-08-05, headless, `--factory-startup`):** mesh → armature → vertex
 skinning weights → keyframed animation → `export_scene.gltf` produced a valid GLB

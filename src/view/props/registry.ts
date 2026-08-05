@@ -45,7 +45,10 @@ export function bool(options: PropOptions, key: string, fallback: boolean): bool
  * contract, a completion blocker — so it is surfaced as data rather than left for someone to
  * notice in a screenshot.
  */
-export function missingBuilders(registry: PropRegistry, kinds: Iterable<string>): readonly string[] {
+export function missingBuilders(
+  registry: PropRegistry,
+  kinds: Iterable<string>,
+): readonly string[] {
   const missing = new Set<string>();
   for (const kind of kinds) {
     if (!(kind in registry)) missing.add(kind);

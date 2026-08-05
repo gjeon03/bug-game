@@ -4,7 +4,12 @@ import type { RegionId } from '../world/types';
 import type { Run } from '../colony/types';
 import { WORKER_CAP } from '../colony/state';
 import { GameCamera } from './camera';
-import { buildLighting, configureRenderer, updateRoutineLights, type RegionLights } from './lighting';
+import {
+  buildLighting,
+  configureRenderer,
+  updateRoutineLights,
+  type RegionLights,
+} from './lighting';
 import { buildScene, openGateVisual, updateGateVisuals, type BuiltScene } from './scene';
 import { createRoachView, type RoachView } from './roaches';
 import { createRouteView, type RouteView } from './routes';
@@ -214,7 +219,10 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
       return caster
         .intersectObject(built.root, true)
         .slice(0, 8)
-        .map((h) => ({ name: h.object.name || h.object.parent?.name || '?', distance: Math.round(h.distance) }));
+        .map((h) => ({
+          name: h.object.name || h.object.parent?.name || '?',
+          distance: Math.round(h.distance),
+        }));
     },
 
     stats() {

@@ -36,17 +36,17 @@ pnpm capture            # drive the built game in a browser and write artifacts/
 
 ## Controls
 
-| Key | Action |
-| --- | --- |
-| `W` `A` `S` `D` | move the scout (camera-relative) |
-| `Shift` | sprint — drains, and being loud raises how fast you are noticed |
-| left-drag | lay a pheromone route from a claimed foothold to a discovered source |
-| right-click | erase the route nearest the cursor |
-| `E` | claim a foothold · start or stop work on a sealed passage |
-| `Space` | traverse a cable, pipe, seam or fabric climb |
-| `1` `2` `3` | commit an adaptation (번식 / 수집 / 은신) when a point is available |
-| wheel | zoom, within a narrow fixed range |
-| `Esc` | pause · `R` restart |
+| Key             | Action                                                               |
+| --------------- | -------------------------------------------------------------------- |
+| `W` `A` `S` `D` | move the scout (camera-relative)                                     |
+| `Shift`         | sprint — drains, and being loud raises how fast you are noticed      |
+| left-drag       | lay a pheromone route from a claimed foothold to a discovered source |
+| right-click     | erase the route nearest the cursor                                   |
+| `E`             | claim a foothold · start or stop work on a sealed passage            |
+| `Space`         | traverse a cable, pipe, seam or fabric climb                         |
+| `1` `2` `3`     | commit an adaptation (번식 / 수집 / 은신) when a point is available  |
+| wheel           | zoom, within a narrow fixed range                                    |
+| `Esc`           | pause · `R` restart                                                  |
 
 ## Recommended first play path
 

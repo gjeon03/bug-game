@@ -330,7 +330,7 @@ actually played at. Body proportions stay honest; only the sticks are exaggerate
 framing changes, re-derive these — do not tweak them by eye.**
 
 **Silhouette is set by sweep, not by part count.** Six legs arranged radially around a compact body is
-a *spider*. A cockroach's legs rake backward — front pair reaching past the head, hind pair trailing
+a _spider_. A cockroach's legs rake backward — front pair reaching past the head, hind pair trailing
 behind the abdomen — and the body is long rather than round. This is the difference between passing
 and failing the "reads as a cockroach" gate.
 

@@ -67,14 +67,7 @@ export interface Scout {
 /* ----------------------------------------------------------------- workers */
 
 export type WorkerState =
-  | 'idle'
-  | 'outbound'
-  | 'collecting'
-  | 'inbound'
-  | 'delivering'
-  | 'climbing'
-  | 'fleeing'
-  | 'dead';
+  'idle' | 'outbound' | 'collecting' | 'inbound' | 'delivering' | 'climbing' | 'fleeing' | 'dead';
 
 export interface Worker {
   readonly id: number;
@@ -111,13 +104,7 @@ export interface Worker {
 /* ------------------------------------------------------------------ routes */
 
 export type RouteHealth =
-  | 'ok'
-  | 'incomplete'
-  | 'disconnected'
-  | 'blocked'
-  | 'congested'
-  | 'compromised'
-  | 'washed';
+  'ok' | 'incomplete' | 'disconnected' | 'blocked' | 'congested' | 'compromised' | 'washed';
 
 /**
  * A pheromone route: a supply line the player draws between a foothold and a source.
@@ -205,14 +192,7 @@ export interface RoutineState {
 }
 
 export type ThreatKind =
-  | 'footsteps'
-  | 'wipe'
-  | 'trap'
-  | 'vacuum'
-  | 'spray'
-  | 'move'
-  | 'light'
-  | 'sleeper';
+  'footsteps' | 'wipe' | 'trap' | 'vacuum' | 'spray' | 'move' | 'light' | 'sleeper';
 
 export interface Threat {
   readonly id: number;
