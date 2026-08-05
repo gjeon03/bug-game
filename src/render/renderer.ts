@@ -1,5 +1,6 @@
 import { TAU, clamp01, lerp } from '../core/math.ts';
 import { valueNoise2D } from '../core/rng.ts';
+import { t } from '../i18n/index.ts';
 import {
   FOOT_KILL_RADIUS,
   FOOT_RADIUS,
@@ -1704,7 +1705,23 @@ export class Renderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = 'rgba(6,10,15,0.8)';
-    const label = `${guide.label} · ${tiles} tile${tiles === 1 ? '' : 's'}`;
+    /*
+     * VERIFIED DEFECT, fixed 2026-08-05.
+     *
+     * This line used to be `` `${guide.label} · ${tiles} tile${tiles === 1 ? '' : 's'}` `` — English
+     * plural morphology, painted onto the canvas, while a correct `hud.guide` key sat unused in both
+     * catalogs. It shipped to production and showed a Korean player "2 tiles" on first hover.
+     *
+     * Seventeen headless gates missed it, and the reason is structural rather than careless: this
+     * module did not import `t` AT ALL. Every localization check observes the i18n pathway —
+     * catalog completeness, missing-key recording, DOM text scans — so a string that bypasses the
+     * pathway is invisible to all of them by construction. Korean has no plural agreement, so
+     * `tile${...}s` was prima-facie untranslated copy that nothing was looking for.
+     *
+     * Guarded now by `tests/unit/no-english-literals.test.ts`, which scans SOURCE rather than
+     * catalogs.
+     */
+    const label = t('hud.guide', { label: guide.label, tiles });
     const tw = ctx.measureText(label).width + 14;
     const lx = Math.min(w - tw / 2 - 4, Math.max(tw / 2 + 4, px - dx * 26));
     const ly = Math.min(h - 16, Math.max(16, py - dy * 26));
