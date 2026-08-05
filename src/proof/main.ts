@@ -12,9 +12,8 @@ import { buildEnvironment, buildLights, configureRenderer } from '../three/env';
 // @ts-expect-error — untyped .mjs shared with tools/bake
 import { SINK_PROPS } from '../../tools/bake/props/sink.mjs';
 // @ts-expect-error — untyped .mjs shared with tools/bake
-import { roach as buildRoachMesh } from '../../tools/bake/props/roach.mjs';
-// @ts-expect-error — untyped .mjs shared with tools/bake
 import { counterStone, laminate, steelBrushed } from '../../tools/bake/lib/materials.mjs';
+import { createRoachAssets, type Roach } from '../three/roach';
 
 interface PropSpec {
   build: () => THREE.Object3D;
@@ -58,7 +57,7 @@ const CAM_YAW_DEG = 38;
  * blue-black rectangle" defect in three dimensions. Widening brings the backsplash into frame, and
  * a visible back edge is most of what stops a surface reading as an infinite plane.
  */
-const CAM_VIEW_UNITS = 430;
+const CAM_VIEW_UNITS = 300;
 /** Seconds for the camera to cover ~63 % of the distance to its target. Damped, never rigid. */
 const CAM_LAG = 0.16;
 
@@ -82,18 +81,28 @@ function cameraOffset(): THREE.Vector3 {
 interface Occluder {
   readonly root: THREE.Object3D;
   readonly materials: THREE.Material[];
+  readonly meshes: THREE.Mesh[];
   /** 1 = fully opaque, 0 = fully faded. Eased toward `target` every frame. */
   current: number;
   target: number;
 }
 
-/** Reduced opacity, not disappearance — the silhouette has to survive so depth is not destroyed. */
-const FADE_FLOOR = 0.22;
+/**
+ * Reduced opacity, not disappearance — the silhouette has to survive so depth is not destroyed.
+ *
+ * MEASURED CORRECTION (proof-03): 0.22 was low enough that the mug and the plate stack read as
+ * glassware rather than as faded ceramic, and because they went on casting a fully opaque shadow
+ * the result looked like a rendering fault instead of an affordance. A faded occluder now stops
+ * casting too — you cannot see through an object and still see its solid shadow without the eye
+ * calling it a bug.
+ */
+const FADE_FLOOR = 0.38;
 /** Seconds for a full fade in or out. CLAUDE.md §3 mandates 150–300 ms. */
 const FADE_SECONDS = 0.22;
 
 function registerOccluder(root: THREE.Object3D): Occluder {
   const materials: THREE.Material[] = [];
+  const meshes: THREE.Mesh[] = [];
   root.traverse((node) => {
     const mesh = node as THREE.Mesh;
     if (!mesh.isMesh) return;
@@ -105,8 +114,9 @@ function registerOccluder(root: THREE.Object3D): Occluder {
       m.transparent = true;
       materials.push(m);
     }
+    meshes.push(mesh);
   });
-  return { root, materials, current: 1, target: 1 };
+  return { root, materials, meshes, current: 1, target: 1 };
 }
 
 /* ------------------------------------------------------------------- scene */
@@ -322,56 +332,23 @@ for (const p of PLACEMENTS) {
 
 /* ------------------------------------------------------------------ roaches */
 
-/**
- * Gait poses, cycled by phase.
+/*
+ * MEASURED CORRECTION (proof-02 -> proof-03).
  *
- * This is a stopgap with a named replacement. The production scout is a code-built `SkinnedMesh`
- * with a procedural tripod gait — a hexapod suits that better than any other character, because six
- * identical three-segment legs generate in a loop and the walk cycle is `sin(phase + leg * PI)`
- * rather than a hand-keyed clip. Pose swapping exists so the proof scene can be judged on lighting,
- * materials, scale and camera TODAY. It is recorded as TEMPORARY in ASSET_MANIFEST.md and blocks
- * completion until replaced.
+ * The first two proofs built ten discrete gait poses per roach and toggled visibility. On an Apple
+ * M1 at 1920x1080 that produced **2,743 geometries and 965 draw calls** for twenty props and five
+ * roaches — it held 60 fps only because the scene was tiny, and the brief requires dozens of
+ * workers. Pose swapping also steps the legs in ten visible jumps.
+ *
+ * `src/three/roach.ts` replaces it with one shared-geometry rigid hierarchy per species, animated
+ * by analytic two-bone IK on an alternating tripod. Geometry count is now constant in colony size.
  */
-const GAIT_STEPS = 10;
+const roachAssets = createRoachAssets();
 
-interface RoachOptions {
-  bodyMm?: number;
-  gait?: number;
-  dead?: boolean;
-  carrying?: number | null;
-  palette?: 'scout' | 'workerDark' | 'workerPale' | 'nymph';
-}
-const makeRoach = buildRoachMesh as (options?: RoachOptions) => THREE.Object3D;
-
-function buildRoachRig(options: Omit<RoachOptions, 'gait'>): THREE.Group {
-  const group = new THREE.Group();
-  for (let i = 0; i < GAIT_STEPS; i++) {
-    const pose = makeRoach({ ...options, gait: i / GAIT_STEPS });
-    pose.visible = i === 0;
-    pose.traverse((node) => {
-      const mesh = node as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-    });
-    group.add(pose);
-  }
-  return group;
-}
-
-function showPose(group: THREE.Group, phase: number): void {
-  const count = group.children.length;
-  const index = Math.floor(((phase % 1) + 1) % 1 * count) % count;
-  for (let i = 0; i < count; i++) {
-    const child = group.children[i];
-    if (child) child.visible = i === index;
-  }
-}
-
-const scout = buildRoachRig({ bodyMm: 35, palette: 'scout' });
+const scout = roachAssets.build({ bodyMm: 35, palette: 'scout', isScout: true });
 // Starts on open ground between the crumbs and the drain, so the opening shot frames the sink.
-scout.position.set(mm(30), 0, mm(60));
-scene.add(scout);
+scout.root.position.set(mm(30), 0, mm(60));
+scene.add(scout.root);
 
 /* ------------------------------------------------------------ pheromone route */
 
@@ -391,6 +368,8 @@ const ROUTE_POINTS = [
   new THREE.Vector3(mm(176), 0, mm(58)),
 ];
 const routeCurve = new THREE.CatmullRomCurve3(ROUTE_POINTS);
+/** Arc length in world units, so a worker's `t` rate can be converted into real travel speed. */
+const routeLength = routeCurve.getLength();
 
 function buildRouteRibbon(curve: THREE.CatmullRomCurve3): THREE.Mesh {
   const SEGMENTS = 140;
@@ -451,7 +430,7 @@ function buildRouteRibbon(curve: THREE.CatmullRomCurve3): THREE.Mesh {
 scene.add(buildRouteRibbon(routeCurve));
 
 interface Worker {
-  readonly rig: THREE.Group;
+  readonly roach: Roach;
   /** Position along the pheromone route, 0..1, wrapping. */
   t: number;
   readonly speed: number;
@@ -461,16 +440,16 @@ interface Worker {
 const workers: Worker[] = [];
 for (let i = 0; i < 4; i++) {
   // Half the line is inbound with cargo — a delivery visibly in progress, which the proof scene is
-  // required to show. The cargo is held in the mandibles by the model itself; a detached floating
+  // required to show. The cargo is held at the mandibles by the model itself; a detached floating
   // dot is on the banned list because that is exactly what the previous build shipped.
-  const carrying = i % 2 === 0 ? 5 : null;
-  const rig = buildRoachRig({
+  const carrying = i % 2 === 0;
+  const roach = roachAssets.build({
     bodyMm: 27,
     palette: carrying ? 'workerPale' : 'workerDark',
-    carrying,
   });
-  scene.add(rig);
-  workers.push({ rig, t: i / 4, speed: 0.055 + i * 0.006, phase: i * 0.37 });
+  roach.setCargo(carrying);
+  scene.add(roach.root);
+  workers.push({ roach, t: i / 4, speed: 0.055 + i * 0.006, phase: i * 0.37 });
 }
 
 /* --------------------------------------------------- moving household shadow */
@@ -508,9 +487,18 @@ const SCOUT_SPEED = mm(150);
 const SCOUT_SPRINT = 2.1;
 
 const raycaster = new THREE.Raycaster();
-const camTarget = new THREE.Vector3().copy(scout.position);
+const camTarget = new THREE.Vector3().copy(scout.root.position);
 let scoutHeading = 0;
 let scoutPhase = 0;
+let scoutEffort = 0;
+/**
+ * World distance covered per complete gait cycle.
+ *
+ * Driving the phase from distance rather than from elapsed time is what ties the legs to the
+ * ground: at half speed the cycle takes twice as long, so the stance foot stays planted instead of
+ * sliding. The value is the hind pair's stride, which is the pair that actually propels the animal.
+ */
+const STRIDE_DISTANCE = mm(17);
 let elapsed = 0;
 let last = performance.now();
 let frames = 0;
@@ -544,7 +532,10 @@ function moveScout(dt: number): void {
   if (held.has('KeyD')) ix += 1;
 
   if (ix === 0 && iz === 0) {
-    scoutPhase += dt * 0.9; // idle shuffle keeps the body alive
+    // At rest the legs hold station but the antennae keep searching — `pose` drives them off the
+    // same phase, so a slow idle advance is what stops the roach reading as a model of an insect.
+    scoutPhase += dt * 0.35;
+    scoutEffort += (0 - scoutEffort) * Math.min(1, dt * 6);
     return;
   }
 
@@ -555,13 +546,13 @@ function moveScout(dt: number): void {
   const wz = nx * Math.sin(yaw) + nz * Math.cos(yaw);
 
   const speed = SCOUT_SPEED * (held.has('ShiftLeft') ? SCOUT_SPRINT : 1);
-  scout.position.x = THREE.MathUtils.clamp(
-    scout.position.x + wx * speed * dt,
+  scout.root.position.x = THREE.MathUtils.clamp(
+    scout.root.position.x + wx * speed * dt,
     -COUNTER_HALF_X + mm(20),
     COUNTER_HALF_X - mm(20),
   );
-  scout.position.z = THREE.MathUtils.clamp(
-    scout.position.z + wz * speed * dt,
+  scout.root.position.z = THREE.MathUtils.clamp(
+    scout.root.position.z + wz * speed * dt,
     -COUNTER_HALF_Z + mm(20),
     COUNTER_HALF_Z - mm(20),
   );
@@ -572,8 +563,10 @@ function moveScout(dt: number): void {
   while (delta > Math.PI) delta -= Math.PI * 2;
   while (delta < -Math.PI) delta += Math.PI * 2;
   scoutHeading += delta * Math.min(1, dt * 12);
-  scout.rotation.y = scoutHeading;
-  scoutPhase += dt * (held.has('ShiftLeft') ? 9 : 5.5);
+  scout.root.rotation.y = scoutHeading;
+  // Gait phase is integrated from actual travel, not from wall time, so the legs cannot skate.
+  scoutPhase += (dt * speed) / STRIDE_DISTANCE;
+  scoutEffort = held.has('ShiftLeft') ? 1.8 : 1;
 }
 
 function updateWorkers(dt: number): void {
@@ -581,10 +574,11 @@ function updateWorkers(dt: number): void {
     w.t = (w.t + w.speed * dt) % 1;
     const point = routeCurve.getPointAt(w.t);
     const tangent = routeCurve.getTangentAt(w.t);
-    w.rig.position.set(point.x, 0, point.z);
-    w.rig.rotation.y = Math.atan2(tangent.x, tangent.z);
-    w.phase += dt * 6;
-    showPose(w.rig, w.phase);
+    w.roach.root.position.set(point.x, 0, point.z);
+    w.roach.root.rotation.y = Math.atan2(tangent.x, tangent.z);
+    // Same distance-driven rule as the scout: the curve's arc length per second sets the cadence.
+    w.phase += (w.speed * routeLength * dt) / STRIDE_DISTANCE;
+    w.roach.pose(w.phase, 1);
   }
 }
 
@@ -604,7 +598,7 @@ function updateOcclusion(dt: number): void {
     new THREE.Vector3(-mm(12), mm(4), 0),
   ];
   for (const probe of probes) {
-    const point = scout.position.clone().add(probe);
+    const point = scout.root.position.clone().add(probe);
     const dir = point.clone().sub(camera.position);
     const distance = dir.length();
     raycaster.set(camera.position, dir.normalize());
@@ -619,11 +613,13 @@ function updateOcclusion(dt: number): void {
   for (const o of occluders) {
     if (o.current < o.target) o.current = Math.min(o.target, o.current + step);
     else if (o.current > o.target) o.current = Math.max(o.target, o.current - step);
+    const opaque = o.current >= 0.999;
     for (const m of o.materials) {
       m.opacity = o.current;
       // Only pay the transparency sorting cost while actually faded.
-      m.depthWrite = o.current >= 0.999;
+      m.depthWrite = opaque;
     }
+    for (const mesh of o.meshes) mesh.castShadow = opaque;
   }
 }
 
@@ -634,18 +630,18 @@ function frame(now: number): void {
 
   resize();
   moveScout(dt);
-  showPose(scout, scoutPhase);
+  scout.pose(scoutPhase, scoutEffort);
   updateWorkers(dt);
 
   // Household shadow sweeps across on a slow cycle, then leaves.
   const sweep = (elapsed % 14) / 14;
   shadowCaster.position.x = THREE.MathUtils.lerp(-mm(1400), mm(1400), sweep);
   shadowCaster.position.z = mm(-40) + Math.sin(sweep * Math.PI) * mm(120);
-  lights.key.target.position.set(scout.position.x, 0, scout.position.z);
+  lights.key.target.position.set(scout.root.position.x, 0, scout.root.position.z);
   lights.key.target.updateMatrixWorld();
-  lights.key.position.set(scout.position.x - 260, 620, scout.position.z + 190);
+  lights.key.position.set(scout.root.position.x - 260, 620, scout.root.position.z + 190);
 
-  camTarget.lerp(scout.position, Math.min(1, dt / CAM_LAG));
+  camTarget.lerp(scout.root.position, Math.min(1, dt / CAM_LAG));
   camera.position.copy(camTarget).add(CAM_OFFSET);
   camera.lookAt(camTarget);
 
@@ -659,10 +655,12 @@ function frame(now: number): void {
     frames = 0;
     fpsAccum = 0;
     const info = renderer.info;
+    const roachStats = roachAssets.stats();
     readoutEl.textContent = [
       `${fps.toFixed(0)} fps`,
       `draw ${info.render.calls}  tri ${info.render.triangles.toLocaleString()}`,
       `geom ${info.memory.geometries}  tex ${info.memory.textures}`,
+      `roach geo ${roachStats.geometries}  mat ${roachStats.materials}`,
     ].join('\n');
   }
 
