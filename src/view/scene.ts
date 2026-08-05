@@ -9,7 +9,7 @@ import {
 } from '../world/units';
 import type { House } from '../world/house';
 import type { RegionId, RegionSpec, WallSpec } from '../world/types';
-import { VIEW_DIR_X, VIEW_DIR_Z } from './camera';
+import { facesViewer } from '../world/viewpoint';
 import { createMaterials, type MaterialId, type MaterialLibrary } from './materials';
 import { box, makeRandom, roundedBox, shadows, type Kit } from './shapes';
 import { PROPS } from './props';
@@ -305,7 +305,7 @@ function buildFloor(kit: Kit, region: RegionSpec): THREE.Mesh {
  */
 export function isNearWall(wall: WallSpec): boolean {
   if (wall.solid) return false;
-  return wall.outward.x * VIEW_DIR_X + wall.outward.z * VIEW_DIR_Z < -0.15;
+  return facesViewer(wall.outward.x, wall.outward.z);
 }
 
 function buildWall(kit: Kit, wall: WallSpec): THREE.Object3D[] {

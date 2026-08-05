@@ -115,9 +115,21 @@ export function buildGrid(surface: Surface, blockers: readonly Rect[]): SurfaceG
   };
 }
 
-/** Paint an exposure rectangle into a grid's base layer. Levels accumulate by max, not by sum. */
+/**
+ * Paint an exposure rectangle into a grid's base layer.
+ *
+ * Authored zones OVERWRITE rather than accumulate. They used to take the maximum, which silently
+ * deleted every zone that was darker than the surface's own baseline: the baseline is
+ * `surface.exposure * 0.34` = 0.425 for the hallway floor, and the hallway's four cover strips are
+ * authored at 0.14-0.30. An independent critic measured 13 of the apartment's 50 zones as inert,
+ * including every cover zone in the hallway and the bedroom — which is the entire "fast lit route
+ * versus slow safe route" mechanic chapter 2 is built on.
+ *
+ * Authored data is more specific than a surface-wide default, so it wins. Later zones over earlier
+ * ones in file order, which is how a lamp pool sits on top of a room's ambient level.
+ */
 export function paintExposure(grid: SurfaceGrid, rect: Rect, level: number): void {
-  paintInto(grid, grid.baseExposure, rect, level);
+  paintInto(grid, grid.baseExposure, rect, level, false);
 }
 
 /** Reset live exposure to the static layer. Routine zones are painted on top each time they change. */
@@ -125,11 +137,23 @@ export function resetExposure(grid: SurfaceGrid): void {
   grid.exposure.set(grid.baseExposure);
 }
 
+/**
+ * Routine-driven light, painted on top of the static layer each tick.
+ *
+ * This one DOES take the maximum: a light coming on can only ever make a place more visible, never
+ * less, so a lamp must not erase the cover a sofa provides.
+ */
 export function paintLiveExposure(grid: SurfaceGrid, rect: Rect, level: number): void {
-  paintInto(grid, grid.exposure, rect, level);
+  paintInto(grid, grid.exposure, rect, level, true);
 }
 
-function paintInto(grid: SurfaceGrid, target: Float32Array, rect: Rect, level: number): void {
+function paintInto(
+  grid: SurfaceGrid,
+  target: Float32Array,
+  rect: Rect,
+  level: number,
+  keepBrighter: boolean,
+): void {
   const c0 = Math.max(0, Math.floor((rect.x0 - grid.x0) / grid.cell));
   const c1 = Math.min(grid.cols - 1, Math.ceil((rect.x1 - grid.x0) / grid.cell) - 1);
   const r0 = Math.max(0, Math.floor((rect.z0 - grid.z0) / grid.cell));
@@ -137,7 +161,7 @@ function paintInto(grid: SurfaceGrid, target: Float32Array, rect: Rect, level: n
   for (let r = r0; r <= r1; r++) {
     for (let c = c0; c <= c1; c++) {
       const i = r * grid.cols + c;
-      if (level > (target[i] ?? 0)) target[i] = level;
+      if (!keepBrighter || level > (target[i] ?? 0)) target[i] = level;
     }
   }
 }

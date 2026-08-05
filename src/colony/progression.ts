@@ -380,11 +380,23 @@ export function updateFinal(run: Run, dt: number): FinalState {
 
   strikeFootholds(run, target, 0.34 * (0.5 + pressure));
   recomputeCapacity(run);
+  run.stats.exterminationSweeps++;
   logEvent(run, 'log.extermination', 'danger', { region: `region.${target}` });
   return { pressure, struck: true };
 }
 
 /* ------------------------------------------------------------ win and loss */
+
+/**
+ * How many whole-home extermination sweeps the colony must survive to win.
+ *
+ * Without this, victory was strictly dominated by the bedroom gate: the gate already demands 14
+ * workers, 60 food and 40 moisture, so every other victory condition was satisfied the moment the
+ * bedroom foothold was claimed, and the win screen congratulated the player for withstanding a
+ * response that had statistically never fired. The finale has to be something the colony endures,
+ * not something it walks past.
+ */
+const SWEEPS_TO_SURVIVE = 2;
 
 export function evaluateRun(run: Run): void {
   if (run.status !== 'playing') return;
@@ -416,6 +428,9 @@ export function evaluateRun(run: Run): void {
   if (run.colony.adaptations.length === 0) return;
   if (run.colony.population < 12) return;
   if (run.colony.food < 30 || run.colony.moisture < 20) return;
+  // The finale: the household has to have actually come for the colony, and the colony has to have
+  // still been standing afterwards.
+  if (run.stats.exterminationSweeps < SWEEPS_TO_SURVIVE) return;
 
   run.status = 'won';
   logEvent(run, 'log.won', 'good', {});

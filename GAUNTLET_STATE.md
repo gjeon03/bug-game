@@ -80,6 +80,38 @@ wall fading and no transparency-sorting class of defect. Props fade (alpha hash)
 
 ---
 
+## 3a. Independent criticism — five critics, all FAIL
+
+Full reports: `artifacts/evidence/whole-home-reboot-final/critics/REPORTS.md`.
+Five fresh-context critics were told the author's own claims here are to be CHECKED, not believed.
+
+| critic    | verdict  |
+| --------- | -------- |
+| visual    | **FAIL** |
+| gameplay  | **FAIL** |
+| camera    | **FAIL** |
+| Korean UX | **FAIL** |
+| technical | **FAIL** |
+
+**14 BLOCKER + 21 HIGH findings.** They caught things inspection did not, including three where the
+author's own evidence disproved the author's own claim.
+
+**Fixed from their findings:**
+
+| Finding                                                                                                                                                                             | Fix                                                                                                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Korean: `(으)로` written-form fallback rendering literally — the game's FIRST Korean sentence                                                                                       | `t()` now implements the ㄹ-받침 exception (서울**로**, not 서울으로); verified on screen as `쓰레기통으로` / `물기로`                                                          |
+| Camera: the 225° yaw was never propagated into world data — nine `solid: true` flags all on camera-NEAR walls, four of five rooms a plasterboard slab                               | flags removed (`outward` already decides); view axis moved to `world/viewpoint.ts` so both layers read one value; load-time assertion throws on any solid near-wall             |
+| Visual: scout 88 % hidden behind an unfaded slab in 4 of 8 frames                                                                                                                   | the kitchen run was deregistered as an occluder during the yaw fix; re-registered at `fadeFloor` 0.4                                                                            |
+| Visual: 48 % of pixels below luminance 0.04; room unnameable                                                                                                                        | default camera distance 1320 → 1900 mm. Measured: dark pixels 48 % → 12.3 % (`02`), 30.9 % (`03`)                                                                               |
+| Gameplay: **13 of 50 exposure zones mathematically inert** — every cover zone in the hallway and bedroom, i.e. chapter 2's entire mechanic                                          | `paintExposure` took `max()` against a 0.425 baseline, so any zone darker than the baseline was discarded. Authored zones now overwrite; only routine LIGHT still takes the max |
+| Gameplay: **five referenced routine ids do not exist** — the bedroom had no dynamic light, exposure or refill at all                                                                | `bathroom.shower`, `bedroom.sleep`, `bedroom.restless`, `living.snack`, `hallway.door` added with catalog entries                                                               |
+| Gameplay: **victory strictly dominated by the bedroom gate** — the finale never ran, and the win screen congratulated the player for surviving an extermination that never happened | victory now requires surviving `SWEEPS_TO_SURVIVE = 2` whole-home extermination sweeps                                                                                          |
+
+**Their findings still OPEN** (recorded, not fixed — see §4).
+
+---
+
 ## 4. Open defects, ranked by player impact
 
 | #   | Defect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | State                                  |

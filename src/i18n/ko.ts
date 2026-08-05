@@ -201,6 +201,11 @@ export const ko = {
   'routine.bathroom.use': '욕실 사용',
   'routine.bedroom.phone': '머리맡 휴대폰',
   'routine.hallway.pass': '복도 통행',
+  'routine.hallway.door': '현관문 여닫기',
+  'routine.bathroom.shower': '샤워',
+  'routine.bedroom.sleep': '잠자리에 듦',
+  'routine.bedroom.restless': '뒤척임',
+  'routine.living.snack': '야식',
   'routine.incoming': '곧 시작된다',
   'routine.active': '진행 중',
 

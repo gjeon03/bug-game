@@ -275,6 +275,8 @@ export interface Cue {
 }
 
 export interface RunStats {
+  /** Whole-home extermination sweeps the colony has lived through. Victory requires surviving some. */
+  exterminationSweeps: number;
   deliveries: number;
   sightings: number;
   workersLost: number;

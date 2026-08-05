@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mm } from '../world/units';
+import { VIEW_DIR_X, VIEW_DIR_Z, VIEW_YAW } from '../world/viewpoint';
 
 /**
  * The diagonal strategy-action camera.
@@ -29,24 +30,28 @@ import { mm } from '../world/units';
 export const CAM_FOV = 32;
 export const CAM_PITCH = (50 * Math.PI) / 180;
 /**
- * Yaw, fixed for the whole game.
+ * Yaw, fixed for the whole game — defined in the WORLD layer, not here.
  *
- * 225°, not 45°. The apartment is authored with its fitted furniture against the low-X / low-Z
- * walls — the kitchen run, the bed head, the sofa back — so the camera has to sit on the HIGH side
- * and look back along -X-Z for those to back their rooms rather than stand in front of them.
- *
- * Measured with the camera at 45°: the kitchen's base run, worktop and splashback were permanently
- * between the viewer and the scout. Registering them as occluders made the entire frame a
- * stochastic alpha-hash dither — correct behaviour from the fade system, applied to something that
- * should never have been fading in the first place. The fix is where the camera stands, not how
- * hard things fade.
+ * 225°: the camera sits at high X / high Z and looks back along -X-Z, so the apartment's fitted
+ * furniture (authored against the low-X / low-Z walls) backs each room instead of standing in front
+ * of it. `world/viewpoint.ts` owns the value because the wall-cutting logic needs the same number
+ * and the two must never disagree.
  */
-export const CAM_YAW = (5 * Math.PI) / 4;
+export const CAM_YAW = VIEW_YAW;
 
 /** Zoom range, in millimetres from the scout. Deliberately narrow — this is not an editor camera. */
-export const CAM_NEAR_MM = 780;
-export const CAM_FAR_MM = 2150;
-export const CAM_DEFAULT_MM = 1320;
+export const CAM_NEAR_MM = 900;
+export const CAM_FAR_MM = 3200;
+/**
+ * Default framing distance.
+ *
+ * Raised from 1320 mm after an independent visual critic measured the opening frame and could not
+ * name the room: roughly six of the apartment's 175 authored props were in shot, and 48 % of pixels
+ * sat below luminance 0.04. The geometry was there; the lens was too tight to include any of the
+ * silhouettes that say "kitchen". 1 900 mm puts the worktop edge, the toe-kick slot and a run of
+ * cabinet doors in the same frame as the scout, at the cost of the scout being smaller.
+ */
+export const CAM_DEFAULT_MM = 1900;
 
 /** Seconds for the follow to cover ~63 % of the remaining distance. */
 const FOLLOW_TAU = 0.16;
@@ -76,9 +81,7 @@ export const BASIS: CameraBasis = {
   rightZ: -Math.cos(CAM_YAW),
 };
 
-/** Unit vector the camera looks along, in XZ. Used to decide which walls are cut away. */
-export const VIEW_DIR_X = Math.cos(CAM_YAW);
-export const VIEW_DIR_Z = Math.sin(CAM_YAW);
+export { VIEW_DIR_X, VIEW_DIR_Z };
 
 export interface FollowTarget {
   readonly x: number;

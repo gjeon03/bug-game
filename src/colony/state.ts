@@ -110,7 +110,7 @@ export const SEEN_COOLDOWN = 7;
  * resources is actually their bottleneck.
  */
 export function storeCap(run: Run): number {
-  return 95 + run.colony.capacity * 10;
+  return 70 + run.colony.capacity * 7;
 }
 
 /* --------------------------------------------------------------- household */
@@ -192,6 +192,63 @@ export const ROUTINES: readonly RoutineSpec[] = [
     aftermath: 6,
     notBefore: 20,
     labelKey: 'routine.bedroom.phone',
+  },
+  {
+    // Referenced by the bathroom's flood zones and its tray/drain refills.
+    id: 'bathroom.shower',
+    region: 'bathroom',
+    period: 168,
+    jitter: 40,
+    telegraph: 6,
+    duration: 40,
+    aftermath: 18,
+    notBefore: 150,
+    labelKey: 'routine.bathroom.shower',
+  },
+  {
+    // The resident settling, turning over, and finally sleeping. Drives the bedroom entirely.
+    id: 'bedroom.sleep',
+    region: 'bedroom',
+    period: 112,
+    jitter: 26,
+    telegraph: 6,
+    duration: 54,
+    aftermath: 14,
+    notBefore: 40,
+    labelKey: 'routine.bedroom.sleep',
+  },
+  {
+    id: 'bedroom.restless',
+    region: 'bedroom',
+    period: 96,
+    jitter: 30,
+    telegraph: 5,
+    duration: 18,
+    aftermath: 10,
+    notBefore: 70,
+    labelKey: 'routine.bedroom.restless',
+  },
+  {
+    id: 'living.snack',
+    region: 'living',
+    period: 132,
+    jitter: 28,
+    telegraph: 6,
+    duration: 26,
+    aftermath: 12,
+    notBefore: 80,
+    labelKey: 'routine.living.snack',
+  },
+  {
+    id: 'hallway.door',
+    region: 'hallway',
+    period: 118,
+    jitter: 30,
+    telegraph: 4,
+    duration: 10,
+    aftermath: 6,
+    notBefore: 110,
+    labelKey: 'routine.hallway.door',
   },
   {
     id: 'hallway.pass',
@@ -360,6 +417,7 @@ export function createRun(seed: number): Run {
     },
     log: [],
     stats: {
+      exterminationSweeps: 0,
       deliveries: 0,
       sightings: 0,
       workersLost: 0,
