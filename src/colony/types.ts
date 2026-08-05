@@ -48,6 +48,16 @@ export interface Scout {
   working: { gate: string; progress: number } | null;
   /** Rises while the scout stands in exposure, falls in cover. Reaching 1 is a sighting. */
   seen: number;
+  /**
+   * Seconds of grace after a sighting.
+   *
+   * Without this, `seen` resets to 0 and immediately begins refilling, so a scout standing in a lit
+   * hallway generates a fresh sighting every 2.4 s indefinitely. Measured on seed 20260805: 377
+   * sightings in one run, which pinned every region's evidence floor at its cap and turned the
+   * household response into a permanent extermination. A real household that glimpses something
+   * looks harder for a moment and then goes back to what it was doing.
+   */
+  seenCooldown: number;
   /** Interpolation source for the renderer — previous tick's transform. */
   prevX: number;
   prevZ: number;
