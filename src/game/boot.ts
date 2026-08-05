@@ -370,6 +370,7 @@ export async function boot(): Promise<void> {
       },
       /** What lies between the focus point and the camera right now, nearest first. */
       probe: () => session.renderer.probeView(),
+      occluderDebug: () => session.renderer.occluderDebug(),
       profile: () => session.renderer.profiler.end(),
       beginProfile: (label: string) => session.renderer.profiler.begin(label),
       restart,

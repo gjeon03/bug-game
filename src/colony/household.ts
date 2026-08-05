@@ -228,12 +228,39 @@ export function updateEvidence(run: Run, dt: number): void {
     // Traffic is a decaying measure of where bodies actually were, and it is what the director
     // aims at. It is not the same as evidence: a busy hidden route is high traffic, low evidence.
     region.traffic = Math.max(0, region.traffic - dt * 0.12);
-    region.evidence = Math.max(region.evidenceFloor, region.evidence - EVIDENCE_DECAY * dt);
+
+    /*
+     * Evidence only cools while a region is QUIET.
+     *
+     * Constant decay was raised to 0.0075/s to make regional loss recoverable, and that silently
+     * removed escalation altogether: at chapter-1 traffic a colony generates roughly 0.0045/s, so
+     * evidence could never climb. Measured in a real browser with two loud routes running for 90
+     * seconds — every region sat at alert 0 with evidence 0.01, and four of the seven household
+     * responses were unreachable content.
+     *
+     * Scaling decay by how busy the region is gives both behaviours from one rule: a corridor with
+     * a column marching down it does not calm down, and the same corridor calms down once the
+     * player reroutes away from it. The floor keeps some cooling even at full traffic so a region
+     * is never permanently pinned by activity alone.
+     */
+    const busy = Math.min(1, region.traffic / 1.2);
+    region.evidence = Math.max(
+      region.evidenceFloor,
+      region.evidence - EVIDENCE_DECAY * dt * Math.max(0.12, 1 - busy),
+    );
 
     const target = alertFor(region.evidence);
     if (target > region.alert) {
       region.alert = target;
-      region.quietFor = 0;
+      /*
+       * Do NOT reset `quietFor` here.
+       *
+       * `quietFor` is the cooldown since the last RESPONSE, not since the last alert change.
+       * Resetting it on escalation meant a region that was steadily getting worse kept postponing
+       * its own response — the exact opposite of the intent. Measured in a real browser: evidence
+       * climbed 0.02 -> 0.82 and the alert went 0 -> 1 -> 2 -> 3 over 163 seconds while the
+       * director issued nothing at all, because each escalation pushed the cooldown back to zero.
+       */
       if (region.unlocked) {
         logEvent(run, 'log.alert.raised', 'danger', {
           region: `region.${region.id}`,

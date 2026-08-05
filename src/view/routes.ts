@@ -38,10 +38,25 @@ const WIDTH_MAX_MM = 17;
 /** Lifted off the floor so it never z-fights, but low enough to read as lying on it. */
 const LIFT_MM = 1.1;
 
+/** Points a single ribbon can hold before its buffers are reallocated. */
+const RIBBON_CAPACITY = 256;
+
 interface Ribbon {
   readonly mesh: THREE.Mesh;
   readonly geometry: THREE.BufferGeometry;
   readonly material: THREE.MeshBasicMaterial;
+  /*
+   * Persistent attributes, written in place.
+   *
+   * These used to be constructed fresh every frame — `setAttribute` with a brand-new
+   * `BufferAttribute` — which orphans the old GL buffer each time. An independent technical critic
+   * instrumented `createBuffer`/`deleteBuffer` and measured **1 386 creates and 0 deletes over 462
+   * frames with a single four-point route**. Allocating once and setting `needsUpdate` reuses the
+   * same buffer for the life of the ribbon.
+   */
+  readonly position: THREE.BufferAttribute;
+  readonly colour: THREE.BufferAttribute;
+  readonly indexAttr: THREE.BufferAttribute;
   routeId: string;
 }
 
@@ -64,6 +79,15 @@ export function createRouteView(maxRoutes = 24): RouteView {
     const existing = pool[index];
     if (existing) return existing;
     const geometry = new THREE.BufferGeometry();
+    const position = new THREE.BufferAttribute(new Float32Array(RIBBON_CAPACITY * 2 * 3), 3);
+    const colour = new THREE.BufferAttribute(new Float32Array(RIBBON_CAPACITY * 2 * 3), 3);
+    const indexAttr = new THREE.BufferAttribute(new Uint16Array((RIBBON_CAPACITY - 1) * 6), 1);
+    position.setUsage(THREE.DynamicDrawUsage);
+    colour.setUsage(THREE.DynamicDrawUsage);
+    indexAttr.setUsage(THREE.DynamicDrawUsage);
+    geometry.setAttribute('position', position);
+    geometry.setAttribute('color', colour);
+    geometry.setIndex(indexAttr);
     const material = new THREE.MeshBasicMaterial({
       transparent: true,
       opacity: 0.85,
@@ -76,7 +100,7 @@ export function createRouteView(maxRoutes = 24): RouteView {
     mesh.renderOrder = 2;
     mesh.visible = false;
     group.add(mesh);
-    const ribbon: Ribbon = { mesh, geometry, material, routeId: '' };
+    const ribbon: Ribbon = { mesh, geometry, material, position, colour, indexAttr, routeId: '' };
     pool[index] = ribbon;
     return ribbon;
   };
@@ -138,15 +162,16 @@ export function createRouteView(maxRoutes = 24): RouteView {
 
 function buildRibbon(ribbon: Ribbon, route: Route, run: Run, time: number): void {
   const points = route.points;
-  const n = points.length;
+  const n = Math.min(points.length, RIBBON_CAPACITY);
   if (n < 2) {
     ribbon.mesh.visible = false;
     return;
   }
 
-  const positions = new Float32Array(n * 2 * 3);
-  const colours = new Float32Array(n * 2 * 3);
-  const indices: number[] = [];
+  const positions = ribbon.position.array as Float32Array;
+  const colours = ribbon.colour.array as Float32Array;
+  const indices = ribbon.indexAttr.array as Uint16Array;
+  let indexCount = 0;
 
   const base = new THREE.Color(HEALTH_COLOUR[route.health]);
   const traffic = Math.min(1, route.assigned / 4);
@@ -196,13 +221,21 @@ function buildRibbon(ribbon: Ribbon, route: Route, run: Run, time: number): void
 
     if (i < n - 1) {
       const a = i * 2;
-      indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+      indices[indexCount++] = a;
+      indices[indexCount++] = a + 1;
+      indices[indexCount++] = a + 2;
+      indices[indexCount++] = a + 1;
+      indices[indexCount++] = a + 3;
+      indices[indexCount++] = a + 2;
     }
   }
 
-  ribbon.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  ribbon.geometry.setAttribute('color', new THREE.BufferAttribute(colours, 3));
-  ribbon.geometry.setIndex(indices);
+  ribbon.position.needsUpdate = true;
+  ribbon.colour.needsUpdate = true;
+  ribbon.indexAttr.needsUpdate = true;
+  // Draw only the part of the fixed-size buffer this route actually fills.
+  ribbon.geometry.setDrawRange(0, indexCount);
+  ribbon.geometry.computeBoundingSphere();
   ribbon.material.vertexColors = true;
   ribbon.material.opacity = 0.35 + 0.5 * route.strength;
 }

@@ -198,6 +198,55 @@ body {
   text-align: right;
 }
 
+/* ── live routes, bottom-left above the alert strip ──────────────────────── */
+#routes {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: end;
+  margin-bottom: calc(var(--gap) + 108px);
+  display: grid;
+  gap: 3px;
+}
+
+#routes:empty {
+  display: none;
+}
+
+#routes .title {
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.route {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 8px;
+  word-break: keep-all;
+}
+
+.route .carry {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.route .state {
+  color: var(--good);
+  font-size: 0.9em;
+}
+
+/* Anything that is not 'ok' is a problem the player can act on, so it is coloured like one. */
+.route:not([data-health='ok']) .state {
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.route[data-health='disconnected'] .state,
+.route[data-health='compromised'] .state,
+.route[data-health='washed'] .state {
+  color: var(--danger);
+}
+
 /* ── alert strip, bottom-left ────────────────────────────────────────────── */
 #regions {
   grid-column: 1;

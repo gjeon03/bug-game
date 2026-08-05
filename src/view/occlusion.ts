@@ -205,6 +205,30 @@ export class OcclusionSystem {
     this.occluders.length = 0;
   }
 
+  /** Per-occluder diagnostics: region, world bounds, and whether the broadphase admitted it. */
+  debug(camera: THREE.Camera, focus: THREE.Vector3, activeRegions?: ReadonlySet<string>) {
+    return this.occluders.slice(0, 6).map((o) => {
+      const dir = focus.clone().sub(camera.position);
+      const far = dir.length();
+      this.raycaster.set(camera.position, dir.normalize());
+      this.raycaster.far = far;
+      return {
+        name: o.root.name,
+        region: o.region,
+        admitted: !activeRegions || o.region === '' || activeRegions.has(o.region),
+        centre: [
+          Math.round(o.bounds.center.x),
+          Math.round(o.bounds.center.y),
+          Math.round(o.bounds.center.z),
+        ],
+        radius: Math.round(o.bounds.radius),
+        sphereHit: this.raycaster.ray.intersectsSphere(o.bounds),
+        meshHit: this.raycaster.intersectObject(o.root, true).length,
+        meshes: o.meshes.length,
+      };
+    });
+  }
+
   stats(): OcclusionStats {
     let fading = 0;
     for (const o of this.occluders) if (o.current < 0.999) fading++;

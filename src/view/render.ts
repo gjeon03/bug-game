@@ -8,6 +8,7 @@ import { buildLighting, configureRenderer, type RegionLights } from './lighting'
 import { buildScene, openGateVisual, updateGateVisuals, type BuiltScene } from './scene';
 import { createRoachView, type RoachView } from './roaches';
 import { createRouteView, type RouteView } from './routes';
+import { createThreatView, type ThreatView } from './threats';
 import { Profiler } from './profiler';
 
 /**
@@ -36,6 +37,7 @@ export interface RenderStats {
   readonly lights: number;
   readonly occluders: number;
   readonly occluderTests: number;
+  readonly occluderCandidates: number;
   readonly fading: number;
   readonly visibleRoaches: number;
   /** How far camera collision had to pull the view in, world units. */
@@ -65,6 +67,8 @@ export interface GameRenderer {
   stats(): RenderStats;
   /** Names and distances of everything between the camera and its focus. Diagnostics only. */
   probeView(): readonly { name: string; distance: number }[];
+  /** Per-occluder broadphase diagnostics. Debug only. */
+  occluderDebug(): unknown;
   dispose(): void;
 }
 
@@ -100,6 +104,9 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
   const routes: RouteView = createRouteView();
   scene.add(routes.group);
 
+  const threats: ThreatView = createThreatView();
+  scene.add(threats.group);
+
   const camera = new GameCamera(canvas.clientWidth / Math.max(1, canvas.clientHeight));
   const profiler = new Profiler(renderer);
 
@@ -132,6 +139,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
 
       roaches.update(run, { alpha }, dt);
       routes.update(run, dt);
+      threats.update(run, dt);
 
       camera.update(dt, {
         x: roaches.scoutPosition.x,
@@ -197,6 +205,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
       built.occlusion.reset();
       roaches.reset();
       routes.reset();
+      threats.reset();
       camera.reset({
         x: run.scout.x,
         y: run.scout.y,
@@ -222,6 +231,10 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
         }));
     },
 
+    occluderDebug() {
+      return built.occlusion.debug(camera.camera, camera.focusPoint, activeRegions);
+    },
+
     stats() {
       const info = renderer.info;
       const occ = built.occlusion.stats();
@@ -238,6 +251,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
         lights: lights.liveSlots,
         occluders: occ.registered,
         occluderTests: occ.tests,
+        occluderCandidates: occ.candidates,
         fading: occ.fading,
         visibleRoaches: roachStats.visible,
         cameraPulledIn: camera.pulledIn,
@@ -247,6 +261,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
 
     dispose() {
       profiler.dispose();
+      threats.dispose();
       routes.dispose();
       roaches.dispose();
       lights.dispose();

@@ -95,6 +95,7 @@ export function createHud(rootId = 'hud'): Hud {
     '<div id="objective" class="panel"></div>',
     '<div id="seen"></div>',
     '<div id="stores" class="panel"></div>',
+    '<div id="routes" class="panel"></div>',
     '<div id="regions" class="panel"></div>',
     '<div id="prompt"></div>',
     '<div id="log"></div>',
@@ -112,6 +113,7 @@ export function createHud(rootId = 'hud'): Hud {
 
   const objective = slot(root.querySelector('#objective') as HTMLElement);
   const stores = slot(root.querySelector('#stores') as HTMLElement);
+  const routes = slot(root.querySelector('#routes') as HTMLElement);
   const regions = slot(root.querySelector('#regions') as HTMLElement);
   const log = slot(root.querySelector('#log') as HTMLElement);
   const promptNode = root.querySelector('#prompt') as HTMLElement;
@@ -131,6 +133,7 @@ export function createHud(rootId = 'hud'): Hud {
     update(run, seenFraction, promptState) {
       renderObjective(objective, run);
       renderStores(stores, run);
+      renderRoutes(routes, run);
       renderRegions(regions, run);
       renderLog(log, run.log);
 
@@ -215,6 +218,34 @@ function renderStores(target: Slot, run: Run): void {
       `<span class="value">${c.population}/${c.capacity}</span></div>` +
       (atCap ? `<div class="blocker">${esc(t('hud.stores'))}</div>` : ''),
   );
+}
+
+/**
+ * Every live route and what is wrong with it.
+ *
+ * The catalog has carried seven route-health sentences since the localization pass and nothing
+ * rendered any of them — an independent critic found all seven referenced only by `src/i18n/`. A
+ * route that has silently stopped delivering is the single most confusing state in the game, and
+ * the game already knew exactly why in every case.
+ */
+function renderRoutes(target: Slot, run: Run): void {
+  if (run.routes.length === 0) {
+    write(target, '');
+    return;
+  }
+  const rows = run.routes.slice(0, 6).map((route) => {
+    const site = run.house.resources.get(route.target);
+    const name = site ? t(site.labelKey) : route.target;
+    const health = t(`hud.routeHealth.${route.health}`);
+    const workers = route.assigned;
+    return (
+      `<div class="route" data-health="${route.health}">` +
+      `<span class="name">${esc(name)}</span>` +
+      `<span class="carry">${workers}</span>` +
+      `<span class="state">${esc(health)}</span></div>`
+    );
+  });
+  write(target, `<div class="title">${esc(t('hud.routes'))}</div>${rows.join('')}`);
 }
 
 function renderRegions(target: Slot, run: Run): void {

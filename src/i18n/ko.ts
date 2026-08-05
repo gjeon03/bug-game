@@ -211,12 +211,12 @@ export const ko = {
 
   /* ── household responses ──────────────────────────────────────────────── */
   'threat.footsteps': '발소리',
-  'threat.light': '불이 켜짐',
+  'threat.light': '불 켜기',
   'threat.wipe': '행주질',
   'threat.move': '물건 치우기',
-  'threat.trap': '끈끈이',
-  'threat.vacuum': '로봇청소기',
-  'threat.spray': '살충제',
+  'threat.trap': '끈끈이 설치',
+  'threat.vacuum': '로봇청소기 가동',
+  'threat.spray': '살충제 살포',
 
   /* ── alert levels ─────────────────────────────────────────────────────── */
   'alert.0': '조용함',
@@ -240,7 +240,7 @@ export const ko = {
   'log.sighting': '{region}에서 들켰다.',
   'log.alert.raised': '{region} 경계 단계가 {level}{level?으로/로} 올라갔다.',
   'log.routine.incoming': '{routine}{routine?이/가} 곧 시작된다.',
-  'log.threat.incoming': '{region}에 {threat}{threat?이/가} 온다.',
+  'log.threat.incoming': '{region}에서 {threat}{threat?이/가} 시작된다.',
   'log.starved': '먹이가 떨어져 일꾼을 잃었다.',
   'log.extermination': '{region}에 박멸 시도가 들어왔다.',
   'log.won': '집 전체가 군체의 영역이 됐다.',
