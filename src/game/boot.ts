@@ -15,6 +15,7 @@ import {
 import { beginGateWork, checkGate, chooseAdaptation, stopGateWork } from '../colony/progression';
 import { createRenderer, type GameRenderer } from '../view/render';
 import { createHud, type Hud, type PromptState } from '../ui/hud';
+import { createAudioBridge, type AudioBridge } from '../audio/bridge';
 import { createInput, type Input } from './input';
 import { Clock } from './loop';
 import type { Run } from '../colony/types';
@@ -49,6 +50,20 @@ export async function boot(): Promise<void> {
 
   const hud: Hud = createHud('hud');
   const input: Input = createInput(canvas);
+  const audio: AudioBridge = createAudioBridge();
+
+  /*
+   * An AudioContext cannot be created outside a user gesture. The help card is dismissed with a
+   * keypress, which is that gesture — so the game is silent for exactly as long as the player has
+   * not touched anything, and audible from their first input onward.
+   */
+  const unlockAudio = (): void => {
+    audio.unlock();
+    window.removeEventListener('keydown', unlockAudio);
+    window.removeEventListener('pointerdown', unlockAudio);
+  };
+  window.addEventListener('keydown', unlockAudio);
+  window.addEventListener('pointerdown', unlockAudio);
   const clock = new Clock();
 
   const params = new URLSearchParams(window.location.search);
@@ -182,9 +197,11 @@ export async function boot(): Promise<void> {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       input.releaseAll();
+      audio.suspend();
     } else {
       // Re-anchor rather than simulate the time the player was not watching.
       clock.resume(performance.now());
+      audio.resume();
     }
   });
 
@@ -193,6 +210,10 @@ export async function boot(): Promise<void> {
   function tick(now: number): void {
     frame++;
     const run = session.run;
+    // CPU cost of everything that is not the draw call — simulation, input, HUD. Measured
+    // separately from GPU because a frame budget with one total and no breakdown sends you to
+    // optimise whatever you guessed, which is how the previous build lost five attempts.
+    const cpuStart = performance.now();
 
     for (const action of input.take()) {
       if (action.kind === 'dismiss') {
@@ -282,14 +303,16 @@ export async function boot(): Promise<void> {
       finalPressure = result.finalPressure;
     }
 
-    // Cues are produced by the simulation and consumed here, once. Nothing reads them back.
-    run.cues.length = 0;
-
     const dt = Math.min(0.05, steps * SIM_DT || 1 / 60);
-    session.renderer.render(run, dt, clock.alpha);
-    session.renderer.profiler.frame(now, 0);
 
+    // Cues are produced by the simulation and consumed here, once — by audio, then discarded.
+    // Nothing reads them back, which is why the simulation can push them without knowing whether
+    // sound is even switched on.
+    audio.update(run, dt);
+    run.cues.length = 0;
+    session.renderer.render(run, dt, clock.alpha);
     hud.update(run, run.scout.seen, blocked ? null : currentPrompt(run));
+    session.renderer.profiler.frame(now, performance.now() - cpuStart);
 
     if (run.status !== 'playing' && hud.curtain !== 'won' && hud.curtain !== 'lost') {
       hud.showCurtain(run.status === 'won' ? 'won' : 'lost', run);
@@ -315,6 +338,9 @@ export async function boot(): Promise<void> {
       },
       get pressure() {
         return finalPressure;
+      },
+      get audio() {
+        return { started: audio.started, voices: audio.voices };
       },
       /**
        * World position to CSS pixels.

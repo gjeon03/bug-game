@@ -4,12 +4,7 @@ import type { RegionId } from '../world/types';
 import type { Run } from '../colony/types';
 import { WORKER_CAP } from '../colony/state';
 import { GameCamera } from './camera';
-import {
-  buildLighting,
-  configureRenderer,
-  updateRoutineLights,
-  type RegionLights,
-} from './lighting';
+import { buildLighting, configureRenderer, type RegionLights } from './lighting';
 import { buildScene, openGateVisual, updateGateVisuals, type BuiltScene } from './scene';
 import { createRoachView, type RoachView } from './roaches';
 import { createRouteView, type RouteView } from './routes';
@@ -32,6 +27,7 @@ const ROUTE_FOCUS_LIMIT = 6;
 export interface RenderStats {
   readonly props: number;
   readonly meshes: number;
+  readonly merged: number;
   readonly geometries: number;
   readonly materials: number;
   readonly textures: number;
@@ -134,17 +130,6 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
       }
       updateGateVisuals(built.gateProps, dt);
 
-      updateRoutineLights(lights, dt, (routine) => {
-        const state = run.routines.get(routine);
-        if (!state) return 0;
-        if (state.phase === 'active') return 1;
-        // Half up during the telegraph — the same ramp the exposure field uses, so what the player
-        // sees and what the simulation charges them are the same thing.
-        if (state.phase === 'incoming') return 0.45;
-        if (state.phase === 'aftermath') return 0.25;
-        return 0;
-      });
-
       roaches.update(run, { alpha }, dt);
       routes.update(run, dt);
 
@@ -175,6 +160,18 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
         if (there) activeRegions.add(there);
       }
       built.occlusion.update(dt, camera.camera, focusPoints, activeRegions);
+
+      // Re-point the fixed light pool at whatever actually reaches the player from here.
+      lights.retarget(camera.focusPoint, (routine) => {
+        const state = run.routines.get(routine);
+        if (!state) return 0;
+        if (state.phase === 'active') return 1;
+        // Half up during the telegraph — the same ramp the exposure field uses, so what the player
+        // sees and what the simulation charges them are the same thing.
+        if (state.phase === 'incoming') return 0.45;
+        if (state.phase === 'aftermath') return 0.25;
+        return 0;
+      });
 
       profiler.beginRender();
       renderer.render(scene, camera.camera);
@@ -232,12 +229,13 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
       return {
         props: built.stats.props,
         meshes: built.stats.meshes,
+        merged: built.stats.merged,
         geometries: info.memory.geometries,
         materials: built.stats.materials + roachStats.materials,
         textures: info.memory.textures,
         drawCalls: info.render.calls,
         triangles: info.render.triangles,
-        lights: lights.count,
+        lights: lights.liveSlots,
         occluders: occ.registered,
         occluderTests: occ.tests,
         fading: occ.fading,

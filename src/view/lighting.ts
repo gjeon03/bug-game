@@ -7,62 +7,74 @@ import type { LightSpec, RegionSpec } from '../world/types';
  *
  * ## Every light is motivated
  *
- * There is no ambient fill that exists because the scene was too dark. Each light in the apartment
+ * There is no ambient fill that exists because the scene was too dark. Each authored light
  * corresponds to a visible object: moonlight through the kitchen window, the strip under the wall
- * units, a television, a phone face-down on a duvet, the standby LED on a router. That constraint
- * is what makes the flat read as a place at night rather than as a lit diagram.
+ * units, a television, a phone face-down on a duvet. That constraint is what makes the flat read as
+ * a place at night rather than as a lit diagram.
  *
- * ## Why routine lights are pre-created and dimmed rather than added and removed
+ * ## Luminous intensity is a UNIT and must be converted like one
  *
- * Adding a light to a three.js scene changes the number of lights the shader must handle and
- * recompiles every material that sees it. Doing that when the washing-up starts would produce a
- * shader-compilation stall in the middle of play — an explicit gate failure. Every light exists from
- * boot; routine lights simply sit at zero intensity until their routine runs.
+ * three.js point and spot lights are physical: irradiance is `intensity / distance²`, with distance
+ * in WORLD UNITS. One world unit here is 1.346 mm, so a ceiling light 1.4 m up is ~1 040 units away
+ * and an authored intensity of 1.5 delivers 1.5/1040² ≈ 1.4e-6 — nothing.
+ *
+ * That is a missing conversion, not a tuning error, and it produced a completely black scene while
+ * 2 760 draw calls were being submitted every frame. A control test with a bright clear colour
+ * proved the geometry was rendering and received no light. Intensities in `LightSpec` are authored
+ * as if the world were metres and scaled here by (units per metre)².
+ *
+ * ## Why a fixed pool instead of one three.js light per authored light
+ *
+ * three.js bakes the light count into every material's program, so adding or removing a light
+ * mid-play recompiles every shader in the scene — a stall the performance contract forbids. And a
+ * forward renderer evaluates EVERY light for EVERY fragment, so having all 26 authored lights live
+ * meant paying for the whole apartment's rig in every room. Measured on real Chrome / Apple M1:
+ * **GPU p50 70.9 ms** with 26 lights.
+ *
+ * So the count is constant. `LIGHT_SLOTS` real lights exist for the lifetime of the scene, and each
+ * frame they are re-pointed at whichever authored lights actually reach the camera's focus, ranked
+ * by irradiance. The shader is compiled once; the room you are in is the room that is lit.
  */
 
-/**
- * Luminous intensity is a UNIT, and it has to be converted like every other unit.
- *
- * three.js point and spot lights are physical: the irradiance a surface receives is
- * `intensity / distance²`, with distance in WORLD UNITS. One world unit here is 1.346 mm, so a
- * ceiling light 1.4 m above a floor is ~1040 units away and an authored intensity of 1.5 delivers
- * 1.5/1040² ≈ 1.4e-6 — nothing.
- *
- * That is not a tuning error, it is a missing conversion, and it produced a completely black scene
- * while 2 760 draw calls and 322 160 triangles were being submitted every frame. A control test
- * with a bright clear colour proved the geometry was rendering and simply receiving no light.
- *
- * Intensities in `LightSpec` are therefore authored in "per square metre" terms, as if the world
- * were metres, and scaled here by (units per metre)². Lengths convert with `mm()`; intensities
- * convert with this.
- */
 const UNITS_PER_METRE = 1000 / MM_PER_UNIT;
 const CANDELA_SCALE = UNITS_PER_METRE * UNITS_PER_METRE;
 
-/** Baseline so a room is never pure black. Deliberately tiny and cool — this is night. */
+/** Baseline so a room is never pure black. Deliberately small and cool — this is night. */
 const NIGHT_AMBIENT = 0.16;
 const NIGHT_AMBIENT_COLOUR = 0x22303f;
 
-/** Hemisphere fill standing in for bounce off ceiling and floor. */
 const SKY_COLOUR = 0x33465c;
 const GROUND_COLOUR = 0x271f18;
 const HEMI_INTENSITY = 0.34;
 
-export interface RegionLights {
-  readonly group: THREE.Group;
-  /** Lights gated on a routine, keyed by routine id. */
-  readonly byRoutine: ReadonlyMap<string, THREE.Light[]>;
-  readonly count: number;
-  dispose(): void;
+/** Positional lights live in the shader at once. Never changes at runtime. */
+const LIGHT_SLOTS = 6;
+
+/** A spot's cone. Wide, because these stand in for windows and strips as much as for lamps. */
+const CONE_ANGLE = 1.05;
+const CONE_PENUMBRA = 0.85;
+const CONE_DECAY = 1.25;
+
+/** An authored light: data. Never added to the scene. */
+interface Authored {
+  readonly spec: LightSpec;
+  /** Already scaled into physical units. */
+  readonly intensity: number;
+  readonly position: THREE.Vector3;
+  readonly target: THREE.Vector3;
+  readonly distance: number;
 }
 
-/**
- * A light's authored intensity, kept so a routine light can be restored exactly.
- *
- * three.js has no "original intensity" concept, and reading it back after a fade gives the faded
- * value — which silently dims a routine a little more every time it runs.
- */
-const AUTHORED = new WeakMap<THREE.Light, number>();
+export interface RegionLights {
+  readonly group: THREE.Group;
+  /** How many lights the apartment authors. The pool is chosen from these. */
+  readonly count: number;
+  /** Slots actually carrying light last frame — surfaced so a perf capture can record it. */
+  readonly liveSlots: number;
+  /** Re-point the pool. Called once per frame with the camera's focus. */
+  retarget(focus: THREE.Vector3, routineLevel: (routine: string) => number): void;
+  dispose(): void;
+}
 
 export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
   const group = new THREE.Group();
@@ -72,159 +84,132 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
   const hemi = new THREE.HemisphereLight(SKY_COLOUR, GROUND_COLOUR, HEMI_INTENSITY);
   group.add(ambient, hemi);
 
-  const byRoutine = new Map<string, THREE.Light[]>();
-  const disposables: THREE.Light[] = [];
-  let count = 2;
-
+  const authored: Authored[] = [];
   for (const region of regions) {
-    for (const spec of region.lights) {
-      const light = makeLight(spec);
-      if (!light) continue;
-      AUTHORED.set(light, light.intensity);
-      group.add(light);
-      /*
-       * A SpotLight aims at `light.target`, and three.js only reads that target's WORLD matrix —
-       * which is never updated unless the target is in the scene graph. Setting `target.position`
-       * without adding the target leaves every spot pointing at the world origin.
-       *
-       * Measured: the whole apartment was lit by a single bright patch in the kitchen's north-west
-       * floor corner — the origin — while every other surface, including all five floors, received
-       * nothing. It reads as "the scene is too dark"; it is actually "every light is aimed at the
-       * same wrong point".
-       */
-      const target = (light as THREE.SpotLight).target;
-      if (target && target.isObject3D) group.add(target);
-      disposables.push(light);
-      count++;
-
-      if (!spec.routine) continue;
-      // Off until its routine runs, but present in the shader from the first frame.
-      light.intensity = 0;
-      const list = byRoutine.get(spec.routine);
-      if (list) list.push(light);
-      else byRoutine.set(spec.routine, [light]);
-    }
+    for (const spec of region.lights) authored.push(describe(spec));
   }
+
+  const slots: THREE.SpotLight[] = [];
+  for (let i = 0; i < LIGHT_SLOTS; i++) {
+    const light = new THREE.SpotLight(0xffffff, 0, mm(4200), CONE_ANGLE, CONE_PENUMBRA, CONE_DECAY);
+    light.castShadow = false;
+    // The target must be in the scene graph or three.js never updates its world matrix and the
+    // spot silently aims at the world origin — which is exactly what happened before this line
+    // existed: the whole flat was lit by one patch in the kitchen's north-west floor corner.
+    group.add(light, light.target);
+    slots.push(light);
+  }
+
+  const scored: { readonly a: Authored; readonly score: number; readonly level: number }[] = [];
+  let live = 0;
 
   return {
     group,
-    byRoutine,
-    count,
-    dispose() {
-      for (const light of disposables) {
-        light.parent?.remove(light);
-        if ('dispose' in light && typeof light.dispose === 'function') light.dispose();
+    count: authored.length,
+    get liveSlots() {
+      return live;
+    },
+
+    retarget(focus, routineLevel) {
+      scored.length = 0;
+      for (const a of authored) {
+        const level = a.spec.routine ? routineLevel(a.spec.routine) : 1;
+        if (level <= 0.001) continue;
+        // Irradiance at the focus point is the honest measure of "does this light matter here".
+        const d2 = Math.max(1, a.position.distanceToSquared(focus));
+        scored.push({ a, score: (a.intensity * level) / d2, level });
       }
-      ambient.parent?.remove(ambient);
-      hemi.parent?.remove(hemi);
-      disposables.length = 0;
-      byRoutine.clear();
+      scored.sort((x, y) => y.score - x.score);
+
+      live = 0;
+      for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i]!;
+        const pick = scored[i];
+        if (!pick) {
+          slot.intensity = 0;
+          continue;
+        }
+        slot.color.setHex(pick.a.spec.colour);
+        slot.intensity = pick.a.intensity * pick.level;
+        slot.position.copy(pick.a.position);
+        slot.target.position.copy(pick.a.target);
+        slot.distance = pick.a.distance;
+        slot.target.updateMatrixWorld();
+        live++;
+      }
+    },
+
+    dispose() {
+      for (const slot of slots) {
+        slot.target.removeFromParent();
+        slot.removeFromParent();
+        slot.dispose();
+      }
+      ambient.removeFromParent();
+      hemi.removeFromParent();
+      slots.length = 0;
+      authored.length = 0;
     },
   };
 }
 
-function makeLight(spec: LightSpec): THREE.Light | null {
+/**
+ * Reduce an authored `LightSpec` to position, aim and physical intensity.
+ *
+ * A window or a strip would ideally be a `RectAreaLight`, but that needs the LTC lookup textures —
+ * a runtime asset this build will not ship — and cannot cast shadows. A wide, soft spot aimed inward
+ * from the aperture is the closest honest approximation: the falloff across a worktop from a 1.1 m
+ * window is what sells it, and a spot reproduces that.
+ */
+function describe(spec: LightSpec): Authored {
+  const position = new THREE.Vector3(spec.at.x, spec.at.y, spec.at.z);
+
+  if (spec.kind === 'spot' && spec.target) {
+    return {
+      spec,
+      intensity: spec.intensity * CANDELA_SCALE,
+      position,
+      target: new THREE.Vector3(spec.target.x, spec.target.y, spec.target.z),
+      distance: spec.distance ?? mm(2400),
+    };
+  }
+
   if (spec.kind === 'point') {
-    const light = new THREE.PointLight(
-      spec.colour,
-      spec.intensity * CANDELA_SCALE,
-      spec.distance ?? mm(1400),
-      1.6,
-    );
-    light.position.set(spec.at.x, spec.at.y, spec.at.z);
-    // Point lights are the expensive ones to shadow; only the few that are load-bearing do.
-    light.castShadow = spec.castShadow === true;
-    if (light.castShadow) configureShadow(light.shadow);
-    return light;
+    // A point light has no aim; give it one straight down so the pooled spot approximates it.
+    return {
+      spec,
+      intensity: spec.intensity * CANDELA_SCALE,
+      position,
+      target: new THREE.Vector3(spec.at.x, spec.at.y - mm(400), spec.at.z),
+      distance: spec.distance ?? mm(1400),
+    };
   }
 
-  if (spec.kind === 'spot') {
-    const light = new THREE.SpotLight(
-      spec.colour,
-      spec.intensity * CANDELA_SCALE,
-      spec.distance ?? mm(2400),
-      0.7,
-      0.5,
-      1.5,
-    );
-    light.position.set(spec.at.x, spec.at.y, spec.at.z);
-    if (spec.target) light.target.position.set(spec.target.x, spec.target.y, spec.target.z);
-    light.castShadow = spec.castShadow === true;
-    if (light.castShadow) configureShadow(light.shadow);
-    return light;
-  }
-
-  /*
-   * A window or a strip. `RectAreaLight` would be physically right but needs the LTC lookup
-   * textures, which are a runtime asset this build will not ship, and it cannot cast shadows.
-   * A wide, soft spot aimed inward from the aperture is the closest honest approximation: the
-   * falloff across a worktop from a 1.1 m window is what sells it, and a spot reproduces that.
-   */
+  // A rect aperture: aim down and into the room, along whichever axis it is narrower on.
   const width = spec.width ?? mm(600);
   const height = spec.height ?? mm(600);
-  const light = new THREE.SpotLight(
-    spec.colour,
-    spec.intensity * CANDELA_SCALE,
-    mm(4200),
-    1.05,
-    0.85,
-    1.25,
-  );
-  light.position.set(spec.at.x, spec.at.y, spec.at.z);
-  // Aim into the room: down, and along whichever axis the aperture is narrower on.
   const horizontal = width >= height ? 0 : mm(400);
-  light.target.position.set(spec.at.x - horizontal, spec.at.y - height, spec.at.z + mm(500));
-  light.castShadow = spec.castShadow === true;
-  if (light.castShadow) configureShadow(light.shadow);
-  return light;
-}
-
-function configureShadow(shadow: THREE.LightShadow): void {
-  shadow.mapSize.set(1024, 1024);
-  shadow.bias = -0.0008;
-  shadow.normalBias = mm(1.5);
-  // `LightShadow.camera` is typed as the base `Camera`; both point and spot shadows use a
-  // perspective camera, so the near/far planes are set through that narrower type.
-  const camera = shadow.camera as THREE.PerspectiveCamera;
-  camera.near = mm(30);
-  camera.far = mm(3600);
-  camera.updateProjectionMatrix();
-}
-
-/**
- * Fade routine lights toward their authored intensity while the routine runs.
- *
- * Lights ramp rather than snap, because a light that pops on gives the player no reaction window —
- * and the telegraph is the whole reason the exposure field rises to half during `incoming`.
- */
-export function updateRoutineLights(
-  lights: RegionLights,
-  dt: number,
-  isActive: (routine: string) => number,
-): void {
-  for (const [routine, list] of lights.byRoutine) {
-    const target = isActive(routine);
-    for (const light of list) {
-      const authored = AUTHORED.get(light) ?? 1;
-      const wanted = authored * target;
-      const k = 1 - Math.exp(-dt / 0.28);
-      light.intensity += (wanted - light.intensity) * k;
-    }
-  }
+  return {
+    spec,
+    intensity: spec.intensity * CANDELA_SCALE,
+    position,
+    target: new THREE.Vector3(spec.at.x - horizontal, spec.at.y - height, spec.at.z + mm(500)),
+    distance: mm(4200),
+  };
 }
 
 /**
  * Renderer setup.
  *
  * ACES filmic tone mapping, because a night interior with a few bright sources is exactly the case
- * where linear output clips the highlights and crushes everything else into one flat dark mass —
- * which an independent critic measured on the previous build as 53.9 % of frame within 6 % of one
- * colour.
+ * where linear output clips the highlights and crushes everything else into one flat dark mass.
+ *
+ * Shadow mapping is OFF. No authored light casts shadows, so enabling it bought a shadow pass that
+ * rendered geometry for nothing.
  */
 export function configureRenderer(renderer: THREE.WebGLRenderer): void {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.62;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = false;
 }
