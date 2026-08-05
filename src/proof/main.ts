@@ -11,9 +11,16 @@ import { buildEnvironment, buildLights, configureRenderer } from '../three/env';
  */
 // @ts-expect-error — untyped .mjs shared with tools/bake
 import { SINK_PROPS } from '../../tools/bake/props/sink.mjs';
+/*
+ * The `@ts-expect-error` has to sit immediately above the module specifier, so this import stays on
+ * one line even though it is long — a multi-line form puts the specifier on a different line and
+ * the directive stops suppressing anything.
+ */
+// prettier-ignore
 // @ts-expect-error — untyped .mjs shared with tools/bake
-import { counterStone, laminate, steelBrushed } from '../../tools/bake/lib/materials.mjs';
+import { counterStone, laminate, steelBrushed, steelPolished } from '../../tools/bake/lib/materials.mjs';
 import { createRoachAssets, type Roach } from '../three/roach';
+import { buildCounter } from '../three/counter';
 
 interface PropSpec {
   build: () => THREE.Object3D;
@@ -151,13 +158,6 @@ const CAM_OFFSET = cameraOffset();
 
 /* ------------------------------------------------------- worktop and cabinet */
 
-const COUNTER_HALF_X = mm(620);
-/** Shallower than a real 600 mm worktop half-depth so the back wall stays in shot. */
-const COUNTER_HALF_Z = mm(330);
-const COUNTER_THICK = mm(38);
-/** Worktop height above the floor — a real Korean apartment counter, and 24 scouts tall. */
-const COUNTER_HEIGHT = mm(880);
-
 /**
  * Low-frequency wear across the worktop.
  *
@@ -205,60 +205,29 @@ function worktopWear(): THREE.CanvasTexture {
 const worktopMaterial = counterStone() as THREE.MeshStandardMaterial;
 worktopMaterial.roughnessMap = worktopWear();
 
-const worktop = new THREE.Mesh(
-  new THREE.BoxGeometry(COUNTER_HALF_X * 2, COUNTER_THICK, COUNTER_HALF_Z * 2),
-  worktopMaterial,
-);
-worktop.position.set(0, -COUNTER_THICK / 2, 0);
-worktop.receiveShadow = true;
-worktop.castShadow = true;
-scene.add(worktop);
-
-/**
- * The cabinet carcass under the worktop, with a recessed toe-kick.
+/*
+ * MEASURED CORRECTION (proof-08 -> proof-09).
  *
- * This is the object the previous build drew as a large blue-black rectangle — the single most
- * reported defect. It is a real box with a real recess here, so the shadow it casts into its own
- * toe-kick is what creates the dark under-cabinet space the colony travels through.
- */
-const cabinetFace = new THREE.Mesh(
-  new THREE.BoxGeometry(COUNTER_HALF_X * 2, COUNTER_HEIGHT - mm(100), mm(560)),
-  laminate(),
-);
-cabinetFace.position.set(0, -COUNTER_THICK - (COUNTER_HEIGHT - mm(100)) / 2, -mm(60));
-cabinetFace.castShadow = true;
-cabinetFace.receiveShadow = true;
-scene.add(cabinetFace);
-
-const toeKick = new THREE.Mesh(
-  new THREE.BoxGeometry(COUNTER_HALF_X * 2, mm(100), mm(400)),
-  laminate(0x3b352f),
-);
-toeKick.position.set(0, -COUNTER_THICK - COUNTER_HEIGHT + mm(50), -mm(140));
-toeKick.receiveShadow = true;
-scene.add(toeKick);
-
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), laminate(0x474d52));
-floor.rotation.x = -Math.PI / 2;
-floor.position.y = -COUNTER_THICK - COUNTER_HEIGHT;
-floor.receiveShadow = true;
-scene.add(floor);
-
-/**
- * The stainless splash-back behind the worktop.
+ * The worktop, cabinet, toe-kick, splashback and floor were five inline boxes here, and the sink
+ * was the sprite-era `sink-drain` prop dropped on top of the slab. That prop carries its own steel
+ * deck because a baked sprite has to be a self-contained island, and in 3D that deck rendered as a
+ * flat dark rectangle with hard straight edges lying on the counter — the single most reported
+ * defect of the previous build, reproduced exactly.
  *
- * Load-bearing for composition, not decoration: it is the vertical the eye needs to stop reading
- * the counter as an endless plane, and being the only large polished-metal surface in shot it is
- * what proves the environment map is doing its job.
+ * `src/three/counter.ts` replaces all of it with one run that has a real aperture: four worktop
+ * slabs around a hole, a basin hanging below, and the drain at the bottom of the recess. A drain is
+ * recognizable because the surface falls away into it, which a decal can never do.
  */
-const splashback = new THREE.Mesh(
-  new THREE.BoxGeometry(COUNTER_HALF_X * 2, mm(210), mm(12)),
-  steelBrushed(),
-);
-splashback.position.set(0, mm(105), -COUNTER_HALF_Z + mm(6));
-splashback.castShadow = true;
-splashback.receiveShadow = true;
-scene.add(splashback);
+const counter = buildCounter({
+  stone: worktopMaterial,
+  steel: steelBrushed(),
+  steelBowl: new THREE.MeshStandardMaterial({ color: 0x9aa5b0, metalness: 0.5, roughness: 0.44 }),
+  steelPolished: steelPolished(),
+  laminate: laminate(),
+  laminateDark: laminate(0x3b352f),
+  floor: laminate(0x474d52),
+});
+scene.add(counter.group);
 
 /* -------------------------------------------------------------------- props */
 
@@ -288,7 +257,7 @@ interface Placement {
  */
 const PLACEMENTS: readonly Placement[] = [
   // The sink surround — the hero of this shot.
-  { registry: SINK, name: 'sink-drain', x: mm(-150), z: mm(-70) },
+  // The drain is no longer a prop — it is part of the counter's real aperture. See counter.ts.
   { registry: SINK, name: 'droplet-m', x: mm(-88), z: mm(-6) },
   { registry: SINK, name: 'droplet-s', x: mm(-118), z: mm(34) },
   { registry: SINK, name: 'droplet-s', x: mm(-60), z: mm(62), spin: 60 },
@@ -546,16 +515,33 @@ function moveScout(dt: number): void {
   const wz = nx * Math.sin(yaw) + nz * Math.cos(yaw);
 
   const speed = SCOUT_SPEED * (held.has('ShiftLeft') ? SCOUT_SPRINT : 1);
-  scout.root.position.x = THREE.MathUtils.clamp(
+  const margin = mm(20);
+  const nextX = THREE.MathUtils.clamp(
     scout.root.position.x + wx * speed * dt,
-    -COUNTER_HALF_X + mm(20),
-    COUNTER_HALF_X - mm(20),
+    -counter.halfWidth + margin,
+    counter.halfWidth - margin,
   );
-  scout.root.position.z = THREE.MathUtils.clamp(
+  const nextZ = THREE.MathUtils.clamp(
     scout.root.position.z + wz * speed * dt,
-    -COUNTER_HALF_Z + mm(20),
-    COUNTER_HALF_Z - mm(20),
+    -counter.halfDepth + margin,
+    counter.halfDepth - margin,
   );
+
+  /*
+   * The sink is a hole, so it has to be a hole for the player too.
+   *
+   * Resolved per axis rather than by rejecting the whole move: rejecting both axes together makes
+   * the scout stick to the rim instead of sliding along it, which is the "invisible collision"
+   * failure the worker reliability targets call out by name.
+   */
+  const inBowl = (x: number, z: number): boolean =>
+    x > counter.bowl.minX - margin &&
+    x < counter.bowl.maxX + margin &&
+    z > counter.bowl.minZ - margin &&
+    z < counter.bowl.maxZ + margin;
+
+  if (!inBowl(nextX, scout.root.position.z)) scout.root.position.x = nextX;
+  if (!inBowl(scout.root.position.x, nextZ)) scout.root.position.z = nextZ;
 
   // The roach models face +Z; rotate toward travel and never snap.
   const want = Math.atan2(wx, wz);

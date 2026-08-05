@@ -74,10 +74,21 @@ interface LegPlan {
   readonly strideMm: number;
 }
 
+/*
+ * MEASURED CORRECTION (proof-09). The first plan splayed all three pairs close to straight out to
+ * the side and gave the hind pair 22.5 mm of leg on a 35 mm body. Rendered, that reads as a SPIDER:
+ * long limbs arranged radially around a compact body is the arachnid silhouette, and it fails the
+ * "scout reads as a cockroach" gate no matter how good the carapace is.
+ *
+ * What separates the two shapes is sweep, not leg count. A cockroach's legs rake BACKWARD — the
+ * front pair reaches forward past the head, the hind pair trails well behind the abdomen, and the
+ * body is long rather than round. Sweeping the pairs apart and shortening the hind reach is what
+ * turns the silhouette back into an insect.
+ */
 const LEG_PLAN: readonly LegPlan[] = [
-  { hipZ: 6.5, hipX: 4.2, femurMm: 6.5, tibiaMm: 6.0, splayDeg: 38, strideMm: 5.5 },
-  { hipZ: 1.5, hipX: 4.8, femurMm: 8.5, tibiaMm: 8.0, splayDeg: 2, strideMm: 7.0 },
-  { hipZ: -3.5, hipX: 4.6, femurMm: 10.5, tibiaMm: 12.0, splayDeg: -34, strideMm: 8.5 },
+  { hipZ: 6.5, hipX: 4.0, femurMm: 6.0, tibiaMm: 5.6, splayDeg: 54, strideMm: 5.0 },
+  { hipZ: 1.5, hipX: 4.6, femurMm: 7.6, tibiaMm: 7.0, splayDeg: -6, strideMm: 6.4 },
+  { hipZ: -3.5, hipX: 4.4, femurMm: 9.0, tibiaMm: 9.6, splayDeg: -54, strideMm: 7.6 },
 ];
 
 /**
@@ -406,10 +417,10 @@ export function createRoachAssets(): RoachAssets {
         const along = inStance ? 0.5 - t : -0.5 + t;
         const lift = inStance ? 0 : Math.sin(t * Math.PI) * mm(2.6) * Math.max(drive, 0.35);
 
-        // How far out the foot rests, as a fraction of total leg length. Below ~0.6 the leg folds
-        // so tightly that the knee towers over the body; near 1.0 it locks straight and stops
-        // reacting. 0.72 keeps a readable bend with the knee just clear of the carapace.
-        const spread = (leg.femurLength + leg.tibiaLength) * 0.72;
+        // How far out the foot rests, as a fraction of total leg length. Near 1.0 the leg locks
+        // straight and stops reacting; too low and the knee towers over the body. 0.58 keeps the
+        // feet tucked close the way a resting cockroach holds them — 0.72 read as a spider.
+        const spread = (leg.femurLength + leg.tibiaLength) * 0.58;
         footLocal.set(
           leg.restDirection.x * spread,
           -bodyRestY + lift,
