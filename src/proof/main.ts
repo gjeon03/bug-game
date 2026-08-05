@@ -22,6 +22,7 @@ import { counterStone, laminate, steelBrushed, steelPolished } from '../../tools
 import { createRoachAssets, type Roach } from '../three/roach';
 import { buildCounter } from '../three/counter';
 import { OcclusionSystem } from '../three/occlusion';
+import { applyWear } from '../three/surfaces';
 import { Profiler, judge, type ProfileResult, type VerdictLine } from '../three/profiler';
 
 interface PropSpec {
@@ -129,170 +130,46 @@ const CAM_OFFSET = cameraOffset();
 
 /* ------------------------------------------------------- worktop and cabinet */
 
-/**
- * Low-frequency wear across the worktop.
+/*
+ * Worktop and cabinet materials.
  *
- * `tools/bake/lib/materials.mjs` records a NEGATIVE RESULT for procedural surface detail: three
- * attempts produced either nothing or a visible repeating grid, because a tiled canvas texture's
- * own seams line up. The escape is to not tile at all — ONE texture stretched across the whole
- * slab, `repeat` left at 1, so there is no period for a grid to form on. It carries no colour, only
- * roughness, so it reads as where the cloth has and has not been rather than as a pattern.
+ * Both get all three channels from one untiled source — see `src/three/surfaces.ts` for why
+ * roughness alone measurably failed to reach the eye.
  */
-function worktopWearCanvas(): HTMLCanvasElement {
-  /*
-   * MEASURED CORRECTION (proof-11, independent critique). The first attempt filled the canvas with
-   * mid-grey and drew ±0.15 blotches, which multiplied against a 0.42 base roughness into a
-   * variation too small to survive a soft environment. The critic measured the result: **53.9 % of
-   * the frame within 6 % of one colour, and a 500×260 patch with a standard deviation of 0.0030.**
-   * "The absence of incident doesn't read as clean, it reads as untextured. It also destroys scale:
-   * with nothing at millimetre resolution to compare against, the roaches float free of size."
-   *
-   * Three families now, at three frequencies, so the key light has something to break up on:
-   * directional grain along the counter's long axis, broad wear where hands and cloths go, and a
-   * few dried water rings. 1024 px across ~920 world units is roughly 1.2 mm per texel — genuinely
-   * millimetre-scale detail, which is the scale reference the scene was missing.
-   *
-   * Still no tiling. `repeat` stays at 1, so there is no period for the banned grid to form on.
-   */
-  const SIZE = 1024;
-  const canvas = document.createElement('canvas');
-  canvas.width = SIZE;
-  canvas.height = SIZE;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('2D context unavailable for worktop wear');
-
-  // Deterministic — evidence has to be reproducible, so no Math.random anywhere in here.
-  let seed = 0x9e3779b9;
-  const rand = (): number => {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    return seed / 0x100000000;
-  };
-
-  // Bright base: roughnessMap multiplies, so near-white keeps the material's authored roughness and
-  // lets every mark below read as a departure from it rather than as a global darkening.
-  ctx.fillStyle = '#d8d8d8';
-  ctx.fillRect(0, 0, SIZE, SIZE);
-
-  // Broad wear — where cloths and forearms actually pass.
-  for (let i = 0; i < 70; i++) {
-    const x = rand() * SIZE;
-    const y = rand() * SIZE;
-    const r = 90 + rand() * 260;
-    const lighter = rand() > 0.45;
-    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, lighter ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.26)');
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(x - r, y - r, r * 2, r * 2);
-  }
-
-  // Directional grain along the counter's long axis. Manufactured surfaces are anisotropic, and
-  // that anisotropy is most of what tells the eye a surface was made rather than generated.
-  ctx.save();
-  ctx.globalAlpha = 0.5;
-  for (let i = 0; i < 900; i++) {
-    const y = rand() * SIZE;
-    const x = rand() * SIZE;
-    const len = 60 + rand() * 340;
-    ctx.strokeStyle = rand() > 0.5 ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.18)';
-    ctx.lineWidth = rand() < 0.85 ? 1 : 2;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + len, y + (rand() - 0.5) * 3);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // Dried water rings — a glass or a wet mug stood here and evaporated. Darker roughness reads as
-  // the polished halo mineral deposits leave behind.
-  for (let i = 0; i < 5; i++) {
-    const x = rand() * SIZE;
-    const y = rand() * SIZE;
-    const r = 26 + rand() * 46;
-    ctx.strokeStyle = 'rgba(0,0,0,0.30)';
-    ctx.lineWidth = 2 + rand() * 3;
-    ctx.beginPath();
-    ctx.ellipse(x, y, r, r * (0.9 + rand() * 0.2), rand() * Math.PI, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  return canvas;
-}
-
-/**
- * Turn a height-ish greyscale canvas into a tangent-space normal map with a Sobel filter.
- *
- * MEASURED CORRECTION (proof-12, independent verification). The wear map was applied as
- * `roughnessMap` only, and the verifier proved it never reached the eye: an auto-levelled high-pass
- * of the whole frame is **black on every countertop pixel**, and like-for-like countertop patches
- * measure 0.0021 after versus 0.0022 before. Roughness alone cannot show under a soft environment
- * against a 0.42 base — there is no hard light to break up.
- *
- * (The 0.0460 figure I reported was a measurement artifact. The camera framing changed between the
- * two captures, so the fixed screen rectangle I compared no longer contained countertop — it
- * straddled the silhouette edge between the cabinet face and the worktop. Measuring a fixed screen
- * rect across a deliberate camera change is not a valid before/after; the measurement has to be
- * anchored to the material.)
- *
- * A normal map gives the key light actual slope to catch, and an albedo variation survives even
- * where the light does not reach. Roughness stays as the third layer.
- */
-function normalMapFrom(source: HTMLCanvasElement, strength: number): THREE.CanvasTexture {
-  const size = source.width;
-  const src = source.getContext('2d');
-  if (!src) throw new Error('2D context unavailable for normal map');
-  const height = src.getImageData(0, 0, size, size).data;
-
-  const out = document.createElement('canvas');
-  out.width = size;
-  out.height = size;
-  const ctx = out.getContext('2d');
-  if (!ctx) throw new Error('2D context unavailable for normal map');
-  const image = ctx.createImageData(size, size);
-
-  const at = (x: number, y: number): number => {
-    const cx = Math.min(size - 1, Math.max(0, x));
-    const cy = Math.min(size - 1, Math.max(0, y));
-    return height[(cy * size + cx) * 4] ?? 0;
-  };
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const dx = (at(x + 1, y) - at(x - 1, y)) / 255;
-      const dy = (at(x, y + 1) - at(x, y - 1)) / 255;
-      // Normalise (-dx*strength, -dy*strength, 1) into the 0..255 encoding three.js expects.
-      const nx = -dx * strength;
-      const ny = -dy * strength;
-      const len = Math.hypot(nx, ny, 1);
-      const i = (y * size + x) * 4;
-      image.data[i] = ((nx / len) * 0.5 + 0.5) * 255;
-      image.data[i + 1] = ((ny / len) * 0.5 + 0.5) * 255;
-      image.data[i + 2] = ((1 / len) * 0.5 + 0.5) * 255;
-      image.data[i + 3] = 255;
-    }
-  }
-
-  ctx.putImageData(image, 0, 0);
-  const texture = new THREE.CanvasTexture(out);
-  texture.wrapS = THREE.ClampToEdgeWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
-  return texture;
-}
-
-const wearCanvas = worktopWearCanvas();
 const worktopMaterial = counterStone() as THREE.MeshStandardMaterial;
-const wearTexture = new THREE.CanvasTexture(wearCanvas);
-wearTexture.wrapS = THREE.ClampToEdgeWrapping;
-wearTexture.wrapT = THREE.ClampToEdgeWrapping;
-wearTexture.anisotropy = 8;
+applyWear(worktopMaterial, { grain: 'horizontal', rings: 5, seed: 0x9e3779b9 });
 
-worktopMaterial.roughnessMap = wearTexture;
-// `map` multiplies the base colour, so the near-white canvas both tints and varies it. The base is
-// lifted to compensate for the map's average, keeping the counter's authored value.
-worktopMaterial.map = wearTexture;
-worktopMaterial.color.multiplyScalar(1.18);
-worktopMaterial.normalMap = normalMapFrom(wearCanvas, 2.2);
-worktopMaterial.normalScale = new THREE.Vector2(0.55, 0.55);
+/*
+ * MEASURED CORRECTION (proof-15, independent verification). The cabinet face was the SECOND flat
+ * surface: a 1060x749 px region, 14.7 % of the frame, with an internal standard deviation of
+ * 1.15 levels out of 255. The verifier's summary was that splitting one flat surface into two flat
+ * surfaces is not texture — together they were 70.2 % of the frame in two solid fills.
+ *
+ * Laminate runs with the timber, so the grain is vertical, and it collects scuffs near the floor
+ * where feet and mops reach rather than water rings.
+ */
+const cabinetMaterial = laminate() as THREE.MeshStandardMaterial;
+applyWear(cabinetMaterial, {
+  grain: 'vertical',
+  streaks: 1100,
+  scuffs: 90,
+  seed: 0x51ed270b,
+  normalStrength: 1.6,
+  normalScale: 0.4,
+});
+
+const toeKickMaterial = laminate(0x3b352f) as THREE.MeshStandardMaterial;
+applyWear(toeKickMaterial, {
+  grain: 'vertical',
+  streaks: 700,
+  scuffs: 160,
+  seed: 0x2f6b1c4d,
+  normalStrength: 1.6,
+  normalScale: 0.45,
+});
+
+const floorMaterial = laminate(0x474d52) as THREE.MeshStandardMaterial;
+applyWear(floorMaterial, { grain: 'horizontal', streaks: 500, seed: 0x7d2b8811, normalScale: 0.3 });
 
 /*
  * MEASURED CORRECTION (proof-08 -> proof-09).
@@ -312,9 +189,9 @@ const counter = buildCounter({
   steel: steelBrushed(),
   steelBowl: new THREE.MeshStandardMaterial({ color: 0x9aa5b0, metalness: 0.5, roughness: 0.44 }),
   steelPolished: steelPolished(),
-  laminate: laminate(),
-  laminateDark: laminate(0x3b352f),
-  floor: laminate(0x474d52),
+  laminate: cabinetMaterial,
+  laminateDark: toeKickMaterial,
+  floor: floorMaterial,
 });
 scene.add(counter.group);
 
