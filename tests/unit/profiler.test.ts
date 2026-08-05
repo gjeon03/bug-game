@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { judge, type ProfileResult, type SceneCeilings } from '../../src/three/profiler.ts';
+import { judge, type ProfileResult, type SceneCeilings } from '../../src/view/profiler';
+import type { VerdictLine } from '../../src/view/profiler';
 
 /**
  * The perf verdict is tested because the verdict is the thing that can lie.
@@ -49,7 +50,7 @@ function result(overrides: Partial<ProfileResult> = {}): ProfileResult {
 }
 
 const find = (lines: ReturnType<typeof judge>, metric: string) =>
-  lines.find((l) => l.metric === metric);
+  lines.find((l: VerdictLine) => l.metric === metric);
 
 describe('perf verdict', () => {
   it('passes a genuinely healthy window', () => {

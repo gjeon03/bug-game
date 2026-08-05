@@ -6,23 +6,28 @@
     <meta name="color-scheme" content="dark" />
     <meta
       name="description"
-      content="걸레받이 제국 — 사람이 사는 주방 안에서 바퀴 군체를 키우는 탑다운 매크로 느와르 전략 게임."
+      content="사람이 사는 아파트 안에서, 싱크대 밑 틈 하나부터 집 전체까지 바퀴 군체를 넓혀 가는 3D 전략 게임."
     />
-    <title>걸레받이 제국</title>
+    <title>집 전체를 점거하라</title>
+    <!--
+      An inline data-URI favicon, not a file. Without it the browser requests /favicon.ico, gets a
+      404, and trips the "zero missing asset requests" gate for a resource the page never asked for.
+      A data URI also cannot become a root-absolute path, so it is safe under the nested-subpath
+      contract.
+    -->
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23090d13'/%3E%3Cg stroke='%23c07a34' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M13 9 L7 4M19 9 L25 4'/%3E%3Cpath d='M11 14 L4 11M11 18 L4 19M12 22 L6 27M21 14 L28 11M21 18 L28 19M20 22 L26 27'/%3E%3C/g%3E%3Cellipse cx='16' cy='19' rx='6.4' ry='9' fill='%236b3f18'/%3E%3Cellipse cx='16' cy='13' rx='5.4' ry='4.6' fill='%23c07a34'/%3E%3Cellipse cx='16' cy='8.6' rx='2.6' ry='2.2' fill='%233a220c'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23070a10'/%3E%3Cg stroke='%23c07a34' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M13 9 L7 4M19 9 L25 4'/%3E%3Cpath d='M11 14 L4 11M11 18 L4 19M12 22 L6 27M21 14 L28 11M21 18 L28 19M20 22 L26 27'/%3E%3C/g%3E%3Cellipse cx='16' cy='19' rx='6.2' ry='8.8' fill='%236b3f18'/%3E%3Cellipse cx='16' cy='13' rx='5.2' ry='4.4' fill='%23c07a34'/%3E%3Cellipse cx='16' cy='8.6' rx='2.5' ry='2.1' fill='%233a220c'/%3E%3C/svg%3E"
     />
   </head>
   <body>
     <div id="app">
-      <canvas id="game" aria-label="걸레받이 제국 게임 화면" role="img"></canvas>
+      <canvas id="game" aria-label="게임 화면" role="img"></canvas>
       <div id="hud" aria-live="polite"></div>
-      <div id="overlay"></div>
-      <noscript>
-        <p class="noscript">걸레받이 제국은 자바스크립트가 켜져 있어야 실행됩니다.</p>
-      </noscript>
     </div>
-    <script type="module" src="/src/main.ts"></script>
+    <noscript>
+      <div id="noscript">이 게임은 자바스크립트가 켜져 있어야 실행된다.</div>
+    </noscript>
+    <script type="module" src="/src/game/boot.ts"></script>
   </body>
 </html>

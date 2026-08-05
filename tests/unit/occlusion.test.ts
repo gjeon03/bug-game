@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { DEFAULT_FADE_FLOOR, OcclusionSystem } from '../../src/three/occlusion.ts';
+import { DEFAULT_FADE_FLOOR, OcclusionSystem } from '../../src/view/occlusion';
 
 /**
  * Occlusion is tested against a synthetic scene rather than against the game's prop layout.

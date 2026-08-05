@@ -1,5 +1,5 @@
-import { en } from './en.ts';
-import { ko, type KoKey } from './ko.ts';
+import { en } from './en';
+import { ko, type KoKey } from './ko';
 
 /**
  * The one place player-facing text comes from.

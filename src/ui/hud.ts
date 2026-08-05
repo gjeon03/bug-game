@@ -1,322 +1,310 @@
-import { clamp01 } from '../core/math.ts';
-import { t } from '../i18n/index.ts';
-import {
-  MAX_ROUTES,
-  RESERVE_MAX,
-  SCOUT_STAMINA_MAX,
-  SUSPICION_MAX,
-  TIER_THRESHOLDS,
-} from '../sim/constants.ts';
-import { specById } from '../sim/adaptations.ts';
-import { FUNCTION_LABELS, interactTarget } from '../sim/colony.ts';
-import type { FootholdFunction } from '../sim/types.ts';
-import { scoutStruggleProgress } from '../sim/scout.ts';
-import { CAUSE_LABELS, tierName } from '../sim/suspicion.ts';
-import type { World } from '../sim/world.ts';
-import { ICONS } from './icons.ts';
+import { t } from '../i18n';
+import { REGION_ORDER, type RegionId } from '../world/types';
+import { storeCap } from '../colony/state';
+import { adaptationOffers } from '../colony/progression';
+import type { Run, RunEvent } from '../colony/types';
 
 /**
- * The HUD is a DOM overlay with `pointer-events: none`, so it can never eat gameplay input.
+ * The heads-up display.
  *
- * It answers, at a glance: what do I have, how obvious am I, what is coming, and what should I do
- * next. Values are written only when they change, so a 60 Hz update loop does not thrash layout.
+ * ## This is the only place player-facing text is produced
+ *
+ * Simulation state carries catalog keys and params. `t()` is called here and nowhere in
+ * `src/colony/` or `src/world/`. That is a structural guarantee, not a convention: there is no
+ * string in the simulation that *could* reach a player untranslated, which is the defect this
+ * project shipped once before and detected only by opening a real browser.
+ *
+ * ## Why a dirty-diff rather than a framework
+ *
+ * The HUD updates every frame and almost nothing in it changes on most frames. Writing `innerHTML`
+ * unconditionally at 60 Hz forces layout every time. Each slot caches the string it last wrote and
+ * skips the DOM entirely when it is unchanged, which turns the HUD from a per-frame layout cost
+ * into approximately nothing.
  */
-export class Hud {
-  private root: HTMLElement;
-  private el: Record<string, HTMLElement> = {};
-  private last: Record<string, string> = {};
 
-  constructor(root: HTMLElement) {
-    this.root = root;
-    this.root.innerHTML = `
-      <div class="corner tl">
-        <div class="panel">
-          ${meter('food', t('hud.meter.food'), ICONS.food, 'f-food')}
-          ${meter('water', t('hud.meter.water'), ICONS.water, 'f-water')}
-          ${meter('pop', t('hud.meter.colony'), ICONS.pop, 'f-pop')}
-          ${meter('brood', t('hud.meter.brood'), ICONS.brood, 'f-brood')}
-        </div>
-      </div>
+const LOG_LINES = 6;
 
-      <div class="corner tr">
-        <div class="panel" id="suspicion">
-          <div class="head">
-            ${ICONS.eye}
-            <span class="tier-name" data-el="tierName">${t('alert.tier.0')}</span>
-            <span class="pips">
-              <span class="pip" data-el="pip0"></span><span class="pip" data-el="pip1"></span
-              ><span class="pip" data-el="pip2"></span><span class="pip" data-el="pip3"></span>
-            </span>
-          </div>
-          <div class="track">
-            <div class="fill" data-el="suspFill" style="width:0%"></div>
-            <div class="ticks">${TIER_THRESHOLDS.map(
-              (t) => `<span class="tick" style="left:${(t / SUSPICION_MAX) * 100}%"></span>`,
-            ).join('')}</div>
-            <div class="floor" data-el="suspFloor" style="left:0%"></div>
-          </div>
-          <div class="cause" data-el="cause">${t('hud.evidence.none')}</div>
-          <div class="next" data-el="next">${t('alert.response.0')}</div>
-          <div class="counter hidden" data-el="counter"></div>
-        </div>
-      </div>
+interface Slot {
+  readonly node: HTMLElement;
+  last: string;
+}
 
-      <div class="corner bl">
-        <div class="panel">
-          ${meter('stam', t('hud.meter.sprint'), ICONS.stamina, 'f-stam')}
-          ${meter('pher', t('hud.meter.pheromone'), ICONS.pheromone, 'f-pher')}
-          <div class="statusline" data-el="scoutState">${t('hud.scout.ready')}</div>
-        </div>
-      </div>
+function slot(node: HTMLElement): Slot {
+  return { node, last: ' ' };
+}
 
-      <div class="corner bc">
-        <div id="tutorial" class="hidden"></div>
-        <div id="toast" class="hidden"></div>
-        <div id="prompt" class="hidden"></div>
-        <div class="panel" id="objective-wrap">
-          <div id="objective">…</div>
-          <div id="blocker" class="hidden" data-el="blocker"></div>
-        </div>
-      </div>
+function write(target: Slot, html: string): void {
+  if (target.last === html) return;
+  target.last = html;
+  target.node.innerHTML = html;
+}
 
-      <div class="corner br">
-        <div class="panel" id="phase">
-          <div class="op" data-el="opTitle">${t('op.title', { index: 1, title: t('op.1.title') })}</div>
-          <ul class="checklist" data-el="checklist"></ul>
-          <div class="unlock" data-el="nextUnlock"></div>
-          <div id="perf" class="hidden" data-el="perf"></div>
-        </div>
-      </div>
+function toggle(node: HTMLElement, on: boolean, className = 'on'): void {
+  if (node.classList.contains(className) === on) return;
+  node.classList.toggle(className, on);
+}
 
-      <div class="choice hidden" data-el="choice"></div>
-    `;
-    this.root.querySelectorAll<HTMLElement>('[data-el]').forEach((n) => {
-      this.el[n.dataset.el as string] = n;
-    });
-    this.el.tutorial = this.root.querySelector('#tutorial') as HTMLElement;
-    this.el.toast = this.root.querySelector('#toast') as HTMLElement;
-    this.el.prompt = this.root.querySelector('#prompt') as HTMLElement;
-    this.el.objective = this.root.querySelector('#objective') as HTMLElement;
-    this.el.suspicionPanel = this.root.querySelector('#suspicion') as HTMLElement;
-    this.el.foodMeter = this.root.querySelector('.f-food') as HTMLElement;
-    this.el.phase = this.root.querySelector('#phase') as HTMLElement;
-    this.el.waterMeter = this.root.querySelector('.f-water') as HTMLElement;
+const ESCAPES: Readonly<Record<string, string>> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+/** Escape anything that reaches innerHTML. Catalog text is ours, but params may not be. */
+function esc(value: string | number): string {
+  return String(value).replace(/[&<>"']/g, (c) => ESCAPES[c] ?? c);
+}
+
+/**
+ * Resolve a param that is itself a catalog key.
+ *
+ * The simulation passes things like `{ region: 'region.kitchen' }`. A key looks like a dotted
+ * lowercase identifier; anything else is a literal value (a count, a number).
+ */
+function resolveParams(params: Record<string, string | number>): Record<string, string | number> {
+  const out: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(params)) {
+    out[key] = typeof value === 'string' && /^[a-z][a-zA-Z0-9]*\./.test(value) ? t(value) : value;
   }
+  return out;
+}
 
-  private set(key: string, value: string): void {
-    if (this.last[key] === value) return;
-    this.last[key] = value;
-    const node = this.el[key];
-    if (node) node.textContent = value;
-  }
+export type CurtainKind = 'help' | 'pause' | 'won' | 'lost';
 
-  private width(key: string, fraction: number): void {
-    const pct = `${(clamp01(fraction) * 100).toFixed(1)}%`;
-    if (this.last[`w:${key}`] === pct) return;
-    this.last[`w:${key}`] = pct;
-    const node = this.el[key];
-    if (node) node.style.width = pct;
-  }
+export interface PromptState {
+  readonly key: string;
+  readonly labelKey: string;
+  readonly params?: Record<string, string | number>;
+}
 
-  private toggle(key: string, on: boolean, text?: string): void {
-    const node = this.el[key];
-    if (!node) return;
-    if (text !== undefined && node.textContent !== text) node.innerHTML = text;
-    const hidden = node.classList.contains('hidden');
-    if (on === hidden) node.classList.toggle('hidden', !on);
-  }
+export interface Hud {
+  update(run: Run, seenFraction: number, prompt: PromptState | null): void;
+  showCurtain(kind: CurtainKind, run: Run): void;
+  hideCurtain(): void;
+  readonly curtain: CurtainKind | null;
+  dispose(): void;
+}
 
-  update(world: World, fps: number, showPerf: boolean, perfLine: string): void {
-    const c = world.colony;
+export function createHud(rootId = 'hud'): Hud {
+  const root = document.getElementById(rootId);
+  if (!root) throw new Error(`HUD root #${rootId} not found`);
 
-    this.width('foodFill', c.food / c.foodCap);
-    this.set('foodNum', `${Math.floor(c.food)}/${c.foodCap}`);
-    this.width('waterFill', c.water / c.waterCap);
-    this.set('waterNum', `${Math.floor(c.water)}/${c.waterCap}`);
-    this.width('popFill', c.capacity > 0 ? c.population / c.capacity : 0);
-    this.set('popNum', `${c.population}/${c.capacity}`);
-    this.width('broodFill', c.brood);
-    this.set('broodNum', `${Math.floor(c.brood * 100)}%`);
+  root.innerHTML = [
+    '<div id="objective" class="panel"></div>',
+    '<div id="seen"></div>',
+    '<div id="stores" class="panel"></div>',
+    '<div id="regions" class="panel"></div>',
+    '<div id="prompt"></div>',
+    '<div id="log"></div>',
+  ].join('');
 
-    const s = world.scout;
-    this.width('stamFill', s.stamina / SCOUT_STAMINA_MAX);
-    this.set('stamNum', `${Math.floor(s.stamina)}`);
-    this.width('pherFill', world.reserve / RESERVE_MAX);
-    const linkedRoutes = world.routes.filter((r) => r.linked).length;
-    this.set('pherNum', `${Math.floor(world.reserve)} · ${linkedRoutes}/${MAX_ROUTES}`);
+  const choice = document.createElement('div');
+  choice.id = 'choice';
+  choice.innerHTML = '<div class="cards"></div>';
+  document.body.appendChild(choice);
 
-    // A shortage is escalated on the meter itself, not only in the objective line.
-    this.el.foodMeter?.classList.toggle('critical', world.shortage === 'food');
-    this.el.waterMeter?.classList.toggle('critical', world.shortage === 'water');
+  const curtainNode = document.createElement('div');
+  curtainNode.id = 'curtain';
+  curtainNode.innerHTML = '<div class="sheet panel"></div>';
+  document.body.appendChild(curtainNode);
 
-    let state = t('hud.scout.ready');
-    if (!s.alive) state = t('hud.scout.dead', { seconds: Math.max(0, s.respawnTimer).toFixed(1) });
-    else if (s.trapId >= 0)
-      state = t('hud.scout.trapped', { percent: Math.round(scoutStruggleProgress(world) * 100) });
-    else if (s.spotted > 0.55) state = t('hud.scout.seen');
-    else if (s.exposure > 0.55) state = t('hud.scout.exposed');
-    else if (s.laying) state = t('hud.scout.laying');
-    this.set('scoutState', state);
+  const objective = slot(root.querySelector('#objective') as HTMLElement);
+  const stores = slot(root.querySelector('#stores') as HTMLElement);
+  const regions = slot(root.querySelector('#regions') as HTMLElement);
+  const log = slot(root.querySelector('#log') as HTMLElement);
+  const promptNode = root.querySelector('#prompt') as HTMLElement;
+  const prompt = slot(promptNode);
+  const seenNode = root.querySelector('#seen') as HTMLElement;
+  const seen = slot(seenNode);
+  const cards = slot(choice.querySelector('.cards') as HTMLElement);
+  const sheet = slot(curtainNode.querySelector('.sheet') as HTMLElement);
 
-    const susp = world.suspicion;
-    this.width('suspFill', susp.value / SUSPICION_MAX);
-    const floorNode = this.el.suspFloor;
-    if (floorNode) floorNode.style.left = `${(susp.floor / SUSPICION_MAX) * 100}%`;
-    this.set('tierName', `${tierName(susp.tier)} · ${Math.round(susp.value)}`);
-    for (let i = 0; i < 4; i++) {
-      const pip = this.el[`pip${i}`];
-      if (pip) pip.classList.toggle('on', susp.tier > i);
-    }
-    const panel = this.el.suspicionPanel;
-    if (panel) {
-      const cls = `t${susp.tier}`;
-      if (this.last.suspClass !== cls) {
-        panel.className = `panel ${cls}`;
-        this.last.suspClass = cls;
+  let curtain: CurtainKind | null = null;
+
+  return {
+    get curtain() {
+      return curtain;
+    },
+
+    update(run, seenFraction, promptState) {
+      renderObjective(objective, run);
+      renderStores(stores, run);
+      renderRegions(regions, run);
+      renderLog(log, run.log);
+
+      if (promptState) {
+        const label = t(promptState.labelKey, resolveParams(promptState.params ?? {}));
+        write(prompt, `<span class="key">${esc(promptState.key)}</span>${esc(label)}`);
       }
-    }
-    this.setHtml(
-      'cause',
-      susp.lastCause
-        ? `<span class="rowicon">◂</span><span>${CAUSE_LABELS[susp.lastCause]}</span>`
-        : `<span class="rowicon">◂</span><span>${t('hud.evidence.none')}</span>`,
-    );
-    // The forecast is the household's own reasoning, not a generic tier label: what it noticed,
-    // roughly where, and what it is likely to do about it.
-    this.setHtml('next', `<span class="rowicon">▸</span><span>${world.hud.forecast}</span>`);
-    this.toggle('counter', world.hud.counterplay !== null);
-    if (world.hud.counterplay) {
-      this.setHtml(
-        'counter',
-        `<span class="rowicon">✽</span><span>${world.hud.counterplay}</span>`,
-      );
-    }
+      toggle(promptNode, promptState !== null);
 
-    this.set('objective', world.objective);
+      // The seen meter only appears when there is something to react to. A permanent risk bar is
+      // wallpaper; one that fades in when the light finds you is information.
+      const visible = seenFraction > 0.06;
+      if (visible) {
+        const pct = Math.round(seenFraction * 100);
+        write(
+          seen,
+          `<div class="label">${esc(t('hud.seen'))}</div>` +
+            `<div class="bar"><i style="width:${pct}%"></i></div>`,
+        );
+      }
+      toggle(seenNode, visible);
 
-    // ── Bottom-centre arbitration. Four independently-mounted pills used to stack, twice saying the
-    // same thing about the same crumbs, against a contract that specifies one line. Priority is:
-    // transient feedback (a toast the player just caused) > contextual prompt > onboarding.
-    const target = interactTarget(world);
-    const showToast = world.hint.length > 0;
-    const showPrompt = !!target && world.status === 'playing';
-    const showTutorial = world.tutorial.length > 0 && !showToast && !showPrompt;
+      const offering = run.colony.adaptationPoints > 0;
+      if (offering) renderChoices(cards, run);
+      toggle(choice, offering);
+    },
 
-    this.toggle('tutorial', showTutorial);
-    if (showTutorial) this.setHtml('tutorial', world.tutorial);
+    showCurtain(kind, run) {
+      curtain = kind;
+      write(sheet, curtainHtml(kind, run));
+      toggle(curtainNode, true);
+    },
 
-    this.toggle('toast', showToast);
-    if (showToast) this.setHtml('toast', world.hint);
+    hideCurtain() {
+      curtain = null;
+      toggle(curtainNode, false);
+    },
 
-    if (showPrompt && target) {
-      // Cost fragments come from the catalog so the resource nouns and their order are the
-      // translator's decision, not the layout's.
-      const parts: string[] = [];
-      if (target.costFood > 0) parts.push(t('unit.food', { amount: target.costFood }));
-      if (target.costWater > 0) parts.push(t('unit.water', { amount: target.costWater }));
-      const cost = parts.length ? t('hud.prompt.costSuffix', { cost: parts.join(', ') }) : '';
-      const label =
-        target.kind === 'claim' || target.kind === 'fit' || target.kind === 'repair'
-          ? `<kbd>E</kbd> ${target.label}${cost}`
-          : target.kind === 'sealed'
-            ? `<kbd>E</kbd> ${target.label}`
-            : `<kbd>E</kbd> ${t('hud.prompt.inspect', { label: target.label })}`;
-      this.setHtml('prompt', label);
-      this.toggle('prompt', true);
-      this.el.prompt?.classList.toggle('blocked', !target.affordable);
-    } else {
-      this.toggle('prompt', false);
-    }
-
-    // ── Objective hierarchy ────────────────────────────────────────────────
-    const h = world.hud;
-    this.set('opTitle', h.operation);
-    const list = h.checklist
-      .map(
-        (item) =>
-          `<li class="${item.done ? 'done' : ''}">${item.label}<span>${Math.floor(Math.min(item.have, item.need) * 10) / 10}/${item.need}</span></li>`,
-      )
-      .join('');
-    this.setHtml('checklist', list);
-    this.set(
-      'nextUnlock',
-      world.finalResponse ? t('hud.theyAreComing') : t('hud.next', { unlock: h.nextUnlock }),
-    );
-    this.el.phase?.classList.toggle('warn', world.finalResponse);
-
-    this.toggle('blocker', h.blocker !== null);
-    if (h.blocker) this.setHtml('blocker', h.blocker);
-
-    // ── One-of-three choice: adaptations, and foothold fit-outs ────────────
-    const choice = choicePanel(world);
-    this.toggle('choice', choice !== null);
-    if (choice) this.setHtml('choice', choice);
-
-    this.toggle('perf', showPerf);
-    if (showPerf) this.set('perf', `${fps.toFixed(0)} fps · ${perfLine}`);
-  }
-
-  private setHtml(key: string, html: string): void {
-    if (this.last[`h:${key}`] === html) return;
-    this.last[`h:${key}`] = html;
-    const node = this.el[key];
-    if (node) node.innerHTML = html;
-  }
+    dispose() {
+      root.innerHTML = '';
+      choice.remove();
+      curtainNode.remove();
+    },
+  };
 }
 
-function meter(id: string, label: string, icon: string, cls: string): string {
-  return `<div class="meter ${cls}">
-      ${icon}
-      <span class="label" data-critical="${t('hud.meter.critical').trim()}">${label}</span>
-      <span class="track"><span class="fill" data-el="${id}Fill" style="width:0%"></span></span>
-      <span class="num" data-el="${id}Num">0</span>
-    </div>`;
+/* ------------------------------------------------------------------ panels */
+
+function renderObjective(target: Slot, run: Run): void {
+  const o = run.objective;
+  const body = t(o.bodyKey, resolveParams(o.params));
+  const blocker = o.blockerKey ? t(o.blockerKey, resolveParams(o.blockerParams)) : '';
+  const progress = Math.round(o.progress * 100);
+
+  write(
+    target,
+    `<div class="chapter">${esc(t(o.titleKey))}</div>` +
+      `<div class="body">${esc(body)}</div>` +
+      (blocker ? `<div class="blocker">${esc(blocker)}</div>` : '') +
+      (progress > 0 ? `<div class="progress"><i style="width:${progress}%"></i></div>` : ''),
+  );
 }
 
-/**
- * The one-of-three choice.
- *
- * Two different decisions share this panel — adaptations and foothold fit-outs — because they are the
- * same shape of decision for the player: three options, one pick, a cost and a stated downside. One
- * widget means one thing to learn.
- */
-function choicePanel(world: World): string | null {
-  if (world.adaptations.offer.length > 0) {
-    const rows = world.adaptations.offer
-      .map((id, i) => {
-        const a = specById(id);
-        if (!a) return '';
-        const poor = world.colony.food < a.costFood || world.colony.water < a.costWater;
-        return `<button class="opt ${a.family} ${poor ? 'poor' : ''}">
-            <kbd>${i + 1}</kbd>
-            <span class="name">${a.name}</span>
-            <span class="cost">${a.costFood} food · ${a.costWater} moisture</span>
-            <span class="blurb">${a.blurb}</span>
-            <span class="down">${a.downside}</span>
-          </button>`;
-      })
-      .join('');
-    return `<div class="choice-head">The colony is ready to specialise — choose one</div>
-      <div class="opts">${rows}</div>`;
+function bar(value: number, max: number): string {
+  const pct = Math.round(Math.min(1, value / Math.max(1, max)) * 100);
+  return `<div class="bar"><i style="width:${pct}%"></i></div>`;
+}
+
+function renderStores(target: Slot, run: Run): void {
+  const cap = storeCap(run);
+  const c = run.colony;
+  const atCap = c.food >= cap - 0.5 || c.moisture >= cap - 0.5;
+
+  write(
+    target,
+    `<div class="stat food"><span class="label">${esc(t('hud.food'))}</span>` +
+      `${bar(c.food, cap)}<span class="value">${Math.floor(c.food)}</span></div>` +
+      `<div class="stat moisture"><span class="label">${esc(t('hud.moisture'))}</span>` +
+      `${bar(c.moisture, cap)}<span class="value">${Math.floor(c.moisture)}</span></div>` +
+      `<div class="stat population"><span class="label">${esc(t('hud.population'))}</span>` +
+      `${bar(c.population, Math.max(1, c.capacity))}` +
+      `<span class="value">${c.population}/${c.capacity}</span></div>` +
+      (atCap ? `<div class="blocker">${esc(t('hud.stores'))}</div>` : ''),
+  );
+}
+
+function renderRegions(target: Slot, run: Run): void {
+  const rows: string[] = [];
+  for (const id of REGION_ORDER) {
+    const state = run.regions.get(id as RegionId);
+    if (!state) continue;
+    const heat = Math.round(Math.min(1, state.evidence) * 100);
+    rows.push(
+      `<div class="region${state.unlocked ? '' : ' locked'}" data-alert="${state.alert}">` +
+        `<span class="name">${esc(t(`region.${id}`))}</span>` +
+        `<div class="heat"><i style="width:${heat}%"></i></div>` +
+        `<span class="level">${esc(t(`alert.${state.alert}`))}</span></div>`,
+    );
+  }
+  write(target, rows.join(''));
+}
+
+function renderLog(target: Slot, entries: readonly RunEvent[]): void {
+  const lines = entries.slice(0, LOG_LINES).map((entry) => {
+    const text = t(entry.key, resolveParams(entry.params));
+    return `<div class="entry ${entry.severity}">${esc(text)}</div>`;
+  });
+  write(target, lines.join(''));
+}
+
+function renderChoices(target: Slot, run: Run): void {
+  const cards = adaptationOffers(run).map((offer, index) => {
+    const spent = !offer.available;
+    return (
+      `<div class="card panel${spent ? ' spent' : ''}">` +
+      `<div class="key">${index + 1}</div>` +
+      `<div class="name">${esc(t(offer.labelKey))}</div>` +
+      `<div class="desc">${esc(t(offer.bodyKey))}</div></div>`
+    );
+  });
+  write(target, cards.join(''));
+}
+
+/* ------------------------------------------------------------------ curtain */
+
+const HELP_LINES: readonly string[] = [
+  'help.move',
+  'help.sprint',
+  'help.route',
+  'help.erase',
+  'help.interact',
+  'help.traverse',
+  'help.adapt',
+  'help.pause',
+  'help.restart',
+];
+
+function curtainHtml(kind: CurtainKind, run: Run): string {
+  if (kind === 'help') {
+    const lines = HELP_LINES.map((key) => `<li>${esc(t(key))}</li>`).join('');
+    return (
+      `<h1>${esc(t('help.title'))}</h1>` +
+      `<p>${esc(t('help.intro'))}</p>` +
+      `<ul>${lines}</ul>` +
+      `<div class="foot">${esc(t('help.dismiss'))}</div>`
+    );
   }
 
-  if (world.pendingFit) {
-    const nest = world.nests.find((n) => n.id === world.pendingFit);
-    if (!nest) return null;
-    const keys: FootholdFunction[] = ['nursery', 'cache', 'bolthole'];
-    const rows = keys
-      .map((fn, i) => {
-        const meta = FUNCTION_LABELS[fn];
-        return `<button class="opt fn-${fn}">
-            <kbd>${i + 1}</kbd>
-            <span class="name">${meta.name}</span>
-            <span class="cost">${nest.fitFood} food · ${nest.fitWater} moisture</span>
-            <span class="blurb">${meta.blurb}</span>
-          </button>`;
-      })
-      .join('');
-    return `<div class="choice-head">Fit out ${nest.label} — choose one</div>
-      <div class="opts">${rows}</div>`;
+  if (kind === 'pause') {
+    return (
+      `<h1>${esc(t('pause.title'))}</h1>` +
+      `<p>${esc(t('pause.resume'))}</p>` +
+      `<div class="foot">${esc(t('pause.restart'))}</div>`
+    );
   }
-  return null;
+
+  const won = kind === 'won';
+  const minutes = Math.floor(run.time / 60);
+  const seconds = Math.floor(run.time % 60);
+  const stats = [
+    t('result.time', { minutes, seconds }),
+    t('result.deliveries', { count: run.stats.deliveries }),
+    t('result.peak', { count: run.stats.peakPopulation }),
+    t('result.sightings', { count: run.stats.sightings }),
+    t('result.lost.workers', { count: run.stats.workersLost }),
+    t('result.regions', { count: run.stats.regionsOpened }),
+  ]
+    .map((line) => `<div>${esc(line)}</div>`)
+    .join('');
+
+  return (
+    `<h1>${esc(t(won ? 'result.won.title' : 'result.lost.title'))}</h1>` +
+    `<p>${esc(t(won ? 'result.won.body' : 'result.lost.body'))}</p>` +
+    `<div class="stats">${stats}</div>` +
+    `<div class="foot">${esc(t('result.restart'))}</div>`
+  );
 }

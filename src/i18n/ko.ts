@@ -1,481 +1,307 @@
 /**
- * Korean catalog — DRAFT. This is the shipped player-facing language.
+ * Korean catalog — the shipped player-facing language.
  *
  * Rules this file follows:
- *   1. Keys are stable and descriptive of *purpose*, never of English wording. Rewriting the English
- *      must never require renaming a key.
+ *   1. Keys are stable and describe *purpose*, never English wording. Rewriting a line must never
+ *      require renaming a key.
  *   2. Interpolation is `{name}`. Every placeholder is named, never positional.
- *   3. Korean has no grammatical plural. Where English branched on count ("1 food line" /
- *      "2 food lines"), there is one key taking `{count}`.
- *   4. Korean has no letter case. The `sentence()` helper in `sim/operations.ts` and every
- *      `text-transform: uppercase` in `style.css` are no-ops here — see the localization spec.
- *   5. `.short` suffix = a variant authored for a slot that overflows at 1280×720. Never a synonym.
+ *   3. Korean has no grammatical plural. Where English would branch on count, one key takes
+ *      `{count}`.
+ *   4. A particle after an interpolated value is written `{x}{x?이/가}` and resolved by `t()` from
+ *      the *sound* of the value. Never hardcode a particle after a placeholder.
+ *   5. Terminology is fixed by the glossary below. Do not re-word a glossary term locally.
  *
- * Terminology is fixed by the glossary in
- * `artifacts/evidence/quality-reboot-baseline/audits/localization-spec.md`. Do not re-word a glossary
- * term locally — change it there and sweep.
+ * Glossary: 먹이 · 수분 · 군체 · 번식 · 페로몬 길 · 노출 · 흔적 · 경계 단계 · 거점 · 적응 ·
+ * 박멸 · 대피 · 정찰병 · 일꾼 · 통로
  */
 export const ko = {
-  /* ── meta / a11y ─────────────────────────────────────────────────────────── */
+  /* ── meta / accessibility ─────────────────────────────────────────────── */
   'meta.lang': 'ko',
-  'meta.title': '걸레받이 제국',
+  'meta.title': '집 전체를 점거하라',
   'meta.description':
-    '걸레받이 제국 — 사람이 사는 주방 안에서 바퀴 군체를 키우는 탑다운 매크로 느와르 전략 게임.',
-  'meta.noscript': '걸레받이 제국은 자바스크립트가 켜져 있어야 실행됩니다.',
-  'a11y.canvas': '걸레받이 제국 게임 화면',
-  'a11y.hudRegion': '상태 표시',
+    '사람이 사는 아파트 안에서, 싱크대 밑 틈 하나부터 집 전체까지 바퀴 군체를 넓혀 가는 3D 전략 게임.',
+  'meta.noscript': '이 게임은 자바스크립트가 켜져 있어야 실행된다.',
+  'a11y.canvas': '게임 화면',
+  'a11y.hud': '군체 상태',
 
-  /* ── shared units and cost fragments ─────────────────────────────────────── */
+  /* ── regions ──────────────────────────────────────────────────────────── */
+  'region.kitchen': '주방',
+  'region.hallway': '복도',
+  'region.living': '거실',
+  'region.bathroom': '욕실',
+  'region.bedroom': '침실',
 
-  /* ── glossary anchors ────────────────────────────────────────────────────
-   * Single words the tests assert on, so a behavioural test can say "the blocker names the
-   * concept" without hardcoding one language's wording. Changing a term here changes both the
-   * game and the test that guards it, which is the point. */
-  'term.remaining': '남았다',
-  'term.operation': '작전',
-  'term.capacityFull': '꽉 찼다',
-  'term.foothold': '거점',
-  'term.adaptation': '적응',
-  'term.cost': '든다',
+  /* ── surfaces ─────────────────────────────────────────────────────────── */
+  'surface.kitchen.floor': '주방 바닥',
+  'surface.kitchen.counter': '싱크대 상판',
+  'surface.hallway.floor': '복도 바닥',
+  'surface.hallway.shoetop': '신발장 위',
+  'surface.living.floor': '거실 바닥',
+  'surface.living.sofaseat': '소파 앉는 면',
+  'surface.living.tabletop': '탁자 위',
+  'surface.living.tvstand': 'TV장 위',
+  'surface.bathroom.floor': '욕실 바닥',
+  'surface.bathroom.basin': '세면대 위',
+  'surface.bathroom.cistern': '물탱크 뚜껑',
+  'surface.bathroom.shelf': '욕실 선반',
+  'surface.bathroom.tray': '샤워 트레이',
+  'surface.bathroom.pipevoid': '배관 공간',
+  'surface.bedroom.floor': '침실 바닥',
+  'surface.bedroom.bed': '매트리스 위',
+  'surface.bedroom.bedside': '협탁 위',
+  'surface.bedroom.sill': '창틀',
 
-  'unit.food': '먹이 {amount}',
-  'unit.water': '수분 {amount}',
-  'unit.costBoth': '먹이 {food} · 수분 {water}',
-  'unit.costBothProse': '먹이 {food}, 수분 {water}',
-  'unit.roaches': '{count}마리',
-  'unit.seconds': '{seconds}초',
-  'unit.percent': '{percent}%',
-  'unit.tiles': '{count}칸',
-  'unit.foodNoun': '먹이',
-  'unit.waterNoun': '수분',
+  /* ── resources ────────────────────────────────────────────────────────── */
+  'resource.kitchen.crumbs': '걸레받이 밑 부스러기',
+  'resource.kitchen.trap': '배수 트랩 물기',
+  'resource.kitchen.fridgeseal': '냉장고 고무 패킹 때',
+  'resource.kitchen.rice': '흘린 밥알',
+  'resource.kitchen.sponge': '젖은 수세미',
+  'resource.kitchen.bin': '음식물 쓰레기통',
+  'resource.hallway.crumbtrail': '끌려 나온 부스러기',
+  'resource.hallway.driptray': '우산 물받이',
+  'resource.living.snackbag': '뜯어 놓은 과자 봉지',
+  'resource.living.seamcrumbs': '소파 틈새 부스러기',
+  'resource.living.glassring': '컵 자국 물기',
+  'resource.living.ricegrain': '소파 밑 밥알',
+  'resource.living.kibble': '흘린 사료',
+  'resource.living.dogbowl': '개 물그릇',
+  'resource.living.sodaspill': '음료 자국',
+  'resource.bathroom.drain': '바닥 배수구',
+  'resource.bathroom.drainscum': '배수구 찌꺼기',
+  'resource.bathroom.basintrap': '세면대 트랩',
+  'resource.bathroom.cisternsweat': '물탱크 결로',
+  'resource.bathroom.traypool': '샤워 트레이 고인 물',
+  'resource.bedroom.crumbs': '침대 밑 부스러기',
+  'resource.bedroom.snack': '협탁 과자 부스러기',
+  'resource.bedroom.glass': '머리맡 물컵',
+  'resource.bedroom.condensation': '창틀 결로',
 
-  /* ── HUD: meters ─────────────────────────────────────────────────────────── */
-  'hud.meter.food': '먹이',
-  'hud.meter.water': '수분',
-  'hud.meter.colony': '군체',
-  'hud.meter.brood': '부화',
-  'hud.meter.sprint': '질주',
-  'hud.meter.pheromone': '페로몬',
-  'hud.meter.critical': ' ⚠ 위험',
+  /* ── footholds ────────────────────────────────────────────────────────── */
+  'foothold.kitchen.undersink': '싱크대 밑 공간',
+  'foothold.kitchen.undersink.desc': '어둡고, 젖어 있고, 아무도 열지 않는다. 여기서 시작한다.',
+  'foothold.kitchen.fridgeback': '냉장고 뒤',
+  'foothold.kitchen.fridgeback.desc': '모터 열기가 새어 나와 늘 따뜻하다. 번식에 좋다.',
+  'foothold.kitchen.cornerseam': '모서리 이음매',
+  'foothold.kitchen.cornerseam.desc': '두 수납장이 만나며 벌어진 틈. 상판으로 올라가는 중계점.',
+  'foothold.hallway.shoeskirt': '신발장 굽도리 틈',
+  'foothold.hallway.shoeskirt.desc': '복도를 건너기 전에 숨을 고를 수 있는 유일한 자리.',
+  'foothold.hallway.architrave': '문틀 뒤 공간',
+  'foothold.hallway.architrave.desc': '문틀과 벽 사이 1센티. 복도 반대편으로 이어지는 중계점.',
+  'foothold.living.sofavoid': '소파 밑 어둠',
+  'foothold.living.sofavoid.desc': '거실에서 가장 넓고 가장 어두운 공간. 사람 발이 닿지 않는다.',
+  'foothold.living.tvback': 'TV장 뒤 배선 뭉치',
+  'foothold.living.tvback.desc': '전선 사이가 따뜻하고, 청소기가 들어오지 못한다.',
+  'foothold.living.tableunder': '탁자 밑면',
+  'foothold.living.tableunder.desc': '상판 바로 아래. 먹이까지 거리가 가장 짧다.',
+  'foothold.living.balconygap': '베란다 문턱 틈',
+  'foothold.living.balconygap.desc': '문틀 아래 실리콘이 갈라져 있다. 바깥 공기가 들어온다.',
+  'foothold.bathroom.pedestalvoid': '세면대 기둥 안',
+  'foothold.bathroom.pedestalvoid.desc': '배관이 지나가는 빈 기둥. 주방까지 이어지는 통로의 입구.',
+  'foothold.bathroom.traylip': '샤워 트레이 턱 밑',
+  'foothold.bathroom.traylip.desc': '수분은 넘치지만 물을 쓸 때마다 쓸려 나간다.',
+  'foothold.bedroom.wardrobeskirt': '장롱 밑 틈',
+  'foothold.bedroom.wardrobeskirt.desc': '침실에서 가장 안전한 자리. 사람은 여기를 들여다보지 않는다.',
+  'foothold.bedroom.bedhead': '침대 머리맡 벽 틈',
+  'foothold.bedroom.bedhead.desc': '자는 사람 바로 옆. 위험한 만큼 집 전체 장악의 마지막 조각이다.',
+  'foothold.bedroom.architrave': '침실 문틀 뒤',
+  'foothold.bedroom.architrave.desc': '침실을 복도 쪽 보급선에 다시 이어 주는 중계점.',
 
-  /* ── HUD: scout status line ──────────────────────────────────────────────── */
-  'hud.scout.ready': '정찰병 대기',
-  'hud.scout.dead': '정찰병 사망 — {seconds}초 후 교대',
-  'hud.scout.trapped': '붙잡힘 — SHIFT+방향 연타 · {percent}%',
-  'hud.scout.trapped.short': '붙잡힘 · SHIFT+방향 {percent}%',
-  'hud.scout.seen': '발각 — 엄폐하라',
-  'hud.scout.exposed': '노출 — 불빛 속',
-  'hud.scout.laying': '페로몬 놓는 중',
+  /* ── links (climbs) ───────────────────────────────────────────────────── */
+  'link.kitchen.cable': '밥솥 전선',
+  'link.kitchen.seam': '수납장 이음매',
+  'link.kitchen.hallway': '벽 안 배관 통로',
+  'link.hallway.interphoneCable': '인터폰 배선',
+  'link.hallway.shoeDrop': '신발장 옆면',
+  'link.hallway.living': '거실 문 아래 틈',
+  'link.hallway.bathroom': '욕실 문 아래 틈',
+  'link.hallway.bedroom': '침실 문 아래 틈',
+  'link.living.tvcable': 'TV 전원선',
+  'link.living.sofaleg': '소파 다리',
+  'link.living.throw': '흘러내린 무릎담요',
+  'link.living.tableleg': '탁자 다리',
+  'link.bathroom.riser': '배관 수직관',
+  'link.bathroom.trap': '세면대 배수관',
+  'link.bathroom.grout': '타일 줄눈',
+  'link.bathroom.cistern': '물탱크 급수관',
+  'link.bathroom.traylip': '트레이 턱',
+  'link.bathroom.kitchen': '주방으로 가는 배관',
+  'link.bedroom.cable': '휴대폰 충전선',
+  'link.bedroom.duvet': '늘어진 이불자락',
+  'link.bedroom.bedsidestep': '협탁에서 침대로',
+  'link.bedroom.curtain': '커튼 자락',
 
-  /* ── HUD: interact prompt ────────────────────────────────────────────────── */
-  'hud.prompt.inspect': '{label} 살피기',
-  'hud.prompt.costSuffix': ' — {cost}',
+  /* ── gates (physical openings) ────────────────────────────────────────── */
+  'gate.kitchen.hallway': '배관 구멍 실리콘',
+  'gate.kitchen.hallway.desc':
+    '싱크대 배수관이 벽을 뚫고 나가는 자리가 굳은 실리콘으로 막혀 있다. 이걸 갉아 내면 벽 속 배관 공간을 지나 복도로 나갈 수 있다.',
+  'gate.hallway.living': '거실 문 문풍지',
+  'gate.hallway.living.desc':
+    '거실 문 아래 틈이 문풍지로 눌려 있다. 일꾼들이 계속 보급을 대 주는 동안 갉아 내야 한다.',
+  'gate.hallway.bathroom': '욕실 배관 슬리브',
+  'gate.hallway.bathroom.desc':
+    '욕실 쪽 배관이 지나는 슬리브가 헐거워져 있다. 수분은 넘치지만 물을 쓸 때마다 길이 쓸려 나간다.',
+  'gate.bathroom.kitchen': '수직 배관 지름길',
+  'gate.bathroom.kitchen.desc':
+    '욕실과 주방은 같은 배관을 나눠 쓴다. 주방 쪽 끝을 뚫으면 복도를 건너지 않고 오갈 수 있다.',
+  'gate.hallway.bedroom': '침실 문 문풍지',
+  'gate.hallway.bedroom.desc':
+    '침실 문은 닫혀 있고 안에는 사람이 자고 있다. 문풍지를 갉는 동안 소리가 난다. 군체 전체가 이 작업을 뒷받침할 수 있어야 한다.',
 
-  /* ── HUD: operation panel ────────────────────────────────────────────────── */
-  'hud.next': '다음: {unlock}',
-  'hud.theyAreComing': '그들이 온다.',
-  'hud.evidence.none': '아직 남긴 흔적이 없다.',
+  /* ── chapters and objectives ──────────────────────────────────────────── */
+  'chapter.kitchen': '1장 · 주방에서 버티기',
+  'chapter.hallway': '2장 · 드러난 복도를 건너기',
+  'chapter.living': '3장 · 여러 갈래를 동시에 굴리기',
+  'chapter.bedroom': '4장 · 사람이 있는 방으로',
+  'chapter.final': '마지막 · 집 전체',
+  'objective.kitchen.title': '1장 · 주방에서 버티기',
+  'objective.kitchen.secure': '먹이와 수분을 확보하고, 일꾼이 오갈 길을 만들어라.',
+  'objective.final.title': '집 전체를 지켜라',
+  'objective.final.body':
+    '통로는 모두 열렸다. 이제 네 구역을 동시에 유지하면서 집안의 박멸 시도를 견뎌 내야 한다.',
 
-  /* ── HUD: one-of-three choice ────────────────────────────────────────────── */
-  'hud.choice.adaptation': '군체가 특화할 준비가 됐다 — 하나만 골라라',
-  'hud.choice.adaptation.short': '특화할 준비가 됐다 — 하나 골라라',
-  'hud.choice.fitOut': '{label} 꾸미기 — 하나만 골라라',
+  /* ── blockers: the single binding constraint, computed from live state ─── */
+  'blocker.workers': '일꾼이 부족하다 — {have}/{need}',
+  'blocker.food': '먹이가 부족하다 — {have}/{need}',
+  'blocker.moisture': '수분이 부족하다 — {have}/{need}',
+  'blocker.foothold': '{foothold}{foothold?을/를} 먼저 차지해야 한다',
+  'blocker.supply': '{foothold}(으)로 들어가는 보급선이 끊겨 있다',
+  'blocker.alert': '{region}{region?이/가} 아직 경계 중이다 — 조용해질 때까지 기다려라',
+  'blocker.adaptation': '적응을 하나 정해야 한다',
+  'blocker.goThere': '{gate} 앞으로 가서 E를 눌러라',
+  'blocker.holdRegion': '아직 거점이 없는 구역이 있다',
+  'blocker.population': '군체가 더 커져야 한다 — 일꾼 24마리',
+  'blocker.stores': '비축이 모자라다 — 먹이 60, 수분 40',
 
-  /* ── Alert: tier names (escalating register) ─────────────────────────────── */
-  'alert.tier.0': '조용함',
-  'alert.tier.1': '낌새',
-  'alert.tier.2': '바퀴 의심',
-  'alert.tier.3': '방역 호출',
-  'alert.tier.4': '박멸',
+  /* ── adaptations ──────────────────────────────────────────────────────── */
+  'adaptation.brood.1': '번식 강화',
+  'adaptation.brood.1.desc': '거점 수용력이 늘고 알이 더 빨리 깬다. 대신 먹이 소모가 커진다.',
+  'adaptation.brood.1.cost': '적응 1',
+  'adaptation.brood.2': '집단 번식',
+  'adaptation.brood.2.desc': '수용력이 한 번 더 늘고 손실 회복이 빨라진다.',
+  'adaptation.brood.2.cost': '적응 1',
+  'adaptation.scavenging.1': '수집 강화',
+  'adaptation.scavenging.1.desc': '일꾼이 더 빨리 움직이고 한 번에 더 많이 가져온다.',
+  'adaptation.scavenging.1.cost': '적응 1',
+  'adaptation.scavenging.2': '집단 수집',
+  'adaptation.scavenging.2.desc': '채집 속도가 한 번 더 오른다. 대신 흔적이 더 크게 남는다.',
+  'adaptation.scavenging.2.cost': '적응 1',
+  'adaptation.shadow.1': '은신 배선',
+  'adaptation.shadow.1.desc': '정찰병과 길이 눈에 덜 띈다. 통로 작업도 빨라진다.',
+  'adaptation.shadow.1.cost': '적응 1',
+  'adaptation.shadow.2': '그림자 연결망',
+  'adaptation.shadow.2.desc': '흔적이 크게 줄고, 길이 끊겨도 회복이 빠르다.',
+  'adaptation.shadow.2.cost': '적응 1',
 
-  /* ── Alert: what the household will do next ──────────────────────────────── */
-  'alert.response.0': '아직 아무도 눈치채지 못했다.',
-  'alert.response.1': '다음: 누군가 들어와 불을 켠다.',
-  'alert.response.2': '다음: 제일 붐비는 길에 끈끈이가 깔린다.',
-  'alert.response.3': '다음: 독먹이, 그리고 주방 전체를 도는 긴 순찰.',
-  'alert.response.4': '다음: 살충제를 꺼내 둥지를 노린다.',
+  /* ── household routines ───────────────────────────────────────────────── */
+  'routine.kitchen.dishes': '설거지',
+  'routine.kitchen.dinner': '늦은 식사',
+  'routine.living.tv': 'TV 시청',
+  'routine.bathroom.use': '욕실 사용',
+  'routine.bedroom.phone': '머리맡 휴대폰',
+  'routine.hallway.pass': '복도 통행',
+  'routine.incoming': '곧 시작된다',
+  'routine.active': '진행 중',
 
-  /* ── Alert: named evidence (why suspicion moved) ─────────────────────────── */
-  'alert.cause.seen': '불빛 속에서 바퀴를 봤다',
-  'alert.cause.corpse': '훤한 데 널린 시체',
-  'alert.cause.traffic': '맨바닥 위 잦은 이동',
-  'alert.cause.depleted': '먹을 게 눈에 띄게 줄었다',
-  'alert.cause.trap': '덫에 뭔가 걸렸다',
-  'alert.cause.expansion': '새로 뚫린 구멍',
-  'alert.cause.noise': '맨바닥에서 들린 부스럭 소리',
-  'alert.cause.droppings': '맨 타일에 남은 자국',
+  /* ── household responses ──────────────────────────────────────────────── */
+  'threat.footsteps': '발소리',
+  'threat.light': '불이 켜짐',
+  'threat.wipe': '행주질',
+  'threat.move': '물건 치우기',
+  'threat.trap': '끈끈이',
+  'threat.vacuum': '로봇청소기',
+  'threat.spray': '살충제',
 
-  /* ── Alert: forecast line (three shapes, matching the three code branches) ─ */
-  'alert.forecast.withPlace': '{tier} — {cause}, {place} 쪽이 제일 심하다. {next}',
-  'alert.forecast.withPlace.short': '{tier} · {cause} · {place}. {next}',
-  'alert.forecast.withCause': '{tier} — {cause}. {next}',
-  'alert.forecast.bare': '{tier}. {next}',
-  'alert.forecast.final': '박멸 — {seconds}초. 네 발길이 제일 잦았던 곳에 약을 치고 있다.',
-  'alert.forecast.final.short': '박멸 — {seconds}초. 제일 붐빈 곳에 약을 친다.',
+  /* ── alert levels ─────────────────────────────────────────────────────── */
+  'alert.0': '조용함',
+  'alert.1': '눈치챔',
+  'alert.2': '의심',
+  'alert.3': '경계',
+  'alert.4': '박멸 시도',
 
-  /* ── Threat: what they will try next, by alert tier ──────────────────────── */
-  'threat.next.unknown': '아직 어딘지는 못 짚었다.',
-  'threat.next.0': '누가 한 번 둘러보러 나올 수 있다.',
-  'threat.next.1': '사람 다닌 자리에 걸레질이 들어온다.',
-  'threat.next.2': '눈치챈 길 위에 덫이 깔린다.',
-  'threat.next.3': '독먹이, 더 나빠지면 살충제.',
-  'threat.next.4': '박멸할 준비가 끝났다.',
+  /* ── run log ──────────────────────────────────────────────────────────── */
+  'log.route.laid': '{target}(으)로 가는 페로몬 길을 놓았다.',
+  'log.route.faded': '아무도 지나지 않은 길이 지워졌다.',
+  'log.route.washed': '{threat}에 길이 쓸려 나갔다.',
+  'log.firstDelivery': '첫 먹이가 둥지에 들어왔다.',
+  'log.found': '{site}{site?을/를} 찾았다.',
+  'log.foothold.claimed': '{foothold}{foothold?을/를} 차지했다.',
+  'log.foothold.lost': '{foothold}{foothold?이/가} 무너졌다.',
+  'log.gate.opened': '{region}(으)로 가는 길이 열렸다.',
+  'log.gate.interrupted': '{gate} 작업이 중단됐다.',
+  'log.chapter': '{chapter}',
+  'log.adaptation': '{adaptation}{adaptation?을/를} 택했다.',
+  'log.sighting': '{region}에서 들켰다.',
+  'log.alert.raised': '{region} 경계 단계가 {level}(으)로 올라갔다.',
+  'log.routine.incoming': '{routine}{routine?이/가} 곧 시작된다.',
+  'log.threat.incoming': '{region}에 {threat}{threat?이/가} 온다.',
+  'log.starved': '먹이가 떨어져 일꾼을 잃었다.',
+  'log.extermination': '{region}에 박멸 시도가 들어왔다.',
+  'log.won': '집 전체가 군체의 영역이 됐다.',
+  'log.lost': '군체가 무너졌다.',
 
-  /* ── Threat: counterplay (shown once the player has met the threat) ──────── */
-  'threat.counter.patrol': '수납장 밑으로 붙어라 — 불빛은 맨바닥의 바퀴만 찾아낸다.',
-  'threat.counter.sweep': '걸레질은 바퀴가 아니라 냄새를 지운다. 지나가면 다시 놓아라.',
-  'threat.counter.trap': '덫은 네가 다닌 자리에 깔린다. 길을 옮기면 덫은 헛것이 된다.',
-  'threat.counter.bait': '독먹이는 느리다. 들어간 바퀴는 걸어 나올 시간이 있다.',
-  'threat.counter.spray': '전부 차지한 틈 안으로. 살충제는 벽 안까지 못 닿는다.',
-  'threat.counter.final': '차지한 틈이 곧 대피소다. 그 바깥은 전부 노출이다.',
+  /* ── cue for state changes the HUD announces ──────────────────────────── */
+  'adaptation.chosen': '적응 선택',
 
-  /* ── Threat: advice promoted into the objective line ─────────────────────── */
-  'threat.advice.trapOnRoute': '끈끈이가 네 보급선 위에 앉았다 — 그 구간을 지우고 돌려라.',
-  'threat.advice.baitOnRoute': '독먹이가 네 길 위에 놓였다 — 길을 그 옆으로 틀어라.',
-  'threat.advice.sweepIncoming': '걸레질이 시작된다 — 지나가는 자리의 냄새는 사라진다.',
-  'threat.advice.final': '군체를 차지한 틈 안으로 넣고 거기 붙들어 둬라.',
+  /* ── HUD ──────────────────────────────────────────────────────────────── */
+  'hud.food': '먹이',
+  'hud.moisture': '수분',
+  'hud.population': '군체',
+  'hud.capacity': '수용력',
+  'hud.routes': '페로몬 길',
+  'hud.alert': '경계 단계',
+  'hud.time': '경과',
+  'hud.blocked': '막힌 이유',
+  'hud.objective': '지금 할 일',
+  'hud.adaptationPoints': '쓸 수 있는 적응 {count}',
+  'hud.seen': '들킬 위험',
+  'hud.stores': '비축이 한계다 — 거점을 늘려라',
+  'hud.routeHealth.ok': '정상',
+  'hud.routeHealth.incomplete': '양 끝이 붙지 않았다',
+  'hud.routeHealth.disconnected': '끊김',
+  'hud.routeHealth.blocked': '먹이가 떨어졌다',
+  'hud.routeHealth.congested': '통로가 막혔다',
+  'hud.routeHealth.compromised': '들킨 길',
+  'hud.routeHealth.washed': '쓸려 나갔다',
+  'hud.press': '{key} 키',
 
-  /* ── Routines: the household's night behaviours ──────────────────────────── */
-  'routine.snack.title': '야식',
-  'routine.snack.warning': '복도에서 발소리. 누가 냉장고로 간다.',
-  'routine.snack.counter': '갓 떨어진 부스러기, 그리고 쏟아지는 불빛. 문 닫히기 전에 챙겨라.',
-  'routine.dishes.title': '설거지',
-  'routine.dishes.warning': '물이 나온다. 싱크대 쪽이 곧 젖고 붐빈다.',
-  'routine.dishes.counter': '고인 물은 공짜 수분이다 — 대신 걸레가 지나간 자리는 냄새가 죽는다.',
-  'routine.trash.title': '쓰레기 배출',
-  'routine.trash.warning': '쓰레기통 뚜껑이 열렸다. 문 옆 바닥에 진한 게 떨어졌다.',
-  'routine.trash.counter': '주방에서 제일 기름진 먹이, 주방에서 제일 훤한 타일 위.',
-  'routine.gone': '흘린 게 치워졌다 — 그 길도 같이 사라졌다.',
+  /* ── controls / onboarding ────────────────────────────────────────────── */
+  'help.title': '조작',
+  'help.move': 'WASD — 정찰병 이동',
+  'help.sprint': 'Shift — 전력 질주 (숨이 찬다)',
+  'help.route': '마우스 왼쪽 끌기 — 페로몬 길 놓기',
+  'help.erase': '마우스 오른쪽 — 길 지우기',
+  'help.interact': 'E — 거점 차지 · 통로 작업',
+  'help.traverse': 'Space — 전선·배관 타고 오르내리기',
+  'help.adapt': '1 2 3 — 적응 선택',
+  'help.pause': 'Esc — 잠시 멈춤',
+  'help.restart': 'R — 다시 시작',
+  'help.dismiss': '아무 키나 눌러 시작',
+  'help.intro':
+    '너는 정찰병 바퀴다. 싱크대 밑 틈 하나에서 시작해, 이 집 전체를 군체의 영역으로 만들어라.',
 
-  /* ── Operations: titles, briefs, unlocks ─────────────────────────────────── */
-  'op.title': '작전 {index} — {title}',
-  'op.cardTitle': '작전 {index}',
-  'op.complete': '작전 완료.',
+  /* ── pause and results ────────────────────────────────────────────────── */
+  'pause.title': '멈춤',
+  'pause.resume': 'Esc — 계속',
+  'pause.restart': 'R — 다시 시작',
+  'result.won.title': '집 전체를 점거했다',
+  'result.won.body': '주방에서 침실까지 모든 구역에 거점이 서 있고, 박멸 시도를 견뎌 냈다.',
+  'result.lost.title': '군체가 무너졌다',
+  'result.lost.body': '남은 거점이 없다. 숨을 곳도, 알을 깔 자리도 없다.',
+  'result.time': '걸린 시간 {minutes}분 {seconds}초',
+  'result.deliveries': '배달 {count}회',
+  'result.peak': '최대 군체 {count}마리',
+  'result.sightings': '들킨 횟수 {count}회',
+  'result.lost.workers': '잃은 일꾼 {count}마리',
+  'result.regions': '연 구역 {count}곳',
+  'result.restart': 'R — 다시 시작',
 
-  'op.1.title': '둥지를 세운다',
-  'op.1.brief': '벽에서 나와라. 먹을 것과 마실 것을 하나씩 찾아 본거지로 이어라.',
-  'op.1.unlock': '집이 밤 일과를 시작한다 — 그게 곧 기회다.',
-  'op.2.title': '일과에 스며든다',
-  'op.2.brief':
-    '집은 띄엄띄엄 깨어난다. 부스러기가 떨어지는 자리에 서 있다가, 불빛보다 먼저 빠져라.',
-  'op.2.unlock': '적응 — 군체가 특화되기 시작한다. 방향은 네가 고른다.',
-  'op.3.title': '군체를 특화한다',
-  'op.3.brief':
-    '살아남는 군체는 하나에 거는 군체다. 네 바퀴가 무엇이 될지 골라라 — 전부는 못 가진다.',
-  'op.3.unlock': '주방 그 자체 — 구역 세 곳을 쥐고, 집이 보내는 것을 버텨라.',
-  'op.4.title': '주방을 차지한다',
-  'op.4.brief': '구역 셋을 동시에, 그들이 오는 동안. 여기가 기억에 남는 대목이다.',
-  'op.4.unlock': '주방은 네 것이 된다.',
-
-  /* ── Operations: checklist labels (fixed-width slot) ─────────────────────── */
-  'op.gate.foodLine': '먹이 길 {count}개',
-  'op.gate.waterLine': '수분 길 {count}개',
-  'op.gate.population': '바퀴 {count}마리',
-  'op.gate.routines': '일과 {count}회 이용',
-  'op.gate.foothold': '거점 {count}곳 확보',
-  'op.gate.adaptations': '적응 {count}개 선택',
-  'op.gate.functions': '거점 기능 {count}개',
-  'op.gate.zones': '구역 {count}곳 장악',
-  'op.gate.survive': '박멸에서 살아남기',
-
-  /* ── Operations: gate actions ────────────────────────────────────────────── */
-  'op.action.findSource': '{noun} 공급원을 찾아라 — 틈에서 멀어져라.',
-  'op.action.layTrail': '{label}까지 걸어간 뒤, 놓기 키를 누른 채 돌아와 길을 남겨라.',
-  'op.action.bringScentHome': '{label}까지 걸어가라 — 그리고 냄새를 본거지로 데려와라.',
-  'op.action.keepBothFlowing': '두 창고를 다 돌려라 — 군체는 먹이와 수분이 같이 있어야 큰다.',
-  'op.action.waitForRoutine': '집이 움직일 때까지 기다려라 — 떨어뜨리는 것에 길을 대라.',
-  'op.action.routineIncoming': '{title} 들어온다 — {counter}',
-  'op.action.routineOpen': '{title}, {seconds}초 열려 있다 — 지금 길을 대라.',
-  'op.action.claimNest': '{label}까지 가서 E를 눌러 차지해라.',
-  'op.action.scoutForCrack': '걸레받이를 훑어 틈을 찾아라.',
-  'op.action.pickAdaptation': '적응을 골라라 — 1, 2, 3.',
-  'op.action.growToMilestone': '바퀴 {count}마리까지 키우면 다음 적응이 열린다.',
-  'op.action.keepGrowing': '군체를 계속 키워라.',
-  'op.action.fitOutHere': '{label} 안에 서서 E를 눌러 꾸며라.',
-  'op.action.claimThenFit': '{label}부터 차지하고, 그다음 꾸며라.',
-  'op.action.claimAnother': '틈을 하나 더 차지해라.',
-  'op.action.holdWhatYouHave': '쥔 것을 지켜라.',
-  'op.action.holdInsurance': '버텨라. 저들은 할 수 있으면 구역을 깬다 — 네 번째가 보험이다.',
-  'op.action.claimCrackInZone':
-    '{label}을 차지해라 — 네 틈은 군체가 숨어 있는 동안에도 {zone}을 붙든다.',
-  'op.action.routeZone': '{zone}으로 길을 통과시켜라 — 지금 장악 {percent}%.',
-  'op.action.zoneEmpty': '{zone}에 길은 있는데 아무도 없다 ({percent}%).',
-  'op.action.zoneStaff': '{zone}에 바퀴를 붙여 둬라 — 장악 {percent}%.',
-  'op.action.shelterNow': '전부 차지한 틈 안으로 — {seconds}초 남았다.',
-  'op.action.triggerFinal': '구역 셋을 쥐어 집의 마지막 대답을 끌어내라.',
-
-  /* ── Operations: blockers (the real reason progress stopped) ─────────────── */
-  'op.blocker.routesFull': '길 {max}개가 전부 쓰이는 중 — 하나 지우고 새로 놓아라.',
-  'op.blocker.routesFullSpill': '길 {max}개가 전부 쓰이는 중 — 하나 지워야 흘린 것에 닿는다.',
-  'op.blocker.trailUnfinished': '마지막 길이 공급원과 둥지 양쪽에 닿지 않았다 — 끝까지 걸어라.',
-  'op.blocker.capacityFull':
-    '둥지가 {capacity}에서 꽉 찼다. 거점을 차지하거나 번식 적응을 골라 늘려라.',
-  'op.blocker.waterTooLow': '수분이 모자라 알을 못 기른다. 수분 길부터 돌려라.',
-  'op.blocker.foodTooLow': '먹이가 모자라 알을 못 기른다. 먹이 길부터 돌려라.',
-  'op.blocker.nestCostFood': '{label}에는 먹이 {need}{need?이/가} 든다 — 지금 {have}.',
-  'op.blocker.nestCostWater': '{label}에는 수분 {need}{need?이/가} 든다 — 지금 {have}.',
-  'op.blocker.adaptCostFood': '제일 싼 적응이 먹이 {need} — 지금 {have}.',
-  'op.blocker.adaptCostWater': '제일 싼 적응이 수분 {need} — 지금 {have}.',
-  'op.blocker.fitCostFood': '{label} 꾸미기에 먹이 {need} — 지금 {have}.',
-  'op.blocker.fitCostWater': '{label} 꾸미기에 수분 {need} — 지금 {have}.',
-  'op.blocker.zoneContested': '{zone}을 집이 훑고 있다 — 저기 있는 동안 장악이 깎인다.',
-  'op.blocker.noShelter':
-    '본거지 말고는 아무도 숨을 데가 없다 — 차지한 틈이 하나 더 있으면 위험이 갈린다.',
-  'op.blocker.adaptationSaving': '{name}에 {shortfall}{shortfall?이/가} 모자란다.',
-  'op.blocker.shortfallFood': '먹이 {amount}',
-  'op.blocker.shortfallWater': '수분 {amount}',
-
-  /* ── Objective: the priority line (final response) ───────────────────────── */
-  'objective.final.sprayOnZone': '{zone}에 약을 치고 있다 — 지나갈 때까지 틈 안으로 넣어라.',
-  'objective.final.regain': '{held}/{need} 장악 — {zone}에 몸을 다시 넣어라. {seconds}초.',
-  'objective.final.holding': '{held}/{need} 장악, {seconds}초 남았다.',
-  'objective.final.slipping': '{need}곳 다 네 것이지만 {zone}이 밀린다 — {seconds}초.',
-  'objective.final.stayHidden': '{seconds}초. 구역 {need}곳을 지키고 훤한 데로 나서지 마라.',
-
-  /* ── Objective: priority lines above the current gate ────────────────────── */
-  'objective.adaptation.choose': '적응을 골라라 — 1, 2, 3.',
-  'objective.routine.incoming': '{title} {seconds}초 뒤 — {counter}',
-  'objective.routine.active': '{title}: 길을 대기까지 {seconds}초.',
-  'objective.routine.harvesting': '{title}{title?이/가} 값을 치르는 중 — {seconds}초 남았다.',
-  'objective.shortage.food': '먹이가 바닥나 간다 — 먹이 길을 하나 더 돌려라.',
-  'objective.shortage.water': '수분이 바닥나 간다 — 수분 길을 하나 더 돌려라.',
-  'objective.shortage.noFoodLine': '먹이 길이 아예 하나도 안 이어져 있다.',
-  'objective.shortage.noWaterLine': '수분 길이 아예 하나도 안 이어져 있다.',
-  'objective.shortage.foodBehind': '먹이 길이 못 따라간다 — 공급원을 하나 더 붙여라.',
-  'objective.shortage.waterBehind': '수분 길이 못 따라간다 — 공급원을 하나 더 붙여라.',
-  'objective.saving.food': '먹이 {amount}{amount?이/가} 더 필요하다 — 먹이 길을 하나 더 돌려라.',
-  'objective.saving.water': '수분 {amount}{amount?이/가} 더 필요하다 — 수분 길을 하나 더 돌려라.',
-  'objective.saving.forAdaptFood': '{blocker} 먹이 길을 하나 더 돌려라.',
-  'objective.saving.forAdaptWater': '{blocker} 수분 길을 하나 더 돌려라.',
-  'objective.start': '틈에서 나와 먹을 것을 찾아라.',
-
-  /* ── Objective: a capped reserve must always name a spend ────────────────── */
-  'objective.capped.subjectBoth': '두 창고가 다',
-  'objective.capped.subjectFood': '곳간이',
-  'objective.capped.subjectWater': '수분이',
-  'objective.capped.adaptation': '{subject} 찼다 — 써라: {name}, 먹이 {cost}.',
-  'objective.capped.claim': '{subject} 찼다 — {label}을 차지해라 ({cost}). 한계가 올라간다.',
-  'objective.capped.fit': '{subject} 찼다 — {label}을 꾸며라 ({cost}). 천장이 올라간다.',
-  'objective.capped.repair': '{subject} 찼다 — {label}에서 E를 눌러 수분으로 메워라.',
-  'objective.capped.capacity':
-    '{subject} 찼고 둥지도 {capacity}에서 꽉 찼다. 병목은 수용력이다 — {label}에 {cost}이 든다.',
-  'objective.capped.capacity.short': '{subject} 찼다. 병목은 수용력 — {label}에 {cost}.',
-  'objective.capped.milestone':
-    '{subject} 찼다 — 쌓아 두는 게 요점이다: 바퀴 {count}마리에서 그걸 쓸 선택이 열린다.',
-  'objective.capped.milestone.short': '{subject} 찼다 — 바퀴 {count}마리에서 선택이 열린다.',
-  'objective.capped.territory':
-    '{subject} 찼다. 이제 병목은 창고가 아니라 땅이다. {zone}으로 길을 밀어 넣어라.',
-  'objective.capped.hold': '{subject} 찼다 — 쥔 것을 지키고 대응을 버텨라.',
-
-  /* ── Adaptations: brood family ───────────────────────────────────────────── */
-  'adaptation.brood1.name': '밀집 부화실',
-  'adaptation.brood1.blurb': '수용력 +10. 알이 35% 빨리 여문다.',
-  'adaptation.brood1.downside': '유지비 +25%. 몸이 늘면 눈에 띌 발길도 는다.',
-  'adaptation.brood2.name': '알집 군집',
-  'adaptation.brood2.blurb': '수용력 +14. 죽은 뒤 20초 동안 두 배 속도로 채워진다.',
-  'adaptation.brood2.downside': '유지비 +25%. 뭉쳐 있으면 찾기도 쉽다.',
-  'adaptation.brood3.name': '2세대',
-  'adaptation.brood3.blurb': '수용력 +18. 약충이 절반 시간에 자라 바로 나른다.',
-  'adaptation.brood3.downside': '유지비 +30%. 훤한 데서 오간 흔적이 20% 더 무겁다.',
-
-  /* ── Adaptations: forage family ──────────────────────────────────────────── */
-  'adaptation.forage1.name': '벌어진 큰턱',
-  'adaptation.forage1.blurb': '한 번에 45% 더 나른다.',
-  'adaptation.forage1.downside': '공급원이 40% 빨리 마르고, 마른 자리는 눈에 띈다.',
-  'adaptation.forage2.name': '빠른 섭식',
-  'adaptation.forage2.blurb': '먹는 시간 절반. 공급원 하나에 넷 대신 여섯이 붙는다.',
-  'adaptation.forage2.downside': '공급원이 40% 빨리 마른다. 붐비는 끝은 더 잘 보인다.',
-  'adaptation.forage3.name': '기회주의자',
-  'adaptation.forage3.blurb': '집이 흘린 것에서 두 배를 얻고 50% 더 오래 남는다.',
-  'adaptation.forage3.downside': '훤한 데서 흘린 것을 먹으면 흔적이 두 배로 남는다.',
-
-  /* ── Adaptations: shadow family ──────────────────────────────────────────── */
-  'adaptation.shadow1.name': '벽 타는 냄새',
-  'adaptation.shadow1.blurb': '엄폐 밑에 놓은 길이 두 배 오래가고 흔적을 40% 덜 남긴다.',
-  'adaptation.shadow1.downside': '나르는 속도 12% 감소. 숨는 값은 공짜가 아니다.',
-  'adaptation.shadow2.name': '경보 페로몬',
-  'adaptation.shadow2.blurb': '위협을 0.5초 먼저 알아채고, 달아날 때 30% 빠르다.',
-  'adaptation.shadow2.downside': '먹는 속도 15% 감소 — 예민한 군체는 덜 일한다.',
-  'adaptation.shadow3.name': '대피소',
-  'adaptation.shadow3.blurb': '차지한 틈이 두 배 먼 데까지 감싸고, 긴급 대피 2회를 얻는다.',
-  'adaptation.shadow3.downside': '운반 속도 15% 감소. 시설은 처리량을 먹는다.',
-
-  /* ── Foothold fit-outs ───────────────────────────────────────────────────── */
-  'foothold.nursery.name': '부화실',
-  'foothold.nursery.blurb': '수용력 +10, 알이 여기서 깬다.',
-  'foothold.cache.name': '창고',
-  'foothold.cache.blurb': '먹이 +90, 수분 +60 보관.',
-  'foothold.bolthole.name': '대피소',
-  'foothold.bolthole.blurb': '수용력 +2, 더 먼 데서도 바퀴가 여기로 숨는다.',
-
-  /* ── Hints: contextual toasts ────────────────────────────────────────────── */
-  'hint.nothingHere': '여기엔 살필 게 없다.',
-  'hint.sealed': '{label}: 작전 {op}까지 막혀 있다. 먹이 {food}, 수분 {water}{water?이/가} 든다.',
-  'hint.resource': '{label}: {noun} {amount} 남았다. 여기로 길을 놓아라.',
-  'hint.repairCost': '틈을 메우는 데 수분 {amount}{amount?이/가} 든다.',
-  'hint.repaired': '{label}, {percent}%까지 메웠다.',
-  'hint.fitCost': '{label} 꾸미기에 먹이 {food}, 수분 {water}{water?이/가} 든다.',
-  'hint.fitChoose': '{label}: 무엇을 지을지 골라라 — 1 부화실, 2 창고, 3 대피소.',
-  'hint.claimCost': '{label}에는 먹이 {food}, 수분 {water}{water?이/가} 든다.',
-  'hint.adaptCost': '{name}에는 먹이 {food}, 수분 {water}{water?이/가} 든다.',
-  'hint.tooPoorAdapt': '곳간이 아직 모자란다.',
-  'hint.tooPoorFit': '곳간이 모자라 그걸 못 꾸민다.',
-  'hint.routeEvicted': '길은 한 번에 {max}개뿐 — 제일 오래된 게 삭았다.',
-
-  /* ── Interact prompt labels ──────────────────────────────────────────────── */
-  'hud.target.sealed': '{label} — 작전 {op}에 열린다',
-  'hud.target.claim': '{label} 차지',
-  'hud.target.fit': '{label} 꾸미기',
-  'hud.target.repair': '{label} 메우기 — {percent}%',
-  'hud.target.resource': '{label} — {amount} 남음',
-
-  /* ── World-space guide arrow ─────────────────────────────────────────────── */
-  'hud.guide': '{label} · {tiles}칸',
-
-  /* ── Places: kitchen regions (used mid-sentence, no capitalization) ──────── */
-  'place.zone.sink': '싱크대 쪽',
-  'place.zone.dishwasher': '식기세척기 쪽',
-  'place.zone.pantry': '팬트리 쪽',
-  'place.zone.stove': '레인지 쪽',
-  'place.zone.fridge': '냉장고 쪽',
-  'place.zone.island': '아일랜드 쪽',
-  'place.zone.trash': '쓰레기통 쪽',
-  'place.zone.doorway': '문간 쪽',
-
-  /* ── Places: coarse region names used in the forecast ────────────────────── */
-  'place.region.sink': '싱크대',
-  'place.region.dishwasher': '식기세척기',
-  'place.region.pantry': '팬트리',
-  'place.region.stove': '레인지',
-  'place.region.fridge': '냉장고',
-  'place.region.trash': '쓰레기통',
-  'place.region.door': '문 앞 바닥',
-  'place.region.island': '아일랜드',
-
-  /* ── Places: resource nodes ──────────────────────────────────────────────── */
-  'place.resource.dishCrumbs': '세척기 부스러기',
-  'place.resource.sinkDrip': '싱크대 물방울',
-  'place.resource.stoveGrease': '레인지 기름때',
-  'place.resource.islandDrop': '아일랜드 음식물',
-  'place.resource.fridgeCondensation': '냉장고 물기',
-  'place.resource.pantryGrain': '팬트리 곡물',
-  'place.resource.trashSpill': '쓰레기통 음식물',
-  'place.resource.petBowl': '물그릇',
-
-  /* ── Places: cracks ──────────────────────────────────────────────────────── */
-  'place.nest.home': '본거지',
-  'place.nest.crackSink': '싱크대 틈',
-  'place.nest.crackIsland': '아일랜드 틈',
-  'place.nest.crackPantry': '팬트리 틈',
-  'place.nest.crackStove': '레인지 옆 틈',
-  'place.nest.crackBin': '쓰레기통 틈',
-
-  /* ── Tutorial: first-run beats. Short, imperative, one action each. ──────── */
-  'tutorial.move': 'WASD — 틈 밖으로.',
-  'tutorial.cover': '벽에 붙어라. 맨바닥은 들킨다.',
-  'tutorial.inspect': 'E — 부스러기를 살펴라.',
-  'tutorial.lay': 'SPACE 누른 채 걸어라. 먹이 → 틈.',
-  'tutorial.follow': '일꾼이 냄새를 따라온다. 첫 운반이다.',
-  'tutorial.both': '먹이는 번식, 수분은 생존. 둘 다 이어라.',
-  'tutorial.sprint': 'SHIFT는 질주. 시끄럽고, 맨바닥에선 들킨다.',
-  'tutorial.erase': 'X로 길을 지운다. 톡 치면 전원 복귀.',
-
-  /* ── Pause card ──────────────────────────────────────────────────────────── */
-  'pause.heading': '일시정지',
-  'pause.wordmark': '걸레받이 제국',
-  'pause.lede': '{operation} · {tier} · 바퀴 {population}마리',
-  'pause.controlsHeading': '조작',
-  'pause.resume': '계속',
-  'pause.restart': '처음부터',
-
-  /* ── Controls ────────────────────────────────────────────────────────────── */
-  'control.move': '정찰병 이동',
-  'control.lay': '페로몬 길 놓기',
-  'control.erase': '길 지우기 · 톡 치면 전원 복귀',
-  'control.interact': '살피기 · 틈 차지하기',
-  'control.sprint': '질주 (시끄럽고, 티가 난다)',
-  'control.pause': '일시정지',
-  'control.restart': '처음부터',
-
-  /* ── Help card ───────────────────────────────────────────────────────────── */
-  'pause.help.heading': '작동 방식',
-  'pause.help.title': '너는 정찰병이지, 무리가 아니다',
-  'pause.help.lede':
-    '일꾼은 명령을 듣지 않는다. 네 몸에서 나온 페로몬을 읽을 뿐이다 — 그러니 일꾼이 쓸 수 있는 길은 네가 직접 걸은 길뿐이다.',
-  'pause.help.linking':
-    '한쪽 끝에 <strong>차지한 둥지</strong>를, 다른 쪽 끝에 <strong>먹이나 수분</strong>을 걸면 군체가 나르기 시작한다. 길이 살아 있으면 양쪽 끝이 따뜻하게 뛴다.',
-  'pause.help.evidence':
-    '훤한 바닥을 지나는 한 뼘 한 뼘이 전부 흔적이다. 흔적은 의심을 키우고, 의심은 발을, 덫을, 끝내 살충제를 부른다. 의심은 절대 0으로 돌아가지 않는다 — 갈아 없애는 게 아니라, 얼마만큼 지고 갈지 고르는 것이다.',
-  'pause.help.back': '뒤로',
-
-  /* ── Operation card ──────────────────────────────────────────────────────── */
-  'op.card.continue': '일하러 간다',
-  'op.card.stat.colony': '군체',
-  'op.card.stat.food': '먹이',
-  'op.card.stat.water': '수분',
-  'op.card.stat.adaptations': '적응',
-  'op.card.stat.deliveries': '운반',
-  'op.card.stat.lost': '손실',
-
-  /* ── Outcome: end card ───────────────────────────────────────────────────── */
-  'outcome.win.heading': '승리',
-  'outcome.lose.heading': '실패',
-  'outcome.subheading': '{heading} · 작전 {operation}/4',
-  'outcome.win.title': '주방은 네 것이다',
-  'outcome.lose.collapse.title': '군체 붕괴',
-  'outcome.lose.nestDestroyed.title': '둥지 파괴',
-  'outcome.lose.exterminated.title': '박멸',
-  'outcome.win.lede': '통은 비었고 너는 아직 여기 있다. {zones} 이제 저들은 절대 다 잡지 못한다.',
-  'outcome.win.ledeZones': '{zones}을 쥐고 있다.',
-  'outcome.lose.collapse.lede': '내보낼 몸이 없다. 마지막 알까지 어둠 속에서 죽었다.',
-  'outcome.lose.nestDestroyed.lede': '본거지 틈을 찾아내 통 하나를 통째로 부어 넣었다.',
-  'outcome.lose.exterminated.lede': '작업이 끝났고, 그 끝에 네가 있었다. 주방은 조용하다.',
-  'outcome.killedBy': '<strong>무엇이 죽였나:</strong> {cause} — {count}마리.',
-  'outcome.killedByNothing': '<strong>무엇이 죽였나:</strong> 아무것도 닿지 않았다 — 그냥 말랐다.',
-  'outcome.topEvidence': ' <strong>제일 큰 흔적:</strong> {cause} (의심 {amount}).',
-  'outcome.zoneLine': '{zone} 장악',
-  'outcome.became': '<strong>이 군체가 된 것:</strong> {list}. 조합이 다르면 판이 달라진다.',
-  'outcome.neverSpecialised':
-    '이 군체는 끝내 특화하지 않았다. 적응은 바퀴 11, 17, 24, 30마리에서 열린다.',
-  'outcome.best': '최고 기록: {result} · 바퀴 {population}마리 · {time}',
-  'outcome.best.survived': '생존',
-  'outcome.best.lost': '실패',
-  'outcome.restart': '다시 한 판',
-  'outcome.help': '작동 방식',
-
-  /* ── Outcome: stats ──────────────────────────────────────────────────────── */
-  'outcome.stat.runTime': '진행 시간',
-  'outcome.stat.deliveries': '운반 횟수',
-  'outcome.stat.hatched': '부화',
-  'outcome.stat.lost': '손실',
-  'outcome.stat.scoutDeaths': '정찰병 사망',
-  'outcome.stat.peakSuspicion': '최고 의심도',
-  'outcome.stat.trapsSprung': '덫 작동',
-  'outcome.stat.peakColony': '최대 군체',
-
-  /* ── Outcome: what killed them ───────────────────────────────────────────── */
-  'outcome.death.foot': '발에 밟혔다',
-  'outcome.death.trap': '끈끈이에 붙었다',
-  'outcome.death.spray': '살충제에 죽었다',
-  'outcome.death.bait': '독먹이에 중독됐다',
-  'outcome.death.starve': '굶어 죽었다 — 곳간이 말랐다',
-  'outcome.death.thirst': '말라 죽었다 — 수분이 닿지 않았다',
-
-  /* ── Settings ────────────────────────────────────────────────────────────── */
-  'settings.master': '전체 음량',
-  'settings.music': '환경음',
-  'settings.sfx': '효과음',
-  'settings.muted': '전체 음소거',
-  'settings.reducedShake': '화면 흔들림 줄이기',
-  'settings.reducedFlash': '섬광 줄이기',
-  'settings.highContrast': '주방 밝게 (가독성)',
-  'settings.showPerf': '성능 표시',
-
-  /* ── Errors ──────────────────────────────────────────────────────────────── */
-  'error.saveFailed': '설정을 저장하지 못했다. 브라우저 저장소가 막혀 있을 수 있다.',
-  'error.loadFailed': '저장된 설정을 읽지 못해 기본값으로 시작한다.',
-  'error.audioBlocked': '소리는 화면을 한 번 누른 뒤에 나온다.',
+  /* ── loading and recoverable errors ───────────────────────────────────── */
+  'loading.title': '집이 잠들기를 기다리는 중',
+  'loading.assets': '자리를 잡는 중…',
+  'error.webgl': '이 브라우저에서는 3D 화면을 켤 수 없다. WebGL2를 켜고 다시 열어라.',
   'error.runtime': '문제가 생겼다. R을 눌러 다시 시작해라.',
+  'error.audioBlocked': '소리는 화면을 한 번 누른 뒤에 나온다.',
 } as const;
 
 export type KoKey = keyof typeof ko;

@@ -1,0 +1,479 @@
+/*
+ * Player-facing chrome. WebGL draws the apartment; this file draws everything the player reads.
+ *
+ * NanumSquareNeo, vendored locally under SIL Open Font License 1.1.
+ * Copyright (c) 2022 NAVER Corp., designed by Sandoll Inc.
+ * See src/fonts/LICENSE-NanumSquareNeo.txt and src/fonts/OFL-1.1.txt.
+ * 이 게임에는 네이버에서 제공한 나눔스퀘어 네오 글꼴이 적용되어 있습니다.
+ *
+ * The files live in src/, not public/, on purpose. Vite copies public/ verbatim and leaves a
+ * root-absolute url() untouched, which 404s under a nested subpath; importing them from src/ makes
+ * Vite fingerprint each file and emit a RELATIVE url, which is what keeps the build subpath-safe.
+ *
+ * Three explicit weights, no synthetic bolding: a browser asked to fake-bold Hangul thickens the
+ * strokes until the counters inside dense glyphs close up, which is unreadable at HUD sizes.
+ * `font-display: block` rather than `swap` — layout is measured once fonts are ready, and a swap
+ * mid-measure is precisely the layout jump the font gate forbids.
+ */
+@font-face {
+  font-family: 'NanumSquareNeo';
+  src: url('../fonts/NanumSquareNeo-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'NanumSquareNeo';
+  src: url('../fonts/NanumSquareNeo-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'NanumSquareNeo';
+  src: url('../fonts/NanumSquareNeo-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --ink: #05070b;
+  --panel: rgba(9, 13, 19, 0.82);
+  --panel-edge: rgba(150, 176, 200, 0.16);
+  --text: #cfd8e0;
+  --text-dim: #8b98a5;
+  --amber: #d6913f;
+  --good: #7fd4a8;
+  --warn: #e0a45c;
+  --danger: #d2585a;
+  --shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+  --radius: 10px;
+  --gap: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--text);
+  font-family: 'NanumSquareNeo', system-ui, sans-serif;
+  font-weight: 400;
+  /* Korean does not benefit from letter-spacing and dense glyphs suffer from it. */
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* The overlay never intercepts pointer events — the world beneath is always reachable. */
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  padding: clamp(10px, 1.6vw, 22px);
+  display: grid;
+  grid-template-columns: minmax(240px, 22vw) 1fr minmax(230px, 20vw);
+  grid-template-rows: auto 1fr auto;
+  gap: var(--gap);
+  font-size: clamp(12px, 0.95vw, 15px);
+  line-height: 1.5;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+}
+
+/* ── objective, top-left ─────────────────────────────────────────────────── */
+#objective {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+}
+
+#objective .chapter {
+  font-weight: 800;
+  font-size: 1.08em;
+  color: var(--amber);
+  margin-bottom: 4px;
+}
+
+#objective .body {
+  color: var(--text);
+  /* Korean breaks badly on arbitrary characters; keep-all breaks on word boundaries. */
+  word-break: keep-all;
+}
+
+#objective .blocker {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--panel-edge);
+  color: var(--warn);
+  font-weight: 700;
+  word-break: keep-all;
+}
+
+#objective .progress {
+  margin-top: 8px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+#objective .progress > i {
+  display: block;
+  height: 100%;
+  background: var(--amber);
+  transition: width 0.2s linear;
+}
+
+/* ── stores, top-right ───────────────────────────────────────────────────── */
+#stores {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: start;
+  display: grid;
+  gap: 6px;
+}
+
+.stat {
+  display: grid;
+  grid-template-columns: 4.2em 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat .label {
+  color: var(--text-dim);
+}
+
+.stat .bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.stat .bar > i {
+  display: block;
+  height: 100%;
+  background: var(--good);
+}
+
+.stat.moisture .bar > i {
+  background: #6fb0d4;
+}
+
+.stat.population .bar > i {
+  background: var(--amber);
+}
+
+.stat .value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 3.4em;
+  text-align: right;
+}
+
+/* ── alert strip, bottom-left ────────────────────────────────────────────── */
+#regions {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: end;
+  display: grid;
+  gap: 4px;
+}
+
+.region {
+  display: grid;
+  grid-template-columns: 3.6em 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.region .name {
+  color: var(--text-dim);
+}
+
+.region.locked {
+  opacity: 0.38;
+}
+
+.region .heat {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.region .heat > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--good), var(--warn) 55%, var(--danger));
+}
+
+.region .level {
+  font-size: 0.9em;
+  color: var(--text-dim);
+}
+
+.region[data-alert='3'] .level,
+.region[data-alert='4'] .level {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* ── run log, bottom-right ───────────────────────────────────────────────── */
+#log {
+  grid-column: 3;
+  grid-row: 3;
+  align-self: end;
+  display: grid;
+  gap: 3px;
+  max-height: 30vh;
+  overflow: hidden;
+}
+
+.entry {
+  word-break: keep-all;
+  opacity: 0.9;
+}
+
+.entry.good {
+  color: var(--good);
+}
+.entry.warn {
+  color: var(--warn);
+}
+.entry.danger {
+  color: var(--danger);
+}
+
+/* ── contextual prompt, centre-bottom ────────────────────────────────────── */
+#prompt {
+  grid-column: 2;
+  grid-row: 3;
+  justify-self: center;
+  align-self: end;
+  text-align: center;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+#prompt.on {
+  opacity: 1;
+}
+
+#prompt .key {
+  display: inline-block;
+  min-width: 1.7em;
+  padding: 1px 6px;
+  margin-right: 6px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--amber);
+  font-weight: 800;
+}
+
+/* ── seen meter, centre-top ──────────────────────────────────────────────── */
+#seen {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  align-self: start;
+  width: min(280px, 26vw);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+#seen.on {
+  opacity: 1;
+}
+
+#seen .bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.09);
+  overflow: hidden;
+}
+
+#seen .bar > i {
+  display: block;
+  height: 100%;
+  background: var(--danger);
+}
+
+#seen .label {
+  text-align: center;
+  font-size: 0.9em;
+  color: var(--danger);
+  margin-bottom: 3px;
+}
+
+/* ── adaptation choice, centre ───────────────────────────────────────────── */
+#choice {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  pointer-events: none;
+  background: rgba(3, 5, 8, 0.55);
+}
+
+#choice.on {
+  display: grid;
+}
+
+#choice .cards {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 14px;
+  max-width: min(900px, 92vw);
+}
+
+.card {
+  width: min(260px, 28vw);
+  padding: 14px;
+  word-break: keep-all;
+}
+
+.card .key {
+  color: var(--amber);
+  font-weight: 800;
+}
+
+.card .name {
+  font-weight: 800;
+  font-size: 1.1em;
+  margin: 4px 0 6px;
+}
+
+.card .desc {
+  color: var(--text-dim);
+}
+
+.card.spent {
+  opacity: 0.35;
+}
+
+/* ── full-screen cards: help, pause, result ──────────────────────────────── */
+#curtain {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(3, 5, 8, 0.86);
+  pointer-events: none;
+  padding: 24px;
+}
+
+#curtain.on {
+  display: grid;
+}
+
+#curtain .sheet {
+  max-width: min(680px, 92vw);
+  text-align: left;
+}
+
+#curtain h1 {
+  margin: 0 0 10px;
+  font-weight: 800;
+  font-size: clamp(20px, 2.4vw, 30px);
+  color: var(--amber);
+  word-break: keep-all;
+}
+
+#curtain p {
+  margin: 0 0 12px;
+  word-break: keep-all;
+  color: var(--text);
+}
+
+#curtain ul {
+  margin: 0 0 12px;
+  padding-left: 1.1em;
+  color: var(--text-dim);
+}
+
+#curtain li {
+  margin-bottom: 3px;
+  word-break: keep-all;
+}
+
+#curtain .foot {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+#curtain .stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 18px;
+  margin-bottom: 12px;
+  color: var(--text-dim);
+}
+
+/* ── narrow viewports: drop to a single readable column ──────────────────── */
+@media (max-width: 900px) {
+  #hud {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+    font-size: 13px;
+  }
+  #objective,
+  #stores,
+  #regions,
+  #log,
+  #prompt,
+  #seen {
+    grid-column: 1;
+  }
+  #stores {
+    grid-row: 2;
+    align-self: start;
+  }
+  #log {
+    display: none;
+  }
+  #choice .cards {
+    grid-auto-flow: row;
+  }
+  .card {
+    width: min(420px, 88vw);
+  }
+}
+
+#noscript {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+}

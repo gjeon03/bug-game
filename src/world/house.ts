@@ -53,9 +53,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.kitchen.hallway',
     descriptionKey: 'gate.kitchen.hallway.desc',
     requires: {
-      workers: 4,
-      food: 26,
-      moisture: 18,
+      workers: 7,
+      food: 68,
+      moisture: 44,
       footholds: ['kitchen.undersink'],
       maxAlert: 2,
     },
@@ -84,9 +84,12 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.hallway.living',
     descriptionKey: 'gate.hallway.living.desc',
     requires: {
-      workers: 8,
-      food: 40,
-      moisture: 26,
+      workers: 15,
+      food: 145,
+      moisture: 92,
+      // The living-room door is the first operation that needs a *working relay*, not just a
+      // balance. This is what makes the hallway a logistics chapter rather than a corridor.
+      suppliedFoothold: 'hallway.shoeskirt',
       maxAlert: 2,
     },
     workSeconds: 11,
@@ -113,7 +116,7 @@ export const GATES: readonly Gate[] = [
     kind: 'pipe',
     labelKey: 'gate.hallway.bathroom',
     descriptionKey: 'gate.hallway.bathroom.desc',
-    requires: { workers: 6, moisture: 22, maxAlert: 3 },
+    requires: { workers: 12, moisture: 88, maxAlert: 3 },
     workSeconds: 8,
     opens: [
       {
@@ -139,7 +142,7 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.bathroom.kitchen',
     descriptionKey: 'gate.bathroom.kitchen.desc',
     // The riser is already there — the work is clearing the dried silicone at the kitchen end.
-    requires: { workers: 6, moisture: 30, footholds: ['kitchen.undersink'] },
+    requires: { workers: 12, moisture: 105, footholds: ['kitchen.undersink'] },
     workSeconds: 10,
     opens: [
       {
@@ -167,9 +170,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.hallway.bedroom',
     descriptionKey: 'gate.hallway.bedroom.desc',
     requires: {
-      workers: 14,
-      food: 60,
-      moisture: 40,
+      workers: 26,
+      food: 235,
+      moisture: 155,
       adaptation: 'any',
       maxAlert: 2,
     },
