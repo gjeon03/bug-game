@@ -296,19 +296,41 @@ body {
 }
 
 /* ── run log, bottom-right ───────────────────────────────────────────────── */
+/*
+ * The run log sits over the world, so it needs its own ground.
+ *
+ * Without a backing it was unreadable at 1280x720 against a lit floor — the lines visually collided
+ * and the colour coding stopped carrying any information. A panel plus a hard line-height fixes
+ * both: the text always has contrast, and the rows never crowd each other whatever the font metrics
+ * do at small sizes.
+ */
 #log {
   grid-column: 3;
   grid-row: 3;
   align-self: end;
+  justify-self: end;
   display: grid;
-  gap: 3px;
+  gap: 2px;
+  max-width: min(420px, 34vw);
   max-height: 30vh;
   overflow: hidden;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+  text-align: right;
+}
+
+#log:empty {
+  display: none;
 }
 
 .entry {
   word-break: keep-all;
-  opacity: 0.9;
+  line-height: 1.45;
+  opacity: 0.95;
 }
 
 .entry.good {

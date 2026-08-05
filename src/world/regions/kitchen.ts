@@ -265,33 +265,40 @@ export const KITCHEN: RegionSpec = {
       kind: 'kitchen.baseRun',
       at: { x: mm(X0), y: 0, z: mm(Z0) },
       options: { lengthMm: X1 - X0, depthMm: COUNTER_DEPTH, axis: 'x' },
-      // Under the 225-degree yaw this run normally BACKS the room rather than fronting it, so it
-      // fades rarely — but the scout spends most of chapter 1 in the toe-kick recess directly in
-      // front of it, and from there it does block. Deregistering it after the yaw flip left the
-      // scout 88 % swallowed by an unfaded slab in four of eight evidence frames.
+      /*
+       * Under the 225-degree yaw this run normally BACKS the room rather than fronting it, so it
+       * fades rarely — but the scout spends most of chapter 1 in the toe-kick recess directly in
+       * front of it, and from there it does block. Deregistering it after the yaw flip left the
+       * scout 88 % swallowed by an unfaded slab in four of eight evidence frames.
+       *
+       * The floor is HIGH on purpose. Alpha hashing drops pixels stochastically, so coverage is
+       * literally the fraction kept, and a large object at 0.4 reads as television static across a
+       * third of the frame at 1280x720. A cabinet run only has to become see-through enough to
+       * find a 35 mm insect behind it; 0.68 does that while staying legible as a solid object.
+       */
       occluder: true,
-      fadeFloor: 0.4,
+      fadeFloor: 0.68,
     },
     {
       kind: 'kitchen.baseRun',
       at: { x: mm(EAST_FACE), y: 0, z: mm(NORTH_FACE) },
       options: { lengthMm: EAST_RUN_Z1 - NORTH_FACE, depthMm: COUNTER_DEPTH, axis: 'z' },
       occluder: true,
-      fadeFloor: 0.4,
+      fadeFloor: 0.68,
     },
     {
       kind: 'kitchen.worktop',
       at: { x: mm(X0), y: mm(COUNTER_H), z: mm(Z0) },
       options: { lengthMm: X1 - X0, depthMm: COUNTER_DEPTH, axis: 'x' },
       occluder: true,
-      fadeFloor: 0.4,
+      fadeFloor: 0.68,
     },
     {
       kind: 'kitchen.worktop',
       at: { x: mm(EAST_FACE), y: mm(COUNTER_H), z: mm(NORTH_FACE) },
       options: { lengthMm: EAST_RUN_Z1 - NORTH_FACE, depthMm: COUNTER_DEPTH, axis: 'z' },
       occluder: true,
-      fadeFloor: 0.4,
+      fadeFloor: 0.68,
     },
     {
       kind: 'kitchen.splashback',
