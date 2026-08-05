@@ -73,18 +73,40 @@ Expected run length: the automated player finishes in ~25 minutes. A human will 
 - Korean UI at 1920×1080, 1440×900, 1280×720 and DPR 2, no tofu, no clipping
 - pheromone routes draw, workers deliver (27 deliveries in the first 45 s of a capture)
 
+**Performance, measured on real hardware** (`performance.json`) — Chrome on Apple M1 via Metal,
+GPU timer queries, 30 s of active play with a live colony (9 workers, 2 routes, audio running):
+
+| metric         | measured       | budget |
+| -------------- | -------------- | ------ |
+| presented p50  | **16.70 ms**   | ≤ 16.7 |
+| presented p95  | **17.80 ms**   | ≤ 20   |
+| presented p99  | **18.50 ms**   | ≤ 33   |
+| worst frame    | 18.70 ms       | < 100  |
+| CPU p50 / p99  | 4.20 / 4.80 ms | —      |
+| GPU p50 / p99  | 3.97 / 4.23 ms | —      |
+| frames > 33 ms | **0**          | —      |
+| draw calls     | 393            | —      |
+
+Before static geometry baking and the fixed light pool this was p50 50.0 / p95 51.6 / p99 83.4 ms
+with CPU 47.9 and GPU 43.9 — about 20 fps.
+
+**Audio works.** `src/audio/bridge.ts` maps simulation cues to the procedural synthesiser, panned
+from real world positions. It unlocks on your first keypress (browsers require a user gesture).
+
 **NOT verified — do not read these as done:**
 
-- **Frame timing.** All browser evidence here is headless Chromium on ANGLE/SwiftShader, which is
-  software rasterisation. It is deterministic, which is what makes the screenshots comparable, and
-  it is worthless for frame time. No p50/p95/p99 figure in this repository was measured on real
-  hardware for this build.
-- **A complete human playthrough.** The full run is verified by the scripted player in
-  `tests/unit/run.test.ts`, not by a person.
-- **Audio.** `src/audio/audio.ts` is retained and functional but is **not yet wired to the new
-  simulation's cues.** The game is currently silent. This is a known gap, not an oversight.
-- **Visual finish.** See `GAUNTLET_STATE.md` §Open defects. The apartment is built and lit, but
-  several rooms have not been looked at by a human at all.
+- **The run is not currently winnable end-to-end by the scripted player.** Fixing three genuinely
+  broken systems (inert cover zones, five missing household routines, a victory condition that was
+  strictly dominated by the gate before it) changed the balance, and the economy has not been
+  re-derived on top of the corrected systems. The previous "won in 21.4 minutes" was true, and was
+  true _because_ those systems were broken. See `GAUNTLET_STATE.md` §4.
+- **A complete human playthrough.** Nobody has played this from beginning to end.
+- **Visual finish.** An independent critic could not name the room without reading the HUD. See
+  `artifacts/evidence/whole-home-reboot-final/critics/REPORTS.md` — all five critics returned FAIL,
+  with 14 blocker findings between them. Several remain open.
+- **`pnpm test` does not complete.** The full-run balance tests are far too slow to be a gate. Run
+  `npx vitest run tests/unit/house.test.ts tests/unit/occlusion.test.ts tests/unit/profiler.test.ts`
+  for the fast suite (79 tests, under a second).
 
 ## Known limitations
 
