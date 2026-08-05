@@ -68,6 +68,11 @@ export const REGIONS: readonly RegionSpec[] = [KITCHEN, HALLWAY, LIVING, BATHROO
  * demands, and the colony's growth curve has to be flattened so income does not compound with
  * population. That is an economy redesign and it is not done.
  *
+ * A seventh attempt raised only the first two gates (kitchen 4/26/18 -> 7/62/42, living 8/40/26 ->
+ * 12/88/58) on the theory that the food fix had removed the starvation failure mode. It had not:
+ * both builds opened ZERO gates in 55 minutes at a peak population of 13-14, with the longest
+ * plateau at 43.8 s — a second away from the decision-density gate. Reverted.
+ *
  * These values stand because they are the only ones measured to be winnable for both builds. The
  * pacing requirement is kept in the test suite as `it.fails` so it turns red the moment it is met,
  * and is recorded as an open defect in GAUNTLET_STATE.md rather than quietly dropped.
@@ -83,9 +88,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.kitchen.hallway',
     descriptionKey: 'gate.kitchen.hallway.desc',
     requires: {
-      workers: 7,
-      food: 62,
-      moisture: 42,
+      workers: 4,
+      food: 26,
+      moisture: 18,
       footholds: ['kitchen.undersink'],
       maxAlert: 2,
     },
@@ -114,9 +119,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.hallway.living',
     descriptionKey: 'gate.hallway.living.desc',
     requires: {
-      workers: 12,
-      food: 88,
-      moisture: 58,
+      workers: 8,
+      food: 40,
+      moisture: 26,
       maxAlert: 2,
     },
     workSeconds: 11,

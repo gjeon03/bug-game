@@ -90,7 +90,10 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
           run.nav,
           { surface: run.scout.surface, x: run.scout.x, z: run.scout.z },
           target,
-          { exposureWeight: 2.4 },
+          // A competent player hugs the baseboards. At 2.4 this bot walked the lit centre of every
+          // room and was seen 64 times in a run; the concealment build, doing the same thing with
+          // stealth, was seen 9 times. The difference was the harness, not the game.
+          { exposureWeight: 5.5 },
         );
         path = found.points;
         pathIndex = 0;

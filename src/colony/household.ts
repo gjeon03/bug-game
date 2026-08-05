@@ -39,6 +39,10 @@ const DEESCALATE_AFTER = 26;
 const RESPONSE_COOLDOWN = 40;
 /** A response with less warning than this is never issued — there would be no decision window. */
 const MIN_TELEGRAPH = 2.2;
+/** Upper bound on the decayed traffic measure. Without it, traffic grows without limit. */
+const TRAFFIC_CAP = 14;
+/** Slowest a region may ever cool, as a fraction of the base decay. Never zero — nothing is pinned. */
+const COOL_FLOOR = 0.4;
 
 interface ThreatSpec {
   readonly kind: ThreatKind;
@@ -227,7 +231,12 @@ export function updateEvidence(run: Run, dt: number): void {
 
     // Traffic is a decaying measure of where bodies actually were, and it is what the director
     // aims at. It is not the same as evidence: a busy hidden route is high traffic, low evidence.
-    region.traffic = Math.max(0, region.traffic - dt * 0.12);
+    /*
+     * Traffic is CLAMPED. It gains 0.05/s per worker in the region and decays 0.12/s, so with a
+     * twenty-worker colony it grew without bound — which both violates the no-unbounded-growth gate
+     * and saturated every downstream term that reads it.
+     */
+    region.traffic = Math.min(TRAFFIC_CAP, Math.max(0, region.traffic - dt * 0.12));
 
     /*
      * Evidence only cools while a region is QUIET.
@@ -243,10 +252,17 @@ export function updateEvidence(run: Run, dt: number): void {
      * player reroutes away from it. The floor keeps some cooling even at full traffic so a region
      * is never permanently pinned by activity alone.
      */
-    const busy = Math.min(1, region.traffic / 1.2);
+    /*
+     * Busy is normalised against the colony's own size, so "busy" means busy FOR THIS COLONY rather
+     * than busy in absolute terms. A flat threshold made every mid-game region permanently busy:
+     * measured at `traffic / 1.2`, peak population fell 67 -> 14 and sightings rose 36 -> 63,
+     * because nothing ever cooled and the lethal responses never stopped.
+     */
+    const scale = 3 + run.colony.population * 0.35;
+    const busy = Math.min(1, region.traffic / scale);
     region.evidence = Math.max(
       region.evidenceFloor,
-      region.evidence - EVIDENCE_DECAY * dt * Math.max(0.12, 1 - busy),
+      region.evidence - EVIDENCE_DECAY * dt * Math.max(COOL_FLOOR, 1 - busy),
     );
 
     const target = alertFor(region.evidence);
