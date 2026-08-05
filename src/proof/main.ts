@@ -12,8 +12,6 @@ import { buildEnvironment, buildLights, configureRenderer } from '../three/env';
 // @ts-expect-error — untyped .mjs shared with tools/bake
 import { SINK_PROPS } from '../../tools/bake/props/sink.mjs';
 // @ts-expect-error — untyped .mjs shared with tools/bake
-import { KITCHEN_PROPS } from '../../tools/bake/props/kitchen.mjs';
-// @ts-expect-error — untyped .mjs shared with tools/bake
 import { roach as buildRoachMesh } from '../../tools/bake/props/roach.mjs';
 // @ts-expect-error — untyped .mjs shared with tools/bake
 import { counterStone, laminate, steelBrushed } from '../../tools/bake/lib/materials.mjs';
@@ -25,7 +23,6 @@ interface PropSpec {
 type PropRegistry = Record<string, PropSpec>;
 
 const SINK = SINK_PROPS as PropRegistry;
-const KITCHEN = KITCHEN_PROPS as PropRegistry;
 
 /* ------------------------------------------------------------------ scale */
 
@@ -53,8 +50,15 @@ const mm = (millimetres: number): number => millimetres / MM_PER_UNIT;
 const CAM_FOV = 34;
 const CAM_PITCH_DEG = 46;
 const CAM_YAW_DEG = 38;
-/** Vertical world span at the focus point; sets camera distance through the FOV. */
-const CAM_VIEW_UNITS = 360;
+/**
+ * Vertical world span at the focus point; sets camera distance through the FOV.
+ *
+ * MEASURED CORRECTION (proof-01 -> proof-02): 360 framed a large empty stretch of worktop and
+ * pushed the sink and its back wall out of shot, which reproduced the banned "large unbroken
+ * blue-black rectangle" defect in three dimensions. Widening brings the backsplash into frame, and
+ * a visible back edge is most of what stops a surface reading as an infinite plane.
+ */
+const CAM_VIEW_UNITS = 430;
 /** Seconds for the camera to cover ~63 % of the distance to its target. Damped, never rigid. */
 const CAM_LAG = 0.16;
 
@@ -138,14 +142,62 @@ const CAM_OFFSET = cameraOffset();
 /* ------------------------------------------------------- worktop and cabinet */
 
 const COUNTER_HALF_X = mm(620);
-const COUNTER_HALF_Z = mm(430);
+/** Shallower than a real 600 mm worktop half-depth so the back wall stays in shot. */
+const COUNTER_HALF_Z = mm(330);
 const COUNTER_THICK = mm(38);
 /** Worktop height above the floor — a real Korean apartment counter, and 24 scouts tall. */
 const COUNTER_HEIGHT = mm(880);
 
+/**
+ * Low-frequency wear across the worktop.
+ *
+ * `tools/bake/lib/materials.mjs` records a NEGATIVE RESULT for procedural surface detail: three
+ * attempts produced either nothing or a visible repeating grid, because a tiled canvas texture's
+ * own seams line up. The escape is to not tile at all — ONE texture stretched across the whole
+ * slab, `repeat` left at 1, so there is no period for a grid to form on. It carries no colour, only
+ * roughness, so it reads as where the cloth has and has not been rather than as a pattern.
+ */
+function worktopWear(): THREE.CanvasTexture {
+  const SIZE = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('2D context unavailable for worktop wear');
+
+  ctx.fillStyle = '#6b6b6b';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Deterministic blotches — a bake must be reproducible, so no Math.random.
+  let seed = 0x9e3779b9;
+  const rand = (): number => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 0x100000000;
+  };
+  for (let i = 0; i < 90; i++) {
+    const x = rand() * SIZE;
+    const y = rand() * SIZE;
+    const r = 40 + rand() * 150;
+    const light = rand() > 0.5;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, light ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.14)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  return texture;
+}
+
+const worktopMaterial = counterStone() as THREE.MeshStandardMaterial;
+worktopMaterial.roughnessMap = worktopWear();
+
 const worktop = new THREE.Mesh(
   new THREE.BoxGeometry(COUNTER_HALF_X * 2, COUNTER_THICK, COUNTER_HALF_Z * 2),
-  counterStone(),
+  worktopMaterial,
 );
 worktop.position.set(0, -COUNTER_THICK / 2, 0);
 worktop.receiveShadow = true;
@@ -182,12 +234,18 @@ floor.position.y = -COUNTER_THICK - COUNTER_HEIGHT;
 floor.receiveShadow = true;
 scene.add(floor);
 
-/** The stainless splash-back strip along the wall edge of the worktop. */
+/**
+ * The stainless splash-back behind the worktop.
+ *
+ * Load-bearing for composition, not decoration: it is the vertical the eye needs to stop reading
+ * the counter as an endless plane, and being the only large polished-metal surface in shot it is
+ * what proves the environment map is doing its job.
+ */
 const splashback = new THREE.Mesh(
-  new THREE.BoxGeometry(COUNTER_HALF_X * 2, mm(90), mm(12)),
+  new THREE.BoxGeometry(COUNTER_HALF_X * 2, mm(210), mm(12)),
   steelBrushed(),
 );
-splashback.position.set(0, mm(45), -COUNTER_HALF_Z + mm(6));
+splashback.position.set(0, mm(105), -COUNTER_HALF_Z + mm(6));
 splashback.castShadow = true;
 splashback.receiveShadow = true;
 scene.add(splashback);
@@ -205,23 +263,41 @@ interface Placement {
   readonly occludes?: boolean;
 }
 
+/*
+ * MEASURED CORRECTION (proof-01 -> proof-02).
+ *
+ * The first layout scattered props across 900 mm of counter, so the framed shot was mostly bare
+ * worktop with the drain clipped off the top edge and the jar and detergent bottle entirely out of
+ * frame. Authored density is not "more objects" — it is objects arranged so that every part of the
+ * frame is doing work. Everything now sits inside the shot, clustered the way a real sink surround
+ * accumulates: wet things near the drain, clean things stacked away from it, crumbs where someone
+ * actually ate.
+ *
+ * `steel-panel` is gone. It rendered as a flat dark quad, which is the exact defect this rebuild
+ * exists to kill.
+ */
 const PLACEMENTS: readonly Placement[] = [
-  { registry: SINK, name: 'sink-drain', x: mm(-210), z: mm(-90) },
-  { registry: SINK, name: 'plate-stack', x: mm(180), z: mm(-170), spin: 12, occludes: true },
-  { registry: SINK, name: 'plate-single', x: mm(-40), z: mm(-230), spin: -24 },
-  { registry: SINK, name: 'sponge', x: mm(-80), z: mm(40), spin: 34 },
-  { registry: SINK, name: 'mug', x: mm(330), z: mm(60), spin: -40, occludes: true },
-  { registry: SINK, name: 'detergent-bottle', x: mm(420), z: mm(-190), occludes: true },
-  { registry: SINK, name: 'dish-towel', x: mm(-390), z: mm(150), spin: 18 },
-  { registry: SINK, name: 'jar', x: mm(-450), z: mm(-200), occludes: true },
-  { registry: SINK, name: 'droplet-m', x: mm(-120), z: mm(-20) },
-  { registry: SINK, name: 'droplet-s', x: mm(-155), z: mm(25) },
-  { registry: SINK, name: 'droplet-s', x: mm(-88), z: mm(78), spin: 60 },
-  { registry: SINK, name: 'crumb-a', x: mm(40), z: mm(120) },
-  { registry: SINK, name: 'crumb-b', x: mm(85), z: mm(150), spin: 40 },
-  { registry: SINK, name: 'crumb-c', x: mm(15), z: mm(175), spin: -20 },
-  { registry: SINK, name: 'crumb-a', x: mm(130), z: mm(96), spin: 110 },
-  { registry: KITCHEN, name: 'steel-panel', x: mm(-300), z: mm(-330) },
+  // The sink surround — the hero of this shot.
+  { registry: SINK, name: 'sink-drain', x: mm(-150), z: mm(-70) },
+  { registry: SINK, name: 'droplet-m', x: mm(-88), z: mm(-6) },
+  { registry: SINK, name: 'droplet-s', x: mm(-118), z: mm(34) },
+  { registry: SINK, name: 'droplet-s', x: mm(-60), z: mm(62), spin: 60 },
+  { registry: SINK, name: 'sponge', x: mm(-58), z: mm(96), spin: 34 },
+
+  // Washed-up crockery, stacked away from the wet zone.
+  { registry: SINK, name: 'plate-stack', x: mm(96), z: mm(-176), spin: 12, occludes: true },
+  { registry: SINK, name: 'plate-single', x: mm(-16), z: mm(-208), spin: -24 },
+  { registry: SINK, name: 'mug', x: mm(196), z: mm(-24), spin: -40, occludes: true },
+  { registry: SINK, name: 'jar', x: mm(-268), z: mm(-186), occludes: true },
+  { registry: SINK, name: 'detergent-bottle', x: mm(150), z: mm(-186), occludes: true },
+  { registry: SINK, name: 'dish-towel', x: mm(-282), z: mm(104), spin: 18 },
+
+  // Crumbs where somebody stood and ate — the colony's reason to cross open ground.
+  { registry: SINK, name: 'crumb-a', x: mm(18), z: mm(104) },
+  { registry: SINK, name: 'crumb-b', x: mm(56), z: mm(138), spin: 40 },
+  { registry: SINK, name: 'crumb-c', x: mm(-8), z: mm(156), spin: -20 },
+  { registry: SINK, name: 'crumb-a', x: mm(92), z: mm(80), spin: 110 },
+  { registry: SINK, name: 'crumb-b', x: mm(128), z: mm(126), spin: -70 },
 ];
 
 const occluders: Occluder[] = [];
@@ -293,7 +369,8 @@ function showPose(group: THREE.Group, phase: number): void {
 }
 
 const scout = buildRoachRig({ bodyMm: 35, palette: 'scout' });
-scout.position.set(mm(60), 0, mm(230));
+// Starts on open ground between the crumbs and the drain, so the opening shot frames the sink.
+scout.position.set(mm(30), 0, mm(60));
 scene.add(scout);
 
 /* ------------------------------------------------------------ pheromone route */
@@ -306,18 +383,19 @@ scene.add(scout);
  * counter, not like a UI element floating above it.
  */
 const ROUTE_POINTS = [
-  new THREE.Vector3(mm(-210), 0, mm(-90)),
-  new THREE.Vector3(mm(-150), 0, mm(20)),
-  new THREE.Vector3(mm(-40), 0, mm(120)),
-  new THREE.Vector3(mm(60), 0, mm(190)),
-  new THREE.Vector3(mm(150), 0, mm(250)),
-  new THREE.Vector3(mm(300), 0, mm(300)),
+  new THREE.Vector3(mm(-150), 0, mm(-70)),
+  new THREE.Vector3(mm(-120), 0, mm(20)),
+  new THREE.Vector3(mm(-52), 0, mm(96)),
+  new THREE.Vector3(mm(30), 0, mm(138)),
+  new THREE.Vector3(mm(112), 0, mm(122)),
+  new THREE.Vector3(mm(176), 0, mm(58)),
 ];
 const routeCurve = new THREE.CatmullRomCurve3(ROUTE_POINTS);
 
 function buildRouteRibbon(curve: THREE.CatmullRomCurve3): THREE.Mesh {
   const SEGMENTS = 140;
-  const HALF_WIDTH = mm(7);
+  /** A scout is 12 mm across; a worked trail is roughly one body wide, not four. */
+  const HALF_WIDTH = mm(4.5);
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
@@ -348,12 +426,22 @@ function buildRouteRibbon(curve: THREE.CatmullRomCurve3): THREE.Mesh {
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
 
+  /*
+   * MEASURED CORRECTION (proof-01 -> proof-02).
+   *
+   * The first attempt used `AdditiveBlending` at 0.42 over a dark worktop and rendered as a
+   * near-WHITE strip that read as paper tape laid on the counter — it dominated the frame and
+   * destroyed the "left behind, not drawn on top" quality a scent trace needs. Additive blending
+   * cannot preserve a hue against a dark background: it only ever adds toward white.
+   *
+   * Normal blending at low opacity keeps the amber, and a soft edge falloff through the V
+   * coordinate stops the ribbon from having the hard parallel sides of a printed line.
+   */
   const material = new THREE.MeshBasicMaterial({
-    color: 0xd8a05a,
+    color: 0xa87a3e,
     transparent: true,
-    opacity: 0.42,
+    opacity: 0.3,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.renderOrder = 2;
