@@ -62,7 +62,7 @@ export function updateScout(run: Run, dt: number, input: ScoutInput, stamina: nu
   if (magnitude < 0.02) {
     scout.speed = 0;
     scout.state = 'idle';
-    accrueExposure(run, dt, 1.05);
+    accrueExposure(run, dt, 0.55);
     return Math.min(1, stamina + dt * SPRINT_RECOVER);
   }
 
@@ -92,14 +92,8 @@ export function updateScout(run: Run, dt: number, input: ScoutInput, stamina: nu
   scout.speed = speed * Math.min(1, magnitude);
   scout.state = 'moving';
 
-  /*
-   * A moving scout is harder to fix on than a stationary one.
-   *
-   * Standing still in the light is what gets a cockroach noticed; a dart across the floor is a
-   * flicker at the edge of vision. Sprinting is still the loudest thing you can do, but ordinary
-   * movement now costs less than loitering — which is also the behaviour the game wants to teach.
-   */
-  accrueExposure(run, dt, sprinting ? 1.5 : 0.78);
+  // Sprinting is loud: it raises how fast the household notices you.
+  accrueExposure(run, dt, sprinting ? 1.6 : 1);
   discover(run);
 
   return nextStamina;

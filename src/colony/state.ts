@@ -81,15 +81,20 @@ export const EVIDENCE_DECAY = 0.0075;
  * This is the memory that makes the endgame the player's own fault: the household does not forget
  * that it saw something in the bedroom, and the final response is aimed by that history.
  *
- * The cap is the important number, and it is deliberately below the alert-2 threshold (0.36).
- * Measured at a 0.80 cap: five sightings pinned a region at alert 3 *forever*, so it never stopped
- * spawning vacuums and sprays, 121 workers died and no colony could recover — which contradicts
- * the design's own "a major regional loss can be recovered from". Permanent memory should mean the
- * household stays *watchful*, not that it stays *at war*. Reaching alert 3 must always require
- * current, ongoing traffic that the player can choose to stop.
+ * The cap is the important number, and it sits below the ALERT-1 threshold (0.16).
+ *
+ * It has been wrong twice, in the same direction both times. At 0.80, five sightings pinned a
+ * region at alert 3 forever: 121 workers died and no colony recovered. Lowered to 0.33 — still
+ * above the alert-1 threshold — and once the household actually started responding, a run with 65
+ * sightings pinned every visited region at "noticing" permanently, costing 246 workers.
+ *
+ * Permanent memory should mean the household stays *watchful*, not that it stays *at war*. Below
+ * 0.16, sightings move a region toward noticing and never past it on their own; every alert level
+ * that actually spawns a response requires CURRENT traffic, which the player can choose to stop.
+ * That is what makes regional loss recoverable.
  */
 export const SIGHTING_FLOOR_GAIN = 0.055;
-export const SIGHTING_FLOOR_CAP = 0.33;
+export const SIGHTING_FLOOR_CAP = 0.13;
 
 export const ALERT_THRESHOLDS: readonly number[] = [0.16, 0.36, 0.6, 0.84];
 

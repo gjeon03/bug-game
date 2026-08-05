@@ -37,11 +37,11 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 164
+    "frame": 163
   },
   "afterRoute": {
     "status": "playing",
-    "time": 4,
+    "time": 5,
     "chapter": "kitchen",
     "population": 2,
     "capacity": 9,
@@ -76,7 +76,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 428
+    "frame": 427
   },
   "working": {
     "status": "playing",
@@ -94,8 +94,8 @@
     "blocker": "blocker.workers",
     "scout": {
       "surface": "kitchen.floor",
-      "x": 859,
-      "z": -2029
+      "x": 862,
+      "z": -2025
     },
     "stats": {
       "props": 187,
@@ -115,7 +115,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 2564
+    "frame": 2563
   },
   "restarts": [
     {
