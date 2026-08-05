@@ -1,174 +1,152 @@
 # GAUNTLET_STATE
 
-Live production state. Updated before the end of every turn. If this file disagrees with a summary
-written in chat, this file is correct.
+**Live production state for the whole-home rebuild.** Updated before the end of every turn. If this
+file disagrees with anything written in chat, **this file is correct**. It is written to survive
+context compaction: read it first, act from it, then update it.
 
-**Branch** `experiment/isometric-threejs-rebuild` · **origin/main..HEAD** `0 13` — thirteen local
-commits, **zero pushes**. Run `git log --oneline -1` for the exact HEAD; this file deliberately does
-not carry a hash it would have to amend a commit to keep accurate.
-
----
-
-## Current phase
-
-**Phase 6–8 of the implementation sequence** — the three.js proof scene exists, has been critiqued
-by two independent fresh-context agents, and is being corrected against their verified findings.
-Map expansion is gated on those corrections, per the brief's "do not expand the whole map until
-independent reviewers confirm".
-
-**Active owner** — main integration owner (me), sequential, for every coupled system: camera +
-occlusion, lighting + materials, scout movement + animation, renderer + profiling. Parallel agents
-are read-only research and criticism only.
+**Branch** `experiment/whole-home-infestation-3d` (created from `df9db36`) · **0 pushes, 0 merges,
+0 PRs, 0 deployments.** Verify with `git rev-parse --abbrev-ref HEAD`.
 
 ---
 
-## Running background work
+## 0. What this build is
 
-| Task ID | What | Status |
-| --- | --- | --- |
-| — | none | Workflow `wr664wcb3` landed and was consumed: 188 props specified across 8 zones, 67 already in the bake library, **121 need authoring**. Its integrated-layout return was truncated to the risk section, so the floor plan was decided by the layout owner instead and now lives in `src/three/room.ts`. |
+A 25-35 minute single-run 3-D strategy-action game. A scout cockroach starts in the void under a
+Korean apartment kitchen sink and opens the whole flat: **kitchen -> hallway -> living room ->
+bedroom**, with the **bathroom** as an optional high-risk shortcut. Progression is spatial - every
+chapter ends by physically opening a route in the world.
 
-Completed and already consumed:
-
-| Task | Result consumed |
-| --- | --- |
-| Repository reuse audit | 59 % of TypeScript survives; sim is renderer-agnostic (0 DOM hits in 8,071 lines); three 3D blockers identified |
-| Test suite audit | 170/179 cases survive a renderer change; `i18n.test.ts:5` imports `render/props.ts` and would take 23 locale invariants down with it |
-| Asset pipeline research | Blender obtainable but unnecessary for a hexapod; KTX2 unavailable via Homebrew; Kenney 3D rejected on texel density |
-| Visual critic #1 (proof-10) | 7 gates: 2 PASS / 1 MARGINAL / 4 FAIL. Ranked five gaps. |
-| Visual critic #2 (proof-12 verification) | Caught a **false verification** of mine — see below |
+Superseded: the Canvas2D kitchen game (`main`) and the kitchen-only three.js proof (`df9db36`).
+Full disposition of inherited code: `CANCELLED_GOAL_HANDOFF_AUDIT.md`.
 
 ---
 
-## Verified defects, ranked by player impact
-
-Ranked by how much each costs the player, not by how easy it is to fix.
-
-| # | Defect | Status | Evidence |
-| --- | --- | --- | --- |
-| 1 | **The frame shows a fragment of a kitchen, not a kitchen.** | **IN PROGRESS** — greybox room with all 8 zones at real millimetre dimensions is standing; 7 of 8 zones still have no props | `artifacts/evidence/isometric-reboot-anchors/` (8 frames), `anchor-contact-sheet.png` |
-| 1a | **Anchor framing is wrong.** At a 300-unit view span with the focus at worktop height, seven of the eight anchor frames are a flat plane. The shots have to frame where props WILL be, and the span has to vary per anchor. | **OPEN — next action** | Contact sheet, this turn |
-| 1b | **The floor wear map reads as noise.** 1024 px stretched over 3700 mm is 3.6 mm per texel, so the directional grain authored for a 920 mm worktop becomes visible speckle on the floor — "random procedural noise" is on the banned list. Surfaces need texel density set per surface, not one canvas for all. | **OPEN** | Contact sheet, this turn |
-| 2 | The cabinet face was a flat dark region, 14.7 % of frame at 1.15 levels internal variance | **CLOSED**, controlled comparison | patch sd 0.00429 → 0.01483 (3.5×); high-pass 0.00060 → 0.00287 (4.8×); dominant colour 17.5 % → 15.3 %; unique colours 18 594 → 19 118; GPU cost +0.02 ms |
-| 3 | Worktop carried no material information | **CLOSED**, measured | patch sd 0.00215 → 0.02152; high-pass sd 0.00062 → 0.00526; dominant colour 53.1 % → 17.5 % |
-| 4 | Roaches read as spiders/ticks | **CLOSED** | Critic #2: "definitively not as spiders or ticks any more" |
-| 5 | Seam and stripes z-fighting into dashed lines (**a defect I introduced**) | **CLOSED** | Markings moved into vertex colours; no coplanar geometry exists |
-| 6 | Pronotum was a separate box overhanging the shell by 0.71 mm/side — "the waist relocated to the shoulder" | **CLOSED** | Same fix |
-| 7 | Legs not actually on the thorax (**my claim was false**: measured 24/35/47 % back) | **CLOSED** | Now 19/29/39 % |
-| 8 | Legs ended in blunt flat-cut cylinders in mid-air | **CLOSED** | Tarsus segment added |
-| 9 | Player marker colour-confusable with food at 6.0 % RGB distance | **CLOSED** | Marker moved toward amber, ~19 % distance |
-| 10 | Debug overlay burned into evidence frames | **CLOSED** | F3 toggle, default hidden; numbers exposed as data via `window.__proof` |
-| 11 | Pheromone ribbon ended in a blunt guillotine cut | **CLOSED** | Width tapers to zero at both ends |
-| 12 | Player-facing English `2 tiles` shipped to production | **CLOSED** | Routed through `t('hud.guide')`; source-literal scan added |
-| 13 | Prop interpenetration and props standing inside the sink aperture | **CLOSED in source**, not yet shown in evidence | Clearance measured at 198.1 mm vs 148.5 mm required |
-| 14 | Cabinet too dark to show its own texture (mean 0.098) | **CLOSED, criterion partially met** | Motivated floor bounce: mean 0.0981 → **0.1426** (+45 %), high-pass 0.00287 → **0.00394** (+37 %). My own pass mark was mean > 0.15; it landed at 0.1426 and I stopped rather than chase the number — see hypotheses. |
-| 15 | Head still not distinct from thorax | **OPEN**, low impact | Critic #2 Part 1c |
-| 16 | Crumbs are hard-faceted polygon shards | **OPEN**, low impact | Critic #1 §1.9 — inherited bake-library geometry |
-
----
-
-## Root-cause hypotheses in play
-
-**Defect 2 — CONFIRMED and closed.** The prediction was that albedo + normal would move the
-cabinet's high-pass by roughly the order the worktop moved (×8.5). Measured **×4.8** — same order, so
-the hypothesis holds. The gap between 4.8 and 8.5 is explained by the alternative hypothesis being
-partly true as well: the cabinet face genuinely receives very little direct light, which is why its
-mean luminance FELL rather than rose when detail was added. That is tracked as defect 14 rather than
-quietly declared solved.
-
-**Defect 14 — CONFIRMED, criterion partially met, and one honest miss recorded.**
-
-The first attempt produced a cabinet patch identical to **seven significant figures** while 4.5 % of
-the frame changed elsewhere. That is not "a small effect", it is "no effect", and it was a direction
-sign error: `multiplyScalar(-600)` put the light above and behind, lighting the worktop instead. A
-surface is lit when the vector to the light has a positive dot with its normal; the cabinet front
-faces +Z, so the light must sit at positive Z and negative Y. Same class of bug as the roach legs
-and antennae, found the same way — by evaluating the vector rather than trusting the number.
-
-Intensity was then swept rather than eyeballed:
-
-| intensity | patch mean | patch high-pass |
-| --- | --- | --- |
-| 0.5 | 0.1146 | 0.00326 |
-| 1.0 | 0.1304 | 0.00365 |
-| 1.4 (shipped) | **0.1426** | **0.00394** |
-| 1.6 | 0.1485 | 0.00410 |
-
-High-pass **rises** monotonically with intensity across the whole range, so there is no wash-out knee
-here — the constraint is aesthetic, not technical. **My stated pass mark was mean > 0.15 and the
-shipped value is 0.1426, so the criterion was missed.** I stopped at 1.4 because 1.6 is 68 % of the
-key light's intensity, which is not a bounce any more, and flooding a night kitchen to hit a number I
-invented would be the wrong trade. Recorded as a miss rather than moved.
-
----
-
-## Next controlled comparison
-
-**Done this turn — results above.** Next comparison belongs to the kitchen build: capture the first
-BUILD ORDER increment from `wr664wcb3` against `proof-19` as the before, at identical camera and
-placement, and check that adding six zones does not push GPU p99 past the budget.
-
-Method, anchored to the material rather than to a screen rectangle:
+## 1. Architecture (target)
 
 ```
-magick <frame> -crop 200x150+320+800 +repage \
-  \( +clone -blur 0x12 \) -compose difference -composite \
-  -format "%[fx:standard_deviation]" info:
+src/
+  world/      units.ts types.ts house.ts regions/{kitchen,hallway,living,bathroom,bedroom}.ts
+              - authored apartment data. Pure data + assembly. No THREE, no DOM.
+  colony/     state, workers, pheromone routes, resources, progression, director, routines,
+              threats, adaptations, rng. Deterministic fixed step. No THREE, no DOM.
+  view/       scene, camera, occlusion, lighting, materials, props/*, roach, fx.
+              - reads colony state, never writes it.
+  ui/         hud, panels, css. DOM overlay. Reads keys+params, resolves via t().
+  audio/      audio.ts (retained verbatim from the old build) + new sound families.
+  i18n/       index.ts (retained verbatim) + rewritten ko.ts / en.ts.
+  game/       boot.ts, loop.ts - the only entry point.
 ```
 
-Cabinet patch now: high-pass **0.00394**, mean **0.1426** (proof-19).
+**Hard rule carried from the old build's worst defect:** simulation state carries **keys + params**,
+never rendered player-facing strings. `t()` is called only in `src/ui/` and `src/view/`. This makes
+the section-4 English-leak defect structurally impossible rather than test-detectable.
 
-The lesson that produced this method: I previously reported a 15× improvement measured on a fixed
-screen rectangle across a deliberate camera move. The rectangle no longer contained countertop, so
-the variance came from a geometry edge. **Never measure a fixed screen rect across a camera change.**
+**Scale anchor:** 1 world unit = 35/26 mm = 1.346 mm (`src/world/units.ts`). Everything is authored
+in millimetres and converted exactly once, at the point of authorship.
+
+**Apartment plan (millimetres, X east / Z south / Y up):**
+
+| Region | x | z |
+| --- | --- | --- |
+| KITCHEN | 0 .. 3800 | -3300 .. -300 |
+| HALLWAY | -200 .. 9600 | -300 .. 1300 |
+| BATHROOM | 200 .. 2600 | 1300 .. 3700 |
+| LIVING | 3400 .. 8000 | 1300 .. 5500 |
+| BEDROOM | 5200 .. 9600 | -3500 .. -300 |
+
+A double-loaded corridor: every room touches the hallway, which is what makes the hallway a real
+logistics spine rather than a corridor with a door at each end.
+
+**Camera looks toward +X and +Z.** Walls with `outward` of `{0,-1}` or `{-1,0}` stand between the
+viewer and the room and are built as 320 mm stubs at load time - a static cut, so there is no
+per-frame wall fading and no artifact class to debug. Walls with `outward` `{1,0}` / `{0,1}` stay
+full height and are each room's visual backing.
 
 ---
 
-## Latest evidence and tests
+## 2. Retained from the previous build (verified, not assumed)
 
-| What | Path / value |
+| Module | Status |
 | --- | --- |
-| Proof scene iterations | `artifacts/evidence/isometric-reboot-proof/proof-01 … proof-19` |
-| Old-build baseline | `artifacts/evidence/isometric-reboot-baseline/01-old-canvas-initial-real-chrome.jpg` |
-| Occlusion cases | `proof-13-occluded.png`, `proof-13-restored.png`, `proof-13-multi-occluder.png` |
-| Unit tests | **180 passing** (15 files) — includes 10 occlusion cases and 6 perf-verdict cases |
-| Lint / typecheck | clean |
-| Real-GPU profile (greybox room, M1, 1920×1080) | presented p50 16.70 / p95 18.20 / p99 18.60; **CPU p99 4.30; GPU p99 10.17**; draw 639, tri 174 476, geom 84, tex 13 |
-| Perf verdict | 11/11 lines PASS, GPU timing available with 300 samples |
+| `src/i18n/index.ts` | **RETAIN unchanged** - `t()` computes Korean particles from the *sound* of the value (`{n?이/가}`). Exactly what section 4a demands. |
+| `src/audio/audio.ts` | **RETAIN, extend** - 659 lines, pure WebAudio, zero imports, 4 buses, 24-voice cap, ~40 sounds from 2 primitives. |
+| `src/three/profiler.ts` | **RETAIN** -> `src/view/` - GPU timer queries, discards disjoint batches, refuses to pass an unmeasured GPU. |
+| `src/three/roach.ts` | **RETAIN, extend** -> `src/view/` - needs a surface-normal argument for climbing. |
+| `src/three/surfaces.ts` | **RETAIN** -> `src/view/` - seeded procedural wear. WARNING: `applyWear` mutates and is **not idempotent**. |
+| `src/three/occlusion.ts` | **REFACTOR** -> keep alpha hashing; add per-region active set + distance reject. |
+| `src/three/env.ts` | **REFACTOR** - `configureRenderer` kept; the light rig is one-kitchen. |
+| `tools/bake/**` | **HARVEST** - millimetre-anchored parametric prop shapes/materials, ported to typed builders. |
 
-**The measurement that matters most right now:** GPU p99 is 10.56 ms of a 16.7 ms budget with only
-the sink fragment built. Remaining headroom for seven more zones is ~5.6 ms, not ~13 ms.
+**Deleted when the new entry point is playable:** `src/render/**`, `src/main.ts`, `src/art/**`,
+`src/testapi.ts`, `src/sim/**`, `src/three/{room,counter}.ts`, `src/proof/**`, `proof.html`, and the
+17 unit + 8 e2e specs that test the deleted game.
 
 ---
 
-## Unresolved completion gates
+## 3. Verified environment facts (re-run 2026-08-05, not inherited)
 
-| Gate group | State |
+| Tool | Verified |
 | --- | --- |
-| New identity — zones recognizable without labels, kitchen looks occupied | **FAIL** — 8 zones exist as greybox volumes; only the sink carries props |
-| Camera and visibility | **PASS in unit tests**, 10 cases; multi-blocker unverified in-scene (layout produces max 1) |
-| Gameplay — first action, first delivery, routes, growth, adaptations, threats | **NOT STARTED** — no loop wired |
-| Cockroaches — reads as cockroach, cargo readable, no stale state | **PARTIAL** — silhouette closed, cargo untested, restart untested |
-| Korean — all text from catalog, font verified at four resolutions | **PARTIAL** — proof scene copy still hardcoded |
-| Assets — every element classified, no temporary | **FAIL** — 7 temporary rows in `ASSET_MANIFEST.md` |
-| Technical — install, typecheck, lint, unit, build, nested path, E2E, console, restart | **PARTIAL** — first five pass; nested-path and E2E not run against the 3D build |
-| Performance | **PASS for the fragment**, with the headroom caveat above |
-| Repository safety | **PASS** — 10 commits, 0 pushes, 0 merges, 0 PRs, 0 deployments |
+| Blender | **5.2.0 LTS**, headless, embedded Python 3.13.13 + numpy 2.3.4. End-to-end rigged+animated GLB export re-verified today: magic `glTF`, version 2, skins 1, animations 1, generator `Khronos glTF Blender I/O v5.2.39`. Cycles 512px/64spp = **1.91 s CPU-only** (no Metal compute device). |
+| ffmpeg 8.1.2 / ImageMagick 7.1.2-29 / draco 1.5.7 / librsvg 2.60.0 | present |
+| Node 21.7.2 / pnpm 9.15.9 / three 0.185.1 / Playwright 1.62.1 | present |
+| Reference machine | MacBookPro17,1 / Apple M1 8-core (4P+4E) / 16 GB / Metal 4 / 2560x1600 |
+| **KTX2 / Basis** | **UNAVAILABLE** - not a Homebrew formula. PNG/WebP only; control texture memory by resolution and atlas discipline. |
+| **Image / 3-D generation** | **UNAVAILABLE** - no local tool, no provider credentials. **All art is Blender procedural + ImageMagick.** |
+| **glTF optimizer CLI** | **UNAVAILABLE** - no gltf-transform/gltfpack/meshopt. Draco via `draco_encoder` or Blender's exporter only. |
+| **Headless Playwright** | renders through **ANGLE / SwiftShader software Vulkan**. Valid for screenshots and logic. **INVALID for frame-time evidence.** Real Chrome on the M1 is the only perf target. |
+| `gh` | unauthenticated - irrelevant here, nothing may be pushed. |
+| pnpm drift | installed 9.15.9 vs `packageManager: pnpm@10.13.1`. Works because corepack is not enforcing; a corepack-strict environment would fail. |
 
 ---
 
-## Exact next executable action
+## 4. Defects found in the inherited code (recorded, mostly fixed by deletion)
 
-Consume the `kitchen-zone-research` workflow (`wr664wcb3`) the moment it lands and build the first
-increment of its BUILD ORDER — chosen so a critic can look at it immediately rather than only at the
-end. That closes defect 1, the highest-impact open item.
+| # | Defect | Disposition |
+| --- | --- | --- |
+| A | `scene.fog` far = 2100 units = **2827 mm**, shorter than a single room's 5027 mm diagonal - any whole-home sightline renders as flat fog. | Fixed by construction in the new renderer. **Must verify.** |
+| B | `counter.ts` builds its own floor 38 mm below `room.ts`'s and overhanging it ~270 mm W / ~1340 mm N. | Both modules obsolete - recorded, not repaired. |
+| C | `proof/main.ts` has **no dispose path**; cannot pass a five-restart leak gate. | Obsolete. New boot has an explicit teardown. |
+| D | Hardcoded English in `src/ui/hud.ts` `choicePanel()` while correct Korean keys sit unused - survived all 29 localization tests. | Structurally prevented: sim carries keys, not strings. |
+| E | `occlusion.update()` is O(focus x 5 probes x occluders) with a full recursive `intersectObject` and no broadphase. | Refactor before the prop count rises. |
+| F | Old sim bakes locale at module import (`ZONES`, `ROUTINE_SPECS`, `ADAPTATIONS` all call `t()` at top level). | Design rejected; see section 1 hard rule. |
 
-Fix defect 1a: give each anchor shot its own view span and a focus point sited where its props will
-stand, then re-capture the contact sheet. Seven flat frames cannot be judged, and the cut list for
-121 props is supposed to be decided against these frames.
+---
 
-Then defect 1b: set texel density per surface. The floor needs roughly a quarter of the counter's
-frequency for the same physical grain size.
+## 5. Progress
 
-Only after both: author zone props in BUILD ORDER, one zone at a time, so the room is always N zones
-finished and 8-N greybox — judgeable — rather than 8 zones half-finished, which is not.
+| Step | State |
+| --- | --- |
+| Branch created + boundary recorded in `CLAUDE.md` section 0 | **DONE** |
+| `CANCELLED_GOAL_HANDOFF_AUDIT.md` | **DONE** |
+| `src/world/units.ts`, `src/world/types.ts` | **DONE** |
+| `src/world/regions/kitchen.ts` | **DONE** - reference region |
+| `src/world/regions/{hallway,living,bathroom,bedroom}.ts` | **IN PROGRESS** - parallel authoring |
+| `src/world/house.ts` (assembly, nav grid, gate graph) | TODO - next |
+| `src/colony/**` (sim) | TODO |
+| `src/view/**` (renderer, camera, occlusion, props) | TODO |
+| `src/ui/**` + Korean catalog rewrite | TODO |
+| Old-runtime deletion + test replacement | TODO |
+| Real-browser playtest + evidence + critics | TODO |
+
+---
+
+## 6. Exact next executable action
+
+Assemble `src/world/house.ts`: import the five regions, place the inter-region gates
+(kitchen->hallway toe-kick, hallway->living door sweep, hallway->bathroom pipe sleeve,
+hallway->bedroom door sweep, plus the bathroom<->kitchen pipe shortcut), build the merged navigation
+grid at 60 mm cells with the exposure field baked in, and export a single `HOUSE` the colony sim and
+the renderer both read. Then typecheck - that is the first hard proof the five authored regions
+actually tile.
+
+---
+
+## 7. Method (non-negotiable, this is what worked before)
+
+Record the observable symptom -> identify the exact scenario -> separate symptom from assumed cause
+-> form falsifiable hypotheses -> **instrument or build a control** -> run the controlled comparison
+-> confirm or reject -> fix the confirmed cause -> replay the identical seed and camera -> compare
+against baseline -> run regressions.
+
+Never measure a fixed screen rectangle across a camera change. Anchor measurements to the material.

@@ -7,10 +7,15 @@ override the other contract documents where the two disagree.
 
 ## 0. Repository boundary (HARD — violating this is the worst possible outcome)
 
-**All work happens on `experiment/isometric-threejs-rebuild`. Verify with
+**All work happens on `experiment/whole-home-infestation-3d`. Verify with
 `git rev-parse --abbrev-ref HEAD` before editing anything.**
 
-The finished result is **for local review only**. It is never published from this effort.
+> Superseded branches, kept intact and never edited: `experiment/isometric-threejs-rebuild`,
+> `experiment/whole-home-infestation-3d-v2`, `archive/isometric-kitchen-proof` (all three sit on
+> `df9db36`), `gameplay-redesign-v3`, `pre-quality-reboot`, `main`.
+
+The finished result is **for local review only**. It is never published from this effort. The final
+build is delivered to the user by running it locally — see `LOCAL_REVIEW.md`.
 
 **Never, under any circumstance, and regardless of how well the work is going:**
 
@@ -40,8 +45,14 @@ Do not modify global Claude configuration (`~/.claude/**`). Project-local deny r
 
 ## 1. Player fantasy (never dilute this)
 
+> **Scope change, 2026-08-05.** This is no longer a kitchen game. It is a **whole-home** game: the
+> colony starts in one crack under the kitchen sink and ends with the entire apartment — kitchen,
+> hallway, living room, bedroom, and optionally the bathroom — as connected territory. Growth is
+> **spatial**: every advance is a physical route opened in the 3-D world, never a number going up.
+> Target one complete **25–35 minute** run. Where §1–§13 below say "kitchen", read "apartment".
+
 You are a **lead scout cockroach** — not a distant commander — secretly infesting a lived-in modern
-Korean apartment kitchen at night. You personally explore, mark opportunities, lay pheromone
+Korean apartment at night. You personally explore, mark opportunities, lay pheromone
 logistics, redirect workers, choose colony adaptations, exploit household routines, and escape human
 responses, while the household learns from your evidence exactly where to strike.
 
