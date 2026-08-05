@@ -240,7 +240,9 @@ function maybeDrawRoute(run: Run): void {
         site.kind === 'food'
           ? run.colony.moisture / Math.max(1, run.colony.food)
           : run.colony.food / Math.max(1, run.colony.moisture);
-      const bias = Math.min(4, Math.max(0.25, shortage));
+      // Hard bias. A competent player does not watch one store hit zero while the other is at the
+      // ceiling; measured runs ended food 0 / moisture 188 because a mild bias lost to distance.
+      const bias = Math.min(24, Math.max(0.1, shortage * shortage));
       const score = (resState.remaining * bias) / (1 + found.length / mm(1000));
       if (score <= bestScore) continue;
       bestScore = score;

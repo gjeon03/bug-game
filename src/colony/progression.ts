@@ -396,7 +396,7 @@ export function updateFinal(run: Run, dt: number): FinalState {
  * response that had statistically never fired. The finale has to be something the colony endures,
  * not something it walks past.
  */
-const SWEEPS_TO_SURVIVE = 2;
+const SWEEPS_TO_SURVIVE = 1;
 
 export function evaluateRun(run: Run): void {
   if (run.status !== 'playing') return;

@@ -63,8 +63,8 @@ export const CARGO_VALUE = 3.1;
  * Held well under the per-worker production rate so growth is possible, but high enough that a
  * colony which stops delivering shrinks within a minute or two.
  */
-export const UPKEEP_FOOD = 0.011;
-export const UPKEEP_MOISTURE = 0.008;
+export const UPKEEP_FOOD = 0.0075;
+export const UPKEEP_MOISTURE = 0.0055;
 
 /** Route strength decays this fast when nothing walks it. */
 export const ROUTE_DECAY = 0.022;

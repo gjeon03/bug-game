@@ -123,10 +123,19 @@ export const KITCHEN: RegionSpec = {
       surface: 'kitchen.floor',
       at: { x: mm(1500), z: mm(NORTH_FACE - 50) },
       kind: 'food',
-      amount: 46,
+      /*
+       * The opening food source, and it has to sustain the opening.
+       *
+       * With the exposure field working, every route to distant food is long, so a colony that
+       * exhausts what is under the sink starves next to a full trap: measured across four runs,
+       * final food 0 with final moisture 176-467. The toe-kick is where crumbs actually collect
+       * under a sink, and it is swept back under by the same washing-up that refills the trap.
+       */
+      amount: 96,
       rate: 1.5,
       disturbance: 0.02,
       labelKey: 'resource.kitchen.crumbs',
+      refilledBy: 'kitchen.dishes',
     },
     {
       id: 'kitchen.drip.trap',
@@ -146,7 +155,7 @@ export const KITCHEN: RegionSpec = {
       surface: 'kitchen.floor',
       at: { x: mm(760), z: mm(-1900) },
       kind: 'food',
-      amount: 38,
+      amount: 74,
       rate: 1.2,
       disturbance: 0.05,
       labelKey: 'resource.kitchen.fridgeseal',
