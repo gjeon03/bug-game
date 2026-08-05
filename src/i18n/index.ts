@@ -67,8 +67,27 @@ function endsWithConsonant(value: string | number): boolean {
 }
 
 /**
+ * Does this value end in ㄹ (rieul)?
+ *
+ * ㄹ is the exception that makes `(으)로` wrong. The `으` in 으로 exists only to break an awkward
+ * consonant cluster, and ㄹ does not need it: 서울로, not 서울으로. So for 으-prefixed particles ㄹ
+ * behaves like a vowel, while for 이/가 and 을/를 it behaves like the consonant it is.
+ */
+function endsWithRieul(value: string | number): boolean {
+  const last = String(value).trim().slice(-1);
+  const code = last.charCodeAt(0);
+  if (code < 0xac00 || code > 0xd7a3) return false;
+  // Final-consonant index 8 is ㄹ.
+  return (code - 0xac00) % 28 === 8;
+}
+
+/**
  * `{name}` interpolates a value. `{name?이/가}` interpolates the PARTICLE that value requires,
  * picking the first form after a consonant and the second after a vowel.
+ *
+ * When the first form begins with `으`, ㄹ counts as a vowel — see `endsWithRieul`. Writing the
+ * written-form fallback `(으)로` into the catalog instead is how `음식물 쓰레기통(으)로 가는
+ * 페로몬 길을 놓았다` reached the screen as the first Korean sentence the game ever shows.
  */
 const PLACEHOLDER = /\{(\w+)(?:\?([^/}]+)\/([^}]+))?\}/g;
 
@@ -90,7 +109,9 @@ export function t(key: KoKey | string, params?: Readonly<Record<string, string |
       const value = params[name];
       if (value === undefined) return whole;
       if (afterConsonant !== undefined && afterVowel !== undefined) {
-        return endsWithConsonant(value) ? afterConsonant : afterVowel;
+        const vowelLike =
+          !endsWithConsonant(value) || (afterConsonant.startsWith('으') && endsWithRieul(value));
+        return vowelLike ? afterVowel : afterConsonant;
       }
       return typeof value === 'number' ? value.toLocaleString(localeTag()) : String(value);
     },

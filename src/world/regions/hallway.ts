@@ -168,7 +168,7 @@ export const HALLWAY: RegionSpec = {
       surface: 'hallway.floor',
       at: { x: mm(640), z: mm(-30) },
       kind: 'moisture',
-      amount: 32,
+      amount: 54,
       rate: 1.1,
       disturbance: 0.02,
       labelKey: 'resource.hallway.driptray',
@@ -182,7 +182,7 @@ export const HALLWAY: RegionSpec = {
       surface: 'hallway.floor',
       at: { x: mm(3300), z: mm(-160) },
       kind: 'food',
-      amount: 30,
+      amount: 51,
       rate: 1.0,
       disturbance: 0.01,
       labelKey: 'resource.hallway.crumbtrail',
@@ -250,7 +250,6 @@ export const HALLWAY: RegionSpec = {
       from: { x: mm(X0), z: mm(Z1) },
       to: { x: mm(X1), z: mm(Z1) },
       outward: { x: 0, z: 1 },
-      solid: true,
       openings: [
         { start: mm(BATH_DOOR_X0 - X0), width: mm(BATH_DOOR_W), height: mm(2050) },
         { start: mm(LIVING_DOOR_X0 - X0), width: mm(LIVING_DOOR_W), height: mm(2100) },
@@ -262,7 +261,6 @@ export const HALLWAY: RegionSpec = {
       from: { x: mm(X1), z: mm(Z0) },
       to: { x: mm(X1), z: mm(Z1) },
       outward: { x: 1, z: 0 },
-      solid: true,
     },
   ],
 

@@ -22,12 +22,12 @@
     "stats": {
       "props": 187,
       "meshes": 2073,
-      "merged": 1943,
-      "geometries": 43,
+      "merged": 1940,
+      "geometries": 42,
       "materials": 228,
       "textures": 21,
-      "drawCalls": 140,
-      "triangles": 34400,
+      "drawCalls": 139,
+      "triangles": 34364,
       "lights": 6,
       "occluders": 94,
       "occluderTests": 0,
@@ -36,7 +36,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 161
+    "frame": 162
   },
   "afterRoute": {
     "status": "playing",
@@ -60,12 +60,12 @@
     "stats": {
       "props": 187,
       "meshes": 2073,
-      "merged": 1943,
-      "geometries": 46,
+      "merged": 1940,
+      "geometries": 45,
       "materials": 228,
       "textures": 21,
-      "drawCalls": 146,
-      "triangles": 34732,
+      "drawCalls": 145,
+      "triangles": 34696,
       "lights": 6,
       "occluders": 94,
       "occluderTests": 0,
@@ -74,7 +74,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 417
+    "frame": 419
   },
   "working": {
     "status": "playing",
@@ -98,12 +98,12 @@
     "stats": {
       "props": 187,
       "meshes": 2073,
-      "merged": 1943,
-      "geometries": 60,
+      "merged": 1940,
+      "geometries": 59,
       "materials": 228,
       "textures": 21,
       "drawCalls": 70,
-      "triangles": 24936,
+      "triangles": 24912,
       "lights": 6,
       "occluders": 94,
       "occluderTests": 0,
@@ -112,7 +112,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 2533
+    "frame": 2535
   },
   "restarts": [
     {
@@ -185,12 +185,12 @@
   "finalStats": {
     "props": 187,
     "meshes": 2073,
-    "merged": 1943,
-    "geometries": 48,
+    "merged": 1940,
+    "geometries": 47,
     "materials": 228,
     "textures": 21,
-    "drawCalls": 140,
-    "triangles": 34400,
+    "drawCalls": 139,
+    "triangles": 34364,
     "lights": 6,
     "occluders": 94,
     "occluderTests": 0,

@@ -110,7 +110,7 @@ export const SEEN_COOLDOWN = 7;
  * resources is actually their bottleneck.
  */
 export function storeCap(run: Run): number {
-  return 70 + run.colony.capacity * 7;
+  return 95 + run.colony.capacity * 10;
 }
 
 /* --------------------------------------------------------------- household */

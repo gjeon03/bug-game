@@ -1,4 +1,5 @@
 import { mm } from './units';
+import { VIEW_DIR_X, VIEW_DIR_Z } from '../view/camera';
 import { buildGrid, paintExposure, resetExposure, type Nav, type SurfaceGrid } from './nav';
 import type {
   FootholdSite,
@@ -78,9 +79,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.kitchen.hallway',
     descriptionKey: 'gate.kitchen.hallway.desc',
     requires: {
-      workers: 4,
-      food: 26,
-      moisture: 18,
+      workers: 6,
+      food: 52,
+      moisture: 36,
       footholds: ['kitchen.undersink'],
       maxAlert: 2,
     },
@@ -109,9 +110,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.hallway.living',
     descriptionKey: 'gate.hallway.living.desc',
     requires: {
-      workers: 8,
-      food: 40,
-      moisture: 26,
+      workers: 13,
+      food: 84,
+      moisture: 55,
       maxAlert: 2,
     },
     workSeconds: 11,
@@ -138,7 +139,7 @@ export const GATES: readonly Gate[] = [
     kind: 'pipe',
     labelKey: 'gate.hallway.bathroom',
     descriptionKey: 'gate.hallway.bathroom.desc',
-    requires: { workers: 6, moisture: 22, maxAlert: 3 },
+    requires: { workers: 9, moisture: 46, maxAlert: 3 },
     workSeconds: 8,
     opens: [
       {
@@ -164,7 +165,7 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.bathroom.kitchen',
     descriptionKey: 'gate.bathroom.kitchen.desc',
     // The riser is already there — the work is clearing the dried silicone at the kitchen end.
-    requires: { workers: 6, moisture: 30, footholds: ['kitchen.undersink'] },
+    requires: { workers: 9, moisture: 62, footholds: ['kitchen.undersink'] },
     workSeconds: 10,
     opens: [
       {
@@ -192,9 +193,9 @@ export const GATES: readonly Gate[] = [
     labelKey: 'gate.hallway.bedroom',
     descriptionKey: 'gate.hallway.bedroom.desc',
     requires: {
-      workers: 14,
-      food: 60,
-      moisture: 40,
+      workers: 22,
+      food: 126,
+      moisture: 84,
       adaptation: 'any',
       maxAlert: 2,
     },
@@ -251,6 +252,7 @@ export function buildHouse(): House {
   }
 
   validate(surfaces, footholds, resources, allLinks);
+  validateWalls();
 
   return { regions: REGIONS, gates: GATES, surfaces, resources, footholds, allLinks, regionOf };
 }
@@ -297,6 +299,32 @@ function validate(
     const supplied = gate.requires.suppliedFoothold;
     if (supplied && !footholds.has(supplied)) {
       throw new Error(`gate ${gate.id} requires unknown supplied foothold "${supplied}"`);
+    }
+  }
+}
+
+/**
+ * A wall marked `solid` must never be one the camera stands in front of.
+ *
+ * `solid` forces a wall to full height regardless of the camera. That is only ever correct for a
+ * wall on the far side of a room. When the fixed camera yaw was flipped 45° -> 225°, nine
+ * `solid: true` flags — every one in the apartment — silently became flags on CAMERA-NEAR walls,
+ * and four of the five regions rendered as a 2 400 mm plasterboard slab filling the frame.
+ *
+ * The yaw lives in the view layer and the flags live in the world layer, so nothing connected them.
+ * This does, at load, by name.
+ */
+function validateWalls(): void {
+  for (const region of REGIONS) {
+    for (const wall of region.walls) {
+      if (!wall.solid) continue;
+      const facing = wall.outward.x * VIEW_DIR_X + wall.outward.z * VIEW_DIR_Z;
+      if (facing < -0.15) {
+        throw new Error(
+          `${region.id}: a wall with outward (${wall.outward.x},${wall.outward.z}) is marked solid ` +
+            `but faces the camera (dot ${facing.toFixed(2)}). It would block the whole room.`,
+        );
+      }
     }
   }
 }
