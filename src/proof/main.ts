@@ -22,6 +22,7 @@ import { counterStone, laminate, steelBrushed, steelPolished } from '../../tools
 import { createRoachAssets, type Roach } from '../three/roach';
 import { buildCounter } from '../three/counter';
 import { OcclusionSystem } from '../three/occlusion';
+import { Profiler, judge, type ProfileResult, type VerdictLine } from '../three/profiler';
 
 interface PropSpec {
   build: () => THREE.Object3D;
@@ -100,6 +101,14 @@ const renderer = new THREE.WebGLRenderer({
   powerPreference: 'high-performance',
 });
 configureRenderer(renderer);
+
+/**
+ * Frame profiling that cannot pass by staying quiet.
+ *
+ * Under WebGL a CPU-callback budget goes green while the game gets slower, because `gl.draw*`
+ * returns before the GPU does the work. See `src/three/profiler.ts`.
+ */
+const profiler = new Profiler(renderer);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x05070b);
@@ -690,6 +699,7 @@ function updateWorkers(dt: number): void {
 }
 
 function frame(now: number): void {
+  const frameStart = performance.now();
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   elapsed += dt;
@@ -712,7 +722,11 @@ function frame(now: number): void {
   camera.lookAt(camTarget);
 
   occlusion.update(dt, camera, [scout.root.position]);
+
+  profiler.beginRender();
   renderer.render(scene, camera);
+  profiler.endRender();
+  profiler.frame(now, performance.now() - frameStart);
 
   frames++;
   fpsAccum += dt;
@@ -753,8 +767,34 @@ objectiveEl.textContent = '싱크대 배수구까지 길을 내라. 접시 더�
  * into the frame being captured. Exposing them as data rather than as pixels is the only way to
  * have both an honest screenshot and a recorded measurement.
  */
+/**
+ * Frame budget, from the game contract. Unchanged from the Canvas2D era on purpose — the brief
+ * requires measured justification for any revision, and none has been earned yet.
+ */
+const FRAME_BUDGET = { p50: 16.7, p95: 20, p99: 33, over50Pct: 1 } as const;
+
+/**
+ * Scene ceilings for the proof scene.
+ *
+ * These are not aspirations, they are alarms. The previous build's real failure mode was counts
+ * growing without anyone noticing — 2,743 geometries for twenty props. A ceiling on a count keeps
+ * meaning something when the hardware changes, which a millisecond budget does not.
+ */
+const SCENE_CEILINGS = {
+  drawCalls: 900,
+  triangles: 400_000,
+  geometries: 140,
+  textures: 24,
+  programs: 24,
+} as const;
+
 interface ProofApi {
   ready: boolean;
+  /** Reported rather than assumed: an unavailable GPU timer is an UNMEASURED result, not a pass. */
+  gpuTimingAvailable: () => boolean;
+  beginProfile: (label: string) => void;
+  endProfile: () => ProfileResult | null;
+  judgeProfile: (result: ProfileResult) => VerdictLine[];
   /**
    * Put the scout somewhere, in millimetres on the worktop plane.
    *
@@ -781,6 +821,10 @@ const proofApi: ProofApi = {
     scout.root.position.set(mm(xMm), 0, mm(zMm));
     camTarget.copy(scout.root.position);
   },
+  gpuTimingAvailable: () => profiler.gpuAvailable,
+  beginProfile: (label: string) => profiler.begin(label),
+  endProfile: () => profiler.end(),
+  judgeProfile: (result: ProfileResult) => judge(result, FRAME_BUDGET, SCENE_CEILINGS),
   stats: () => ({
     fps: lastFps,
     drawCalls: renderer.info.render.calls,
