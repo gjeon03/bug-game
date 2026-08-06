@@ -452,6 +452,9 @@ export function updateFinal(run: Run, dt: number): FinalState {
  */
 const SWEEPS_TO_SURVIVE = 1;
 
+/** Seconds a colony may sit at zero workers before the run is called. */
+const COLONY_DEAD_GRACE = 25;
+
 export function evaluateRun(run: Run): void {
   if (run.status !== 'playing') return;
 
@@ -463,6 +466,26 @@ export function evaluateRun(run: Run): void {
     run.status = 'lost';
     logEvent(run, 'log.lost', 'danger', {});
     return;
+  }
+
+  /*
+   * Failure: the colony is gone and cannot come back.
+   *
+   * Holding a refuge with nobody in it is not a game still in progress. A technical review measured
+   * a run sitting at population 0 with `status: 'playing'` for ninety-five seconds and counting, and
+   * a bot run held that state for twenty-three minutes — the player is watching an empty room with
+   * no way to affect it, and no screen ever tells them it is over.
+   *
+   * The scout alone cannot rebuild: brood needs stores, and stores need workers to carry them. So a
+   * population of zero that stays zero is a loss, given a grace period long enough that a bad sweep
+   * which happens to catch everyone at once still leaves room for the last egg to hatch.
+   */
+  if (run.colony.population === 0) {
+    if (run.deadFor > COLONY_DEAD_GRACE) {
+      run.status = 'lost';
+      logEvent(run, 'log.lost.extinct', 'danger', {});
+      return;
+    }
   }
 
   /*

@@ -2,7 +2,7 @@ import { findPath } from '../src/world/nav';
 import { mm } from '../src/world/units';
 import { SIM_DT } from '../src/colony/state';
 import { eraseRoute, type DrawnPoint } from '../src/colony/routes';
-import { TRAIL_REACH, cancelTrail, sealTrail, startTrail } from '../src/colony/trail';
+import { TRAIL_REACH, cancelTrail, nestInReach, sealTrail, startTrail } from '../src/colony/trail';
 import {
   beginClimb,
   claimFoothold,
@@ -142,7 +142,16 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
        * starved. Throttled rather than gated, because planning is an A* per (refuge, source) pair.
        */
       planIn -= 0.35;
-      if (!mission && planIn <= 0) {
+      /*
+       * A refuge the colony can afford outranks any route.
+       *
+       * A live mission takes over the scout completely, and with routes to plan continuously the bot
+       * never walked to a foothold again: measured over forty minutes it laid 1,144 deliveries and
+       * finished holding exactly one refuge, which is the victory condition it can never meet.
+       * Capacity is what everything else is downstream of.
+       */
+      if (affordableFoothold(run, options)) mission = null;
+      if (!affordableFoothold(run, options) && !mission && planIn <= 0) {
         planIn = PLAN_EVERY;
         mission = planRoute(run);
       }
@@ -197,9 +206,21 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
          * never add to and never replace. Measured: the scout stood at (1347, -1983) at speed 0 for
          * the entire remaining 29 minutes while the colony starved to zero behind it.
          */
-        if (run.trail) cancelTrail(run);
-        if (startTrail(run)) mission.laying = true;
-        else mission = null;
+        /*
+         * Only try to start once we are actually standing on the refuge.
+         *
+         * Aborting the mission when `startTrail` failed threw away the plan on the very tick it was
+         * made — the scout was still across the room, so of course no refuge was in reach. Measured:
+         * a food route to crumbs 260 mm from the nest was planned and discarded every two seconds
+         * for the whole run while the colony starved at 0 food beside 133 banked moisture.
+         */
+        if (nestInReach(run) === mission.nest) {
+          if (run.trail) cancelTrail(run);
+          if (startTrail(run)) {
+            mission.laying = true;
+            mission.progressAt = run.time;
+          }
+        }
       } else if (nearMission(run, mission)) {
         // Reached the end of the planned line. Seal it if the source is genuinely in reach.
         if (sealTrail(run) || !run.trail) mission = null;
@@ -329,44 +350,27 @@ function advanceAlong(
  * not an optimum, just not stupid.
  */
 /**
- * Abandon a route so a starving store can be served.
+ * Routing is not a zero-sum trade any more.
  *
- * A competent player does not watch one resource hit zero while every one of their supply lines
- * feeds the other. This harness used to: `maybeDrawRoute` caps each foothold at two routes and only
- * reconsiders when the network's shape changes, so once all eight routes served food the colony
- * died of thirst standing next to a full drain trap — measured with `driedUp: 0`, moisture 0,
- * population 0, 270 deliveries.
+ * This used to erase a route serving the surplus store so a scarce one could take its place — cheap
+ * when `createRoute` conjured a line, ruinous now that a replacement costs the walk back. Two
+ * measured failures in opposite directions: keeping the last route unconditionally starved the
+ * colony to extinction beside 133 banked moisture, and dropping it left the bot with zero routes and
+ * four deliveries in six minutes.
+ *
+ * A colony short of one store needs a route TO that store, which is a planning problem, not a
+ * deletion problem. `planRoute` already biases hard toward the scarce resource. So this only removes
+ * routes that have genuinely stopped being routes.
  */
 function rebalanceRoutes(run: Run): void {
-  const { food, moisture } = run.colony;
-  const starving: 'food' | 'moisture' | null =
-    moisture < 6 && food > moisture * 3
-      ? 'moisture'
-      : food < 6 && moisture > food * 3
-        ? 'food'
-        : null;
-  if (!starving) return;
-
-  /*
-   * Never drop the last route.
-   *
-   * Erasing was cheap when a replacement was one function call away. Now it costs the walk back, so
-   * a colony that thrashes its own network starves while the scout is still en route — measured at
-   * four deliveries in thirty minutes.
-   */
-  if (run.routes.length <= 1) return;
-
-  const serves = (kind: 'food' | 'moisture'): number =>
-    run.routes.filter((r) => run.house.resources.get(r.target)?.kind === kind && r.health === 'ok')
-      .length;
-  if (serves(starving) > 0) return;
-
-  // Drop the least productive route feeding the resource we already have too much of.
-  const surplus = starving === 'food' ? 'moisture' : 'food';
-  const victim = run.routes
-    .filter((r) => run.house.resources.get(r.target)?.kind === surplus)
-    .sort((a, b) => a.deliveries - b.deliveries)[0];
-  if (victim) eraseRoute(run, victim.id);
+  for (const route of [...run.routes]) {
+    const site = run.house.resources.get(route.target);
+    const state = run.resources.get(route.target);
+    // Exhausted or unreachable. Holding it just occupies a slot `planRoute` could use.
+    if (!site || !state || state.remaining <= 0 || route.health === 'blocked') {
+      eraseRoute(run, route.id);
+    }
+  }
 }
 
 /**
@@ -380,7 +384,7 @@ function planRoute(run: Run): RouteMission | null {
   for (const [nestId, nestState] of run.footholds) {
     if (!nestState.claimed || nestState.damage >= 1) continue;
     const existing = run.routes.filter((r) => r.nest === nestId && r.health !== 'blocked');
-    if (existing.length >= 2) continue;
+    if (existing.length >= 3) continue;
 
     const nest = run.house.footholds.get(nestId);
     if (!nest) continue;
@@ -425,6 +429,20 @@ function planRoute(run: Run): RouteMission | null {
   return null;
 }
 
+
+/** A refuge the colony could take right now, if any. */
+function affordableFoothold(run: Run, options: BotOptions): string {
+  for (const [id, site] of run.house.footholds) {
+    if (options.skipBathroom && site.region === 'bathroom') continue;
+    const state = run.footholds.get(id);
+    if (state?.claimed && state.damage < 1) continue;
+    if (!run.regions.get(site.region)?.unlocked) continue;
+    if (run.colony.food < site.cost.food || run.colony.moisture < site.cost.moisture) continue;
+    if (run.colony.population < site.cost.workers) continue;
+    return id;
+  }
+  return '';
+}
 
 /** The next point on the mission's line, advancing as the scout reaches each one. */
 function missionStep(run: Run, mission: RouteMission): Steering | null {

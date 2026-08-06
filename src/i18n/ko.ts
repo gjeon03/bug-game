@@ -157,6 +157,19 @@ export const ko = {
   'chapter.final': '마지막 · 주방 전체',
   'objective.kitchen.title': '1장 · 주방에서 버티기',
   'objective.kitchen.secure': '먹이와 수분을 확보하고, 일꾼이 오갈 길을 만들어라.',
+  'surface.kitchen.table': '식탁 위',
+  'surface.kitchen.chair': '의자',
+  'surface.kitchen.bin': '음식물 쓰레기통 안',
+  'link.kitchen.chairleg': '의자 다리',
+  'link.kitchen.chairedge': '의자에서 식탁으로',
+  'link.kitchen.charger': '충전기 줄',
+  'link.kitchen.binlid': '젖혀진 뚜껑',
+  'resource.kitchen.tablecrumbs': '식탁 부스러기',
+  'resource.kitchen.tablering': '컵 자국',
+  'resource.kitchen.binfood': '음식물 쓰레기',
+  'foothold.kitchen.tableleg': '식탁 다리 안쪽',
+  'foothold.kitchen.tableleg.desc':
+    '식탁 다리를 잇는 받침 안쪽 빈 곳. 방의 반대쪽 끝을 잡으려면 여기가 있어야 한다.',
   'objective.kitchen.firstHold': '싱크대 밑 틈을 거점으로 삼아라. E를 눌러 차지한다.',
   'objective.kitchen.firstRoute': '먹이까지 페로몬 길을 놓아라. 일꾼이 그 길을 따라 나른다.',
   'objective.kitchen.grow': '군체를 불려라. 거점마다 품을 수 있는 수가 정해져 있다.',
@@ -248,6 +261,7 @@ export const ko = {
   'log.starved': '먹이가 떨어져 일꾼을 잃었다.',
   'log.extermination': '{region}에 박멸 시도가 들어왔다.',
   'log.won': '주방이 군체의 영역이 됐다.',
+  'log.lost.extinct': '군체가 전멸했다. 알을 깔 개체가 남지 않았다.',
   'log.lost': '군체가 무너졌다.',
 
   /* ── cue for state changes the HUD announces ──────────────────────────── */

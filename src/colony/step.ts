@@ -71,6 +71,7 @@ export function stepRun(run: Run, dt: number, input: StepInput): StepResult {
 
   // 5 — read the state back for the player.
   run.idleFor += dt;
+  run.deadFor = run.colony.population === 0 ? run.deadFor + dt : 0;
   updateObjective(run);
   evaluateRun(run);
 

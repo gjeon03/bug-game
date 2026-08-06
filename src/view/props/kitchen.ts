@@ -632,6 +632,93 @@ export const KITCHEN_PROPS: PropRegistry = {
    * Food-waste bin by the door: the richest and loudest node in chapter 1. It has to look like the
    * thing you should not touch — lid ajar, liner showing, a stain under it.
    */
+  /**
+   * The dining table. 1400 x 800, top at 730 mm — a real Korean apartment 4인 식탁.
+   *
+   * The kitchen had two walkable planes, floor and worktop, and a player was expected to spend a
+   * whole run on them. The table is the second destination the room needed: high enough to be a
+   * separate world, low enough that a chair reaches it, and covered in the by-products of people
+   * having eaten — which is what a cockroach is actually there for.
+   *
+   * The underside matters as much as the top. A 35 mm insect reads the rail and the leg brackets as
+   * architecture, and the shadow they throw is the darkest floor in the room away from the toe-kick.
+   */
+  'kitchen.diningTable': (kit, options) => {
+    const width = num(options, 'widthMm', 1400);
+    const depth = num(options, 'depthMm', 800);
+    const height = num(options, 'heightMm', 730);
+    const oak = kit.materials.clone('wood', 0xbe9a6e);
+    const leg = kit.materials.clone('wood', 0xa07f57);
+
+    const top = at(bevelledBox(kit, width, 34, depth, oak, 4), 0, height - 17, 0);
+    // The apron the top sits on. Inset so the underside reads as built rather than as a slab.
+    const apron = new THREE.Group();
+    apron.add(at(bevelledBox(kit, width - 120, 62, 22, leg, 3), 0, height - 65, depth / 2 - 70));
+    apron.add(at(bevelledBox(kit, width - 120, 62, 22, leg, 3), 0, height - 65, -depth / 2 + 70));
+    apron.add(at(bevelledBox(kit, 22, 62, depth - 120, leg, 3), width / 2 - 70, height - 65, 0));
+    apron.add(at(bevelledBox(kit, 22, 62, depth - 120, leg, 3), -width / 2 + 70, height - 65, 0));
+
+    const legs = new THREE.Group();
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        legs.add(
+          at(
+            bevelledBox(kit, 58, height - 34, 58, leg, 3),
+            sx * (width / 2 - 80),
+            (height - 34) / 2,
+            sz * (depth / 2 - 80),
+          ),
+        );
+      }
+    }
+
+    // Crumbs and a dried ring where a glass stood. Both are why the colony climbs up here.
+    const litter = scatter(kit, 14, 260, (i) =>
+      at(blob(kit, 2.6 + kit.rand() * 3.4, 0.6, i % 3 === 0 ? 'crumb' : 'rice'), 0, height + 1, 0),
+    );
+    const stain = at(rot(ring(kit, 34, 2.4, 'grime'), Math.PI / 2, 0, 0), 300, height + 0.8, -120);
+
+    return shadows(group(top, apron, legs, litter, stain));
+  },
+
+  /**
+   * A dining chair, pulled out from the table.
+   *
+   * It exists to be climbed. The seat at 440 mm is the only halfway step between the floor and the
+   * 730 mm table, and the gap between its edge and the table edge is the jump the player has to
+   * find. A chair pushed neatly in would close that route, which is why this one is out.
+   */
+  'kitchen.chair': (kit, options) => {
+    const seatH = num(options, 'seatMm', 440);
+    const w = 420;
+    const d = 420;
+    const wood = kit.materials.clone('wood', 0xb0895f);
+
+    const seat = at(bevelledBox(kit, w, 30, d, wood, 3), 0, seatH - 15, 0);
+    const legs = new THREE.Group();
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        legs.add(
+          at(cylinder(kit, 20, 24, seatH - 30, wood, 12), sx * (w / 2 - 34), (seatH - 30) / 2, sz * (d / 2 - 34)),
+        );
+      }
+    }
+    // Stretchers between the front legs — a real climbing hold, and the reason the leg is scalable.
+    const rails = new THREE.Group();
+    for (const sz of [-1, 1]) {
+      rails.add(at(cylinder(kit, 14, 14, w - 68, wood, 10), 0, 150, sz * (d / 2 - 34)));
+    }
+    rails.children.forEach((c) => c.rotateZ(Math.PI / 2));
+
+    const back = new THREE.Group();
+    back.add(at(bevelledBox(kit, w, 300, 26, wood, 3), 0, seatH + 170, -d / 2 + 16));
+    for (const sx of [-1, 1]) {
+      back.add(at(bevelledBox(kit, 34, 340, 30, wood, 3), sx * (w / 2 - 24), seatH + 170, -d / 2 + 16));
+    }
+
+    return shadows(group(seat, legs, rails, back));
+  },
+
   'kitchen.wasteBin': (kit) => {
     const shell = kit.materials.clone('plasticGreen', 0x6f7a5e);
     return shadows(

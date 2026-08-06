@@ -36,6 +36,30 @@ const EAST_FACE = X1 - COUNTER_DEPTH; // 3140
 const EAST_CARCASS = EAST_FACE + TOEKICK_DEPTH; // 3240
 const EAST_RUN_Z1 = -1400;
 
+/**
+ * The dining half of the room.
+ *
+ * The kitchen had exactly two walkable planes — floor and worktop — and a player was meant to spend
+ * a whole run on them. Everything below adds the second half of a real kitchen: the table people
+ * actually eat at, the chair that reaches it, and the bin by the door. Three new planes, six new
+ * climbs, and the by-products of the room being used.
+ */
+const TABLE_X0 = 880;
+const TABLE_X1 = 2280;
+const TABLE_Z0 = -1780;
+const TABLE_Z1 = -980;
+const TABLE_H = 730;
+
+const CHAIR_X = 2560;
+const CHAIR_Z = -1380;
+const CHAIR_HALF = 210;
+const CHAIR_H = 440;
+
+const BIN_X = 3400;
+const BIN_Z = -860;
+const BIN_HALF = 160;
+const BIN_INSIDE_H = 300;
+
 const FRIDGE_W = 700;
 const FRIDGE_D = 680;
 const FRIDGE_Z0 = -2200;
@@ -75,6 +99,65 @@ export const KITCHEN: RegionSpec = {
       exposure: 1.5,
       labelKey: 'surface.kitchen.counter',
     },
+    {
+      /*
+       * The table top. The most exposed plane in the room after the worktop, and the only one that
+       * is exposed because of PEOPLE rather than because of a lamp — someone is sitting here.
+       */
+      id: 'kitchen.table.top',
+      region: 'kitchen',
+      y: mm(TABLE_H),
+      bounds: { x0: mm(TABLE_X0), z0: mm(TABLE_Z0), x1: mm(TABLE_X1), z1: mm(TABLE_Z1) },
+      // A solid slab: the footprint IS the bounds. Stated rather than implied, because the guard in
+      // house.test.ts refuses to let a raised surface stay silent about what holds it up.
+      support: [{ x0: mm(TABLE_X0), z0: mm(TABLE_Z0), x1: mm(TABLE_X1), z1: mm(TABLE_Z1) }],
+      exposure: 1.6,
+      labelKey: 'surface.kitchen.table',
+    },
+    {
+      /** The chair seat: the only halfway step between the floor and the table. */
+      id: 'kitchen.chair.seat',
+      region: 'kitchen',
+      y: mm(CHAIR_H),
+      bounds: {
+        x0: mm(CHAIR_X - CHAIR_HALF),
+        z0: mm(CHAIR_Z - CHAIR_HALF),
+        x1: mm(CHAIR_X + CHAIR_HALF),
+        z1: mm(CHAIR_Z + CHAIR_HALF),
+      },
+      support: [
+        {
+          x0: mm(CHAIR_X - CHAIR_HALF),
+          z0: mm(CHAIR_Z - CHAIR_HALF),
+          x1: mm(CHAIR_X + CHAIR_HALF),
+          z1: mm(CHAIR_Z + CHAIR_HALF),
+        },
+      ],
+      exposure: 0.9,
+      labelKey: 'surface.kitchen.chair',
+    },
+    {
+      /** Inside the food-waste bin. The richest food in the room, and the worst place to be. */
+      id: 'kitchen.bin.inside',
+      region: 'kitchen',
+      y: mm(BIN_INSIDE_H),
+      bounds: {
+        x0: mm(BIN_X - BIN_HALF),
+        z0: mm(BIN_Z - BIN_HALF),
+        x1: mm(BIN_X + BIN_HALF),
+        z1: mm(BIN_Z + BIN_HALF),
+      },
+      support: [
+        {
+          x0: mm(BIN_X - BIN_HALF),
+          z0: mm(BIN_Z - BIN_HALF),
+          x1: mm(BIN_X + BIN_HALF),
+          z1: mm(BIN_Z + BIN_HALF),
+        },
+      ],
+      exposure: 0.5,
+      labelKey: 'surface.kitchen.bin',
+    },
   ],
 
   /* The carcasses. The toe-kick strip in front of each is deliberately NOT blocked: it is the
@@ -100,6 +183,18 @@ export const KITCHEN: RegionSpec = {
       surface: 'kitchen.counter',
       rect: { x0: mm(2660), z0: mm(-3160), x1: mm(3160), z1: mm(-2760) },
     },
+    {
+      /*
+       * The sink aperture.
+       *
+       * `props/kitchen.ts` cuts this hole out of the worktop geometry, and nothing ever told the
+       * navigation grid — so the scout walked straight across the opening, over a 700 mm drop into
+       * the basin. Geometry and navigation have to be told the same thing twice; this is the second
+       * telling.
+       */
+      surface: 'kitchen.counter',
+      rect: { x0: mm(1546), z0: mm(-3154), x1: mm(1954), z1: mm(-2786) },
+    },
   ],
 
   links: [
@@ -119,11 +214,62 @@ export const KITCHEN: RegionSpec = {
       id: 'kitchen.seam.corner',
       from: 'kitchen.floor',
       to: 'kitchen.counter',
-      at: { x: mm(EAST_FACE - 40), z: mm(NORTH_FACE - 40) },
+      at: { x: mm(EAST_FACE + 190), z: mm(NORTH_FACE - 40) },
       seconds: 3.4,
       capacity: 2,
       kind: 'seam',
       labelKey: 'link.kitchen.seam',
+    },
+    {
+      /*
+       * Up a chair leg. The stretcher between the front legs is the hold that makes it climbable,
+       * and it is authored in the prop for exactly that reason.
+       */
+      id: 'kitchen.leg.chair',
+      from: 'kitchen.floor',
+      to: 'kitchen.chair.seat',
+      at: { x: mm(CHAIR_X - CHAIR_HALF + 40), z: mm(CHAIR_Z + CHAIR_HALF - 40) },
+      exitAt: { x: mm(CHAIR_X - CHAIR_HALF + 90), z: mm(CHAIR_Z + CHAIR_HALF - 90) },
+      seconds: 1.6,
+      capacity: 1,
+      kind: 'seam',
+      labelKey: 'link.kitchen.chairleg',
+    },
+    {
+      /** The gap from the pulled-out chair to the table edge. The reason the chair is pulled out. */
+      id: 'kitchen.gap.chairedge',
+      from: 'kitchen.chair.seat',
+      to: 'kitchen.table.top',
+      at: { x: mm(CHAIR_X - CHAIR_HALF + 30), z: mm(CHAIR_Z) },
+      exitAt: { x: mm(TABLE_X1 - 60), z: mm(CHAIR_Z) },
+      seconds: 1.3,
+      capacity: 2,
+      kind: 'gap',
+      labelKey: 'link.kitchen.chairedge',
+    },
+    {
+      /** A phone charger cable left hanging off the table. The direct route, and a slow one. */
+      id: 'kitchen.cable.charger',
+      from: 'kitchen.floor',
+      to: 'kitchen.table.top',
+      at: { x: mm(TABLE_X0 + 180), z: mm(TABLE_Z1 - 40) },
+      exitAt: { x: mm(TABLE_X0 + 180), z: mm(TABLE_Z1 - 120) },
+      seconds: 2.6,
+      capacity: 1,
+      kind: 'cable',
+      labelKey: 'link.kitchen.charger',
+    },
+    {
+      /** Over the tipped bin lid. Short, rich, and standing in the doorway's light. */
+      id: 'kitchen.gap.binlid',
+      from: 'kitchen.floor',
+      to: 'kitchen.bin.inside',
+      at: { x: mm(BIN_X - BIN_HALF - 30), z: mm(BIN_Z) },
+      exitAt: { x: mm(BIN_X - 40), z: mm(BIN_Z) },
+      seconds: 3.0,
+      capacity: 1,
+      kind: 'gap',
+      labelKey: 'link.kitchen.binlid',
     },
   ],
 
@@ -187,7 +333,7 @@ export const KITCHEN: RegionSpec = {
       id: 'kitchen.sponge',
       region: 'kitchen',
       surface: 'kitchen.counter',
-      at: { x: mm(1620), z: mm(-2960) },
+      at: { x: mm(2120), z: mm(-2960) },
       kind: 'moisture',
       amount: 52,
       rate: 1.8,
@@ -206,6 +352,45 @@ export const KITCHEN: RegionSpec = {
       rate: 2.4,
       disturbance: 0.42,
       labelKey: 'resource.kitchen.bin',
+      refilledBy: 'kitchen.dinner',
+    },
+    {
+      /** Crumbs on the table. Plentiful, easy — and you are standing where people look. */
+      id: 'kitchen.table.crumbs',
+      region: 'kitchen',
+      surface: 'kitchen.table.top',
+      at: { x: mm(TABLE_X0 + 520), z: mm(TABLE_Z0 + 360) },
+      kind: 'food',
+      amount: 120,
+      rate: 1.7,
+      disturbance: 0.16,
+      labelKey: 'resource.kitchen.tablecrumbs',
+      refilledBy: 'kitchen.dinner',
+    },
+    {
+      /** The ring a cold glass left. Small, but it is water you do not have to cross the room for. */
+      id: 'kitchen.table.ring',
+      region: 'kitchen',
+      surface: 'kitchen.table.top',
+      at: { x: mm(TABLE_X0 + 1180), z: mm(TABLE_Z0 + 240) },
+      kind: 'moisture',
+      amount: 58,
+      rate: 1.1,
+      disturbance: 0.14,
+      labelKey: 'resource.kitchen.tablering',
+      refilledBy: 'kitchen.dinner',
+    },
+    {
+      /** Inside the bin. The richest food in the kitchen and the most disturbed place in it. */
+      id: 'kitchen.bin.inside.food',
+      region: 'kitchen',
+      surface: 'kitchen.bin.inside',
+      at: { x: mm(BIN_X), z: mm(BIN_Z) },
+      kind: 'food',
+      amount: 210,
+      rate: 2.2,
+      disturbance: 0.42,
+      labelKey: 'resource.kitchen.binfood',
       refilledBy: 'kitchen.dinner',
     },
   ],
@@ -247,6 +432,25 @@ export const KITCHEN: RegionSpec = {
       capacity: 3,
       concealment: 0.6,
       cost: { food: 16, moisture: 10, workers: 1 },
+    },
+    {
+      /*
+       * The void inside the table's leg bracket.
+       *
+       * The dining half of the room needed a home of its own. Without one, every table route runs
+       * all the way back to the sink and the colony can never actually hold this end of the kitchen
+       * — which is what the victory condition asks of it.
+       */
+      id: 'kitchen.tableleg',
+      region: 'kitchen',
+      surface: 'kitchen.floor',
+      at: { x: mm(TABLE_X1 - 80), z: mm(TABLE_Z0 + 80) },
+      role: 'satellite',
+      labelKey: 'foothold.kitchen.tableleg',
+      descriptionKey: 'foothold.kitchen.tableleg.desc',
+      capacity: 7,
+      concealment: 0.74,
+      cost: { food: 14, moisture: 10, workers: 3 },
     },
   ],
 
@@ -394,6 +598,28 @@ export const KITCHEN: RegionSpec = {
       kind: 'kitchen.puddle',
       at: { x: mm(1980), y: 0, z: mm(NORTH_FACE - 55) },
       options: { radiusMm: 110 },
+    },
+    {
+      kind: 'kitchen.diningTable',
+      at: { x: mm((TABLE_X0 + TABLE_X1) / 2), y: 0, z: mm((TABLE_Z0 + TABLE_Z1) / 2) },
+      options: { widthMm: TABLE_X1 - TABLE_X0, depthMm: TABLE_Z1 - TABLE_Z0, heightMm: TABLE_H },
+      occluder: true,
+      fadeFloor: 0.4,
+    },
+    {
+      kind: 'kitchen.chair',
+      at: { x: mm(CHAIR_X), y: 0, z: mm(CHAIR_Z) },
+      options: { seatMm: CHAIR_H },
+      occluder: true,
+      fadeFloor: 0.36,
+    },
+    {
+      // A second chair, pushed in on the far side. It is scenery: no surface, no climb.
+      kind: 'kitchen.chair',
+      at: { x: mm(TABLE_X0 + 340), y: 0, z: mm(TABLE_Z0 - 190) },
+      options: { seatMm: CHAIR_H },
+      occluder: true,
+      fadeFloor: 0.36,
     },
   ],
 
