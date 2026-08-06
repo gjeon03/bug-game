@@ -83,6 +83,8 @@ export function createRoachView(workerCap: number): RoachView {
 
   const scoutPosition = new THREE.Vector3();
   let phase = 0;
+  /** Damped body pitch, radians. Nose-up while ascending a link. */
+  let scoutPitch = 0;
 
   return {
     group,
@@ -101,10 +103,38 @@ export function createRoachView(workerCap: number): RoachView {
       scout.root.rotation.y = s.heading;
       scoutPosition.set(sx, sy + mm(4), sz);
 
-      // Gait frequency follows actual ground speed, so a stationary scout stops moving its legs
-      // instead of jogging on the spot.
-      const scoutEffort = Math.min(1, s.speed / 320);
-      scout.pose(phase * (2 + scoutEffort * 9), scoutEffort);
+      /*
+       * Climbing has to LOOK like climbing.
+       *
+       * The simulation moves a climbing scout by interpolating straight from the mouth of a link to
+       * its landing and sets `speed = 0` for the duration. The view had no case for it at all, so a
+       * scout going up a cable kept the flat pose it walks the floor with, and — because the gait is
+       * driven by speed — froze its legs completely while sliding upward in a straight line. It read
+       * as a model being translated, not an animal gripping something.
+       *
+       * Two things fix it, and neither needs the link: pitch the body along whatever slope the
+       * frame actually travelled, and drive the gait from that travel rather than from `speed`.
+       * Deriving both from the interpolated motion means a vertical cable, a shallow ramp and a
+       * lip pull-over all pose correctly without authoring anything per link.
+       */
+      const dy = s.y - s.prevY;
+      const horizontal = Math.hypot(s.x - s.prevX, s.z - s.prevZ);
+      const climbing = s.climb !== null;
+      const targetPitch = climbing ? Math.atan2(dy, Math.max(1e-5, horizontal)) : 0;
+      // Damped so the pull-over at the top eases instead of snapping flat in one frame.
+      scoutPitch += (targetPitch - scoutPitch) * Math.min(1, dt * 9);
+      scout.root.rotation.x = -scoutPitch;
+
+      /*
+       * Gait. On the ground it follows real ground speed, so a stationary scout stops moving its
+       * legs instead of jogging on the spot. On a climb `speed` is zero by construction, so it
+       * follows the distance actually covered — a climbing insect works hard and moves slowly, and
+       * the cadence should say so.
+       */
+      const climbEffort = Math.min(1, (Math.abs(dy) + horizontal) / (dt * 260 + 1e-5));
+      const scoutEffort = climbing ? Math.max(0.55, climbEffort) : Math.min(1, s.speed / 320);
+      const cadence = climbing ? 2 + scoutEffort * 5 : 2 + scoutEffort * 9;
+      scout.pose(phase * cadence, scoutEffort);
       scout.root.visible = s.state !== 'dead';
 
       let visible = 0;
