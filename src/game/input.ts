@@ -25,6 +25,43 @@ export type Action =
   | { readonly kind: 'broodHold' }
   | { readonly kind: 'zoom'; readonly delta: number };
 
+/**
+ * Hangul jamo back to the physical key that produced it.
+ *
+ * `event.code` is meant to be layout-independent, and usually is. But this game ships Korean-first,
+ * so a player very often has the IME in Hangul mode, and in that state a letter keydown can reach
+ * the page with `code` empty or unidentified while the arrow keys — which no IME touches — keep
+ * working perfectly. That is the exact signature reported: the arrows moved the scout right and D
+ * did nothing, even though both run through the identical branch of `movement()`.
+ *
+ * Mapping the produced jamo back to its QWERTY position makes the controls work in either mode
+ * without asking the player to notice what their 한/영 key is doing. 2-set layout.
+ */
+const HANGUL_TO_CODE: Readonly<Record<string, string>> = {
+  ㅈ: 'KeyW',
+  ㅁ: 'KeyA',
+  ㄴ: 'KeyS',
+  ㅇ: 'KeyD',
+  ㄷ: 'KeyE',
+  ㄱ: 'KeyR',
+  ㅗ: 'KeyH',
+};
+
+/**
+ * The canonical physical key for an event.
+ *
+ * Prefers `event.code`; falls back to the character when a layout or IME has emptied it. The Latin
+ * fallback costs nothing and covers the same class of failure on other layouts.
+ */
+function resolveCode(event: KeyboardEvent): string {
+  if (event.code) return event.code;
+  const key = event.key ?? '';
+  const jamo = HANGUL_TO_CODE[key];
+  if (jamo) return jamo;
+  if (key.length === 1 && /[a-zA-Z]/.test(key)) return `Key${key.toUpperCase()}`;
+  return key;
+}
+
 const FAMILY_KEYS: Readonly<Record<string, AdaptationFamily>> = {
   Digit1: 'brood',
   Digit2: 'scavenging',
@@ -64,13 +101,19 @@ export function createInput(target: HTMLElement): Input {
   let pointer: DragSample | null = null;
 
   const onKeyDown = (event: KeyboardEvent): void => {
+    const code = resolveCode(event);
+    // Both are recorded: `code` is what the game reads, and the jamo mapping means a Hangul-mode
+    // press and an English-mode press of the same physical key land on the same token.
+    const jamo = HANGUL_TO_CODE[event.key ?? ''];
     if (event.repeat) {
-      held.add(event.code);
+      held.add(code);
+      if (jamo) held.add(jamo);
       return;
     }
-    held.add(event.code);
+    held.add(code);
+    if (jamo) held.add(jamo);
 
-    switch (event.code) {
+    switch (jamo ?? code) {
       case 'KeyE':
         queue.push({ kind: 'interact' });
         break;
@@ -95,7 +138,7 @@ export function createInput(target: HTMLElement): Input {
         event.preventDefault();
         break;
       default: {
-        const family = FAMILY_KEYS[event.code];
+        const family = FAMILY_KEYS[code];
         if (family) queue.push({ kind: 'adapt', family });
         break;
       }
@@ -104,7 +147,15 @@ export function createInput(target: HTMLElement): Input {
   };
 
   const onKeyUp = (event: KeyboardEvent): void => {
-    held.delete(event.code);
+    held.delete(resolveCode(event));
+    const jamo = HANGUL_TO_CODE[event.key ?? ''];
+    if (jamo) held.delete(jamo);
+    /*
+     * A Hangul keyup can arrive with a different `key` than its keydown — the IME may have composed
+     * a syllable in between, so the jamo that went down is not the character that comes up. Left
+     * unhandled that pins a direction on forever, which is worse than the key not working at all.
+     */
+    if (!event.code && !jamo) held.clear();
   };
 
   const onPointerDown = (event: PointerEvent): void => {
