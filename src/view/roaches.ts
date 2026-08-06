@@ -39,8 +39,6 @@ export interface RoachView {
   readonly scoutPosition: THREE.Vector3;
   stats(): { readonly geometries: number; readonly materials: number; readonly visible: number };
   reset(): void;
-  /** Show the scout through blockers. Driven by `OcclusionSystem.scoutHidden`. */
-  setScoutHidden(hidden: boolean): void;
   dispose(): void;
 }
 
@@ -67,55 +65,6 @@ export function createRoachView(workerCap: number): RoachView {
   scout.root.castShadow = true;
   group.add(scout.root);
 
-  /*
-   * The scout's silhouette, drawn THROUGH whatever is in front of it.
-   *
-   * Fading the blocker is only half the fix. A player crossing behind the kitchen cabinet run —
-   * which ships at fadeFloor 0.68, so barely fades at all — still could not tell where they were or
-   * which way they were pointing, which is exactly what was reported. Opacity on the cabinet cannot
-   * supply heading; the scout's own shape can.
-   *
-   * It reuses the rig's real geometry, so what shows through is a correctly-posed, correctly-headed
-   * cockroach, animating with the gait. That matters for the contract: CLAUDE.md §3 forbids fading
-   * the player and §7 bans "a glowing circle as the player identifier" and "floating labels
-   * compensating for weak art". A silhouette of the actual creature is composition, not a marker.
-   *
-   * Each clone is parented to the SAME node as the mesh it copies, so it inherits that bone's
-   * transform for free and needs no per-frame syncing. `depthTest: false` is what lets it through
-   * the blocker; the high `renderOrder` keeps it out of the opaque sort.
-   */
-  const silhouetteMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffd9a8,
-    transparent: true,
-    opacity: 0.5,
-    depthTest: false,
-    depthWrite: false,
-    toneMapped: false,
-  });
-  const silhouette: THREE.Mesh[] = [];
-  /*
-   * Collect first, attach second.
-   *
-   * Attaching inside the `traverse` callback recurses forever: `traverse` walks into children added
-   * during the walk, each ghost is itself a mesh with geometry, and so each ghost spawns a ghost.
-   * The real browser said "boot failed: Maximum call stack size exceeded"; all 86 unit tests passed,
-   * because none of them boots a renderer.
-   */
-  const sourceMeshes: THREE.Mesh[] = [];
-  scout.root.traverse((node) => {
-    const mesh = node as THREE.Mesh;
-    if (mesh.isMesh && mesh.geometry) sourceMeshes.push(mesh);
-  });
-  for (const mesh of sourceMeshes) {
-    const ghost = new THREE.Mesh(mesh.geometry, silhouetteMaterial);
-    ghost.renderOrder = 950;
-    ghost.castShadow = false;
-    ghost.receiveShadow = false;
-    ghost.visible = false;
-    silhouette.push(ghost);
-    mesh.add(ghost);
-  }
-
   const bodies: Body[] = [];
   // Restrained variation: three palettes, so a crowd reads as individuals without becoming a
   // fruit bowl. Deterministic by index so a screenshot reproduces.
@@ -139,11 +88,6 @@ export function createRoachView(workerCap: number): RoachView {
     group,
     scoutPosition,
 
-    /** Show the scout through blockers. Driven by `OcclusionSystem.scoutHidden`. */
-    setScoutHidden(hidden: boolean): void {
-      const show = hidden && scout.root.visible;
-      for (const ghost of silhouette) ghost.visible = show;
-    },
 
     update(run, interp, dt) {
       phase += dt;
@@ -197,7 +141,6 @@ export function createRoachView(workerCap: number): RoachView {
 
     dispose() {
       assets.dispose();
-      silhouetteMaterial.dispose();
       cargoGeometry.dispose();
       cargoFood.dispose();
       cargoWater.dispose();

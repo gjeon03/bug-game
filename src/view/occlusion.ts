@@ -287,12 +287,12 @@ export class OcclusionSystem {
     /*
      * The FIRST focus point is the scout, and whether it is hidden is reported separately.
      *
-     * Fading the thing in front of the player is only half of the problem. A player behind a
-     * cabinet run still has to know where they are and which way they are moving, and no amount of
-     * opacity on the cabinet supplies that when the fade floor is high. `roaches.ts` uses this to
-     * draw the scout's own silhouette through the blocker. §3 forbids fading the player; it does
-     * not forbid drawing the player, and a correctly-posed scout-shaped silhouette is composition
-     * rather than the banned "glowing circle as the player identifier".
+     * Reported as diagnostics only. It briefly also drove a scout silhouette drawn through the
+     * blocker with `depthTest: false`, which did make the scout visible — and made it look like a
+     * separate insect stuck to the cabinet DOOR, because a silhouette with no depth cue lands at the
+     * scout's screen position rather than at its distance. A player described it as the scout
+     * "떠다니고" (floating). Once occluders became genuinely translucent, the silhouette was solving
+     * a problem that no longer existed, so it was removed and this flag stayed for triage.
      *
      * Reading it from the f === 0 pass is exact because nothing is condemned before that pass runs,
      * so a hit recorded there can only have come from the scout's own probes.
