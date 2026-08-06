@@ -278,12 +278,25 @@ export function updateColony(run: Run, dt: number): void {
   if (colony.food > cap) colony.food = cap;
   if (colony.moisture > cap) colony.moisture = cap;
 
-  if (colony.food < 0 || colony.moisture < 0) {
+  if (colony.food <= 0 || colony.moisture <= 0) {
     colony.food = Math.max(0, colony.food);
     colony.moisture = Math.max(0, colony.moisture);
-    // Starvation sheds the newest worker, not a random one — the colony gives back what it just
-    // grew, so the loss is legible as "I over-expanded" rather than as bad luck.
-    if (run.rng.bool(0.35 * dt)) {
+    colony.starvedFor += dt;
+
+    /*
+     * Running dry stops GROWTH immediately and only kills after sustained deprivation.
+     *
+     * Killing a worker as soon as a store touched zero produced a death spiral that no play could
+     * escape: every death needed a replacement, every replacement cost more of the resource that
+     * had just run out. Measured on the brood build — the specialization whose whole purpose is
+     * growth — 76 workers lost with ZERO threats and every region at alert 0. Nothing was hunting
+     * them; the economy was eating itself.
+     *
+     * A colony out of water should shrink slowly and recoverably, which is what the brief asks of
+     * every setback. The grace period is the difference between "I over-expanded, let me reroute"
+     * and "the run is over and I could not see why".
+     */
+    if (colony.starvedFor > STARVE_GRACE && run.rng.bool(0.12 * dt)) {
       const victim = [...run.workers].reverse().find((w) => w.alive);
       if (victim) {
         victim.alive = false;
@@ -295,6 +308,7 @@ export function updateColony(run: Run, dt: number): void {
     }
     return;
   }
+  colony.starvedFor = 0;
 
   if (colony.population >= colony.capacity) {
     colony.broodProgress = 0;
@@ -360,6 +374,9 @@ export interface FinalState {
  * spaced enough for the colony to actually rebuild between them, which is the whole recovery loop.
  */
 const SWEEP_COOLDOWN = 110;
+
+/** Seconds a colony may sit at zero before it starts losing bodies. */
+const STARVE_GRACE = 14;
 
 /** Each sweep after the first hits harder — the household learns. */
 const SWEEP_ESCALATION = 0.18;

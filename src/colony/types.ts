@@ -252,6 +252,8 @@ export interface Colony {
   capacity: number;
   /** 0..1 accumulating toward the next worker. */
   broodProgress: number;
+  /** Seconds the colony has been continuously out of food or water. Drives starvation losses. */
+  starvedFor: number;
   adaptations: Adaptation[];
   /** Adaptation points earned by chapter completion, spent on a family. */
   adaptationPoints: number;
