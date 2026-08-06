@@ -43,9 +43,20 @@ export const REACH = mm(150);
 /** How close the scout must be for a hidden site to reveal itself. */
 export const DISCOVER_RADIUS = mm(420);
 
-/** Resource cost and time for one worker to be born. */
+/**
+ * Resource cost and time for one worker to be born.
+ *
+ * Brood is deliberately FOOD-hungry and only moderately thirsty. At 4.2 moisture per worker the
+ * brood specialization — which exists to grow the colony faster — outran its own water supply and
+ * killed itself: measured on seed 20260805, capacity 30, 199 deliveries, every region at alert 0,
+ * and the run still ended with moisture 0 and population 0. A specialization whose only outcome is
+ * starvation is not a choice.
+ *
+ * Eggs want protein more than water, and making the two costs asymmetric is also what keeps brood
+ * distinct from scavenging rather than being the same pressure at a different rate.
+ */
 export const BROOD_FOOD_PER_WORKER = 6.5;
-export const BROOD_MOISTURE_PER_WORKER = 4.2;
+export const BROOD_MOISTURE_PER_WORKER = 2.4;
 export const BROOD_SECONDS = 7.4;
 
 /**
