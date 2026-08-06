@@ -1,7 +1,7 @@
 import { findPath } from '../src/world/nav';
 import { mm } from '../src/world/units';
 import { SIM_DT } from '../src/colony/state';
-import { createRoute, type DrawnPoint } from '../src/colony/routes';
+import { createRoute, eraseRoute, type DrawnPoint } from '../src/colony/routes';
 import {
   beginClimb,
   claimFoothold,
@@ -76,6 +76,7 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
       // Re-planning routes is the single most expensive thing this harness does — an A* per
       // (foothold, source) pair. Only do it when the world has actually changed shape, which is
       // also when a human would look at their network again.
+      rebalanceRoutes(run);
       const shape = routeShape(run);
       if (shape !== lastShape) {
         lastShape = shape;
@@ -189,7 +190,8 @@ function signature(run: Run): string {
 function routeShape(run: Run): string {
   const claimed = [...run.footholds.entries()].filter(([, f]) => f.claimed && f.damage < 1).length;
   const found = [...run.resources.values()].filter((r) => r.found && r.remaining >= 6).length;
-  return `${claimed}|${found}|${run.routes.length}|${run.routes.map((r) => r.target).join(',')}`;
+  const starved = run.colony.food < 6 ? 'F' : run.colony.moisture < 6 ? 'M' : '-';
+  return `${claimed}|${found}|${run.routes.length}|${starved}|${run.routes.map((r) => r.target).join(',')}`;
 }
 
 function samePlace(a: Steering, b: Steering): boolean {
@@ -222,6 +224,38 @@ function advanceAlong(
  * "Best" is nearest-with-most-left, which is what a competent player does on their first run —
  * not an optimum, just not stupid.
  */
+/**
+ * Abandon a route so a starving store can be served.
+ *
+ * A competent player does not watch one resource hit zero while every one of their supply lines
+ * feeds the other. This harness used to: `maybeDrawRoute` caps each foothold at two routes and only
+ * reconsiders when the network's shape changes, so once all eight routes served food the colony
+ * died of thirst standing next to a full drain trap — measured with `driedUp: 0`, moisture 0,
+ * population 0, 270 deliveries.
+ */
+function rebalanceRoutes(run: Run): void {
+  const { food, moisture } = run.colony;
+  const starving: 'food' | 'moisture' | null =
+    moisture < 6 && food > moisture * 3
+      ? 'moisture'
+      : food < 6 && moisture > food * 3
+        ? 'food'
+        : null;
+  if (!starving) return;
+
+  const serves = (kind: 'food' | 'moisture'): number =>
+    run.routes.filter((r) => run.house.resources.get(r.target)?.kind === kind && r.health === 'ok')
+      .length;
+  if (serves(starving) > 0) return;
+
+  // Drop the least productive route feeding the resource we already have too much of.
+  const surplus = starving === 'food' ? 'moisture' : 'food';
+  const victim = run.routes
+    .filter((r) => run.house.resources.get(r.target)?.kind === surplus)
+    .sort((a, b) => a.deliveries - b.deliveries)[0];
+  if (victim) eraseRoute(run, victim.id);
+}
+
 function maybeDrawRoute(run: Run): void {
   for (const [nestId, nestState] of run.footholds) {
     if (!nestState.claimed || nestState.damage >= 1) continue;
