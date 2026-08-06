@@ -73,6 +73,13 @@ export interface RegionLights {
   readonly liveSlots: number;
   /** Re-point the pool. Called once per frame with the camera's focus. */
   retarget(focus: THREE.Vector3, routineLevel: (routine: string) => number): void;
+  /**
+   * Force every routine light on, for room portraits.
+   *
+   * A room at night with its television, lamp and ceiling fitting all off is genuinely dark, and
+   * "the household is using this room" is one of the cues a reviewer is meant to identify it from.
+   */
+  showcase: boolean;
   dispose(): void;
 }
 
@@ -86,7 +93,12 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
 
   const authored: Authored[] = [];
   for (const region of regions) {
-    for (const spec of region.lights) authored.push(describe(spec));
+    // The region's own centre is what an aperture in its wall illuminates — see `describe`.
+    const centre = {
+      x: (region.bounds.x0 + region.bounds.x1) / 2,
+      z: (region.bounds.z0 + region.bounds.z1) / 2,
+    };
+    for (const spec of region.lights) authored.push(describe(spec, centre));
   }
 
   const slots: THREE.SpotLight[] = [];
@@ -102,10 +114,17 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
 
   const scored: { readonly a: Authored; readonly score: number; readonly level: number }[] = [];
   let live = 0;
+  let showcase = false;
 
   return {
     group,
     count: authored.length,
+    get showcase() {
+      return showcase;
+    },
+    set showcase(on: boolean) {
+      showcase = on;
+    },
     get liveSlots() {
       return live;
     },
@@ -113,7 +132,7 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
     retarget(focus, routineLevel) {
       scored.length = 0;
       for (const a of authored) {
-        const level = a.spec.routine ? routineLevel(a.spec.routine) : 1;
+        const level = a.spec.routine ? (showcase ? 1 : routineLevel(a.spec.routine)) : 1;
         if (level <= 0.001) continue;
         // Irradiance at the focus point is the honest measure of "does this light matter here".
         const d2 = Math.max(1, a.position.distanceToSquared(focus));
@@ -161,7 +180,7 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
  * from the aperture is the closest honest approximation: the falloff across a worktop from a 1.1 m
  * window is what sells it, and a spot reproduces that.
  */
-function describe(spec: LightSpec): Authored {
+function describe(spec: LightSpec, centre: { x: number; z: number }): Authored {
   const position = new THREE.Vector3(spec.at.x, spec.at.y, spec.at.z);
 
   if (spec.kind === 'spot' && spec.target) {
@@ -185,16 +204,27 @@ function describe(spec: LightSpec): Authored {
     };
   }
 
-  // A rect aperture: aim down and into the room, along whichever axis it is narrower on.
-  const width = spec.width ?? mm(600);
+  /*
+   * A rect aperture — a window, a balcony door, an under-cabinet strip — aims at the CENTRE OF ITS
+   * OWN ROOM.
+   *
+   * It used to aim at a hardcoded `+Z` offset, which is only ever correct for an aperture on a
+   * room's low-z wall. The living room's balcony door sits on the SOUTH wall at z = 5460 with the
+   * room spanning 1300…5500, so its moonlight — the room's only standing light — was aimed at
+   * z = 5960, straight out of the building. The living room rendered essentially black and could
+   * not be identified at all. The kitchen window happened to work only because it is on an east
+   * wall where both the `-X` and `+Z` nudges point inward.
+   *
+   * Aiming at the room centre is right for every wall by construction, and the falloff across the
+   * floor is what makes a window read as a window.
+   */
   const height = spec.height ?? mm(600);
-  const horizontal = width >= height ? 0 : mm(400);
   return {
     spec,
     intensity: spec.intensity * CANDELA_SCALE,
     position,
-    target: new THREE.Vector3(spec.at.x - horizontal, spec.at.y - height, spec.at.z + mm(500)),
-    distance: mm(4200),
+    target: new THREE.Vector3(centre.x, Math.max(0, spec.at.y - height), centre.z),
+    distance: mm(6000),
   };
 }
 

@@ -87,11 +87,49 @@ export function updateWorkers(run: Run, dt: number): void {
 /* -------------------------------------------------------------- assignment */
 
 /**
- * Give idle workers the route that most needs them.
+ * How much this colony wants one more body on this route, right now.
  *
- * "Most needs them" is deliberately simple — fewest workers per unit of route length — because a
- * cleverer allocator makes the player's own routing decisions matter less. The colony should
- * faithfully execute a bad plan.
+ * ## Why the old metric was fatal
+ *
+ * It was `assigned / max(1, length / 400mm)` — workers per unit of route length. That reads as
+ * "spread labour evenly", and it does the opposite: a SHORT route hits the `max(1, …)` floor and is
+ * considered full at one worker, while a long route accepts eight before it matches. So the
+ * nearest, cheapest, highest-throughput source in the flat is starved of labour by construction.
+ *
+ * Measured on the brood build, seed 20260805: the under-sink drain trap held five workers at t=90 s
+ * and zero from t=120 s onward, while food routes absorbed every body. Moisture drained 176 → 0
+ * over six minutes with **no threat, no alert above 0, and the source never running dry** — the
+ * colony died of thirst standing next to full water because nobody was told to fetch it.
+ *
+ * A colony does not allocate by distance. It allocates by need: the scarcer resource pulls harder,
+ * a dying route pulls less, and each body already on a line reduces what the next one adds. That is
+ * also what the pheromone fiction says happens — the trail that serves the greater need is the one
+ * that gets reinforced.
+ */
+function routeAppeal(run: Run, route: Route): number {
+  const site = run.house.resources.get(route.target);
+  const state = run.resources.get(route.target);
+  if (!site || !state || state.remaining <= 0) return -1;
+
+  const have = site.kind === 'food' ? run.colony.food : run.colony.moisture;
+  const other = site.kind === 'food' ? run.colony.moisture : run.colony.food;
+  // Ratio, not difference, so it stays meaningful at both ends of the run. The +12 keeps a store at
+  // zero from producing an infinite pull and stops the allocator oscillating.
+  const scarcity = (other + 12) / (have + 12);
+
+  // Each additional body on a line adds less than the last: they queue at the source and at climbs.
+  const crowding = 1 + route.assigned * 0.85;
+
+  return (scarcity * Math.max(0.15, route.strength)) / crowding;
+}
+
+/**
+ * Give workers the route the colony most needs served.
+ *
+ * Workers re-choose at a natural moment — the instant they finish a delivery, standing in the nest,
+ * which is exactly where a real one would sense which trail is strongest. Before this they chose
+ * once, on spawn, and never again: labour was frozen at whatever the network looked like when each
+ * body hatched, and no amount of skilled play could move it.
  */
 function assignRoutes(run: Run): void {
   const usable = run.routes.filter((r) => r.health === 'ok' || r.health === 'congested');
@@ -101,15 +139,15 @@ function assignRoutes(run: Run): void {
     if (!worker.alive || worker.route || worker.state !== 'idle') continue;
 
     let best: Route | null = null;
-    let bestLoad = Infinity;
+    let bestAppeal = -Infinity;
     for (const route of usable) {
-      const load = route.assigned / Math.max(1, route.length / mm(400));
-      if (load < bestLoad) {
-        bestLoad = load;
+      const appeal = routeAppeal(run, route);
+      if (appeal > bestAppeal) {
+        bestAppeal = appeal;
         best = route;
       }
     }
-    if (!best) continue;
+    if (!best || bestAppeal <= 0) continue;
 
     worker.route = best.id;
     worker.leg = 0;
@@ -380,7 +418,15 @@ function deliver(run: Run, worker: Worker, route: Route | undefined): void {
 
   worker.cargo = 0;
   worker.cargoKind = null;
-  worker.state = 'outbound';
+  /*
+   * Release the worker so it re-chooses.
+   *
+   * Standing in the nest having just dropped a load is the one moment a worker can sensibly change
+   * its mind, and it is the only thing that lets the colony rebalance toward whichever store is
+   * running dry. Keeping the route here is what froze labour allocation for a whole run.
+   */
+  worker.route = '';
+  worker.state = 'idle';
   worker.leg = 0;
 }
 

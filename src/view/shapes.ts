@@ -59,8 +59,8 @@ export function roundedBox(
     bevelEnabled: true,
     bevelThickness: r,
     bevelSize: r,
-    bevelSegments: 2,
-    curveSegments: 3,
+    bevelSegments: 3,
+    curveSegments: 5,
   });
   geometry.translate(0, 0, -(d - r * 2) / 2);
   geometry.computeVertexNormals();
@@ -87,7 +87,7 @@ export function cylinder(
   bottomMm: number,
   heightMm: number,
   material: MaterialId | THREE.Material,
-  segments = 12,
+  segments = 20,
   open = false,
 ): THREE.Mesh {
   const geometry = new THREE.CylinderGeometry(
@@ -101,11 +101,20 @@ export function cylinder(
   return new THREE.Mesh(kit.own(geometry), resolve(kit, material));
 }
 
+/**
+ * Segment counts are generous on purpose.
+ *
+ * At 35 mm creature scale a ten-segment sphere reads as a faceted polygon, and faceted polygons
+ * read as placeholder geometry — which the asset contract treats as a completion blocker. Measured
+ * headroom on the reference machine is GPU p50 3.97 ms against a 16.7 ms budget, and the
+ * performance policy is explicit that guardrails are not visual-quality ceilings: spend measured
+ * headroom on verified visual gaps rather than defend a triangle count nobody set.
+ */
 export function sphere(
   kit: Kit,
   radiusMm: number,
   material: MaterialId | THREE.Material,
-  segments = 10,
+  segments = 18,
 ): THREE.Mesh {
   const geometry = new THREE.SphereGeometry(mm(radiusMm), segments, Math.max(6, segments >> 1));
   return new THREE.Mesh(kit.own(geometry), resolve(kit, material));
@@ -117,7 +126,7 @@ export function blob(
   radiusMm: number,
   flatten: number,
   material: MaterialId | THREE.Material,
-  segments = 8,
+  segments = 16,
 ): THREE.Mesh {
   const mesh = sphere(kit, radiusMm, material, segments);
   mesh.scale.set(1, flatten, 1);
@@ -151,7 +160,7 @@ export function tube(
   const curve = new THREE.CatmullRomCurve3(
     pointsMm.map(([x, y, z]) => new THREE.Vector3(mm(x), mm(y), mm(z))),
   );
-  const geometry = new THREE.TubeGeometry(curve, segments, mm(radiusMm), 6, false);
+  const geometry = new THREE.TubeGeometry(curve, segments, mm(radiusMm), 10, false);
   return new THREE.Mesh(kit.own(geometry), resolve(kit, material));
 }
 
@@ -163,7 +172,7 @@ export function ring(
   material: MaterialId | THREE.Material,
   arc = Math.PI * 2,
 ): THREE.Mesh {
-  const geometry = new THREE.TorusGeometry(mm(radiusMm), mm(thicknessMm), 6, 16, arc);
+  const geometry = new THREE.TorusGeometry(mm(radiusMm), mm(thicknessMm), 10, 28, arc);
   return new THREE.Mesh(kit.own(geometry), resolve(kit, material));
 }
 

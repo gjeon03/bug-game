@@ -26,6 +26,8 @@ import type { AdaptationFamily, Run } from '../src/colony/types';
  */
 
 export interface BotOptions {
+  /** Called every simulated second. Diagnosis only — it cannot change state. */
+  readonly sample?: (run: Run, seconds: number) => void;
   /** Which specialization to commit to. Two different families must both be able to win. */
   readonly build: AdaptationFamily;
   /** Skip the bathroom entirely, to prove it is optional. */
@@ -144,6 +146,10 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
     if (firstDeliveryAt === null && run.stats.deliveries > 0) firstDeliveryAt = run.time;
     for (const id of run.openGates) {
       if (!gateOpenedAt.has(id)) gateOpenedAt.set(id, run.time);
+    }
+
+    if (options.sample && Math.floor(run.time) !== Math.floor(run.time - SIM_DT)) {
+      options.sample(run, run.time);
     }
 
     const after = signature(run);

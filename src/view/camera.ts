@@ -105,6 +105,7 @@ export class GameCamera {
   private readonly back = new THREE.Vector3();
   private readonly caster = new THREE.Raycaster();
   private collisionDistance = 0;
+  private locked = false;
   private distance = mm(CAM_DEFAULT_MM);
   private targetDistance = mm(CAM_DEFAULT_MM);
   private smoothedY = 0;
@@ -139,6 +140,7 @@ export class GameCamera {
    * visible seam and, on restart, is state leakage — a tracked completion gate.
    */
   reset(target: FollowTarget): void {
+    this.locked = false;
     this.started = false;
     this.distance = mm(CAM_DEFAULT_MM);
     this.targetDistance = mm(CAM_DEFAULT_MM);
@@ -146,6 +148,7 @@ export class GameCamera {
   }
 
   update(dt: number, target: FollowTarget): void {
+    if (this.locked) return;
     // Lead the scout by where it is going, capped so a sprint does not throw the focus off-screen.
     const lead = Math.min(target.speed * LEAD_SECONDS, mm(240));
     const leadX = Math.sin(target.heading) * lead;
@@ -180,6 +183,34 @@ export class GameCamera {
     this.camera.lookAt(this.focus);
   }
 
+  /**
+   * Park the camera over an arbitrary point, ignoring the follow target.
+   *
+   * Evidence capture only. It reads nothing from and writes nothing to the simulation — it exists
+   * so a room can be photographed without first playing twenty minutes to reach it, and so those
+   * photographs can be taken from a repeatable place.
+   */
+  override(x: number, y: number, z: number, distance: number): void {
+    /*
+     * The lock is the load-bearing part. Without it `update()` re-follows the scout on the very
+     * next animation frame and the screenshot taken 450 ms later shows wherever the player is
+     * standing — which silently produced a set of "room portraits" that were all the kitchen.
+     */
+    this.locked = true;
+    this.started = true;
+    this.focus.set(x, y, z);
+    this.smoothedY = y;
+    this.distance = distance;
+    this.targetDistance = distance;
+    const horizontal = distance * Math.cos(CAM_PITCH);
+    this.camera.position.set(
+      x - horizontal * Math.cos(CAM_YAW),
+      y + distance * Math.sin(CAM_PITCH),
+      z - horizontal * Math.sin(CAM_YAW),
+    );
+    this.camera.lookAt(this.focus);
+  }
+
   /** Where the camera is currently looking. The occlusion system's primary focus point. */
   get focusPoint(): THREE.Vector3 {
     return this.focus;
@@ -203,7 +234,14 @@ export class GameCamera {
    * camera has to move. Occlusion fading still handles the ordinary case of a prop standing between
    * a legitimately-placed camera and the scout.
    */
+  /** Release a capture lock and resume following the scout. */
+  unlock(): void {
+    this.locked = false;
+    this.started = false;
+  }
+
   resolveCollision(obstacles: THREE.Object3D): void {
+    if (this.locked) return;
     this.back.copy(this.camera.position).sub(this.focus);
     const distance = this.back.length();
     if (distance < 1e-4) return;

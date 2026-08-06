@@ -370,6 +370,11 @@ export async function boot(): Promise<void> {
       },
       /** What lies between the focus point and the camera right now, nearest first. */
       probe: () => session.renderer.probeView(),
+      /** Photograph a room. Evidence capture only — the simulation is untouched. */
+      viewRegion: (id: string, distance: number) => {
+        session.renderer.viewRegion(id as never, distance, session.run);
+      },
+      releaseView: () => session.renderer.releaseView(),
       occluderDebug: () => session.renderer.occluderDebug(),
       profile: () => session.renderer.profiler.end(),
       beginProfile: (label: string) => session.renderer.profiler.begin(label),

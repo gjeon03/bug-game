@@ -67,6 +67,10 @@ export interface GameRenderer {
   stats(): RenderStats;
   /** Names and distances of everything between the camera and its focus. Diagnostics only. */
   probeView(): readonly { name: string; distance: number }[];
+  /** Park the camera over a region until released. Evidence capture only. */
+  viewRegion(id: RegionId, distance: number, run: Run): void;
+  /** Release a capture lock. */
+  releaseView(): void;
   /** Per-occluder broadphase diagnostics. Debug only. */
   occluderDebug(): unknown;
   dispose(): void;
@@ -213,6 +217,23 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
         speed: 0,
         heading: run.scout.heading,
       });
+    },
+
+    viewRegion(id, distance, run) {
+      const region = run.house.regions.find((r) => r.id === id);
+      if (!region) return;
+      const cx = (region.bounds.x0 + region.bounds.x1) / 2;
+      const cz = (region.bounds.z0 + region.bounds.z1) / 2;
+      camera.override(cx, 0, cz, distance);
+      // Everything opaque and the household's lights on: a faded prop is not the prop, and a dark
+      // room is not the room.
+      built.occlusion.reset();
+      lights.showcase = true;
+    },
+
+    releaseView() {
+      camera.unlock();
+      lights.showcase = false;
     },
 
     probeView() {

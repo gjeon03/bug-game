@@ -11,7 +11,15 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:4273/';
-const OUT = resolve(process.argv[2] ?? 'artifacts/evidence/whole-home-reboot-final');
+/*
+ * The default output is a scratch directory, NOT the phase evidence set.
+ *
+ * It used to default straight to `whole-home-reboot-final/`, and a bare `node scripts/capture.mjs`
+ * run during the completion pass silently overwrote ten committed baseline images — the exact thing
+ * the evidence contract forbids, because a baseline you can overwrite is not a comparison basis.
+ * Writing a phase set is now something you have to ask for by name.
+ */
+const OUT = resolve(process.argv[2] ?? 'artifacts/evidence/completion/runtime');
 mkdirSync(OUT, { recursive: true });
 
 const errors = [];
