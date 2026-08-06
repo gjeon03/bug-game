@@ -94,7 +94,7 @@ export function cylinder(
     mm(topMm),
     mm(bottomMm),
     mm(heightMm),
-    segments,
+    smoothEnough(Math.max(topMm, bottomMm), segments),
     1,
     open,
   );
@@ -102,21 +102,36 @@ export function cylinder(
 }
 
 /**
- * Segment counts are generous on purpose.
+ * Minimum segment count for a curved surface of a given size.
  *
- * At 35 mm creature scale a ten-segment sphere reads as a faceted polygon, and faceted polygons
- * read as placeholder geometry — which the asset contract treats as a completion blocker. Measured
- * headroom on the reference machine is GPU p50 3.97 ms against a 16.7 ms budget, and the
- * performance policy is explicit that guardrails are not visual-quality ceilings: spend measured
- * headroom on verified visual gaps rather than defend a triangle count nobody set.
+ * Faceting is a function of how long each flat span is ON SCREEN, not of which prop asked for it.
+ * A 3 mm crumb at eight segments is a crumb; a 62 mm cushion at eight segments is a placeholder —
+ * and 159 call sites across the prop library pass explicit counts in the 6–12 range, each written
+ * when that prop was considered alone. A bedroom capture showed three duvet wrinkles reading as
+ * bare polyhedra, which the asset contract treats as a completion blocker.
+ *
+ * Scaling the floor with size fixes all of them from one place and, importantly, leaves small
+ * deliberately-faceted parts alone: a hex bolt is a few millimetres across, so its requested six
+ * segments survive untouched. The caller's value is honoured whenever it is already generous — this
+ * only ever raises, never lowers.
+ *
+ * Spending triangles here is deliberate. Measured headroom on the reference machine is GPU p50
+ * 3.97 ms against a 16.7 ms budget, and the performance policy is explicit that measured guardrails
+ * are not visual-quality ceilings.
  */
+function smoothEnough(sizeMm: number, requested: number): number {
+  const needed = Math.round(Math.min(40, Math.max(8, sizeMm * 0.5)));
+  return Math.max(requested, needed);
+}
+
 export function sphere(
   kit: Kit,
   radiusMm: number,
   material: MaterialId | THREE.Material,
   segments = 18,
 ): THREE.Mesh {
-  const geometry = new THREE.SphereGeometry(mm(radiusMm), segments, Math.max(6, segments >> 1));
+  const s = smoothEnough(radiusMm, segments);
+  const geometry = new THREE.SphereGeometry(mm(radiusMm), s, Math.max(6, s >> 1));
   return new THREE.Mesh(kit.own(geometry), resolve(kit, material));
 }
 

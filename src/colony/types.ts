@@ -84,6 +84,18 @@ export interface Worker {
   speed: number;
   /** Which route this worker serves. Empty string when idle. */
   route: string;
+  /**
+   * Simulation time before which this worker will not attempt route assignment again.
+   *
+   * Assignment ends in an A* reachability check, and a worker whose only appealing route is
+   * unreachable used to have its assignment withdrawn and land back in `idle` — which meant it ran
+   * the same failing search again on the very next frame, forever. Measured after workers began
+   * being released on every delivery: roughly forty idle bodies each burning one full path search
+   * per frame, about 2,400 searches a second, and 600 simulated seconds cost 285 s of CPU against
+   * 13 s for the same span beforehand. Backing a failed search off is what keeps per-frame work
+   * bounded, which the performance gates require outright.
+   */
+  replanAt: number;
   /** Index into the route's point list. */
   leg: number;
   /** Lateral offset from the route centreline, so a busy route reads as a column not a queue. */

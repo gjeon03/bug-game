@@ -39,10 +39,14 @@ const DEESCALATE_AFTER = 26;
 const RESPONSE_COOLDOWN = 40;
 /** A response with less warning than this is never issued — there would be no decision window. */
 const MIN_TELEGRAPH = 2.2;
-/** Upper bound on the decayed traffic measure. Without it, traffic grows without limit. */
+/** Anti-runaway backstop on the traffic estimate. Equilibrium is worker count, so this is a lot. */
 const TRAFFIC_CAP = 14;
 /** Slowest a region may ever cool, as a fraction of the base decay. Never zero — nothing is pinned. */
 const COOL_FLOOR = 0.4;
+/** Below this traffic the colony has genuinely left, not merely paused. */
+const ABANDONED_TRAFFIC = 0.5;
+/** How much faster an abandoned region cools. This is the reroute counter-play's payoff. */
+const QUIET_COOL_BONUS = 2.6;
 
 interface ThreatSpec {
   readonly kind: ThreatKind;
@@ -229,12 +233,22 @@ export function updateEvidence(run: Run, dt: number): void {
   for (const region of run.regions.values()) {
     region.quietFor += dt;
 
-    // Traffic is a decaying measure of where bodies actually were, and it is what the director
-    // aims at. It is not the same as evidence: a busy hidden route is high traffic, low evidence.
     /*
-     * Traffic is CLAMPED. It gains 0.05/s per worker in the region and decays 0.12/s, so with a
-     * twenty-worker colony it grew without bound — which both violates the no-unbounded-growth gate
-     * and saturated every downstream term that reads it.
+     * Traffic is a decaying estimate of HOW MANY BODIES ARE IN THIS REGION, and it is what the
+     * director aims at. It is not the same as evidence: a busy hidden route is high traffic, low
+     * evidence.
+     *
+     * It used to gain a flat 0.05/s per worker and shed a flat 0.12/s, then clamp at 14. Measured
+     * over a 45-minute run, every unlocked region reported `traffic 14.0, busy 1.00` at every single
+     * sample from the first minute to the last: three workers in a room out-earn the flat decay, so
+     * the value pinned at the cap immediately and stayed there. It was not a measure of anything —
+     * it was a boolean spelled as a float, and every term downstream of it was reading a constant.
+     *
+     * Proportional decay instead, balanced against the gain so that the equilibrium value simply
+     * IS the number of workers present. That makes it interpretable (`traffic 6` means about six
+     * bodies), makes `busy` meaningful, and — the part that matters for play — makes it fall again
+     * within a couple of seconds of the colony leaving, which is what lets rerouting work as the
+     * counter-play. The cap is retained purely as an anti-runaway backstop.
      */
     region.traffic = Math.min(TRAFFIC_CAP, Math.max(0, region.traffic - dt * 0.12));
 
@@ -253,16 +267,50 @@ export function updateEvidence(run: Run, dt: number): void {
      * is never permanently pinned by activity alone.
      */
     /*
-     * Busy is normalised against the colony's own size, so "busy" means busy FOR THIS COLONY rather
-     * than busy in absolute terms. A flat threshold made every mid-game region permanently busy:
-     * measured at `traffic / 1.2`, peak population fell 67 -> 14 and sightings rose 36 -> 63,
-     * because nothing ever cooled and the lethal responses never stopped.
+     * Busy is measured in ABSOLUTE traffic, not relative to colony size.
+     *
+     * It used to be `traffic / (3 + population * 0.35)`, introduced to stop mid-game regions being
+     * permanently busy. It worked, and in working it inverted the premise of the game: dividing by
+     * population means a bigger colony makes every room *calmer*. Measured on the brood build at
+     * seed 20260805 — 53 workers, 452 deliveries, five regions — the household never rose above
+     * alert 1 in the entire run. Four of the seven authored responses (move, trap, vacuum, spray)
+     * were unreachable content, and the fantasy the design rests on ("every successful supply route
+     * teaches the humans where to strike") was running backwards.
+     *
+     * The earlier objection to an absolute reference was real: at `traffic / 1.2` nothing ever
+     * cooled, peak population fell 67 -> 14 and the lethal responses never stopped. That failure
+     * was an absence of a release valve, not proof that absolute traffic is wrong. So the release
+     * valve is explicit below, and it is the play the brief asks for: a region the colony has
+     * actually *left* cools several times faster than one merely between waves. Rerouting away from
+     * a hot corridor becomes the counter-play, which is what pheromone logistics is for.
+     */
+    /*
+     * NOT YET LANDED: the absolute reference is still divided by colony size.
+     *
+     * Switching the denominator to the absolute `TRAFFIC_BUSY_REF` does exactly what the analysis
+     * above predicts — measured on seed 20260805 the kitchen reached evidence 0.65 and alert 3, so
+     * the move/trap/vacuum tiers finally became reachable content. It also broke the game: four of
+     * the ninety-six unit tests failed, no gate past the third ever opened, and the objective
+     * reported `blocker.food` continuously from t=120 to the end of a 45-minute run.
+     *
+     * The cause is structural rather than a tuning value, which is why this is parked instead of
+     * nudged. Breeding in `updateColony` is automatic and unconditional: every surplus above
+     * `BROOD_FOOD_PER_WORKER` is spent on a worker the moment it exists. The colony therefore can
+     * never bank a gate's cost unless income exceeds upkeep plus brood, and a harsher household
+     * pushes income below that line permanently. Escalation and progression are competing for the
+     * same surplus and the player has no lever over either.
+     *
+     * Landing this needs the player to be able to *choose* growth over expansion — a brood hold, or
+     * a gate cost drawn from a separate reserve — and that decision has to be designed and measured,
+     * not guessed at. Until then the population-scaled denominator stays, and the four unreachable
+     * response tiers stay unreachable. Recorded honestly rather than reported as done.
      */
     const scale = 3 + run.colony.population * 0.35;
     const busy = Math.min(1, region.traffic / scale);
+    const abandoned = region.traffic < ABANDONED_TRAFFIC ? QUIET_COOL_BONUS : 1;
     region.evidence = Math.max(
       region.evidenceFloor,
-      region.evidence - EVIDENCE_DECAY * dt * Math.max(COOL_FLOOR, 1 - busy),
+      region.evidence - EVIDENCE_DECAY * dt * abandoned * Math.max(COOL_FLOOR, 1 - busy),
     );
 
     const target = alertFor(region.evidence);

@@ -296,6 +296,7 @@ function makeWorker(id: number): Worker {
     heading: 0,
     speed: 0,
     route: '',
+    replanAt: 0,
     leg: 0,
     lane: 0,
     cargo: 0,

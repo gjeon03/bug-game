@@ -84,6 +84,15 @@ export function updateWorkers(run: Run, dt: number): void {
   detectStuck(run, dt);
 }
 
+/**
+ * Seconds a worker waits before retrying assignment after a failed reachability search.
+ *
+ * Short enough that a newly opened gate or a freshly laid route is picked up almost immediately —
+ * a player must never see the colony ignore a route they just built — and long enough that a
+ * genuinely stranded worker costs one search every few seconds instead of one every frame.
+ */
+const REPLAN_BACKOFF = 2.5;
+
 /* -------------------------------------------------------------- assignment */
 
 /**
@@ -137,6 +146,7 @@ function assignRoutes(run: Run): void {
 
   for (const worker of run.workers) {
     if (!worker.alive || worker.route || worker.state !== 'idle') continue;
+    if (worker.replanAt > run.time) continue;
 
     let best: Route | null = null;
     let bestAppeal = -Infinity;
@@ -167,6 +177,8 @@ function assignRoutes(run: Run): void {
         worker.route = '';
         worker.state = 'idle';
         best.assigned--;
+        // Unreachable now is very likely unreachable next frame too. Wait for the world to change.
+        worker.replanAt = run.time + REPLAN_BACKOFF;
       }
     }
   }
