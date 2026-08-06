@@ -345,8 +345,18 @@ export function createRun(seed: number): Run {
     });
   }
 
+  /*
+   * Region state is derived from the regions the house actually assembled, not from the authored
+   * order of all five.
+   *
+   * With the flat sealed to the kitchen, seeding all five left four rows in the HUD's region panel
+   * for rooms that have no surfaces, no grids and no way in — an evidence bar and an alert level for
+   * a place that does not exist in this build.
+   */
   const regions = new Map<RegionId, RegionState>();
+  const present = new Set(house.regions.map((r) => r.id));
   for (const id of REGION_ORDER) {
+    if (!present.has(id)) continue;
     regions.set(id, {
       id,
       unlocked: id === 'kitchen',

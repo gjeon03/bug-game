@@ -45,19 +45,21 @@ Do not modify global Claude configuration (`~/.claude/**`). Project-local deny r
 
 ## 1. Player fantasy (never dilute this)
 
-> **Scope change, 2026-08-05.** This is no longer a kitchen game. It is a **whole-home** game: the
-> colony starts in one crack under the kitchen sink and ends with the entire apartment — kitchen,
-> hallway, living room, bedroom, and optionally the bathroom — as connected territory. Growth is
-> **spatial**: every advance is a physical route opened in the 3-D world, never a number going up.
-> Target one complete **25–35 minute** run. Where §1–§13 below say "kitchen", read "apartment".
+> **Scope change, 2026-08-07 — KITCHEN ONLY.** This supersedes the whole-home scope below. Five thin
+> rooms were worth less than one that holds up: a player walking the kitchen found floating geometry,
+> a dead control and almost nothing to do, while four more rooms sat behind gates in the same state.
+> The kitchen is now the entire game, and depth in it is the only measure that counts. The other four
+> region files are intact in `SEALED_REGIONS` / `SEALED_GATES` and unreferenced — reactivating one is
+> adding it back to `REGIONS` and restoring its gate, not re-deriving it. Where §1–§13 say
+> "apartment" or "whole-home", read "kitchen".
 
-You are a **lead scout cockroach** — not a distant commander — secretly infesting a lived-in modern
-Korean apartment at night. You personally explore, mark opportunities, lay pheromone
+You are a **lead scout cockroach** — not a distant commander — secretly infesting the kitchen of a
+lived-in modern Korean apartment at night. You personally explore, mark opportunities, lay pheromone
 logistics, redirect workers, choose colony adaptations, exploit household routines, and escape human
 responses, while the household learns from your evidence exactly where to strike.
 
-> "I am tiny, fast, vulnerable, and clever. Every object in this home is enormous. Every successful
-> supply route makes my colony stronger, but it also teaches the humans where to strike."
+> "I am tiny, fast, vulnerable, and clever. Every object in this kitchen is enormous. Every
+> successful supply route makes my colony stronger, but it also teaches the humans where to strike."
 
 Scouting **is** routing. Growth is visible in the world, never only in a number.
 
@@ -65,9 +67,15 @@ Scouting **is** routing. Growth is visible in the world, never only in a number.
 game · a collectathon · a top-down 2D reskin · a flat floor-plan simulator · a tech-tree colony
 manager.
 
-Target **one complete 15–20 minute run** in **one excellent environment**. Not multiple maps.
+Target **one complete 25–35 minute run** in **one excellent room**. The room has to earn that
+duration through density — surfaces to reach, refuges to take, routines to exploit, debris to work
+— never through longer walks or costlier prices.
 
----
+### 1a. Controls are keyboard-only
+
+Every action must be reachable from the keyboard. The mouse is not a supported input: a player who
+never touches it must be able to play the whole game, including laying and erasing pheromone routes.
+Pointer support may exist only as a redundant convenience, and never as the sole path to anything.
 
 ## 2. Renderer (decided — see `DECISIONS.md` for the measured basis)
 

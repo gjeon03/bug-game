@@ -11,6 +11,12 @@ import type {
   Surface,
 } from './types';
 import { KITCHEN } from './regions/kitchen';
+/*
+ * Sealed regions. Imported but not assembled, so the module graph keeps them honest — they still
+ * typecheck against the current world vocabulary and cannot silently rot while the kitchen is the
+ * whole game. `SEALED_REGIONS` is the reactivation list: move one into `REGIONS`, restore its gate,
+ * and it is back.
+ */
 import { HALLWAY } from './regions/hallway';
 import { LIVING } from './regions/living';
 import { BATHROOM } from './regions/bathroom';
@@ -31,7 +37,22 @@ import { BEDROOM } from './regions/bedroom';
  * exists. The player's first evidence that a gate opened is that the world changes shape.
  */
 
-export const REGIONS: readonly RegionSpec[] = [KITCHEN, HALLWAY, LIVING, BATHROOM, BEDROOM];
+/*
+ * KITCHEN ONLY.
+ *
+ * The whole-home scope is deliberately sealed off. Five thin rooms turned out to be worth less than
+ * one that holds up: a player walked the kitchen for a few minutes and found floating geometry, a
+ * dead control, and almost nothing to do — while four other rooms sat behind gates in the same
+ * state. Depth in the room the player actually starts in beats breadth nobody reaches.
+ *
+ * The other four region files are intact and unreferenced. Bringing one back is adding it to this
+ * array and restoring its gate; nothing about them has been deleted. Until then they cost nothing —
+ * no surfaces, no grids, no props, no draw calls.
+ */
+export const REGIONS: readonly RegionSpec[] = [KITCHEN];
+
+/** Authored, verified against the type system, and deliberately not assembled. */
+export const SEALED_REGIONS: readonly RegionSpec[] = [HALLWAY, LIVING, BATHROOM, BEDROOM];
 
 /* ------------------------------------------------------------------- gates */
 
@@ -77,7 +98,7 @@ export const REGIONS: readonly RegionSpec[] = [KITCHEN, HALLWAY, LIVING, BATHROO
  * pacing requirement is kept in the test suite as `it.fails` so it turns red the moment it is met,
  * and is recorded as an open defect in GAUNTLET_STATE.md rather than quietly dropped.
  */
-export const GATES: readonly Gate[] = [
+export const SEALED_GATES: readonly Gate[] = [
   {
     id: 'gate.kitchen.hallway',
     from: 'kitchen',
@@ -224,6 +245,20 @@ export const GATES: readonly Gate[] = [
     ],
   },
 ];
+
+/**
+ * The gates that actually ship. None, while the kitchen is the whole game.
+ *
+ * `SEALED_GATES` above keeps the authored passages — the silicone seal at the waste pipe, the
+ * baseboard gap, the door undercut — because they are real research about a real apartment and
+ * throwing them away would mean re-deriving them later. They are simply not offered.
+ *
+ * This matters structurally, not cosmetically: a gate is the only thing that adds a navigation edge
+ * into another region, so with none of them present the rest of the flat is not "locked", it is
+ * absent. Nothing can path there, no worker can wander there, and no objective can ask for it.
+ */
+export const GATES: readonly Gate[] = [];
+
 
 /* ------------------------------------------------------------------- house */
 

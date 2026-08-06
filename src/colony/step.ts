@@ -17,8 +17,13 @@ import type { Run } from './types';
 
 const IDLE_HINT_AFTER = 12;
 
-/** The four regions a run must hold to win. The bathroom is deliberately not among them. */
-const MAIN_REGIONS: readonly RegionId[] = ['kitchen', 'hallway', 'living', 'bedroom'];
+/**
+ * Victory is measured in kitchen refuges held, not in rooms opened.
+ *
+ * The old measure was four regions. With the flat sealed to the kitchen it could never be
+ * satisfied, so the objective panel would have reported a blocker the player had no way to clear.
+ */
+const HOLD_TARGET_REGION: RegionId = 'kitchen';
 
 export interface StepInput extends ScoutInput {
   /** Sprint reserve carried across ticks by the caller, 0..1. */
@@ -124,20 +129,20 @@ function nextGate(run: Run): Gate | null {
   return null;
 }
 
-function heldRegions(run: Run): Set<RegionId> {
-  const held = new Set<RegionId>();
-  for (const [id, state] of run.footholds) {
-    if (!state.claimed || state.damage >= 1) continue;
-    const site = run.house.footholds.get(id);
-    if (site) held.add(site.region);
-  }
-  return held;
-}
 
 /** How close the colony is to the victory condition, as a fraction. */
+function kitchenHoldFraction(run: Run): number {
+  const sites = [...run.house.footholds.values()].filter((f) => f.region === HOLD_TARGET_REGION);
+  if (sites.length === 0) return 1;
+  const held = sites.filter((site) => {
+    const state = run.footholds.get(site.id);
+    return state?.claimed === true && state.damage < 1;
+  }).length;
+  return held / sites.length;
+}
+
 function holdProgress(run: Run): number {
-  const held = heldRegions(run);
-  const main = MAIN_REGIONS.filter((r) => held.has(r)).length / MAIN_REGIONS.length;
+  const main = kitchenHoldFraction(run);
   const strength = Math.min(1, run.colony.population / 12);
   const stores = Math.min(1, (run.colony.food / 30 + run.colony.moisture / 20) / 2);
   const specialised = run.colony.adaptations.length > 0 ? 1 : 0;
@@ -146,10 +151,7 @@ function holdProgress(run: Run): number {
 
 /** Which victory condition is currently missing. Only one is reported — the most fundamental. */
 function holdBlocker(run: Run): string | null {
-  const held = heldRegions(run);
-  for (const region of MAIN_REGIONS) {
-    if (!held.has(region)) return 'blocker.holdRegion';
-  }
+  if (kitchenHoldFraction(run) < 1) return 'blocker.holdRegion';
   if (run.colony.adaptations.length === 0) return 'blocker.adaptation';
   if (run.colony.population < 12) return 'blocker.population';
   if (run.colony.food < 30 || run.colony.moisture < 20) return 'blocker.stores';

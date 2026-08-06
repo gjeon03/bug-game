@@ -382,6 +382,9 @@ export interface FinalState {
  */
 const SWEEP_COOLDOWN = 110;
 
+/** Claimed kitchen refuges before the household mounts its full response. */
+const FINALE_HOLDS = 2;
+
 /** Seconds a colony may sit at zero before it starts losing bodies. */
 const STARVE_GRACE = 14;
 
@@ -396,13 +399,18 @@ const SWEEP_ESCALATION = 0.18;
  * Victory is not a timer expiring: the colony has to still hold a viable network afterwards.
  */
 export function updateFinal(run: Run, dt: number): FinalState {
-  const bedroom = run.regions.get('bedroom');
-  if (!bedroom?.unlocked) return { pressure: 0, struck: false };
-
-  const holdsBedroom = [...run.footholds.entries()].some(
-    ([id, state]) => state.claimed && run.house.footholds.get(id)?.region === 'bedroom',
-  );
-  if (!holdsBedroom) return { pressure: 0, struck: false };
+  /*
+   * The household's full response starts once the colony has taken real hold of the kitchen.
+   *
+   * It used to key off a bedroom foothold. With the flat sealed to one room that trigger can never
+   * fire, so the finale — and therefore the only thing standing between the player and an automatic
+   * win — would simply never have happened. Two claimed refuges is the one-room equivalent: enough
+   * that the infestation is no longer a rumour.
+   */
+  const kitchenHolds = [...run.footholds.entries()].filter(
+    ([id, state]) => state.claimed && state.damage < 1 && run.house.footholds.get(id)?.region === 'kitchen',
+  ).length;
+  if (kitchenHolds < FINALE_HOLDS) return { pressure: 0, struck: false };
 
   let total = 0;
   let unlocked = 0;
@@ -457,20 +465,22 @@ export function evaluateRun(run: Run): void {
     return;
   }
 
-  const regionsHeld = new Set<RegionId>();
-  for (const [id, state] of run.footholds) {
-    if (!state.claimed || state.damage >= 1) continue;
-    const site = run.house.footholds.get(id);
-    if (site) regionsHeld.add(site.region);
-  }
+  /*
+   * Victory is measured inside the kitchen, because the kitchen is the game.
+   *
+   * This used to demand footholds in kitchen, hallway, living room AND bedroom. With the other four
+   * regions sealed there is no navigation edge to any of them, so that condition could never become
+   * true — the run would have been unwinnable by construction, which is a worse failure than a short
+   * run. Holding every refuge the kitchen offers is the equivalent statement about a one-room game:
+   * the colony has taken the whole space it can reach.
+   */
+  const kitchenFootholds = [...run.house.footholds.values()].filter((f) => f.region === 'kitchen');
+  const holdsAll = kitchenFootholds.every((site) => {
+    const state = run.footholds.get(site.id);
+    return state?.claimed === true && state.damage < 1;
+  });
 
-  const holdsMain =
-    regionsHeld.has('kitchen') &&
-    regionsHeld.has('hallway') &&
-    regionsHeld.has('living') &&
-    regionsHeld.has('bedroom');
-
-  if (!holdsMain) return;
+  if (!holdsAll) return;
   if (run.colony.adaptations.length === 0) return;
   if (run.colony.population < 12) return;
   if (run.colony.food < 30 || run.colony.moisture < 20) return;
