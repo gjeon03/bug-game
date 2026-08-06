@@ -17,9 +17,9 @@
 export const ko = {
   /* ── meta / accessibility ─────────────────────────────────────────────── */
   'meta.lang': 'ko',
-  'meta.title': '집 전체를 점거하라',
+  'meta.title': '주방을 점거하라',
   'meta.description':
-    '사람이 사는 아파트 안에서, 싱크대 밑 틈 하나부터 집 전체까지 바퀴 군체를 넓혀 가는 3D 전략 게임.',
+    '사람이 사는 아파트 주방에서, 싱크대 밑 틈 하나부터 조리대 위까지 바퀴 군체를 넓혀 가는 3D 전략 게임.',
   'meta.noscript': '이 게임은 자바스크립트가 켜져 있어야 실행된다.',
   'a11y.canvas': '게임 화면',
   'a11y.hud': '군체 상태',
@@ -154,14 +154,14 @@ export const ko = {
   'chapter.hallway': '2장 · 드러난 복도를 건너기',
   'chapter.living': '3장 · 여러 갈래를 동시에 굴리기',
   'chapter.bedroom': '4장 · 사람이 있는 방으로',
-  'chapter.final': '마지막 · 집 전체',
+  'chapter.final': '마지막 · 주방 전체',
   'objective.kitchen.title': '1장 · 주방에서 버티기',
   'objective.kitchen.secure': '먹이와 수분을 확보하고, 일꾼이 오갈 길을 만들어라.',
   'objective.kitchen.firstHold': '싱크대 밑 틈을 거점으로 삼아라. E를 눌러 차지한다.',
   'objective.kitchen.firstRoute': '먹이까지 페로몬 길을 놓아라. 일꾼이 그 길을 따라 나른다.',
-  'objective.kitchen.grow': '군체를 불려라. 피난처마다 품을 수 있는 수가 정해져 있다.',
-  'objective.kitchen.expand': '남은 피난처를 차지해 주방 전체를 군체의 영역으로 만들어라.',
-  'objective.final.title': '집 전체를 지켜라',
+  'objective.kitchen.grow': '군체를 불려라. 거점마다 품을 수 있는 수가 정해져 있다.',
+  'objective.kitchen.expand': '남은 거점을 차지해 주방 전체를 군체의 영역으로 만들어라.',
+  'objective.final.title': '주방을 지켜라',
   'objective.final.body':
     '통로는 모두 열렸다. 이제 네 구역을 동시에 유지하면서 집안의 박멸 시도를 견뎌 내야 한다.',
 
@@ -174,7 +174,7 @@ export const ko = {
   'blocker.alert': '{region}{region?이/가} 아직 경계 중이다 — 조용해질 때까지 기다려라',
   'blocker.adaptation': '적응을 하나 정해야 한다',
   'blocker.goThere': '{gate} 앞으로 가서 E를 눌러라',
-  'blocker.holdRegion': '아직 차지하지 않은 피난처가 있다',
+  'blocker.holdRegion': '아직 차지하지 않은 거점이 있다',
   'blocker.population': '군체가 더 커져야 한다 — 일꾼 12마리',
   'blocker.stores': '비축이 모자라다 — 먹이 30, 수분 20',
 
@@ -247,7 +247,7 @@ export const ko = {
   'log.threat.incoming': '{region}에서 {threat}{threat?이/가} 시작된다.',
   'log.starved': '먹이가 떨어져 일꾼을 잃었다.',
   'log.extermination': '{region}에 박멸 시도가 들어왔다.',
-  'log.won': '집 전체가 군체의 영역이 됐다.',
+  'log.won': '주방이 군체의 영역이 됐다.',
   'log.lost': '군체가 무너졌다.',
 
   /* ── cue for state changes the HUD announces ──────────────────────────── */
@@ -281,7 +281,14 @@ export const ko = {
   'help.sprint': 'Shift — 전력 질주 (숨이 찬다)',
   'help.route': '마우스 왼쪽 끌기 — 페로몬 길 놓기',
   'help.erase': '마우스 오른쪽 — 길 지우기',
-  'help.interact': 'E — 거점 차지 · 통로 작업',
+  'help.interact': 'E — 거점 차지',
+  /*
+   * Contextual-prompt labels. The HUD draws the key as its own chip, so these must NOT repeat it —
+   * reusing the help-card strings printed "EE — 거점 차지" on screen.
+   */
+  'prompt.claim': '거점 차지',
+  'prompt.working': '통로 작업 중',
+  'prompt.climb': '타고 오르기',
   'help.traverse': 'Space — 전선·배관 타고 오르내리기',
   'help.adapt': '1 2 3 — 적응 선택',
   'help.pause': 'Esc — 잠시 멈춤',
@@ -299,7 +306,7 @@ export const ko = {
   'pause.resume': 'Esc — 계속',
   'pause.restart': 'R — 다시 시작',
   'result.won.title': '집 전체를 점거했다',
-  'result.won.body': '주방에서 침실까지 모든 구역에 거점이 서 있고, 박멸 시도를 견뎌 냈다.',
+  'result.won.body': '주방의 모든 거점이 군체의 것이 됐고, 박멸 시도를 견뎌 냈다.',
   'result.lost.title': '군체가 무너졌다',
   'result.lost.body': '남은 거점이 없다. 숨을 곳도, 알을 깔 자리도 없다.',
   'result.time': '걸린 시간 {minutes}분 {seconds}초',

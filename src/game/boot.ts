@@ -162,16 +162,16 @@ export async function boot(): Promise<void> {
 
   /** What the scout could do right now, if anything. Drives the contextual prompt. */
   function currentPrompt(run: Run): PromptState | null {
-    if (run.scout.working) return { key: 'E', labelKey: 'help.interact' };
+    if (run.scout.working) return { key: 'E', labelKey: 'prompt.working' };
     const gate = gateInReach(run);
     if (gate) {
       const check = checkGate(run, gate);
       return check.ok
-        ? { key: 'E', labelKey: 'help.interact' }
-        : { key: '', labelKey: check.blockerKey ?? 'help.interact', params: check.blockerParams };
+        ? { key: 'E', labelKey: 'prompt.claim' }
+        : { key: '', labelKey: check.blockerKey ?? 'prompt.claim', params: check.blockerParams };
     }
-    if (footholdInReach(run)) return { key: 'E', labelKey: 'help.interact' };
-    if (climbInReach(run)) return { key: 'Space', labelKey: 'help.traverse' };
+    if (footholdInReach(run)) return { key: 'E', labelKey: 'prompt.claim' };
+    if (climbInReach(run)) return { key: 'Space', labelKey: 'prompt.climb' };
     return null;
   }
 

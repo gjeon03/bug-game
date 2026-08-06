@@ -50,6 +50,16 @@ const HEMI_INTENSITY = 0.34;
 /** Positional lights live in the shader at once. Never changes at runtime. */
 const LIGHT_SLOTS = 6;
 
+/**
+ * How many of the pooled lights cast shadows.
+ *
+ * Not all six. A shadow map is the most expensive thing a light can do, and the slots are sorted by
+ * irradiance at the focus point, so the first two are the ones actually shaping the frame the player
+ * is looking at. The rest fill.
+ */
+const SHADOW_SLOTS = 2;
+const SHADOW_MAP = 1024;
+
 /** A spot's cone. Wide, because these stand in for windows and strips as much as for lamps. */
 const CONE_ANGLE = 1.05;
 const CONE_PENUMBRA = 0.85;
@@ -104,7 +114,26 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
   const slots: THREE.SpotLight[] = [];
   for (let i = 0; i < LIGHT_SLOTS; i++) {
     const light = new THREE.SpotLight(0xffffff, 0, mm(4200), CONE_ANGLE, CONE_PENUMBRA, CONE_DECAY);
-    light.castShadow = false;
+    /*
+     * The first `SHADOW_SLOTS` lights cast. Everything in the prop library already calls `shadows()`
+     * to set `castShadow`/`receiveShadow` on its meshes — the intent was authored throughout and
+     * then never switched on at the renderer, so nothing in the room was grounded to anything. An
+     * art review put it first on its list: "nothing casts a shadow — every object in the game
+     * floats", and a player independently described the scout as 떠다닌다.
+     *
+     * Bias is set in world units, where 1 unit = 1.346 mm. The default 0.0001 is meaningless at this
+     * scale; a 35 mm insect needs its contact shadow to touch its feet, so the normal bias is a
+     * fraction of a millimetre rather than a fraction of a metre.
+     */
+    light.castShadow = i < SHADOW_SLOTS;
+    if (light.castShadow) {
+      light.shadow.mapSize.set(SHADOW_MAP, SHADOW_MAP);
+      light.shadow.bias = -0.0004;
+      light.shadow.normalBias = mm(0.6);
+      light.shadow.camera.near = mm(30);
+      light.shadow.camera.far = mm(3000);
+      light.shadow.focus = 1;
+    }
     // The target must be in the scene graph or three.js never updates its world matrix and the
     // spot silently aims at the world origin — which is exactly what happened before this line
     // existed: the whole flat was lit by one patch in the kitchen's north-west floor corner.
@@ -234,12 +263,19 @@ function describe(spec: LightSpec, centre: { x: number; z: number }): Authored {
  * ACES filmic tone mapping, because a night interior with a few bright sources is exactly the case
  * where linear output clips the highlights and crushes everything else into one flat dark mass.
  *
- * Shadow mapping is OFF. No authored light casts shadows, so enabling it bought a shadow pass that
- * rendered geometry for nothing.
+ * Shadow mapping is ON, for the two brightest pooled lights only.
+ *
+ * It used to be off, with the note "no authored light casts shadows, so enabling it bought a shadow
+ * pass that rendered geometry for nothing" — which is circular: the lights did not cast because
+ * nobody had turned them on. The visible consequence was that no object in the room was attached to
+ * the surface under it. Every prop builder already asks for shadows via `shapes.ts` `shadows()`.
+ *
+ * PCF soft, because a hard edge at 35 mm scale reads as a decal rather than as contact.
  */
 export function configureRenderer(renderer: THREE.WebGLRenderer): void {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.62;
-  renderer.shadowMap.enabled = false;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 }
