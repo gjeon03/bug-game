@@ -97,6 +97,24 @@ export function buildGrid(surface: Surface, blockers: readonly Rect[]): SurfaceG
   }
 
   /*
+   * The grid is a whole number of cells, so it OVERHANGS its surface.
+   *
+   * `cols` and `rows` round up, which leaves up to one cell of slack past the far edge — measured at
+   * 40 mm in x on both kitchen surfaces, with `kitchen.floor` cell 63 sitting at 3810 mm against a
+   * 3800 mm bound. Conservative blocker rasterisation never covers it, because no authored blocker
+   * reaches past the room. The result is a thin lip of walkable space outside the room itself.
+   *
+   * Blocking by cell centre against the bounds is the general cure and costs one pass.
+   */
+  for (let r = 0; r < rows; r++) {
+    const cz = z0 + (r + 0.5) * cell;
+    for (let c = 0; c < cols; c++) {
+      const cx = x0 + (c + 0.5) * cell;
+      if (cx < x0 || cx > x1 || cz < z0 || cz > z1) flags[r * cols + c] = BLOCKED;
+    }
+  }
+
+  /*
    * Anything outside the declared footprint is not walkable.
    *
    * Done before the exposure fill so the two cannot disagree. Cells are tested at their CENTRE, the

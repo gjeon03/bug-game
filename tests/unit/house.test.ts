@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GATES, SEALED_GATES, SEALED_REGIONS, buildHouse, buildNav } from '../../src/world/house';
-import { isWalkable, nearestWalkable } from '../../src/world/nav';
+import { cellCentre, isWalkable, nearestWalkable } from '../../src/world/nav';
 import { mm, toMm } from '../../src/world/units';
 
 /**
@@ -279,5 +279,35 @@ describe('raised surfaces declare their footprint', () => {
     // has stopped constraining anything.
     expect(fraction).toBeLessThan(0.75);
     expect(fraction).toBeGreaterThan(0.2);
+  });
+});
+
+/**
+ * A grid is a whole number of cells, so it always overhangs its surface a little. That is fine —
+ * what is not fine is any of that overhang being WALKABLE.
+ *
+ * `cols`/`rows` round up, leaving up to a cell of slack past the far edge: 40 mm in x on both
+ * kitchen surfaces, with `kitchen.floor` cell 63 centred at 3810 mm against a 3800 mm bound. No
+ * authored blocker reaches past the room, so conservative rasterisation never covered it and the
+ * room had a thin lip of standable space outside itself.
+ */
+describe('grids do not extend the room', () => {
+  it('no walkable cell centre lies outside its surface bounds', () => {
+    const nav = buildNav(house, new Set());
+    const outside: string[] = [];
+
+    for (const [id, grid] of nav.grids) {
+      const b = grid.surface.bounds;
+      for (let i = 0; i < grid.flags.length; i++) {
+        if (grid.flags[i] !== 0) continue;
+        const c = cellCentre(grid, i);
+        if (c.x < b.x0 || c.x > b.x1 || c.z < b.z0 || c.z > b.z1) {
+          outside.push(`${id} cell ${i} at (${Math.round(toMm(c.x))}, ${Math.round(toMm(c.z))})mm`);
+          break;
+        }
+      }
+    }
+
+    expect(outside, 'walkable cells outside the room').toEqual([]);
   });
 });
