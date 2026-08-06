@@ -1,7 +1,8 @@
 import { findPath } from '../src/world/nav';
 import { mm } from '../src/world/units';
 import { SIM_DT } from '../src/colony/state';
-import { createRoute, eraseRoute, type DrawnPoint } from '../src/colony/routes';
+import { eraseRoute, type DrawnPoint } from '../src/colony/routes';
+import { TRAIL_REACH, cancelTrail, sealTrail, startTrail } from '../src/colony/trail';
 import {
   beginClimb,
   claimFoothold,
@@ -17,9 +18,13 @@ import type { AdaptationFamily, Run } from '../src/colony/types';
  * A scripted competent player.
  *
  * **It may only do things a human can do.** It drives the scout with the same movement vector the
- * keyboard produces, draws routes by handing `createRoute` a polyline the way a mouse drag does,
- * and claims, climbs and works gates through the same public functions the input layer calls. It
- * never writes simulation state directly.
+ * keyboard produces, lays routes by WALKING them through `startTrail`/`sealTrail` exactly as the F
+ * key does, and claims, climbs and works gates through the same public functions the input layer
+ * calls. It never writes simulation state directly.
+ *
+ * It used to call `createRoute` with a polyline straight from `findPath`, conjuring a route between
+ * two points the scout had never travelled — so every balance number this project recorded was
+ * measured through a path no player can use. Routing is now the same walk for both.
  *
  * That restriction is the whole point: a bot allowed to mutate state proves the balance of a game
  * nobody can play. This one proves the balance of the game that ships.
@@ -51,6 +56,28 @@ interface Steering {
   z: number;
 }
 
+/**
+ * A route the bot has decided to lay and is now physically walking.
+ *
+ * `laying` flips once the scout has reached the nest and pressed the equivalent of F. Until then it
+ * is walking TO the nest; after it, it is walking the line.
+ */
+interface RouteMission {
+  readonly nest: string;
+  readonly target: string;
+  readonly path: readonly { surface: string; x: number; z: number }[];
+  index: number;
+  laying: boolean;
+  /** Simulation time the mission last made progress. Used to abandon a stalled walk. */
+  progressAt: number;
+}
+
+/** Seconds a route walk may make no progress before the bot gives up on it. */
+const MISSION_STALL = 12;
+
+/** How often to look for a new route to walk when idle. An A* per (refuge, source) pair. */
+const PLAN_EVERY = 2;
+
 /** Play until the run resolves or the time budget runs out. */
 export function playRun(run: Run, options: BotOptions): BotTrace {
   const maxSeconds = options.maxSeconds ?? 40 * 60;
@@ -62,10 +89,11 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
   let path: readonly { surface: string; x: number; z: number }[] = [];
   let pathIndex = 0;
   let replanIn = 0;
+  let mission: RouteMission | null = null;
+  let planIn = 0;
   let longestPlateau = 0;
   let plateau = 0;
   let lastSignature = '';
-  let lastShape = '';
 
   while (run.status === 'playing' && run.time < maxSeconds) {
     /* ---- decide, a few times a second rather than every tick ---- */
@@ -103,14 +131,43 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
       // (foothold, source) pair. Only do it when the world has actually changed shape, which is
       // also when a human would look at their network again.
       rebalanceRoutes(run);
-      const shape = routeShape(run);
-      if (shape !== lastShape) {
-        lastShape = shape;
-        maybeDrawRoute(run);
+      /*
+       * Look for the next route to walk whenever there is no mission, not only when the network
+       * changed shape.
+       *
+       * The shape gate was written when routing was free — `createRoute` conjured a line and the
+       * only cost was an A*. Now a route costs the walk, so a mission ends far from home with the
+       * network unchanged and nothing to trigger a re-plan: measured, the scout finished its second
+       * route at (277, -1050) and stood there for the remaining twenty-nine minutes while the colony
+       * starved. Throttled rather than gated, because planning is an A* per (refuge, source) pair.
+       */
+      planIn -= 0.35;
+      if (!mission && planIn <= 0) {
+        planIn = PLAN_EVERY;
+        mission = planRoute(run);
       }
       if (firstRouteAt === null && run.routes.length > 0) firstRouteAt = run.time;
 
-      const target = chooseTarget(run, options);
+      /*
+       * A live mission overrides every other destination.
+       *
+       * Laying a route is not a background action any more — it is where the scout physically is
+       * and what it is doing, for as long as the walk takes. Treating it as the steering goal is
+       * what makes the harness pay the same seconds a player pays.
+       */
+      /*
+       * A mission that stops progressing is abandoned rather than allowed to block everything.
+       *
+       * While a mission is live it overrides every other destination, so any bug that stops it
+       * advancing freezes the whole harness — measured once as the scout standing at (1347, -1983)
+       * at speed 0 for twenty-nine minutes while the colony starved to zero behind it. Whatever the
+       * cause, the bot must keep playing.
+       */
+      if (mission && run.time - mission.progressAt > MISSION_STALL) {
+        cancelTrail(run);
+        mission = null;
+      }
+      const target = mission ? missionStep(run, mission) : chooseTarget(run, options);
       if (target && (!steering || !samePlace(steering, target))) {
         steering = target;
         const found = findPath(
@@ -124,7 +181,31 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
         );
         path = found.points;
         pathIndex = 0;
+        // An unreachable or degenerate target must not latch `steering`, or the bot stops asking.
+        if (path.length === 0) steering = null;
       }
+    }
+
+    /* ---- the route walk: start at the nest, seal at the source ---- */
+    if (mission) {
+      if (!mission.laying) {
+        /*
+         * A trail left open by a previous mission blocks `startTrail` forever.
+         *
+         * `startTrail` refuses while `run.trail` is set, so a seal that failed — the source ran dry
+         * between planning and arriving, say — left the harness holding a one-point line it could
+         * never add to and never replace. Measured: the scout stood at (1347, -1983) at speed 0 for
+         * the entire remaining 29 minutes while the colony starved to zero behind it.
+         */
+        if (run.trail) cancelTrail(run);
+        if (startTrail(run)) mission.laying = true;
+        else mission = null;
+      } else if (nearMission(run, mission)) {
+        // Reached the end of the planned line. Seal it if the source is genuinely in reach.
+        if (sealTrail(run) || !run.trail) mission = null;
+      }
+      // A trail the simulation dropped (source exhausted, refuge lost) ends the mission with it.
+      if (mission && mission.laying && !run.trail) mission = null;
     }
 
     /* ---- act on whatever is within arm's reach ---- */
@@ -216,13 +297,6 @@ function signature(run: Run): string {
   ].join('|');
 }
 
-/** Changes only when the set of nests, routes or known sources changes. */
-function routeShape(run: Run): string {
-  const claimed = [...run.footholds.entries()].filter(([, f]) => f.claimed && f.damage < 1).length;
-  const found = [...run.resources.values()].filter((r) => r.found && r.remaining >= 6).length;
-  const starved = run.colony.food < 6 ? 'F' : run.colony.moisture < 6 ? 'M' : '-';
-  return `${claimed}|${found}|${run.routes.length}|${starved}|${run.routes.map((r) => r.target).join(',')}`;
-}
 
 function samePlace(a: Steering, b: Steering): boolean {
   return a.surface === b.surface && Math.hypot(a.x - b.x, a.z - b.z) < mm(120);
@@ -273,6 +347,15 @@ function rebalanceRoutes(run: Run): void {
         : null;
   if (!starving) return;
 
+  /*
+   * Never drop the last route.
+   *
+   * Erasing was cheap when a replacement was one function call away. Now it costs the walk back, so
+   * a colony that thrashes its own network starves while the scout is still en route — measured at
+   * four deliveries in thirty minutes.
+   */
+  if (run.routes.length <= 1) return;
+
   const serves = (kind: 'food' | 'moisture'): number =>
     run.routes.filter((r) => run.house.resources.get(r.target)?.kind === kind && r.health === 'ok')
       .length;
@@ -286,7 +369,14 @@ function rebalanceRoutes(run: Run): void {
   if (victim) eraseRoute(run, victim.id);
 }
 
-function maybeDrawRoute(run: Run): void {
+/**
+ * Pick the next route worth walking. Returns the mission, or `null` if none is worth it.
+ *
+ * This used to call `createRoute` outright. It cannot any more, and that is the point: a route now
+ * costs the walk, so the bot has to spend the same seconds a player would and the balance numbers
+ * finally describe the game that ships.
+ */
+function planRoute(run: Run): RouteMission | null {
   for (const [nestId, nestState] of run.footholds) {
     if (!nestState.claimed || nestState.damage >= 1) continue;
     const existing = run.routes.filter((r) => r.nest === nestId && r.health !== 'blocked');
@@ -295,8 +385,8 @@ function maybeDrawRoute(run: Run): void {
     const nest = run.house.footholds.get(nestId);
     if (!nest) continue;
 
-    let bestId = '';
     let bestScore = 0;
+    let bestId = '';
     let bestPath: readonly DrawnPoint[] = [];
 
     for (const [resId, resState] of run.resources) {
@@ -329,8 +419,50 @@ function maybeDrawRoute(run: Run): void {
       bestPath = found.points;
     }
 
-    if (bestId) createRoute(run, nestId, bestId, bestPath);
+    if (bestId)
+      return { nest: nestId, target: bestId, path: bestPath, index: 0, laying: false, progressAt: run.time };
   }
+  return null;
+}
+
+
+/** The next point on the mission's line, advancing as the scout reaches each one. */
+function missionStep(run: Run, mission: RouteMission): Steering | null {
+  const nest = run.house.footholds.get(mission.nest);
+  if (!mission.laying) {
+    if (!nest) return null;
+    /*
+     * Already standing on it — do not ask for a path to where we are.
+     *
+     * `findPath` between two points inside the same cell returns an empty polyline, the caller
+     * latches `steering` to that target, and because a mission returns the SAME target every tick
+     * it never recomputes: the scout froze at (1347, -1983) with speed 0 for an entire 30-minute
+     * run. The old code survived this only because `chooseTarget` kept changing its mind.
+     */
+    const close = Math.hypot(nest.at.x - run.scout.x, nest.at.z - run.scout.z) < TRAIL_REACH;
+    return close ? null : { surface: nest.surface, x: nest.at.x, z: nest.at.z };
+  }
+  while (mission.index < mission.path.length) {
+    const point = mission.path[mission.index]!;
+    const close =
+      point.surface === run.scout.surface &&
+      Math.hypot(point.x - run.scout.x, point.z - run.scout.z) < mm(120);
+    if (!close) return { surface: point.surface, x: point.x, z: point.z };
+    mission.index++;
+    mission.progressAt = run.time;
+  }
+  const site = run.house.resources.get(mission.target);
+  return site ? { surface: site.surface, x: site.at.x, z: site.at.z } : null;
+}
+
+/** Has the walk reached the source it set out for? */
+function nearMission(run: Run, mission: RouteMission): boolean {
+  const site = run.house.resources.get(mission.target);
+  if (!site) return true;
+  return (
+    site.surface === run.scout.surface &&
+    Math.hypot(site.at.x - run.scout.x, site.at.z - run.scout.z) < TRAIL_REACH
+  );
 }
 
 /** Where should the scout physically be right now? */

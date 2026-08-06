@@ -279,8 +279,14 @@ export const ko = {
   'help.title': '조작',
   'help.move': 'WASD — 정찰병 이동',
   'help.sprint': 'Shift — 전력 질주 (숨이 찬다)',
-  'help.route': '마우스 왼쪽 끌기 — 페로몬 길 놓기',
-  'help.erase': '마우스 오른쪽 — 길 지우기',
+  'log.route.started': '페로몬을 흘리기 시작했다. 먹이까지 걸어가라.',
+  'log.route.cancelled': '흘리던 페로몬을 지웠다.',
+  'log.route.needNest': '거점 위에서만 길을 시작할 수 있다.',
+  'log.route.needSource': '먹이나 물가에 서서 F를 눌러 길을 끝내라.',
+  'log.route.tooShort': '길이 너무 짧다.',
+  'log.route.noneNear': '가까이에 지울 길이 없다.',
+  'help.route': 'F — 거점에서 시작, 걸어가서 먹이 앞에서 다시 F',
+  'help.erase': 'G — 가장 가까운 길 지우기',
   'help.interact': 'E — 거점 차지',
   /*
    * Contextual-prompt labels. The HUD draws the key as its own chip, so these must NOT repeat it —

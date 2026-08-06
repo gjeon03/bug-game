@@ -287,6 +287,12 @@ export interface Colony {
   broodHold: boolean;
 }
 
+/** The pheromone line the scout is currently walking, or `null`. See `colony/trail.ts`. */
+export interface TrailState {
+  readonly nest: string;
+  readonly points: { surface: string; x: number; z: number }[];
+}
+
 export interface RunEvent {
   readonly key: string;
   readonly params: Record<string, string | number>;
@@ -331,6 +337,8 @@ export interface Run {
 
   workers: Worker[];
   routes: Route[];
+  /** The line being walked right now, or `null`. Owned by `colony/trail.ts`. */
+  trail: TrailState | null;
   footholds: Map<string, Foothold>;
   resources: Map<string, ResourceState>;
   regions: Map<RegionId, RegionState>;

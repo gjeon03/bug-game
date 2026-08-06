@@ -3,15 +3,21 @@ import type { Run } from '../colony/types';
 import type { AdaptationFamily } from '../colony/types';
 
 /**
- * Keyboard and pointer.
+ * Keyboard only.
  *
  * Held keys are polled, discrete actions are queued. That split matters: movement must sample the
  * key's *current* state every tick or a dropped frame eats a step of walking, while pressing E
  * twice in one frame must not claim two footholds.
  *
- * The pointer's job is route drawing. A drag samples world positions and hands the polyline to the
- * simulation exactly as drawn — the shape of that line is the player's decision and the game's
- * central mechanic, so it is never smoothed away here.
+ * ## There is no pointer path
+ *
+ * Route drawing used to be a pointer drag, and it was removed rather than kept as a convenience.
+ * Two mechanics for one action is what produced the surface-stamping defect: every drag sample was
+ * written onto `run.scout.surface` at the moment of the drag, so a route could not cross from the
+ * floor to the worktop — vertical routes were structurally impossible in a game whose whole subject
+ * is vertical space. Laying the trail by walking records the surface the scout is actually on.
+ *
+ * CLAUDE.md §1a: a player who never touches the mouse must be able to play the whole game.
  */
 
 export type Action =
@@ -23,6 +29,8 @@ export type Action =
   | { readonly kind: 'adapt'; readonly family: AdaptationFamily }
   | { readonly kind: 'erase' }
   | { readonly kind: 'broodHold' }
+  | { readonly kind: 'trail' }
+  | { readonly kind: 'eraseNearest' }
   | { readonly kind: 'zoom'; readonly delta: number };
 
 /**
@@ -38,6 +46,8 @@ export type Action =
  * without asking the player to notice what their 한/영 key is doing. 2-set layout.
  */
 const HANGUL_TO_CODE: Readonly<Record<string, string>> = {
+  ㄹ: 'KeyF',
+  ㅎ: 'KeyG',
   ㅈ: 'KeyW',
   ㅁ: 'KeyA',
   ㄴ: 'KeyS',
@@ -68,10 +78,6 @@ const FAMILY_KEYS: Readonly<Record<string, AdaptationFamily>> = {
   Digit3: 'shadow',
 };
 
-export interface DragSample {
-  readonly clientX: number;
-  readonly clientY: number;
-}
 
 export interface Input {
   /** Camera-relative movement vector for this tick, already normalised. */
@@ -79,26 +85,14 @@ export interface Input {
   sprinting(): boolean;
   /** Drain queued discrete actions. */
   take(): readonly Action[];
-  /** Points sampled during the current drag, oldest first. Empty when not dragging. */
-  readonly drag: readonly DragSample[];
-  readonly dragging: boolean;
-  /** Consume the finished drag. Returns the samples and clears them. */
-  endDrag(): readonly DragSample[];
-  readonly pointer: DragSample | null;
   /** Release every held key — used when focus is lost, so the scout does not walk into a wall. */
   releaseAll(): void;
   dispose(): void;
 }
 
-/** Minimum pointer travel, in CSS pixels, before another drag sample is recorded. */
-const DRAG_SPACING = 9;
-
-export function createInput(target: HTMLElement): Input {
+export function createInput(): Input {
   const held = new Set<string>();
   const queue: Action[] = [];
-  let drag: DragSample[] = [];
-  let dragging = false;
-  let pointer: DragSample | null = null;
 
   const onKeyDown = (event: KeyboardEvent): void => {
     const code = resolveCode(event);
@@ -130,6 +124,12 @@ export function createInput(target: HTMLElement): Input {
       case 'KeyH':
         queue.push({ kind: 'broodHold' });
         break;
+      case 'KeyF':
+        queue.push({ kind: 'trail' });
+        break;
+      case 'KeyG':
+        queue.push({ kind: 'eraseNearest' });
+        break;
       case 'ArrowUp':
       case 'ArrowDown':
       case 'ArrowLeft':
@@ -158,64 +158,17 @@ export function createInput(target: HTMLElement): Input {
     if (!event.code && !jamo) held.clear();
   };
 
-  const onPointerDown = (event: PointerEvent): void => {
-    if (event.button === 2) {
-      queue.push({ kind: 'erase' });
-      return;
-    }
-    if (event.button !== 0) return;
-    dragging = true;
-    drag = [{ clientX: event.clientX, clientY: event.clientY }];
-    target.setPointerCapture(event.pointerId);
+  /** Focus loss must drop every held key, or the scout keeps walking while the tab is away. */
+  const onBlur = (): void => {
+    held.clear();
   };
-
-  const onPointerMove = (event: PointerEvent): void => {
-    pointer = { clientX: event.clientX, clientY: event.clientY };
-    if (!dragging) return;
-    const last = drag[drag.length - 1];
-    if (
-      last &&
-      Math.hypot(event.clientX - last.clientX, event.clientY - last.clientY) < DRAG_SPACING
-    ) {
-      return;
-    }
-    drag.push(pointer);
-  };
-
-  const onPointerUp = (event: PointerEvent): void => {
-    if (!dragging) return;
-    dragging = false;
-    if (target.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
-  };
-
-  const onWheel = (event: WheelEvent): void => {
-    queue.push({ kind: 'zoom', delta: Math.sign(event.deltaY) });
-    event.preventDefault();
-  };
-
-  const onContextMenu = (event: Event): void => event.preventDefault();
-  const onBlur = (): void => held.clear();
 
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
   window.addEventListener('blur', onBlur);
-  target.addEventListener('pointerdown', onPointerDown);
-  target.addEventListener('pointermove', onPointerMove);
-  target.addEventListener('pointerup', onPointerUp);
-  target.addEventListener('pointercancel', onPointerUp);
-  target.addEventListener('wheel', onWheel, { passive: false });
-  target.addEventListener('contextmenu', onContextMenu);
 
   return {
     movement() {
-      /*
-       * Arrow keys are bound alongside WASD.
-       *
-       * They were not, and a player pressing them got nothing at all — the browser scrolled the
-       * page instead, because nothing called `preventDefault` for them either. WASD is what a
-       * player used to games reaches for; the arrows are what everyone else reaches for, and there
-       * is no reason to make that a wrong guess.
-       */
       const up = held.has('KeyW') || held.has('ArrowUp');
       const down = held.has('KeyS') || held.has('ArrowDown');
       const rightKey = held.has('KeyD') || held.has('ArrowRight');
@@ -231,40 +184,18 @@ export function createInput(target: HTMLElement): Input {
       queue.length = 0;
       return out;
     },
-    get drag() {
-      return drag;
-    },
-    get dragging() {
-      return dragging;
-    },
-    endDrag() {
-      const out = drag;
-      drag = [];
-      return out;
-    },
-    get pointer() {
-      return pointer;
-    },
     releaseAll() {
       held.clear();
-      dragging = false;
-      drag = [];
     },
     dispose() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
-      target.removeEventListener('pointerdown', onPointerDown);
-      target.removeEventListener('pointermove', onPointerMove);
-      target.removeEventListener('pointerup', onPointerUp);
-      target.removeEventListener('pointercancel', onPointerUp);
-      target.removeEventListener('wheel', onWheel);
-      target.removeEventListener('contextmenu', onContextMenu);
       held.clear();
       queue.length = 0;
-      drag = [];
     },
   };
+
 }
 
 /** True when the run is in a state where world input should be ignored. */

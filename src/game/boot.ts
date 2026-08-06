@@ -4,7 +4,7 @@ import { t } from '../i18n';
 import { mm } from '../world/units';
 import { SIM_DT, createRun, logEvent } from '../colony/state';
 import { stepRun } from '../colony/step';
-import { createRoute, eraseRoute, type DrawnPoint } from '../colony/routes';
+import { eraseNearestRoute, sealTrail, startTrail } from '../colony/trail';
 import {
   beginClimb,
   claimFoothold,
@@ -49,7 +49,7 @@ export async function boot(): Promise<void> {
   if (document.fonts?.ready) await document.fonts.ready;
 
   const hud: Hud = createHud('hud');
-  const input: Input = createInput(canvas);
+  const input: Input = createInput();
   const audio: AudioBridge = createAudioBridge();
 
   /*
@@ -78,10 +78,6 @@ export async function boot(): Promise<void> {
 
   hud.showCurtain('help', session.run);
 
-  const ray = new THREE.Raycaster();
-  const plane = new THREE.Plane();
-  const hit = new THREE.Vector3();
-  const ndc = new THREE.Vector2();
 
   function start(target: HTMLCanvasElement, withSeed: number): Session {
     const run = createRun(withSeed);
@@ -97,68 +93,7 @@ export async function boot(): Promise<void> {
   }
 
   /** Screen point to a world position on the plane the scout is currently standing on. */
-  function toWorld(clientX: number, clientY: number, run: Run): THREE.Vector3 | null {
-    const rect = canvas.getBoundingClientRect();
-    ndc.set(
-      ((clientX - rect.left) / rect.width) * 2 - 1,
-      -((clientY - rect.top) / rect.height) * 2 + 1,
-    );
-    ray.setFromCamera(ndc, session.renderer.camera.camera);
-    const y = run.house.surfaces.get(run.scout.surface)?.y ?? 0;
-    plane.set(new THREE.Vector3(0, 1, 0), -y);
-    return ray.ray.intersectPlane(plane, hit) ? hit.clone() : null;
-  }
 
-  /**
-   * Turn a finished drag into a route.
-   *
-   * The nest is the claimed foothold nearest where the drag started and the source is the
-   * discovered resource nearest where it ended, both on the scout's surface. That is the reading a
-   * player intends when they drag from their nest to some food, and it never silently picks
-   * something they cannot see.
-   */
-  function commitDrag(run: Run, samples: readonly { clientX: number; clientY: number }[]): void {
-    if (samples.length < 2) return;
-    const points: DrawnPoint[] = [];
-    for (const sample of samples) {
-      const world = toWorld(sample.clientX, sample.clientY, run);
-      if (world) points.push({ surface: run.scout.surface, x: world.x, z: world.z });
-    }
-    if (points.length < 2) return;
-
-    const head = points[0]!;
-    const tail = points[points.length - 1]!;
-
-    let nest = '';
-    let nestDistance = mm(900);
-    for (const [id, state] of run.footholds) {
-      if (!state.claimed || state.damage >= 1) continue;
-      const site = run.house.footholds.get(id);
-      if (!site) continue;
-      const d = Math.hypot(site.at.x - head.x, site.at.z - head.z);
-      if (d < nestDistance) {
-        nestDistance = d;
-        nest = id;
-      }
-    }
-
-    let target = '';
-    let targetDistance = mm(900);
-    for (const [id, state] of run.resources) {
-      if (!state.found || state.remaining <= 0) continue;
-      const site = run.house.resources.get(id);
-      if (!site) continue;
-      const d = Math.hypot(site.at.x - tail.x, site.at.z - tail.z);
-      if (d < targetDistance) {
-        targetDistance = d;
-        target = id;
-      }
-    }
-
-    if (!nest || !target) return;
-    createRoute(run, nest, target, points);
-    run.idleFor = 0;
-  }
 
   /** What the scout could do right now, if anything. Drives the contextual prompt. */
   function currentPrompt(run: Run): PromptState | null {
@@ -234,6 +169,14 @@ export async function boot(): Promise<void> {
       if (run.status !== 'playing' || paused) continue;
 
       switch (action.kind) {
+        case 'trail':
+          // One key, two meanings, decided by whether a line is already being walked.
+          if (run.trail) sealTrail(run);
+          else startTrail(run);
+          break;
+        case 'eraseNearest':
+          eraseNearestRoute(run);
+          break;
         case 'broodHold': {
           run.colony.broodHold = !run.colony.broodHold;
           logEvent(
@@ -266,35 +209,13 @@ export async function boot(): Promise<void> {
         case 'adapt':
           chooseAdaptation(run, action.family);
           break;
-        case 'erase': {
-          // Erase the route whose nearest point is closest to the cursor.
-          const p = input.pointer;
-          if (!p) break;
-          const world = toWorld(p.clientX, p.clientY, run);
-          if (!world) break;
-          let best = '';
-          let bestDistance = mm(320);
-          for (const route of run.routes) {
-            for (const point of route.points) {
-              const d = Math.hypot(point.x - world.x, point.z - world.z);
-              if (d < bestDistance) {
-                bestDistance = d;
-                best = route.id;
-              }
-            }
-          }
-          if (best) eraseRoute(run, best);
-          break;
-        }
         case 'zoom':
           session.renderer.camera.zoom(action.delta * mm(180));
           break;
       }
     }
 
-    if (!input.dragging && input.drag.length > 0) {
-      commitDrag(run, input.endDrag());
-    }
+
 
     const blocked = paused || run.status !== 'playing' || hud.curtain === 'help';
     const move = blocked ? { x: 0, z: 0 } : input.movement();
@@ -355,9 +276,9 @@ export async function boot(): Promise<void> {
       /**
        * World position to CSS pixels.
        *
-       * Exposed so an automated playtest can drag between two things that actually exist rather
-       * than between arbitrary screen coordinates — the difference between testing route drawing
-       * and testing whether a blind drag happens to land on something.
+       * Kept for evidence capture and defect triage — it is how a screenshot harness answers "where
+       * on screen is the thing I am claiming something about". It no longer has anything to do with
+       * route drawing, which is walked with the keyboard.
        */
       project(x: number, y: number, z: number) {
         const v = new THREE.Vector3(x, y, z).project(session.renderer.camera.camera);

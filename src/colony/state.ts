@@ -427,6 +427,7 @@ export function createRun(seed: number): Run {
     },
     workers,
     routes: [],
+    trail: null,
     footholds,
     resources,
     regions,

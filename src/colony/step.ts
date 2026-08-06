@@ -3,6 +3,7 @@ import { updateDirector, updateEvidence, updateRoutines } from './household';
 import { checkGate, evaluateRun, updateColony, updateFinal, updateGateWork } from './progression';
 import { updateRoutes } from './routes';
 import { updateScout, type ScoutInput } from './scout';
+import { extendTrail } from './trail';
 import { updateWorkers } from './workers';
 import type { Run } from './types';
 
@@ -57,6 +58,16 @@ export function stepRun(run: Run, dt: number, input: StepInput): StepResult {
   // 4 — consequences.
   updateEvidence(run, dt);
   const final = updateFinal(run, dt);
+  /*
+   * The pheromone line records itself, inside the fixed step.
+   *
+   * It used to be sampled from the render loop, which meant `tests/bot.ts` — which drives `stepRun`
+   * directly and never renders — could not lay a route by walking at all. Sampling here is also the
+   * honest place: the recorded line is the line the scout walked, at the simulation's own rate,
+   * independent of how fast anyone happens to be drawing.
+   */
+  extendTrail(run);
+
 
   // 5 — read the state back for the player.
   run.idleFor += dt;
