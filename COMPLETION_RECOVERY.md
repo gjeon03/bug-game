@@ -103,3 +103,97 @@ operations — not multiplied prices, slowed workers, or waiting. The measured s
 the first four gates all fall inside ~2 minutes while the bedroom phase carries the rest.
 
 Then: room identity. Four of five regions have never been rendered to a human reviewer.
+
+---
+
+# Session 2 — measured findings
+
+Everything below was produced by instrumentation on a fixed seed, not by reading code and forming an
+opinion. Where a change was reverted, the numbers that justified reverting it are kept.
+
+## 6. Breeding build: fixed and confirmed
+
+`assignRoutes` allocated workers permanently (only `state === 'idle'` was ever reconsidered) and
+measured route load normalised by length, so a short route read as full at one worker. The colony
+died of thirst beside full water sources — `driedUp: 0`, zero threats, every region at alert 0.
+
+Need-based `routeAppeal` plus releasing workers on delivery. Seed 20260805, brood:
+**`status=won end=6.4min`, peak population 53, 452 deliveries, 16 lost.** Allocation now responds —
+moisture 1.1 at t=270 → 20 workers assigned → 35.8 by t=330.
+
+## 7. `findPath` was 99.3 % of simulation CPU
+
+Wrapping each subsystem of `stepRun`: `updateWorkers` 99.2 % of the step, and inside it `findPath`
+99.3 % of wall time — **20,624 calls at 8.619 ms each**. Not a call-frequency problem (0.82/step); a
+single search cost 8.6 ms. The frontier was fully re-sorted on every expansion and then `shift()`ed.
+
+Binary heap. Same seed, **identical call count 20,624** — the search is unchanged, only the cost of
+selecting the minimum:
+
+| | before | after |
+| --- | --- | --- |
+| `findPath` per call | 8.619 ms | **2.471 ms** |
+| whole sim step | 7.106 ms | **2.071 ms** |
+| 420 s run, wall | 179 s | **52 s** |
+
+The old code carried a comment predicting exactly this: *"Simplicity wins until it does not."*
+
+## 8. `region.traffic` is not a measure — and the fix is parked
+
+Traffic gained a flat `0.05/s` per worker and shed a flat `0.12/s`, clamped at 14. Over a 45-minute
+run **every unlocked region reported `traffic 14.0, busy 1.00` at every single sample**: three
+workers out-earn the decay, so it pins at the cap immediately. It is a boolean spelled as a float,
+and every term downstream reads a constant.
+
+Balancing gain against proportional decay makes equilibrium traffic equal the worker count. That is
+strictly more correct — and it changes balance, because the game was tuned around the constant. It
+is **reverted**, with the reason recorded rather than the change quietly kept.
+
+## 9. Household escalation is real, unreachable, and blocked on a design decision
+
+Evidence decay is divided by colony population (`3 + population * 0.35`). Dividing by population
+means **a bigger colony makes every room calmer** — the inverse of the game's premise. Measured
+consequence: 53 workers and 452 deliveries never pushed any region above **alert 1**, so `move`,
+`trap`, `vacuum` and `spray` — four of seven authored responses — are content no player has seen.
+
+Switching to an absolute reference does exactly what the analysis predicts: kitchen reaches evidence
+0.65 and **alert 3**. It also breaks the game — no gate past the third opens and the objective
+reports `blocker.food` continuously from t=120 to the end of a 45-minute run.
+
+The cause is structural, which is why this is parked rather than nudged. Breeding in `updateColony`
+is **automatic and unconditional**: every surplus is spent on a worker as soon as it exists, so the
+colony can never bank a gate cost unless income exceeds upkeep plus brood. A harsher household
+pushes income under that line permanently. **Escalation and progression compete for one surplus and
+the player has no lever over either.** Landing it requires giving the player a way to choose growth
+over expansion — a brood hold, or a separate reserve for gate work. That is a design decision to be
+measured, not guessed.
+
+## 10. Correction: the black wedge was my own instrument
+
+`bedroom-wide.png` was 28.0 % pure `srgb(0,0,0)` and `bathroom-wide.png` 47.7 %. I treated it as a
+lighting defect. It was not: `rooms.mjs` shot at 4200–5200 mm while the camera is clamped to
+`CAM_NEAR_MM` 900 – `CAM_FAR_MM` 3200. Those frames sit **outside the room's walls**, photographing
+unlit exteriors against the void from a vantage point no player can reach.
+
+Recorded because it is the failure mode this whole process exists to prevent — a defect invented by
+the measuring instrument, which I nearly spent an hour "fixing".
+
+**A constraint this exposes:** at 35 mm scale inside a 3.2 m room, *no* legal camera position sees a
+whole room. There is no establishing shot in this game. The "identify each room without HUD labels"
+gate therefore has to be judged from characteristic detail at floor level, or it certifies something
+the build cannot deliver. Captures are now taken at 1900 mm (default) and 3200 mm (max zoom-out).
+
+## 11. Still open
+
+- **Run length** is the headline gate and is **not met**: 6.4 min against a 25–35 min target. §9 is
+  the blocking decision.
+- `run.test.ts` (`pnpm test:slow`) asserts `minutes > 10` and therefore **already failed on the
+  inherited build** — a 6.4-minute victory cannot satisfy it. It is not a regression from this
+  session's changes, and it is not passing either.
+- `bathroom-wide` remains **47.7 % black at the legal 3200 mm**, unlike the other four rooms. That
+  one is a real defect and is unexplained.
+- Showcase captures are over-exposed (hallway mean luminance 0.98 ≈ white); the `showcase` flag
+  forcing every routine light on is the likely cause.
+- Assignment churn: ~49 `findPath` calls per second for 39 workers is still more re-planning than
+  the design needs, even though each call is now cheap.
+- No 25–35 minute human-played victory exists. No independent critic pass has been re-run.
