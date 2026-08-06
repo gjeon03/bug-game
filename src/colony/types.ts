@@ -326,6 +326,9 @@ export interface Run {
 
   /** Seconds since the player last did anything that changed state. Drives context guidance. */
   idleFor: number;
+
+  /** Seconds until the household may mount another whole-home sweep. */
+  sweepCooldown: number;
 }
 
 export type { NavPoint };

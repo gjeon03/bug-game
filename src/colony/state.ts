@@ -435,6 +435,8 @@ export function createRun(seed: number): Run {
     nextThreatId: 0,
     nextRouteId: 0,
     idleFor: 0,
+    // The first sweep can never land before the colony has had a chance to establish itself.
+    sweepCooldown: 90,
   };
 
   recomputeCapacity(run);

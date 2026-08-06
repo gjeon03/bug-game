@@ -349,6 +349,22 @@ export interface FinalState {
 }
 
 /**
+ * Minimum seconds between whole-home sweeps.
+ *
+ * `updateFinal` used to roll a per-tick probability with no cooldown at all, which at 60 Hz meant a
+ * sweep roughly every thirteen seconds. Measured on seed 4242: **125 sweeps in one run**. That is a
+ * metronome, not a finale — the household emptied its arsenal continuously and the event the win
+ * screen describes had no weight whatsoever.
+ *
+ * A sweep is the largest thing the household does. It has to be rare enough to be an event and
+ * spaced enough for the colony to actually rebuild between them, which is the whole recovery loop.
+ */
+const SWEEP_COOLDOWN = 110;
+
+/** Each sweep after the first hits harder — the household learns. */
+const SWEEP_ESCALATION = 0.18;
+
+/**
  * The endgame.
  *
  * Establishing a bedroom foothold starts a whole-home response whose severity is drawn from the
@@ -371,14 +387,20 @@ export function updateFinal(run: Run, dt: number): FinalState {
     unlocked++;
     total += region.evidence;
   }
-  const pressure = Math.min(1, total / Math.max(1, unlocked) + run.stats.sightings * 0.03);
+  const pressure = Math.min(1, total / Math.max(1, unlocked) + run.stats.sightings * 0.01);
 
-  if (!run.rng.bool(dt * 0.06 * (0.3 + pressure))) return { pressure, struck: false };
+  run.sweepCooldown -= dt;
+  if (run.sweepCooldown > 0) return { pressure, struck: false };
+
+  // Pressure decides HOW SOON within the window, never how often — the cooldown is the floor.
+  if (!run.rng.bool(dt * 0.5 * (0.15 + pressure))) return { pressure, struck: false };
 
   const target = exterminationTargets(run)[0];
   if (!target) return { pressure, struck: false };
 
-  strikeFootholds(run, target, 0.34 * (0.5 + pressure));
+  run.sweepCooldown = SWEEP_COOLDOWN;
+  const severity = 0.3 + pressure * 0.35 + run.stats.exterminationSweeps * SWEEP_ESCALATION;
+  strikeFootholds(run, target, Math.min(0.9, severity));
   recomputeCapacity(run);
   run.stats.exterminationSweeps++;
   logEvent(run, 'log.extermination', 'danger', { region: `region.${target}` });
