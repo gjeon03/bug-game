@@ -39,6 +39,20 @@ export interface Surface {
   /** Extent in XZ, world units. */
   readonly bounds: Rect;
   /**
+   * Where this surface is physically held up, if its footprint is not the whole of `bounds`.
+   *
+   * A surface is a rectangle because a grid is a rectangle. Real furniture is often not: a worktop
+   * turns a corner, a shelf is an L, a windowsill is a strip. When the two disagree the difference
+   * is walkable emptiness — and at 880 mm above the floor that means the scout strides through mid
+   * air. The kitchen worktop shipped with 3.1 m by 1.2 m of exactly that, and a player found it
+   * inside a minute by climbing up and walking inward.
+   *
+   * Declaring the footprint makes the grid derive the truth instead of trusting the bounding box:
+   * anything outside the union of these rectangles is not walkable, by construction. Omit it only
+   * for a surface that genuinely fills its own bounds — a floor, or a single unbroken slab.
+   */
+  readonly support?: readonly Rect[];
+  /**
    * How readable this surface is to the household. Multiplies the exposure of every cell on it.
    * A worktop is lit and scanned constantly; the void under the sink never is.
    */

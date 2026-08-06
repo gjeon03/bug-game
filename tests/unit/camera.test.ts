@@ -64,9 +64,10 @@ describe('WASD moves the scout the way the player sees it', () => {
 
   it('A moves the scout to the LEFT of the screen', () => {
     const d = screenDelta(0, -1);
-    expect(d.x, `A produced screen dx=${d.x.toFixed(3)}, expected negative (leftward)`).toBeLessThan(
-      -0.02,
-    );
+    expect(
+      d.x,
+      `A produced screen dx=${d.x.toFixed(3)}, expected negative (leftward)`,
+    ).toBeLessThan(-0.02);
   });
 
   it('W moves the scout AWAY from the viewer, up the screen', () => {
@@ -79,9 +80,10 @@ describe('WASD moves the scout the way the player sees it', () => {
 
   it('S moves the scout TOWARD the viewer, down the screen', () => {
     const d = screenDelta(-1, 0);
-    expect(d.y, `S produced screen dy=${d.y.toFixed(3)}, expected negative (down-screen)`).toBeLessThan(
-      -0.02,
-    );
+    expect(
+      d.y,
+      `S produced screen dy=${d.y.toFixed(3)}, expected negative (down-screen)`,
+    ).toBeLessThan(-0.02);
   });
 
   /*

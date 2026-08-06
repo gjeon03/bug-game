@@ -61,6 +61,17 @@ export const KITCHEN: RegionSpec = {
       region: 'kitchen',
       y: mm(COUNTER_H),
       bounds: { x0: mm(X0), z0: mm(Z0), x1: mm(X1), z1: mm(EAST_RUN_Z1) },
+      /*
+       * The worktop is an L, not the rectangle its bounds describe: a north run across the full
+       * width, and an east run turning the corner. Declaring both means the grid blocks the inside
+       * of the corner by construction, instead of leaving 3.1 m by 1.2 m of walkable mid-air 880 mm
+       * above the floor — which is what shipped, and what a player found by climbing up and walking
+       * inward.
+       */
+      support: [
+        { x0: mm(X0), z0: mm(Z0), x1: mm(X1), z1: mm(NORTH_FACE) },
+        { x0: mm(EAST_FACE), z0: mm(NORTH_FACE), x1: mm(X1), z1: mm(EAST_RUN_Z1) },
+      ],
       exposure: 1.5,
       labelKey: 'surface.kitchen.counter',
     },

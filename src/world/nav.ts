@@ -96,6 +96,30 @@ export function buildGrid(surface: Surface, blockers: readonly Rect[]): SurfaceG
     }
   }
 
+  /*
+   * Anything outside the declared footprint is not walkable.
+   *
+   * Done before the exposure fill so the two cannot disagree. Cells are tested at their CENTRE, the
+   * same convention the blocker rasteriser uses, so a footprint edge and a blocker edge land on the
+   * same cell rather than a half-cell apart.
+   */
+  if (surface.support && surface.support.length > 0) {
+    for (let r = 0; r < rows; r++) {
+      const cz = z0 + (r + 0.5) * cell;
+      for (let c = 0; c < cols; c++) {
+        const cx = x0 + (c + 0.5) * cell;
+        let held = false;
+        for (const rect of surface.support) {
+          if (cx >= rect.x0 && cx <= rect.x1 && cz >= rect.z0 && cz <= rect.z1) {
+            held = true;
+            break;
+          }
+        }
+        if (!held) flags[r * cols + c] = BLOCKED;
+      }
+    }
+  }
+
   // The surface's own multiplier is the floor of its exposure: a worktop is never as safe as the
   // void under it, whatever else is or is not happening in the room.
   const base = Math.min(1, surface.exposure * 0.34);

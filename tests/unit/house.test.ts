@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GATES, buildHouse, buildNav } from '../../src/world/house';
-import { findPath, nearestWalkable } from '../../src/world/nav';
-import { toMm } from '../../src/world/units';
+import { findPath, isWalkable, nearestWalkable } from '../../src/world/nav';
+import { mm, toMm } from '../../src/world/units';
 import type { RegionId } from '../../src/world/types';
 
 /**
@@ -231,5 +231,128 @@ describe('the apartment is dense enough to read as somewhere people live', () =>
     for (const key of keys) {
       expect(key, `"${key}" looks like prose, not a catalog key`).toMatch(/^[a-z][a-zA-Z0-9.]*$/);
     }
+  });
+});
+
+/**
+ * A raised surface must not be walkable where there is nothing under it.
+ *
+ * `kitchen.counter` is authored as one rectangle, but the worktop it represents is an L: a north run
+ * across the full width, and an east run turning the corner. The inside of the L — 3.1 m by 1.2 m of
+ * it — was walkable at y = 880 mm with nothing beneath, so climbing to the worktop and walking
+ * inward left the scout striding through mid-air over the floor. A player found it in about a
+ * minute ("싱크대 위로 올라가서 돌아다니니 그냥 떠서 돌아다녀졌어"); no automated gate did.
+ *
+ * The general rule this encodes: for every surface above y = 0, every walkable cell has to sit over
+ * authored geometry. Bounds are a cheap rectangle, and a cheap rectangle is a lie for any worktop
+ * that turns a corner.
+ */
+describe('raised surfaces are only walkable where something holds them up', () => {
+  const COUNTER_H = 880;
+  const NORTH_FACE = -2640;
+  const EAST_FACE = 3140;
+
+  it('the inside of the kitchen worktop L is not walkable', () => {
+    const house = buildHouse();
+    const nav = buildNav(house, new Set());
+
+    // Dead centre of the void: past the north run's face, west of the east run.
+    const voidSamples: readonly (readonly [number, number])[] = [
+      [1500, -2000],
+      [800, -1600],
+      [2500, -1800],
+      [2000, -2400],
+      [400, -2500],
+      // Just past the north run's face — the rasteriser rounds conservatively, so this is where a
+      // one-cell strip of floating would survive if the blocker were authored short.
+      [1500, -2560],
+      [1500, -1450],
+    ];
+    for (const [x, z] of voidSamples) {
+      expect(
+        isWalkable(nav, 'kitchen.counter', mm(x), mm(z)),
+        `counter should be void at (${x}, ${z}) — nothing is under it`,
+      ).toBe(false);
+    }
+  });
+
+  it('the worktop itself is still walkable on both runs', () => {
+    const house = buildHouse();
+    const nav = buildNav(house, new Set());
+
+    // North run, well inside its 660 mm depth.
+    expect(isWalkable(nav, 'kitchen.counter', mm(1200), mm(-2900)), 'north run').toBe(true);
+    // East run, past the corner.
+    expect(isWalkable(nav, 'kitchen.counter', mm(3500), mm(-2000)), 'east run').toBe(true);
+    void COUNTER_H;
+    void NORTH_FACE;
+    void EAST_FACE;
+  });
+});
+
+/**
+ * Every raised surface must say where it is held up — or be on the record as not yet checked.
+ *
+ * This is the general form of the worktop defect. A surface is a rectangle because a grid is a
+ * rectangle; furniture usually is not. Wherever the two disagree the difference is walkable
+ * emptiness, and above the floor that reads as the scout walking on air.
+ *
+ * The kitchen is the region under active work, so its surfaces must declare `support`. The other
+ * regions are listed explicitly rather than skipped silently: this test is the record that they
+ * have NOT been verified, and it fails the moment someone adds a raised surface without deciding.
+ */
+describe('raised surfaces declare their footprint', () => {
+  /** Raised surfaces outside the kitchen, not yet audited. Shrink this list; never grow it. */
+  const UNVERIFIED: ReadonlySet<string> = new Set([
+    'hallway.shoetop',
+    'living.sofa.seat',
+    'living.table.top',
+    'living.tvstand.top',
+    'bathroom.pipevoid',
+    'bathroom.basin',
+    'bathroom.shelf',
+    'bathroom.cistern',
+    'bathroom.tray',
+    'bedroom.bed',
+    'bedroom.bedside',
+    'bedroom.sill',
+  ]);
+
+  it('kitchen raised surfaces declare support, and the debt list is honest', () => {
+    const house = buildHouse();
+    const missing: string[] = [];
+    const unknown: string[] = [];
+
+    for (const surface of house.surfaces.values()) {
+      if (surface.y <= 0) continue;
+      if (surface.support && surface.support.length > 0) continue;
+      if (surface.region === 'kitchen') missing.push(surface.id);
+      else if (!UNVERIFIED.has(surface.id)) unknown.push(surface.id);
+    }
+
+    expect(missing, 'kitchen raised surfaces without a declared footprint').toEqual([]);
+    expect(
+      unknown,
+      'a raised surface appeared that is neither verified nor on the debt list — decide which',
+    ).toEqual([]);
+  });
+
+  it('a declared footprint actually removes area, or it is not saying anything', () => {
+    const house = buildHouse();
+    const counter = house.surfaces.get('kitchen.counter');
+    expect(counter?.support?.length ?? 0).toBeGreaterThan(1);
+
+    const nav = buildNav(house, new Set());
+    const grid = nav.grids.get('kitchen.counter');
+    expect(grid).toBeDefined();
+    if (!grid) return;
+
+    let walkable = 0;
+    for (let i = 0; i < grid.flags.length; i++) if (grid.flags[i] === 0) walkable++;
+    const fraction = walkable / grid.flags.length;
+    // The L covers appreciably less than its bounding box; if this ever reaches ~1 the footprint
+    // has stopped constraining anything.
+    expect(fraction).toBeLessThan(0.75);
+    expect(fraction).toBeGreaterThan(0.2);
   });
 });
