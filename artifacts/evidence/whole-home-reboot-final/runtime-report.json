@@ -37,11 +37,11 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 163
+    "frame": 165
   },
   "afterRoute": {
     "status": "playing",
-    "time": 4,
+    "time": 5,
     "chapter": "kitchen",
     "population": 2,
     "capacity": 9,
@@ -76,7 +76,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 427
+    "frame": 431
   },
   "working": {
     "status": "playing",
@@ -85,9 +85,9 @@
     "population": 3,
     "capacity": 9,
     "food": 4,
-    "moisture": 54,
+    "moisture": 53,
     "routes": 2,
-    "deliveries": 18,
+    "deliveries": 17,
     "openGates": [],
     "claimed": 1,
     "objectiveTitle": "chapter.kitchen",
@@ -104,8 +104,8 @@
       "geometries": 67,
       "materials": 228,
       "textures": 21,
-      "drawCalls": 119,
-      "triangles": 32260,
+      "drawCalls": 121,
+      "triangles": 32420,
       "lights": 6,
       "occluders": 98,
       "occluderTests": 6,
@@ -115,7 +115,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 2556
+    "frame": 2561
   },
   "restarts": [
     {
