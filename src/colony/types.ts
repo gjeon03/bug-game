@@ -269,6 +269,22 @@ export interface Colony {
   adaptations: Adaptation[];
   /** Adaptation points earned by chapter completion, spent on a family. */
   adaptationPoints: number;
+  /**
+   * Player-held pause on breeding. While true, surplus banks instead of becoming workers.
+   *
+   * Breeding used to be automatic and unconditional, which meant growth and expansion competed for
+   * one surplus with no lever over either: every unit of food above `BROOD_FOOD_PER_WORKER` became
+   * a worker the instant it existed, so a colony could not save for a gate unless income exceeded
+   * upkeep plus brood. Measured consequence — with a household aggressive enough to reach alert 3,
+   * the objective reported `blocker.food` continuously from t=120 to the end of a 45-minute run and
+   * no gate past the third ever opened. The colony was not poor; it was spending faster than it
+   * could decide not to.
+   *
+   * This is the decision that makes "prepare an expansion" a real act rather than a wait. Holding
+   * costs growth and, because the colony stays small, it also leaves less evidence — which is the
+   * cautious build the acceptance list asks to be distinguishable from the aggressive one.
+   */
+  broodHold: boolean;
 }
 
 export interface RunEvent {

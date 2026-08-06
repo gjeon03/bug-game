@@ -413,6 +413,7 @@ export function createRun(seed: number): Run {
       starvedFor: 0,
       adaptations: [],
       adaptationPoints: 0,
+    broodHold: false,
     },
     workers,
     routes: [],

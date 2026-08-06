@@ -300,10 +300,19 @@ export function updateEvidence(run: Run, dt: number): void {
      * pushes income below that line permanently. Escalation and progression are competing for the
      * same surplus and the player has no lever over either.
      *
-     * Landing this needs the player to be able to *choose* growth over expansion — a brood hold, or
-     * a gate cost drawn from a separate reserve — and that decision has to be designed and measured,
-     * not guessed at. Until then the population-scaled denominator stays, and the four unreachable
-     * response tiers stay unreachable. Recorded honestly rather than reported as done.
+     * The missing lever now exists — `colony.broodHold`, the H key — and it does unblock the stall:
+     * with the absolute reference AND the hold available, the brood build opens all five gates
+     * instead of stopping at three. It still does not win. Measured at seed 20260805 over the full
+     * 50-minute cap: 5 gates, peak population 74, 1,457 deliveries, and **19 extermination sweeps**.
+     *
+     * That is the next defect in the chain, and it is in `updateFinal`, not here. Sweeps have a
+     * 110 s cooldown, severity escalating 0.18 each, and NO terminal condition — so past about ten
+     * minutes the endgame is a metronome that destroys footholds faster than the colony can retake
+     * them, and the four-region victory check can never all be true at once. The finale has to
+     * resolve — succeed or fail — before escalation is worth landing.
+     *
+     * So the population-scaled denominator stays for now and the four response tiers stay
+     * unreachable. A short run that closes beats a long one that cannot.
      */
     const scale = 3 + run.colony.population * 0.35;
     const busy = Math.min(1, region.traffic / scale);

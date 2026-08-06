@@ -315,6 +315,13 @@ export function updateColony(run: Run, dt: number): void {
     return;
   }
 
+  // Held by the player: bank the surplus instead of spending it on a body. Upkeep is still charged
+  // above, so holding is a real cost and not a free pause.
+  if (colony.broodHold) {
+    colony.broodProgress = 0;
+    return;
+  }
+
   if (colony.food < BROOD_FOOD_PER_WORKER || colony.moisture < BROOD_MOISTURE_PER_WORKER) {
     colony.broodProgress = Math.max(0, colony.broodProgress - dt * 0.1);
     return;

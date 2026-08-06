@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import '../ui/styles.css';
 import { t } from '../i18n';
 import { mm } from '../world/units';
-import { SIM_DT, createRun } from '../colony/state';
+import { SIM_DT, createRun, logEvent } from '../colony/state';
 import { stepRun } from '../colony/step';
 import { createRoute, eraseRoute, type DrawnPoint } from '../colony/routes';
 import {
@@ -234,6 +234,16 @@ export async function boot(): Promise<void> {
       if (run.status !== 'playing' || paused) continue;
 
       switch (action.kind) {
+        case 'broodHold': {
+          run.colony.broodHold = !run.colony.broodHold;
+          logEvent(
+            run,
+            run.colony.broodHold ? 'log.broodHold.on' : 'log.broodHold.off',
+            'info',
+            {},
+          );
+          break;
+        }
         case 'interact': {
           if (run.scout.working) {
             stopGateWork(run);

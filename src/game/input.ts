@@ -22,6 +22,7 @@ export type Action =
   | { readonly kind: 'dismiss' }
   | { readonly kind: 'adapt'; readonly family: AdaptationFamily }
   | { readonly kind: 'erase' }
+  | { readonly kind: 'broodHold' }
   | { readonly kind: 'zoom'; readonly delta: number };
 
 const FAMILY_KEYS: Readonly<Record<string, AdaptationFamily>> = {
@@ -82,6 +83,9 @@ export function createInput(target: HTMLElement): Input {
         break;
       case 'KeyR':
         queue.push({ kind: 'restart' });
+        break;
+      case 'KeyH':
+        queue.push({ kind: 'broodHold' });
         break;
       default: {
         const family = FAMILY_KEYS[event.code];

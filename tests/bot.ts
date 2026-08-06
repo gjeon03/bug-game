@@ -75,6 +75,20 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
 
       if (run.colony.adaptationPoints > 0) chooseAdaptation(run, options.build);
 
+      /*
+       * Hold brood while the next gate is waiting on stores.
+       *
+       * A human reads `blocker.food` on the objective panel and stops feeding the nursery so the
+       * stockpile can actually reach the number. Without this the harness breeds every surplus into
+       * a worker and can never satisfy a gate it is one delivery short of — which is exactly the
+       * stall that made escalation unlandable. This is the same toggle the H key drives; the bot
+       * has no privileged access.
+       */
+      const waitingOnStores =
+        run.objective.blockerKey === 'blocker.food' ||
+        run.objective.blockerKey === 'blocker.moisture';
+      run.colony.broodHold = waitingOnStores;
+
       // Re-planning routes is the single most expensive thing this harness does — an A* per
       // (foothold, source) pair. Only do it when the world has actually changed shape, which is
       // also when a human would look at their network again.

@@ -216,7 +216,8 @@ function renderStores(target: Slot, run: Run): void {
       `<div class="stat population"><span class="label">${esc(t('hud.population'))}</span>` +
       `${bar(c.population, Math.max(1, c.capacity))}` +
       `<span class="value">${c.population}/${c.capacity}</span></div>` +
-      (atCap ? `<div class="blocker">${esc(t('hud.stores'))}</div>` : ''),
+      (atCap ? `<div class="blocker">${esc(t('hud.stores'))}</div>` : '') +
+      (c.broodHold ? `<div class="blocker">${esc(t('hud.broodHold'))}</div>` : ''),
   );
 }
 
@@ -295,6 +296,7 @@ const HELP_LINES: readonly string[] = [
   'help.interact',
   'help.traverse',
   'help.adapt',
+  'help.broodHold',
   'help.pause',
   'help.restart',
 ];

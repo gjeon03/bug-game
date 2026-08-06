@@ -281,6 +281,10 @@ export const ko = {
   'help.traverse': 'Space — 전선·배관 타고 오르내리기',
   'help.adapt': '1 2 3 — 적응 선택',
   'help.pause': 'Esc — 잠시 멈춤',
+  'log.broodHold.on': '번식 보류 — 잉여를 비축한다',
+  'log.broodHold.off': '번식 재개',
+  'help.broodHold': 'H — 번식 보류/재개',
+  'hud.broodHold': '번식 보류',
   'help.restart': 'R — 다시 시작',
   'help.dismiss': '아무 키나 눌러 시작',
   'help.intro':

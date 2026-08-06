@@ -197,3 +197,46 @@ the build cannot deliver. Captures are now taken at 1900 mm (default) and 3200 m
 - Assignment churn: ~49 `findPath` calls per second for 39 workers is still more re-planning than
   the design needs, even though each call is now cheap.
 - No 25–35 minute human-played victory exists. No independent critic pass has been re-run.
+
+## 12. The brood hold exists, and it moved the blocker one link down the chain
+
+§9 said the missing piece was a way for the player to choose growth over expansion. That now exists:
+`colony.broodHold`, toggled with **H**, surfaced in the HUD and the help sheet, with Korean strings
+in the catalog. The bot uses the same public toggle — it holds brood whenever the objective reports
+`blocker.food` or `blocker.moisture`, which is what a human reading that panel would do.
+
+It works, in the sense that it does exactly what §9 predicted. With the absolute evidence reference
+**and** the hold available, the brood build stops stalling at three gates and **opens all five**.
+
+It still does not win. Seed 20260805, full 50-minute cap:
+
+| | value |
+| --- | --- |
+| status | `playing` — cap reached, never resolved |
+| gates opened | 5 of 5 |
+| peak population | 74 |
+| deliveries | 1,457 |
+| **extermination sweeps** | **19** |
+| workers lost | 116 |
+| longest plateau | 12.6 s (inside the 45 s gate) |
+
+**The next defect is in `updateFinal`, not in the evidence model.** A sweep has a 110 s cooldown,
+severity escalating `SWEEP_ESCALATION` 0.18 per sweep, and *no terminal condition*. Nineteen sweeps
+in one run is the same metronome failure recorded earlier at 125 sweeps, just slower — past roughly
+ten minutes the endgame destroys footholds faster than the colony can retake them, so the
+four-region victory check in `evaluateRun` can never be simultaneously true.
+
+**The finale has to resolve — win or lose — before harder escalation is worth landing.** Ordering
+matters here: a longer run that cannot close is worse than a short one that can, so the
+population-scaled denominator stays and the four unreachable response tiers stay unreachable until
+the endgame terminates.
+
+Sequence for whoever picks this up:
+
+1. Give `updateFinal` a terminal condition — a bounded campaign (N waves, then the household gives
+   up or the colony is destroyed), not an unbounded timer.
+2. Re-land the absolute evidence reference from §9. The brood hold already removes its stall.
+3. Only then tune length toward 25–35 minutes.
+
+The lever is committed and inert under current tuning: with the population-scaled household,
+`blocker.food` is rare, so the hold rarely engages and the shipped balance is unchanged.
