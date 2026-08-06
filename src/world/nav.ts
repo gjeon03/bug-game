@@ -237,6 +237,20 @@ export function nearestWalkable(
 interface OpenNode {
   readonly key: number;
   readonly f: number;
+  /**
+   * Insertion order, used only to break ties in `f`.
+   *
+   * `Array.prototype.sort` is required to be stable, so the linear frontier this replaced always
+   * popped the EARLIEST-inserted node among equals. A bare binary heap does not: it returns some
+   * minimum, not the first one. On a uniform grid huge numbers of nodes share an `f`, so dropping
+   * the tiebreak silently re-routes workers along different paths of identical cost — through cells
+   * with different exposure. Measured on seed 20260805 the brood build went from winning at 6.4 min
+   * with 16 workers lost to never finishing with **346 lost**, on a change advertised as pure
+   * optimisation. The call count matched exactly, which is precisely why it looked safe.
+   *
+   * With the counter the pop order is the old order, node for node.
+   */
+  readonly seq: number;
 }
 
 /**
@@ -253,8 +267,19 @@ interface OpenNode {
  * A heap gives the same node in O(log F). Nothing about the search changes — same nodes, same
  * order, same result — so this is the cost of asking, not a behavioural change.
  */
+/** Strict ordering: cheaper `f` first, and among equals the one inserted earlier. */
+function cheaper(a: OpenNode, b: OpenNode): boolean {
+  return a.f === b.f ? a.seq < b.seq : a.f < b.f;
+}
+
 class OpenHeap {
   private readonly items: OpenNode[] = [];
+  private counter = 0;
+
+  /** Stamp insertion order here so no call site has to remember to. */
+  add(key: number, f: number): void {
+    this.push({ key, f, seq: this.counter++ });
+  }
 
   get size(): number {
     return this.items.length;
@@ -266,7 +291,7 @@ class OpenHeap {
     let i = items.length - 1;
     while (i > 0) {
       const parent = (i - 1) >> 1;
-      if (items[parent]!.f <= items[i]!.f) break;
+      if (cheaper(items[parent]!, items[i]!)) break;
       [items[parent], items[i]] = [items[i]!, items[parent]!];
       i = parent;
     }
@@ -283,8 +308,8 @@ class OpenHeap {
         const left = i * 2 + 1;
         const right = left + 1;
         let small = i;
-        if (left < items.length && items[left]!.f < items[small]!.f) small = left;
-        if (right < items.length && items[right]!.f < items[small]!.f) small = right;
+        if (left < items.length && cheaper(items[left]!, items[small]!)) small = left;
+        if (right < items.length && cheaper(items[right]!, items[small]!)) small = right;
         if (small === i) break;
         [items[small], items[i]] = [items[i]!, items[small]!];
         i = small;
@@ -360,7 +385,7 @@ export function findPath(
   gScore.set(startKey, 0);
 
   const open = new OpenHeap();
-  open.push({ key: startKey, f: heuristic(startCell.point, goalCell.point) });
+  open.add(startKey, heuristic(startCell.point, goalCell.point));
 
   let expansions = 0;
   let bestKey = startKey;
@@ -408,7 +433,7 @@ export function findPath(
         bestH = h;
         bestKey = nKey;
       }
-      open.push({ key: nKey, f: tentative + h });
+      open.add(nKey, tentative + h);
     }
 
     // Climbs. A link is only usable from the cell it physically occupies.
@@ -433,7 +458,7 @@ export function findPath(
       cameFrom.set(nKey, current.key);
       cameVia.set(nKey, link.id);
       surfaceOf.set(nKey, other);
-      open.push({ key: nKey, f: tentative + heuristic(landing.point, goalCell.point) });
+      open.add(nKey, tentative + heuristic(landing.point, goalCell.point));
     }
   }
 

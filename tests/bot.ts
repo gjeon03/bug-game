@@ -87,7 +87,17 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
       const waitingOnStores =
         run.objective.blockerKey === 'blocker.food' ||
         run.objective.blockerKey === 'blocker.moisture';
-      run.colony.broodHold = waitingOnStores;
+      /*
+       * Only once the colony is big enough to be worth protecting.
+       *
+       * Holding on the bare `blocker.food` signal strangled the run: early on a gate is almost
+       * always short of stores, so the harness held brood from the first minute and the brood build
+       * — the specialization whose entire identity is growth — peaked at 19 workers instead of 53
+       * and never finished a 50-minute run. Growth IS the correct early play; the hold only becomes
+       * correct once there are enough bodies that another mouth costs more than it earns. Twelve is
+       * the population the victory check itself asks for.
+       */
+      run.colony.broodHold = waitingOnStores && run.colony.population >= 12;
 
       // Re-planning routes is the single most expensive thing this harness does — an A* per
       // (foothold, source) pair. Only do it when the world has actually changed shape, which is

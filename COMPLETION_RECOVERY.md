@@ -28,7 +28,7 @@ everything below was re-checked against the actual build on this branch.
 | # | Reported | Reproduced? | Actual finding |
 | --- | --- | --- | --- |
 | 1 | Run is ~9.7 min, not 25–35 | **YES** | shadow won 9.7 min; brood never finished |
-| 2 | Breeding build cannot complete | **YES — and root cause now found** | see §3 |
+| 2 | Breeding build cannot complete | **YES — still open.** One root cause found and fixed (§3); the build still does not complete through `tests/bot.ts` — see the retraction in §6 |
 | 3 | Rooms unreadable without HUD labels | **YES** | only the kitchen has ever been seen; four regions never rendered to a human |
 | 4 | Critics FAIL, blockers open | **PARTLY OBSOLETE** | of 14 blockers, 10 were closed with re-measurements last session; the remaining live ones are room identity, run length, and the brood build |
 | 5 | No proof of a full kitchen→bedroom run | **NO — this is obsolete** | shadow seed 4242 reaches all four main regions, 12 footholds, survives an extermination sweep, and wins. What is missing is a run of the right *length*, not a run that connects |
@@ -111,15 +111,33 @@ Then: room identity. Four of five regions have never been rendered to a human re
 Everything below was produced by instrumentation on a fixed seed, not by reading code and forming an
 opinion. Where a change was reverted, the numbers that justified reverting it are kept.
 
-## 6. Breeding build: fixed and confirmed
+## 6. Breeding build: allocation defect fixed — but NOT "confirmed", and the retraction matters
 
 `assignRoutes` allocated workers permanently (only `state === 'idle'` was ever reconsidered) and
 measured route load normalised by length, so a short route read as full at one worker. The colony
 died of thirst beside full water sources — `driedUp: 0`, zero threats, every region at alert 0.
 
-Need-based `routeAppeal` plus releasing workers on delivery. Seed 20260805, brood:
-**`status=won end=6.4min`, peak population 53, 452 deliveries, 16 lost.** Allocation now responds —
-moisture 1.1 at t=270 → 20 workers assigned → 35.8 by t=330.
+Need-based `routeAppeal` plus releasing workers on delivery. Allocation demonstrably responds now —
+moisture 1.1 at t=270 → 20 workers assigned → 35.8 by t=330 — and that specific defect is genuinely
+fixed.
+
+> **RETRACTION.** I reported this as `status=won end=6.4min`, peak 53, 452 deliveries, 16 lost, and
+> called the build confirmed. That number came from a **throwaway probe with its own scripted
+> player**, not from `tests/bot.ts`. Re-running commit `33f049e` — the very commit the claim was
+> filed under — through the real harness gives:
+>
+> `{"status":"playing","min":50,"gates":3,"peak":41,"deliveries":967,"lost":241,"sweeps":0}`
+>
+> The brood build **does not complete** at that commit and never did through the shipped harness. It
+> opens three of five gates and runs out the 50-minute cap.
+>
+> This also clears the three commits that followed: I spent a long stretch hunting a regression I had
+> introduced, testing three hypotheses (bot hold policy, tighter gating, heap tie-breaking) and
+> rejecting all three by measurement — because there was no regression. The baseline was wrong.
+>
+> The lesson is narrow and worth keeping: **two harnesses are two different games.** A number from a
+> disposable probe may not be compared against a number from the committed bot, and "confirmed"
+> requires the gate that will be re-run later, not the instrument that happened to be open.
 
 ## 7. `findPath` was 99.3 % of simulation CPU
 
@@ -240,3 +258,29 @@ Sequence for whoever picks this up:
 
 The lever is committed and inert under current tuning: with the population-scaled household,
 `blocker.food` is rare, so the hold rarely engages and the shipped balance is unchanged.
+
+## 13. Corrected status of the loop, measured through `tests/bot.ts` only
+
+Every row below is the committed harness at 50-minute cap, seed as noted. No throwaway probes.
+
+| build | seed | status | min | gates | peak | deliveries | lost |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| shadow | 4242 | **won** | 6.4 | 3 | 29 | 223 | 0 |
+| scavenging | 31337 | **won** | 7.7 | 5 | 38 | 283 | 7 |
+| brood | 20260805 | **never completes** | 50 (cap) | 3 | 41 | 967–1377 | 241–346 |
+
+So the honest headline is not "the run is 6.4 minutes and needs lengthening". It is:
+
+- **Two of three builds complete**, both far short of the 25–35 minute target.
+- **The brood build has never completed through the shipped harness**, at any commit this session,
+  including before any of this session's changes. The allocation defect in §3 was real and is fixed;
+  it was not the only thing stopping that build.
+- The brood build's signature is high throughput and heavy losses — 967–1377 deliveries against
+  241–346 workers lost, with `sweeps: 0`. Nothing is exterminating it. It is losing bodies to
+  ordinary low-alert responses and starvation faster than it converts food into territory, and it
+  stalls at three of five gates.
+
+**Next diagnostic, and this time instrument before touching anything:** log per-cause worker deaths
+(threat kind, starvation, stuck-recovery) per minute for the brood build, alongside the objective
+blocker at each stall. The question to answer first is *why gate four never opens* — not why the run
+is short. Nothing about length is worth tuning while a whole specialization cannot finish.
