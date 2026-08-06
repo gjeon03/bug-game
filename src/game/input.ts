@@ -87,6 +87,13 @@ export function createInput(target: HTMLElement): Input {
       case 'KeyH':
         queue.push({ kind: 'broodHold' });
         break;
+      case 'ArrowUp':
+      case 'ArrowDown':
+      case 'ArrowLeft':
+      case 'ArrowRight':
+        // Held, not queued — movement is polled. This only stops the page scrolling under the game.
+        event.preventDefault();
+        break;
       default: {
         const family = FAMILY_KEYS[event.code];
         if (family) queue.push({ kind: 'adapt', family });
@@ -150,8 +157,20 @@ export function createInput(target: HTMLElement): Input {
 
   return {
     movement() {
-      const forward = (held.has('KeyW') ? 1 : 0) - (held.has('KeyS') ? 1 : 0);
-      const strafe = (held.has('KeyD') ? 1 : 0) - (held.has('KeyA') ? 1 : 0);
+      /*
+       * Arrow keys are bound alongside WASD.
+       *
+       * They were not, and a player pressing them got nothing at all — the browser scrolled the
+       * page instead, because nothing called `preventDefault` for them either. WASD is what a
+       * player used to games reaches for; the arrows are what everyone else reaches for, and there
+       * is no reason to make that a wrong guess.
+       */
+      const up = held.has('KeyW') || held.has('ArrowUp');
+      const down = held.has('KeyS') || held.has('ArrowDown');
+      const rightKey = held.has('KeyD') || held.has('ArrowRight');
+      const leftKey = held.has('KeyA') || held.has('ArrowLeft');
+      const forward = (up ? 1 : 0) - (down ? 1 : 0);
+      const strafe = (rightKey ? 1 : 0) - (leftKey ? 1 : 0);
       if (forward === 0 && strafe === 0) return { x: 0, z: 0 };
       return cameraRelative(forward, strafe);
     },

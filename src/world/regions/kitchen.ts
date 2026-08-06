@@ -277,28 +277,28 @@ export const KITCHEN: RegionSpec = {
        * find a 35 mm insect behind it; 0.68 does that while staying legible as a solid object.
        */
       occluder: true,
-      fadeFloor: 0.68,
+      fadeFloor: 0.52,
     },
     {
       kind: 'kitchen.baseRun',
       at: { x: mm(EAST_FACE), y: 0, z: mm(NORTH_FACE) },
       options: { lengthMm: EAST_RUN_Z1 - NORTH_FACE, depthMm: COUNTER_DEPTH, axis: 'z' },
       occluder: true,
-      fadeFloor: 0.68,
+      fadeFloor: 0.52,
     },
     {
       kind: 'kitchen.worktop',
       at: { x: mm(X0), y: mm(COUNTER_H), z: mm(Z0) },
       options: { lengthMm: X1 - X0, depthMm: COUNTER_DEPTH, axis: 'x' },
       occluder: true,
-      fadeFloor: 0.68,
+      fadeFloor: 0.52,
     },
     {
       kind: 'kitchen.worktop',
       at: { x: mm(EAST_FACE), y: mm(COUNTER_H), z: mm(NORTH_FACE) },
       options: { lengthMm: EAST_RUN_Z1 - NORTH_FACE, depthMm: COUNTER_DEPTH, axis: 'z' },
       occluder: true,
-      fadeFloor: 0.68,
+      fadeFloor: 0.52,
     },
     {
       kind: 'kitchen.splashback',

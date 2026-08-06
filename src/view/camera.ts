@@ -74,11 +74,26 @@ export interface CameraBasis {
  * Constant, because the yaw is constant. Exported as data so the input layer never has to reach
  * into the camera object, and so a test can assert that "W" moves the scout away from the viewer.
  */
+/*
+ * `right` is `cross(forward, up)` for a Y-up right-handed scene, which works out to
+ * `(-sin yaw, cos yaw)`.
+ *
+ * It was `(sin yaw, -cos yaw)` — exactly the negation, so it was the LEFT vector, and D walked the
+ * scout left while A walked it right. Forward was correct throughout, which is why this read as
+ * "the controls are reversed" rather than as anything obviously geometric: pressing W did the right
+ * thing, so the natural assumption was that the whole mapping was fine.
+ *
+ * A player found this, not a gate. The comment below used to say a test could assert the mapping;
+ * no such test existed, and `cameraRelative` and `BASIS` had zero references anywhere under
+ * `tests/`. `tests/unit/camera.test.ts` now stands a real camera up and checks which way the scout
+ * travels in normalised device coordinates, because the claim being made is about the screen. With
+ * the old basis that test measured D at screen dx = -0.163, i.e. leftward.
+ */
 export const BASIS: CameraBasis = {
   forwardX: Math.cos(CAM_YAW),
   forwardZ: Math.sin(CAM_YAW),
-  rightX: Math.sin(CAM_YAW),
-  rightZ: -Math.cos(CAM_YAW),
+  rightX: -Math.sin(CAM_YAW),
+  rightZ: Math.cos(CAM_YAW),
 };
 
 export { VIEW_DIR_X, VIEW_DIR_Z };

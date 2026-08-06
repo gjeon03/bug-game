@@ -172,6 +172,9 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
         if (there) activeRegions.add(there);
       }
       built.occlusion.update(dt, camera.camera, focusPoints, activeRegions);
+      // Blocker opacity alone cannot convey heading. When something is in front of the scout, draw
+      // the scout through it as well.
+      roaches.setScoutHidden(built.occlusion.scoutHidden);
 
       // Re-point the fixed light pool at whatever actually reaches the player from here.
       lights.retarget(camera.focusPoint, (routine) => {

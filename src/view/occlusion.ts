@@ -45,7 +45,22 @@ export const DEFAULT_FADE_FLOOR = 0.42;
  * static — observed at 0.22 across a whole frame. Clamping here means an over-eager authored
  * `fadeFloor` cannot produce that.
  */
-export const MIN_FADE_FLOOR = 0.34;
+/*
+ * Lowered from 0.34.
+ *
+ * The clamp was silently discarding authored intent: 31 of the 56 `fadeFloor` values across
+ * `world/regions/*.ts` sat below it and shipped raised to exactly 0.34. The bathroom's largest
+ * occluder is authored at 0.16 with the comment "the reason occlusion fading has to work here: the
+ * scout crosses behind it on every water run". The level author had already asked for what the
+ * player is now asking for.
+ *
+ * It is not lowered further because coverage IS the fraction of pixels kept under alpha hashing, so
+ * a low floor on a large near object reads as the television static §7 bans — reproduced in a
+ * control capture at 0.18. The heavier lifting is done by drawing the scout through the blocker
+ * instead (see `roaches.ts`), which conveys position AND heading, neither of which any amount of
+ * blocker opacity can supply.
+ */
+export const MIN_FADE_FLOOR = 0.28;
 
 /** Seconds for a full fade in or out. The contract mandates 150–300 ms. */
 export const DEFAULT_FADE_SECONDS = 0.22;
@@ -86,6 +101,8 @@ interface Occluder {
 }
 
 export interface OcclusionStats {
+  /** Whether anything currently stands between the camera and the scout. */
+  readonly scoutHidden: boolean;
   readonly registered: number;
   /** Groups currently below full coverage — surfaced so a perf capture can record it. */
   readonly fading: number;
@@ -118,6 +135,8 @@ export class OcclusionSystem {
   private readonly fadeSeconds: number;
   private lastCandidates = 0;
   private lastTests = 0;
+  /** True while any occluder stands between the camera and the scout. Read by `roaches.ts`. */
+  scoutHidden = false;
 
   constructor(fadeSeconds: number = DEFAULT_FADE_SECONDS) {
     this.fadeSeconds = fadeSeconds;
@@ -237,6 +256,7 @@ export class OcclusionSystem {
       fading,
       candidates: this.lastCandidates,
       tests: this.lastTests,
+      scoutHidden: this.scoutHidden,
     };
   }
 
@@ -264,7 +284,23 @@ export class OcclusionSystem {
     this.lastCandidates = candidates.length;
     let tests = 0;
 
-    for (const focus of focusPoints) {
+    /*
+     * The FIRST focus point is the scout, and whether it is hidden is reported separately.
+     *
+     * Fading the thing in front of the player is only half of the problem. A player behind a
+     * cabinet run still has to know where they are and which way they are moving, and no amount of
+     * opacity on the cabinet supplies that when the fade floor is high. `roaches.ts` uses this to
+     * draw the scout's own silhouette through the blocker. §3 forbids fading the player; it does
+     * not forbid drawing the player, and a correctly-posed scout-shaped silhouette is composition
+     * rather than the banned "glowing circle as the player identifier".
+     *
+     * Reading it from the f === 0 pass is exact because nothing is condemned before that pass runs,
+     * so a hit recorded there can only have come from the scout's own probes.
+     */
+    let scoutHidden = false;
+
+    for (let f = 0; f < focusPoints.length; f++) {
+      const focus = focusPoints[f]!;
       for (const offset of PROBE_OFFSETS) {
         this.probe.copy(focus).add(offset);
         this.direction.copy(this.probe).sub(camera.position);
@@ -281,11 +317,15 @@ export class OcclusionSystem {
           // sphere the ray misses cannot contain a triangle the ray hits.
           if (!this.raycaster.ray.intersectsSphere(o.bounds)) continue;
           tests++;
-          if (this.raycaster.intersectObject(o.root, true).length > 0) o.target = o.floor;
+          if (this.raycaster.intersectObject(o.root, true).length > 0) {
+            o.target = o.floor;
+            if (f === 0) scoutHidden = true;
+          }
         }
       }
     }
     this.lastTests = tests;
+    this.scoutHidden = scoutHidden;
 
     const step = dt / this.fadeSeconds;
     for (const o of this.occluders) {
