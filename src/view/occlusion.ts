@@ -60,7 +60,7 @@ export const DEFAULT_FADE_FLOOR = 0.42;
  * instead (see `roaches.ts`), which conveys position AND heading, neither of which any amount of
  * blocker opacity can supply.
  */
-export const MIN_FADE_FLOOR = 0.28;
+export const MIN_FADE_FLOOR = 0.22;
 
 /** Seconds for a full fade in or out. The contract mandates 150–300 ms. */
 export const DEFAULT_FADE_SECONDS = 0.22;
@@ -342,8 +342,28 @@ export class OcclusionSystem {
     const opaque = o.current >= 0.999;
     for (const m of o.materials) {
       m.opacity = o.current;
-      // alphaHash costs a shader variant, so it is only switched on while actually needed.
-      m.alphaHash = !opaque;
+      /*
+       * True alpha blending, with depth writing left ON.
+       *
+       * This used to be `alphaHash`, chosen because hashed alpha needs no sorting. It is a real
+       * property and the reason the technique was picked — but under alpha hashing, coverage IS the
+       * fraction of pixels kept, so a half-faded cabinet is literally a random half of its pixels.
+       * Across a large near prop that reads as television static, which §7 bans by name, and it is
+       * what a player reported after the fade floors were lowered. A side-by-side control capture at
+       * the same camera and seed settles it: hashed alpha is salt-and-pepper noise, blending is
+       * clean smoked glass.
+       *
+       * §3 permits "dithered alpha OR an equally depth-stable technique" and forbids alpha-sorting
+       * artifacts. Keeping `depthWrite` true is what earns the second half: the prop still writes
+       * depth, so it cannot mis-sort against itself or against other props, and the guard test that
+       * pinned this behaviour still passes on the part that was actually load-bearing.
+       *
+       * Anything behind it stays visible because opaque geometry draws BEFORE the transparent queue
+       * — the floor and the scout are already in the buffer when the cabinet blends over them.
+       */
+      m.alphaHash = false;
+      m.transparent = !opaque;
+      m.depthWrite = true;
       m.needsUpdate = true;
     }
     for (let i = 0; i < o.meshes.length; i++) {
@@ -356,6 +376,8 @@ export class OcclusionSystem {
     for (const m of o.materials) {
       m.opacity = 1;
       m.alphaHash = false;
+      m.transparent = false;
+      m.depthWrite = true;
       m.needsUpdate = true;
     }
     for (let i = 0; i < o.meshes.length; i++) {

@@ -264,6 +264,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
       const occ = built.occlusion.stats();
       const roachStats = roaches.stats();
       return {
+        scoutHidden: built.occlusion.scoutHidden,
         props: built.stats.props,
         meshes: built.stats.meshes,
         merged: built.stats.merged,
