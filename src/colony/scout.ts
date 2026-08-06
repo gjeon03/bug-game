@@ -268,6 +268,20 @@ export function claimFoothold(run: Run, id: string): boolean {
   state.brood = 1;
   recomputeCapacity(run);
 
+  /*
+   * Taking a refuge is what earns a specialization.
+   *
+   * `adaptationPoints` used to be written in exactly one place — `openGate` — so sealing the flat to
+   * the kitchen made the game unwinnable by construction: `evaluateRun` returns early while
+   * `adaptations.length === 0`, no gate can ever open, and therefore no point can ever be earned.
+   * Three independent reviewers found this in the source within minutes of the reseal.
+   *
+   * A foothold is the right new source, and not merely a convenient one. It is the same beat the
+   * gate was carrying — the colony physically reaches somewhere new, and the reach is what makes it
+   * capable of something new — expressed in the vocabulary of a one-room game.
+   */
+  run.colony.adaptationPoints++;
+
   const y = run.house.surfaces.get(site.surface)?.y ?? 0;
   pushCue(run, 'foothold.claimed', site.at.x, y, site.at.z);
   logEvent(run, 'log.foothold.claimed', 'good', { foothold: site.labelKey });

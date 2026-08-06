@@ -157,6 +157,10 @@ export const ko = {
   'chapter.final': '마지막 · 집 전체',
   'objective.kitchen.title': '1장 · 주방에서 버티기',
   'objective.kitchen.secure': '먹이와 수분을 확보하고, 일꾼이 오갈 길을 만들어라.',
+  'objective.kitchen.firstHold': '싱크대 밑 틈을 거점으로 삼아라. E를 눌러 차지한다.',
+  'objective.kitchen.firstRoute': '먹이까지 페로몬 길을 놓아라. 일꾼이 그 길을 따라 나른다.',
+  'objective.kitchen.grow': '군체를 불려라. 피난처마다 품을 수 있는 수가 정해져 있다.',
+  'objective.kitchen.expand': '남은 피난처를 차지해 주방 전체를 군체의 영역으로 만들어라.',
   'objective.final.title': '집 전체를 지켜라',
   'objective.final.body':
     '통로는 모두 열렸다. 이제 네 구역을 동시에 유지하면서 집안의 박멸 시도를 견뎌 내야 한다.',
@@ -170,7 +174,7 @@ export const ko = {
   'blocker.alert': '{region}{region?이/가} 아직 경계 중이다 — 조용해질 때까지 기다려라',
   'blocker.adaptation': '적응을 하나 정해야 한다',
   'blocker.goThere': '{gate} 앞으로 가서 E를 눌러라',
-  'blocker.holdRegion': '아직 거점이 없는 구역이 있다',
+  'blocker.holdRegion': '아직 차지하지 않은 피난처가 있다',
   'blocker.population': '군체가 더 커져야 한다 — 일꾼 12마리',
   'blocker.stores': '비축이 모자라다 — 먹이 30, 수분 20',
 

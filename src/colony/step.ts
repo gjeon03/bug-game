@@ -82,11 +82,18 @@ export function updateObjective(run: Run): void {
   const gate = nextGate(run);
 
   if (!gate) {
-    // Everything is open — the run is in its endgame.
-    objective.titleKey = 'objective.final.title';
-    objective.bodyKey = 'objective.final.body';
+    /*
+     * No gates ship while the kitchen is the whole game, so this is the normal path, not the endgame.
+     *
+     * It used to be the endgame branch, and sealing the flat sent the player straight into it: the
+     * very first sentence of a brand new run read "통로는 모두 열렸다" — all the passages are open —
+     * to someone who had not yet taken a single refuge. The objective now names the next thing to do
+     * inside the kitchen, in the order it has to be done.
+     */
+    objective.titleKey = 'objective.kitchen.title';
+    objective.bodyKey = kitchenStepKey(run);
     objective.params = {};
-    objective.at = null;
+    objective.at = kitchenStepAt(run);
     objective.progress = holdProgress(run);
     objective.blockerKey = holdBlocker(run);
     objective.blockerParams = {};
@@ -112,6 +119,32 @@ export function updateObjective(run: Run): void {
   // been standing still long enough to have lost the thread, in which case say where.
   objective.blockerKey = run.idleFor > IDLE_HINT_AFTER ? 'blocker.goThere' : null;
   objective.blockerParams = { gate: gate.labelKey };
+}
+
+/**
+ * The next thing to do inside the kitchen, in the order it has to be done.
+ *
+ * Read every tick from live state rather than from a step counter, so a player who does things out
+ * of order — or loses a refuge to a sweep — is told what is true now instead of what a script
+ * expected.
+ */
+function kitchenStepKey(run: Run): string {
+  const anyHeld = [...run.footholds.values()].some((f) => f.claimed && f.damage < 1);
+  if (!anyHeld) return 'objective.kitchen.firstHold';
+  if (run.routes.length === 0) return 'objective.kitchen.firstRoute';
+  if (kitchenHoldFraction(run) < 1) return 'objective.kitchen.expand';
+  if (run.colony.population < 12) return 'objective.kitchen.grow';
+  return 'objective.final.body';
+}
+
+/** Where that step is, so the HUD can point at it. */
+function kitchenStepAt(run: Run): { surface: string; x: number; z: number } | null {
+  for (const site of run.house.footholds.values()) {
+    const state = run.footholds.get(site.id);
+    if (state?.claimed && state.damage < 1) continue;
+    return { surface: site.surface, x: site.at.x, z: site.at.z };
+  }
+  return null;
 }
 
 /**
