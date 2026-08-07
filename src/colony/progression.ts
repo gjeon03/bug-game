@@ -408,12 +408,41 @@ const SWEEP_COOLDOWN = 110;
  * finale and the win.
  */
 function finaleArmed(run: Run): boolean {
-  const sites = [...run.house.footholds.values()].filter((f) => f.region === 'kitchen');
-  if (sites.length === 0) return false;
-  return sites.every((site) => {
+  return heldKitchenRefuges(run) >= refugesToHold(run);
+}
+
+/** Kitchen refuges currently claimed and standing. */
+function heldKitchenRefuges(run: Run): number {
+  let held = 0;
+  for (const site of run.house.footholds.values()) {
+    if (site.region !== 'kitchen') continue;
     const state = run.footholds.get(site.id);
-    return state?.claimed === true && state.damage < 1;
-  });
+    if (state?.claimed === true && state.damage < 1) held++;
+  }
+  return held;
+}
+
+/**
+ * How many refuges the colony must hold — a majority, not all of them.
+ *
+ * It was ALL of them, which was a reasonable statement about a room with four. With eight it is a
+ * different demand: measured on seed 20260805, the brood build reached 8/8 at t=180 with 23 workers
+ * and 58 food, and by t=240 it was at 9 workers and 9 food with twenty-one dead. Holding every
+ * refuge means spreading traffic across every one of them, and traffic is exactly what the
+ * household's response is aimed by — so "take everything" was a losing instruction that the victory
+ * condition itself was issuing.
+ *
+ * A majority turns that into a choice: which refuges are worth the traffic they generate, and which
+ * are better left cold. That is a better statement of "the colony has taken the room" than a
+ * checklist, and it is the difference between a list and a decision.
+ */
+function refugesToHold(run: Run): number {
+  let total = 0;
+  for (const site of run.house.footholds.values()) {
+    if (site.region === 'kitchen') total++;
+  }
+  if (total === 0) return 0;
+  return Math.max(1, Math.ceil(total * 0.75));
 }
 
 /** Seconds a colony may sit at zero before it starts losing bodies. */
@@ -525,11 +554,8 @@ export function evaluateRun(run: Run): void {
    * run. Holding every refuge the kitchen offers is the equivalent statement about a one-room game:
    * the colony has taken the whole space it can reach.
    */
-  const kitchenFootholds = [...run.house.footholds.values()].filter((f) => f.region === 'kitchen');
-  const holdsAll = kitchenFootholds.every((site) => {
-    const state = run.footholds.get(site.id);
-    return state?.claimed === true && state.damage < 1;
-  });
+  // A majority, not every one — see `refugesToHold`.
+  const holdsAll = heldKitchenRefuges(run) >= refugesToHold(run);
 
   if (!holdsAll) return;
   if (run.colony.adaptations.length === 0) return;
