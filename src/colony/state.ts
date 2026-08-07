@@ -219,6 +219,74 @@ export const ROUTINES: readonly RoutineSpec[] = [
     notBefore: 140,
     labelKey: 'routine.kitchen.dinner',
   },
+  /*
+   * The rest of the night.
+   *
+   * The kitchen had two routines. `updateRoutines` gates every one behind `region.unlocked` and the
+   * other four belong to sealed rooms, so in a 194-second run the kitchen saw `dishes` once or
+   * twice and `dinner` at most once. A one-room game whose room has two events has no timeline at
+   * all — the middle of every run was a flat stretch of hauling with nothing happening to it.
+   *
+   * Each of these opens an opportunity AND a danger, because that is the only kind of event §1 asks
+   * for: "routines create both opportunity and danger". A fridge door is light you must not stand
+   * in and a seal you can strip while it hangs open.
+   *
+   * Periods are deliberately not multiples of each other and the jitters are wide, so they drift
+   * against one another instead of settling into a repeating bar. `notBefore` staggers the opening
+   * minutes: the player meets them one at a time rather than all at once.
+   */
+  {
+    // Somebody opens the fridge, stands in the cold light, closes it. The most frequent event in a
+    // real kitchen at night, and the shortest.
+    id: 'kitchen.fridge',
+    region: 'kitchen',
+    period: 61,
+    jitter: 17,
+    telegraph: 3.5,
+    duration: 12,
+    aftermath: 6,
+    notBefore: 24,
+    labelKey: 'routine.kitchen.fridge',
+  },
+  {
+    // The kettle. Steam settles on every cold surface in the room — this is where moisture comes
+    // back — and the worktop is lit and occupied while it boils.
+    id: 'kitchen.kettle',
+    region: 'kitchen',
+    period: 127,
+    jitter: 28,
+    telegraph: 6,
+    duration: 34,
+    aftermath: 18,
+    notBefore: 76,
+    labelKey: 'routine.kitchen.kettle',
+  },
+  {
+    // The food waste bin gets emptied. The lid is off and the doorway is busy: the richest food in
+    // the room becomes reachable exactly while the worst place to be is occupied.
+    id: 'kitchen.bin',
+    region: 'kitchen',
+    period: 173,
+    jitter: 41,
+    telegraph: 7,
+    duration: 24,
+    aftermath: 16,
+    notBefore: 108,
+    labelKey: 'routine.kitchen.bin',
+  },
+  {
+    // A glass of water at three in the morning. Brief, unlit, and it can happen at any point — the
+    // one routine that is never safe to plan around.
+    id: 'kitchen.water',
+    region: 'kitchen',
+    period: 83,
+    jitter: 37,
+    telegraph: 2.5,
+    duration: 9,
+    aftermath: 4,
+    notBefore: 40,
+    labelKey: 'routine.kitchen.water',
+  },
   {
     id: 'living.tv',
     region: 'living',

@@ -222,6 +222,10 @@ export const ko = {
   /* ── household routines ───────────────────────────────────────────────── */
   'routine.kitchen.dishes': '설거지',
   'routine.kitchen.dinner': '늦은 식사',
+  'routine.kitchen.fridge': '냉장고 문 열기',
+  'routine.kitchen.kettle': '물 끓이기',
+  'routine.kitchen.bin': '음식물 쓰레기 비우기',
+  'routine.kitchen.water': '물 마시러 나옴',
   'routine.living.tv': 'TV 시청',
   'routine.bathroom.use': '욕실 사용',
   'routine.bedroom.phone': '머리맡 휴대폰',

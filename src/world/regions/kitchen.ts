@@ -354,7 +354,7 @@ export const KITCHEN: RegionSpec = {
       rate: 1.4,
       disturbance: 0.01,
       labelKey: 'resource.kitchen.trap',
-      refilledBy: 'kitchen.dishes',
+      refilledBy: 'kitchen.water',
     },
     {
       id: 'kitchen.fridge.seal',
@@ -366,6 +366,9 @@ export const KITCHEN: RegionSpec = {
       rate: 1.2,
       disturbance: 0.05,
       labelKey: 'resource.kitchen.fridgeseal',
+      // The door seal is only worth stripping while the door has been opened — which is the whole
+      // point of the fridge routine: a short, frequent, well-lit window.
+      refilledBy: 'kitchen.fridge',
     },
     {
       id: 'kitchen.rice',
@@ -377,6 +380,7 @@ export const KITCHEN: RegionSpec = {
       rate: 2.0,
       disturbance: 0.16,
       labelKey: 'resource.kitchen.rice',
+      // Rice gets spilled when somebody serves a meal, not when they open the fridge.
       refilledBy: 'kitchen.dinner',
     },
     {
@@ -389,7 +393,7 @@ export const KITCHEN: RegionSpec = {
       rate: 1.8,
       disturbance: 0.09,
       labelKey: 'resource.kitchen.sponge',
-      refilledBy: 'kitchen.dishes',
+      refilledBy: 'kitchen.kettle',
     },
     {
       // The richest source in chapter 1 and the loudest. Taking it teaches the evidence system.
@@ -402,7 +406,7 @@ export const KITCHEN: RegionSpec = {
       rate: 2.4,
       disturbance: 0.42,
       labelKey: 'resource.kitchen.bin',
-      refilledBy: 'kitchen.dinner',
+      refilledBy: 'kitchen.bin',
     },
     {
       /** Crumbs on the table. Plentiful, easy — and you are standing where people look. */
@@ -428,7 +432,7 @@ export const KITCHEN: RegionSpec = {
       rate: 1.1,
       disturbance: 0.14,
       labelKey: 'resource.kitchen.tablering',
-      refilledBy: 'kitchen.dinner',
+      refilledBy: 'kitchen.kettle',
     },
     {
       /** Inside the bin. The richest food in the kitchen and the most disturbed place in it. */
@@ -441,7 +445,7 @@ export const KITCHEN: RegionSpec = {
       rate: 2.2,
       disturbance: 0.42,
       labelKey: 'resource.kitchen.binfood',
-      refilledBy: 'kitchen.dinner',
+      refilledBy: 'kitchen.bin',
     },
   ],
 
