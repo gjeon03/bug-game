@@ -273,9 +273,18 @@ export const ko = {
   'log.won': '주방이 군체의 영역이 됐다.',
   'log.threat.swat': '봤다. 손이 내려온다.',
   'log.scout.stomped': '정찰병이 밟혔다. 일꾼 하나가 그 자리를 물려받는다.',
-  'log.scout.revived': '새 정찰병이 개수대 밑에서 나왔다.',
-  'log.lost.extinct': '군체가 전멸했다. 알을 깔 개체가 남지 않았다.',
-  'log.lost.noScout': '정찰병이 밟혔고, 대신 나설 개체가 없다.',
+  /*
+   * 싱크대, not 개수대 — and 일꾼, not 개체.
+   *
+   * Both are the same object under two names, and both were visible on screen at once: the help
+   * card says 「싱크대 밑 틈」 while the revival log said 「개수대 밑에서 나왔다」, and the stomp
+   * frame put 「일꾼 하나가 그 자리를 물려받는다」 in the log directly under 「다음 개체가 올라오는
+   * 중」 in the centre banner. §4 governs terminology by glossary; a player reading two words for
+   * one thing has to work out whether they are the same thing, and that work is the cost.
+   */
+  'log.scout.revived': '새 정찰병이 싱크대 밑에서 나왔다.',
+  'log.lost.extinct': '군체가 전멸했다. 알을 깔 일꾼이 남지 않았다.',
+  'log.lost.noScout': '정찰병이 밟혔고, 대신 나설 일꾼이 없다.',
   'log.lost': '군체가 무너졌다.',
 
   /* ── cue for state changes the HUD announces ──────────────────────────── */
@@ -294,7 +303,7 @@ export const ko = {
   'hud.adaptationPoints': '쓸 수 있는 적응 {count}',
   'hud.seen': '들킬 위험',
   'hud.caught': '밟히기까지',
-  'hud.down': '정찰병을 잃었다 — 다음 개체가 올라오는 중',
+  'hud.down': '정찰병을 잃었다 — 다음 일꾼이 올라오는 중',
   'hud.stores': '비축이 한계다 — 거점을 늘려라',
   'hud.routeHealth.ok': '정상',
   'hud.routeHealth.incomplete': '양 끝이 붙지 않았다',

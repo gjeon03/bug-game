@@ -390,6 +390,11 @@ body {
 }
 
 /* ── seen meter, centre-top ──────────────────────────────────────────────── */
+/*
+ * `.panel` in the markup supplies the background, border and padding. Only placement, width and
+ * the fade live here — this meter was the last HUD element drawing its text straight onto the 3D
+ * scene, at a measured 1.14:1 against the kitchen floor and 1.94:1 at its own pulse peak.
+ */
 #seen {
   grid-column: 2;
   grid-row: 1;

@@ -93,7 +93,16 @@ export function createHud(rootId = 'hud'): Hud {
 
   root.innerHTML = [
     '<div id="objective" class="panel"></div>',
-    '<div id="seen"></div>',
+    /*
+     * The crush meter gets a panel, like every other HUD block.
+     *
+     * It was the one element on screen with no backing, and it is the most urgent thing the game
+     * ever says. Measured on the stomp capture: the 「밟히기까지」 label against the floor behind it
+     * came to 1.14:1, and 1.94:1 at the brightest point of its own pulse. The prompt got exactly
+     * this treatment last round under a comment claiming parity with "every other HUD block" —
+     * this was the block that comment skipped.
+     */
+    '<div id="seen" class="panel"></div>',
     '<div id="down"></div>',
     '<div id="stores" class="panel"></div>',
     '<div id="routes" class="panel"></div>',

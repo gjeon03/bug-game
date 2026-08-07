@@ -11,6 +11,7 @@
  */
 import { chromium } from '@playwright/test';
 import { layRoute } from './lib/walk.mjs';
+import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -128,8 +129,28 @@ const result = await page.evaluate(() => ({
 
 await page.screenshot({ path: resolve(OUT, '10-perf-active-play.png') });
 
+/*
+ * Stamp the commit the numbers describe, and refuse to stamp a dirty tree.
+ *
+ * The committed `performance.json` was three commits and one light behind HEAD, and nothing said
+ * so — a reviewer had to notice that its `lights: 2` disagreed with a runtime report's `lights: 3`
+ * to work out that the frame times described a build that no longer existed. Comparing incidental
+ * scene counts is a fragile way to detect that; the commit hash is not.
+ *
+ * A dirty tree is refused outright rather than recorded, because "that sha plus some edits" is not
+ * a state anybody can return to, and §11 asks for evidence tied to a specific claim.
+ */
+const headSha = execSync('git rev-parse HEAD').toString().trim();
+const dirty = execSync('git status --porcelain -- src scripts index.html').toString().trim();
+if (dirty) {
+  throw new Error(
+    `working tree is dirty — a profile stamped ${headSha.slice(0, 7)} would not describe it:\n${dirty}`,
+  );
+}
+
 const p = result.profile;
 const report = {
+  headSha,
   hardware: renderer,
   window: { seconds: SECONDS, frames: p?.frames, measuredSeconds: p?.seconds },
   duringCapture: result.run,
