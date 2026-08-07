@@ -196,4 +196,59 @@ console.log('draw calls     ', result.stats.drawCalls, 'triangles', result.stats
 console.log('audio          ', JSON.stringify(result.audio));
 console.log('console errors ', errors.length);
 
+/*
+ * The verdict, and a non-zero exit when it fails.
+ *
+ * `judge()` existed, was tested, and was called by nothing outside its own test — so this script
+ * printed a table and exited 0 no matter what the numbers said, and `pnpm review` did not run it at
+ * all. §10's performance section was, in practice, unenforced. Everything below is the enforcement.
+ */
+const verdict = await page.evaluate(
+  ([profile, stats]) =>
+    window.__game.judge({
+      label: 'active play',
+      frames: profile?.frames ?? 0,
+      seconds: profile?.seconds ?? 0,
+      p50: profile?.p50 ?? Infinity,
+      p95: profile?.p95 ?? Infinity,
+      p99: profile?.p99 ?? Infinity,
+      worst: profile?.worst ?? Infinity,
+      cpuP50: profile?.cpuP50 ?? null,
+      cpuP99: profile?.cpuP99 ?? null,
+      gpuP50: profile?.gpuP50 ?? null,
+      gpuP99: profile?.gpuP99 ?? null,
+      gpuSamples: profile?.gpuSamples ?? 0,
+      over16: profile?.over16 ?? 0,
+      over33: profile?.over33 ?? 0,
+      over50: profile?.over50 ?? 0,
+      over100: profile?.over100 ?? 0,
+      over50Pct: profile?.over50Pct ?? 100,
+      peak: {
+        drawCalls: stats.drawCalls,
+        triangles: stats.triangles,
+        geometries: stats.geometries,
+        textures: stats.textures,
+        programs: stats.programs ?? 0,
+      },
+    }),
+  [p, result.stats],
+);
+
+console.log('\n=== VERDICT ===');
+for (const line of verdict) {
+  const value = line.value === null ? 'UNMEASURED' : line.value.toFixed(2);
+  console.log(
+    `${line.pass ? 'PASS' : 'FAIL'}  ${line.metric.padEnd(24)} ${String(value).padStart(10)} / ${line.budget}${line.note ? `  ${line.note}` : ''}`,
+  );
+}
+
+report.verdict = verdict;
+writeFileSync(resolve(OUT, 'performance.json'), JSON.stringify(report, null, 2));
+
 await browser.close();
+
+const failed = verdict.filter((line) => !line.pass);
+if (failed.length > 0) {
+  console.error(`\n${failed.length} budget line(s) failed: ${failed.map((l) => l.metric).join(', ')}`);
+  process.exit(1);
+}

@@ -367,18 +367,58 @@ function buildBody(
     thumb.rotation.y = 0.62;
     g.add(thumb);
   } else if (kind === 'move') {
-    const foot = new THREE.Mesh(
-      own(new THREE.BoxGeometry(mm(120), mm(120), mm(120))),
-      mat(0x5b4a38, 0.85),
+    /*
+     * `threat.move` is 물건 치우기 — somebody tidying up. The thing that arrives is the OBJECT
+     * being moved, not a foot.
+     *
+     * It was a single 120 mm brown cube: §7's "objects represented as bare primitives" as literally
+     * as that can be written, and also the wrong noun — a cube arriving is not a reading of "a mug
+     * is picked up and put somewhere else". A mug with a handle reads as the event and the
+     * household in one silhouette.
+     */
+    const china = mat(0xd8d2c6, 0.55);
+    const mug = new THREE.Mesh(
+      own(new THREE.CylinderGeometry(mm(42), mm(36), mm(96), 18, 1, true)),
+      china,
     );
-    foot.position.y = mm(60);
-    g.add(foot);
-  } else {
-    // 'light' and 'sleeper': nothing physical arrives, the ring is the whole event.
-    const glow = new THREE.Mesh(own(new THREE.SphereGeometry(mm(60), 10, 8)), mat(0xf0e2b0, 0.1));
-    glow.position.y = mm(120);
-    g.add(glow);
+    mug.position.y = mm(48);
+
+    const base = new THREE.Mesh(
+      own(new THREE.CylinderGeometry(mm(36), mm(36), mm(6), 18)),
+      china,
+    );
+    base.position.y = mm(3);
+
+    // Cold coffee. At this scale the dark disc inside the rim is most of what says "used".
+    const dregs = new THREE.Mesh(
+      own(new THREE.CylinderGeometry(mm(38), mm(38), mm(3), 18)),
+      mat(0x3a2a1e, 0.3),
+    );
+    dregs.position.y = mm(22);
+
+    const handle = new THREE.Mesh(
+      own(new THREE.TorusGeometry(mm(28), mm(7), 8, 18, Math.PI * 1.1)),
+      china,
+    );
+    handle.rotation.y = Math.PI / 2;
+    handle.rotation.z = -Math.PI / 2;
+    handle.position.set(mm(44), mm(52), 0);
+
+    g.add(mug, base, dregs, handle);
   }
+  /*
+   * `light` gets no body at all, and that is the whole point.
+   *
+   * There used to be an opaque 60 mm sphere floating 120 mm in the air here, directly beneath a
+   * comment reading "nothing physical arrives, the ring is the whole event" — the code contradicted
+   * its own docstring. `mat()`'s second argument is roughness, not opacity, so it was not even a
+   * soft glow: it was a solid ball hanging in the room, which is §7's "unexplained circles" and
+   * "detached floating dots as cargo" at once.
+   *
+   * The `sleeper` kind that shared this branch has no producer anywhere in the simulation — grep
+   * for `kind: 'sleeper'` returns nothing — so it goes too, rather than being left as a shape
+   * waiting for a feature.
+   */
 
   return g;
 }

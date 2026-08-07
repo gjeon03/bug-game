@@ -20,6 +20,7 @@ import {
 } from '../colony/scout';
 import { beginGateWork, checkGate, chooseAdaptation, stopGateWork } from '../colony/progression';
 import { createRenderer, type GameRenderer } from '../view/render';
+import { FRAME_BUDGET, SCENE_CEILINGS, judge } from '../view/profiler';
 import { createHud, type Hud, type PromptState } from '../ui/hud';
 import { createAudioBridge, type AudioBridge } from '../audio/bridge';
 import { createInput, type Input } from './input';
@@ -295,6 +296,17 @@ export async function boot(): Promise<void> {
       },
       get audio() {
         return { started: audio.started, voices: audio.voices };
+      },
+      /**
+       * Judge a profile against the shipped budget, from inside the page.
+       *
+       * `scripts/perf.mjs` runs under node and cannot import TypeScript, so without this the only
+       * way for the harness to enforce §10 would be to restate `FRAME_BUDGET` and `SCENE_CEILINGS`
+       * in a second place — and a budget the gate and the test disagree about is worse than no
+       * budget. Exposing the judgement instead of the numbers keeps one source of truth.
+       */
+      judge(profile: Parameters<typeof judge>[0]) {
+        return judge(profile, FRAME_BUDGET, SCENE_CEILINGS);
       },
       /**
        * World position to CSS pixels.
