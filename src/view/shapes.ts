@@ -148,14 +148,56 @@ export function blob(
   return mesh;
 }
 
-/** A flat quad lying on the ground plane. For stains, puddles, rugs, decals. */
+/**
+ * A stain lying on the ground plane. Crumb fields, puddles, grease, dust.
+ *
+ * ## Why this is not a quad any more
+ *
+ * It was `PlaneGeometry` — an opaque axis-aligned rectangle in a flat grey. At play scale that is
+ * two hard straight edges across the middle of the floor, and an art review named it the single
+ * largest prototype signal in every gameplay frame: nothing spilled on a kitchen floor has corners.
+ * The same frames showed the puddle's own water disc and rim crossing the left edge of the grey
+ * rectangle that was supposed to be grounding it, so the decal was not even containing its prop.
+ *
+ * The obvious fix — an alpha-mapped quad — reopens the z-fighting that `d8fe4fb` closed, because a
+ * transparent coplanar decal has to choose between depth writes and sorting artefacts. An irregular
+ * OUTLINE needs neither: the geometry itself is the shape of the spill, it stays opaque, and it
+ * keeps the single 0.35 mm lift that has been holding that artefact off since the fix.
+ *
+ * The outline is a deterministic radial wobble, so a given prop's stain is the same every run and
+ * evidence screenshots still compare.
+ */
+const PATCH_POINTS = 22;
+/** How far the outline strays from the base ellipse, as a fraction of its radius. */
+const PATCH_WOBBLE = 0.26;
+
 export function patch(
   kit: Kit,
   widthMm: number,
   depthMm: number,
   material: MaterialId | THREE.Material,
 ): THREE.Mesh {
-  const geometry = new THREE.PlaneGeometry(mm(widthMm), mm(depthMm));
+  const halfWidth = mm(widthMm) / 2;
+  const halfDepth = mm(depthMm) / 2;
+
+  const shape = new THREE.Shape();
+  // Two octaves: a slow lobe that gives the spill a direction, and a fine ripple for the edge.
+  const phase = kit.rand() * Math.PI * 2;
+  const lobe = kit.rand() * Math.PI * 2;
+  for (let i = 0; i <= PATCH_POINTS; i++) {
+    const angle = (i / PATCH_POINTS) * Math.PI * 2;
+    const wobble =
+      1 +
+      PATCH_WOBBLE * Math.sin(angle * 2 + lobe) * 0.6 +
+      PATCH_WOBBLE * Math.sin(angle * 5 + phase) * 0.4;
+    const x = Math.cos(angle) * halfWidth * wobble;
+    const y = Math.sin(angle) * halfDepth * wobble;
+    if (i === 0) shape.moveTo(x, y);
+    else shape.lineTo(x, y);
+  }
+  shape.closePath();
+
+  const geometry = new THREE.ShapeGeometry(shape, 1);
   geometry.rotateX(-Math.PI / 2);
   const mesh = new THREE.Mesh(kit.own(geometry), resolve(kit, material));
   // Nudge up so it never z-fights the floor it sits on. Coplanar geometry produced the dashed-line

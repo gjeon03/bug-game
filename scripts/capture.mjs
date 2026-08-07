@@ -9,6 +9,7 @@
 import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { layRoute, nearestSupplyPair } from './lib/walk.mjs';
 
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:4273/';
 /*
@@ -96,90 +97,34 @@ console.log('02 kitchen, first view');
 await shot('02-kitchen-start');
 
 /*
- * Draw a route between two things that actually exist: the home nest and the nearest discovered
- * source on the same surface.
+ * Lay a route by WALKING it, because that is the only way the shipped game lays one.
  *
- * Done BEFORE walking anywhere, and that ordering is load-bearing. The camera follows the scout, so
- * a world point projected after the scout has crossed the room lands outside the viewport and the
- * pointer events go nowhere — which is exactly how an earlier version of this script reported
- * "routes: 0" for a mechanic that was working perfectly.
+ * This block used to be two `page.mouse.down/move/up` drags over projected world points. Pointer
+ * route drawing was deleted from `src/game/input.ts` twenty-two commits earlier — the file states
+ * outright that there is no pointer path — so both drags were mime, and the script said so in its
+ * own output without anybody reading it: `afterRoute` recorded `routes: 0, deliveries: 0`, and the
+ * t=40 "colony working" sample recorded `routes: 0, deliveries: 0, population 2`. The two frames
+ * named `02-kitchen-start` and `05-colony-working` had identical HUDs, because in forty seconds of
+ * capture the colony had done nothing at all.
+ *
+ * Everything below presses keys. If the route does not appear, the script fails loudly rather than
+ * photographing an empty room and calling it evidence.
  */
-const drag = await page.evaluate(() => {
-  const g = window.__game;
-  const run = g.run;
-  const nest = run.house.footholds.get('kitchen.undersink');
-  let best = null;
-  let bestD = Infinity;
-  for (const [id, st] of run.resources) {
-    if (!st.found || st.remaining <= 0) continue;
-    const site = run.house.resources.get(id);
-    if (!site || site.surface !== nest.surface) continue;
-    const d = Math.hypot(site.at.x - nest.at.x, site.at.z - nest.at.z);
-    if (d < bestD) {
-      bestD = d;
-      best = site;
-    }
-  }
-  if (!best) return null;
-  const y = run.house.surfaces.get(nest.surface)?.y ?? 0;
-  const steps = [];
-  for (let i = 0; i <= 12; i++) {
-    const t = i / 12;
-    steps.push(
-      g.project(
-        nest.at.x + (best.at.x - nest.at.x) * t,
-        y,
-        nest.at.z + (best.at.z - nest.at.z) * t,
-      ),
-    );
-  }
-  return { target: best.id, steps };
-});
+const pair = await nearestSupplyPair(page);
+if (!pair) throw new Error('no found source on the nest surface — nothing to route to');
 
-if (drag) {
-  console.log(`  drawing route to ${drag.target}`);
-  await page.mouse.move(drag.steps[0].x, drag.steps[0].y);
-  await page.mouse.down();
-  for (const p of drag.steps.slice(1)) {
-    await page.mouse.move(p.x, p.y);
-    await page.waitForTimeout(30);
-  }
-  await page.mouse.up();
-} else {
-  console.log('  no reachable source found to draw to');
-}
+console.log(`  walking a route to ${pair.source.id}`);
+const laid = await layRoute(page, pair);
+console.log(`  route: ${JSON.stringify(laid)}`);
+if (!laid.ok) throw new Error(`route was never laid: ${laid.why}`);
+
 await page.waitForTimeout(2000);
 console.log('04 first route');
 await shot('04-route-drawn');
 const afterRoute = await state();
 console.log('  after route:', JSON.stringify(afterRoute).slice(0, 320));
-
-// A second, longer route to the food waste bin — the richest and loudest source in chapter 1.
-const long = await page.evaluate(() => {
-  const g = window.__game;
-  const run = g.run;
-  const nest = run.house.footholds.get('kitchen.undersink');
-  const bin = run.house.resources.get('kitchen.bin');
-  if (!run.resources.get('kitchen.bin')?.found) return null;
-  const y = run.house.surfaces.get(nest.surface)?.y ?? 0;
-  const steps = [];
-  for (let i = 0; i <= 16; i++) {
-    const t = i / 16;
-    steps.push(
-      g.project(nest.at.x + (bin.at.x - nest.at.x) * t, y, nest.at.z + (bin.at.z - nest.at.z) * t),
-    );
-  }
-  return { steps };
-});
-if (long) {
-  await page.mouse.move(long.steps[0].x, long.steps[0].y);
-  await page.mouse.down();
-  for (const p of long.steps.slice(1)) {
-    await page.mouse.move(p.x, p.y);
-    await page.waitForTimeout(28);
-  }
-  await page.mouse.up();
-  await page.waitForTimeout(1500);
+if (afterRoute.routes < 1) {
+  throw new Error('the run reports no routes after one was laid — the capture proves nothing');
 }
 
 // Walk, so the camera, gait and occlusion all have something to do.
