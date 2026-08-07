@@ -7,6 +7,7 @@ import { GameCamera } from './camera';
 import { buildLighting, configureRenderer, type RegionLights } from './lighting';
 import { makeGradientEnv } from './night';
 import { buildScene, openGateVisual, updateGateVisuals, type BuiltScene } from './scene';
+import { createNestView, type NestView } from './nests';
 import { createRoachView, type RoachView } from './roaches';
 import { createRouteView, type RouteView } from './routes';
 import { createThreatView, type ThreatView } from './threats';
@@ -120,6 +121,14 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
   const lights: RegionLights = buildLighting(initial.house.regions);
   scene.add(lights.group);
 
+  /*
+   * Built from the HOUSE, not from the run — refuge sites are authored world data and never change
+   * between runs. Only which of the three states is showing depends on `run.footholds`, so restart
+   * re-shows rather than rebuilds, the same as the scene and the lighting.
+   */
+  const nests: NestView = createNestView(initial.house);
+  scene.add(nests.group);
+
   const roaches: RoachView = createRoachView(WORKER_CAP);
   scene.add(roaches.group);
 
@@ -159,6 +168,9 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
       }
       updateGateVisuals(built.gateProps, dt);
 
+      // Refuge state is a visibility toggle over pre-built geometry, so this is a handful of boolean
+      // writes per frame rather than anything worth event-driving.
+      nests.update(run);
       roaches.update(run, { alpha }, dt);
       routes.update(run, dt);
       threats.update(run, dt);
@@ -254,6 +266,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
       openedSeen.clear();
       for (const id of run.openGates) openedSeen.add(id);
       built.occlusion.reset();
+      nests.reset(run);
       roaches.reset();
       routes.reset();
       threats.reset();
@@ -332,6 +345,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
       profiler.dispose();
       threats.dispose();
       routes.dispose();
+      nests.dispose();
       roaches.dispose();
       lights.dispose();
       built.dispose();
