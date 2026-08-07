@@ -38,14 +38,6 @@ import * as THREE from 'three';
  */
 
 /**
- * The shared shader hook, on the prototype so clones keep it.
- *
- * Empty in phase one. When it is filled it must stay a SINGLE function for the whole material
- * library — the moment there are two, `customProgramCacheKey` produces two keys, materials split
- * their programs, and §10's "zero shader-compilation stalls during validated active play" gate
- * starts failing on a frame nobody can predict.
- */
-/**
  * Per-material rim settings, read off the material itself.
  *
  * `onBeforeCompile` is invoked as a method, so `this` is the material being compiled. That is what
@@ -115,14 +107,35 @@ export class NightStandardMaterial extends THREE.MeshStandardMaterial {
  * The environment gradient that replaces the flat ambient term.
  *
  * A single `AmbientLight` adds the same value to every fragment regardless of which way it faces,
- * which is precisely why the current frames have three large planes sitting within 12° of hue of
- * one another. An environment map is the cheapest thing in three.js that makes the dark side of an
+ * which is precisely why the frames had three large planes sitting within 12° of hue of one
+ * another. An environment map is the cheapest thing in three.js that makes the dark side of an
  * object depend on where that object is pointing.
  *
  * Authored as a canvas because the build ships no runtime assets — the same seeded-canvas route
  * `surfaces.ts` already uses for wear. Cool overhead (the window and the borrowed hallway light are
  * both cool), warm-plum underside (bounce off wood floor and cabinet carcass). Neither end is
  * neutral, so no surface can resolve to grey.
+ *
+ * ## MEASURED: it is currently contributing almost nothing, and I do not know why
+ *
+ * The direction was chosen on the strength of this mechanism, so it was tested rather than assumed.
+ * Sweeping the gradient from its authored night values all the way to pure white, with the build
+ * verified at every step:
+ *
+ *     sky #4d6b82   frame mean 40.99 %   pure black 3.21 %
+ *     sky #8fb4d8   frame mean 40.50 %   pure black 3.34 %
+ *     sky #cfe0f0   frame mean 40.23 %   pure black 3.46 %
+ *     sky #ffffff   frame mean 40.60 %   pure black 3.34 %
+ *
+ * Non-monotonic and inside capture noise — a white environment is indistinguishable from a dark
+ * one. Toggling `scene.environment` to null likewise moves nothing. `envMapIntensity` from 1 to 6
+ * moves nothing. The texture IS bound (`renderer.info.memory.textures` goes 25 to 27 for the PMREM
+ * target and the white spot pixel).
+ *
+ * It is kept because it costs one texture, does no measurable harm, and later phases of this
+ * direction are written against it — but nothing in this build may be attributed to it until
+ * somebody explains the numbers above. The improvement from 4.97 % to 3.21 % pure black came from
+ * the hue-shifted dark albedos and the Fresnel rim, both of which were verified by control test.
  */
 const SKY = '#4d6b82';
 const HORIZON = '#3a3f4a';

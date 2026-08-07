@@ -15,7 +15,7 @@
     },
     {
       "label": "sighting",
-      "time": 3.1,
+      "time": 3.2,
       "state": "moving",
       "seen": 0,
       "caught": 0,
@@ -37,7 +37,7 @@
       "state": "dead",
       "seen": 0,
       "caught": 0,
-      "downFor": 3.4,
+      "downFor": 3.38,
       "scoutsLost": 1,
       "sightings": 1,
       "population": 1,
@@ -54,7 +54,7 @@
       "time": 4.7,
       "state": "idle",
       "seen": 0,
-      "caught": 0.047,
+      "caught": 0.062,
       "downFor": 0,
       "scoutsLost": 0,
       "sightings": 1,
@@ -73,7 +73,7 @@
       "state": "dead",
       "seen": 0,
       "caught": 0,
-      "downFor": 3.02,
+      "downFor": 3,
       "scoutsLost": 1,
       "sightings": 1,
       "population": 1,
@@ -100,7 +100,7 @@
     },
     {
       "label": "replacement-walks",
-      "moved": 279
+      "moved": 275.3
     },
     {
       "label": "korean",

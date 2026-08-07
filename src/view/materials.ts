@@ -335,7 +335,6 @@ export function createMaterials(): MaterialLibrary {
      */
     if (spec.rim) material.userData.rim = spec.rim;
 
-
     if (spec.emissive !== undefined) {
       material.emissive = new THREE.Color(spec.emissive);
       material.emissiveIntensity = spec.emissiveIntensity ?? 1;
