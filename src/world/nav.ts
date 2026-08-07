@@ -221,6 +221,54 @@ export function cellCentre(grid: SurfaceGrid, index: number): Vec2 {
   return { x: grid.x0 + (c + 0.5) * grid.cell, z: grid.z0 + (r + 0.5) * grid.cell };
 }
 
+/**
+ * The link a body at `(x, z)` would actually use to get from `from` to `to`.
+ *
+ * Both callers of this used to be `links.find(pair matches)`, which returns the FIRST declaration in
+ * array order and is therefore blind to where the body is standing. The kitchen declares two
+ * floor<->counter links — `kitchen.cable.ricecooker` at capacity 1 (declared first) and
+ * `kitchen.seam.corner` at capacity 2 — so every worker crossing between those surfaces took the
+ * narrow cable, and every route crossing there was *recorded* as using the cable no matter which
+ * mouth the player had physically walked through.
+ *
+ * Measured across nine bot runs (three seeds x three builds): `kitchen.seam.corner` appeared in zero
+ * worker climbs and zero route link lists, while the other five links all appeared. It is authored,
+ * reachable, guarded by three tests, drawn in the world — and no body had ever used it. The scout
+ * was the only thing in the game doing this correctly, because `climbInReach` picks the nearest
+ * mouth, which meant a player could walk a route up the wide seam and then watch every worker queue
+ * at the narrow cable they never chose.
+ *
+ * `preferFree` is for the worker case: among the mouths a body could take, one with spare capacity
+ * beats a closer one that is full, because the point of a second link is that it is a second lane.
+ * Ties and the nothing-is-free case fall back to nearest, so the behaviour degrades to the old shape
+ * rather than to no link at all.
+ */
+export function linkBetween(
+  nav: Nav,
+  from: string,
+  to: string,
+  x: number,
+  z: number,
+  preferFree?: (link: Link) => boolean,
+): Link | null {
+  let best: Link | null = null;
+  let bestDistance = Infinity;
+  let bestFree = false;
+  for (const link of nav.links) {
+    const forward = link.from === from && link.to === to;
+    if (!forward && !(link.to === from && link.from === to)) continue;
+    const mouth = forward ? link.at : (link.exitAt ?? link.at);
+    const d = Math.hypot(mouth.x - x, mouth.z - z);
+    const free = preferFree ? preferFree(link) : false;
+    if (best && bestFree && !free) continue;
+    if (best && free === bestFree && d >= bestDistance) continue;
+    best = link;
+    bestDistance = d;
+    bestFree = free;
+  }
+  return best;
+}
+
 export function isWalkable(nav: Nav, surface: string, x: number, z: number): boolean {
   const grid = nav.grids.get(surface);
   if (!grid) return false;

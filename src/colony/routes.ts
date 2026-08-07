@@ -1,4 +1,4 @@
-import { findPath, isWalkable, nearestWalkable, type NavPoint } from '../world/nav';
+import { findPath, isWalkable, linkBetween, nearestWalkable, type NavPoint } from '../world/nav';
 import { mm } from '../world/units';
 import type { RegionId } from '../world/types';
 import { inKillZone } from './household';
@@ -182,12 +182,10 @@ export function measure(run: Run, route: Route): void {
     if (previous.surface === p.surface) {
       length += dist(previous, p);
     } else {
-      // A surface change can only have happened through a link; find which one.
-      const link = run.nav.links.find(
-        (l) =>
-          (l.from === previous.surface && l.to === p.surface) ||
-          (l.to === previous.surface && l.from === p.surface),
-      );
+      // A surface change can only have happened through a link; find which one. Which one is a
+      // question about where the player was standing, not about declaration order — see
+      // `linkBetween`. Getting this wrong credited every crossing to the first-declared link.
+      const link = linkBetween(run.nav, previous.surface, p.surface, previous.x, previous.z);
       if (link) links.push(link.id);
     }
   }

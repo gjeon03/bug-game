@@ -1,4 +1,4 @@
-import { findPath, isWalkable, nearestWalkable } from '../world/nav';
+import { findPath, isWalkable, linkBetween, nearestWalkable } from '../world/nav';
 import { mm } from '../world/units';
 import {
   CARGO_VALUE,
@@ -283,10 +283,15 @@ function moveToward(
 /* ------------------------------------------------------------------ climbs */
 
 function beginClimb(run: Run, worker: Worker, toSurface: string, dt: number): void {
-  const link = run.nav.links.find(
-    (l) =>
-      (l.from === worker.surface && l.to === toSurface) ||
-      (l.to === worker.surface && l.from === toSurface),
+  // Nearest usable mouth, preferring one with a free lane — see `linkBetween`. Picking by array
+  // order made the kitchen's wider second seam dead content in every measured run.
+  const link = linkBetween(
+    run.nav,
+    worker.surface,
+    toSurface,
+    worker.x,
+    worker.z,
+    (l) => run.workers.filter((w) => w.alive && w.climb?.link === l.id).length < l.capacity,
   );
   if (!link) {
     worker.state = 'idle';

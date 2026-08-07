@@ -168,6 +168,16 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
       light.shadow.camera.near = mm(30);
       light.shadow.camera.far = mm(3000);
       light.shadow.focus = 1;
+      /*
+       * Without this the soft filter is soft in name only.
+       *
+       * `shadowmap_pars_fragment.glsl.js` computes its sample radius as `shadowRadius * texelSize`,
+       * and `shadowRadius` defaults to 1 — so the five-tap Vogel disk three.js pays for every
+       * shadowed fragment lands inside a single texel and returns five copies of the same depth
+       * comparison. The cost was already being spent; only the result was thrown away. That is the
+       * staircased terminator in the shipped evidence frames, and widening it is free.
+       */
+      light.shadow.radius = 3;
     }
     /*
      * Every slot carries a map, even the ones with nothing to project.
@@ -333,5 +343,12 @@ export function configureRenderer(renderer: THREE.WebGLRenderer): void {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.62;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  /*
+   * `PCFSoftShadowMap` is deprecated in the pinned three@0.185.1. `WebGLShadowMap.js:99-102`
+   * coerces it to `PCFShadowMap` on the first render and emits a `console.warn` — in a build whose
+   * §10 evidence claims zero console output, and whose capture gate only ever counted `error`. So
+   * the renderer was already running PCF; naming the deprecated constant bought a warning and
+   * nothing else. Say what it actually does.
+   */
+  renderer.shadowMap.type = THREE.PCFShadowMap;
 }

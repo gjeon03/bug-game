@@ -32,8 +32,19 @@ const browser = await chromium.launch({
 const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
 const page = await context.newPage();
 
+/*
+ * Warnings are collected too, and they were not.
+ *
+ * This listener counted `error` only, so `configureRenderer` naming a constant three.js deprecated
+ * in the pinned r185 produced `WebGLShadowMap: PCFSoftShadowMap has been deprecated` on every boot
+ * and this gate reported "console errors: 0" underneath it. A library telling us we are holding it
+ * wrong is exactly the class of message a capture gate exists to surface. Warnings do not fail the
+ * run — they are printed, so they cannot be silently accumulated.
+ */
+const warnings = [];
 page.on('console', (m) => {
   if (m.type() === 'error') errors.push(m.text());
+  else if (m.type() === 'warning') warnings.push(m.text());
 });
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
 page.on('response', (r) => {
@@ -251,6 +262,7 @@ writeFileSync(resolve(OUT, 'runtime-report.json'), JSON.stringify(report, null, 
 
 console.log('\n=== SUMMARY ===');
 console.log('console errors :', errors.length, errors.slice(0, 5));
+console.log('console warns  :', warnings.length, warnings.slice(0, 5));
 console.log('failed requests:', missingRequests.length, missingRequests.slice(0, 5));
 console.log('external reqs  :', externalRequests.length, externalRequests.slice(0, 5));
 console.log(
