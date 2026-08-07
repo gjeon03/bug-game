@@ -107,6 +107,20 @@ export function createThreatView(): ThreatView {
     const existing = slot.bodies.get(kind);
     if (existing) return existing;
     const body = buildBody(kind, own, materials);
+    /*
+     * Threat bodies cast shadows.
+     *
+     * They did not, and the hand in particular read as pasted onto the frame rather than arriving
+     * in it — no contact shadow means no contact, which at 35 mm scale is the only cue that says
+     * how far above the floor the thing currently is. It receives too, so the descending hand darkens
+     * as it enters the cabinet's own shadow.
+     */
+    body.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+    });
     body.visible = false;
     slot.root.add(body);
     slot.bodies.set(kind, body);
@@ -298,7 +312,15 @@ function buildBody(
      *
      * Seen from the game's camera this is the back of the hand, so the knuckle line is the read.
      */
-    const skin = mat(0xd9a488, 0.72);
+    /*
+     * Skin, not white plastic.
+     *
+     * The first version used 0xd9a488 at roughness 0.72 and photographed as an untextured white
+     * box — an art review called it exactly that. Two things were wrong: the value was far too
+     * light for a hand seen against pale kitchen wood under a warm spill, and skin at 0.72 is
+     * glossy enough to blow out under a direct source. Real skin is a mid-tone, and it is matte.
+     */
+    const skin = mat(0xa86f52, 0.94);
     const palm = new THREE.Mesh(own(new THREE.BoxGeometry(mm(92), mm(26), mm(104))), skin);
     palm.position.set(0, mm(13), mm(18));
 
@@ -306,7 +328,25 @@ function buildBody(
     knuckles.scale.set(1, 0.3, 0.42);
     knuckles.position.set(0, mm(24), mm(-32));
 
-    g.add(palm, knuckles);
+    /*
+     * A wrist and a forearm running out of frame.
+     *
+     * Without them the hand is an object; with them it is a PERSON, and §3 asks that approaching
+     * danger stays readable. It also fixes the scale read: a disembodied palm could be any size,
+     * while a forearm leaving the top of the shot says how far away the rest of the body is.
+     */
+    const wrist = new THREE.Mesh(own(new THREE.CylinderGeometry(mm(30), mm(34), mm(90), 12)), skin);
+    wrist.rotation.x = Math.PI / 2 - 0.22;
+    wrist.position.set(0, mm(34), mm(112));
+
+    const forearm = new THREE.Mesh(
+      own(new THREE.CylinderGeometry(mm(34), mm(52), mm(520), 14)),
+      skin,
+    );
+    forearm.rotation.x = Math.PI / 2 - 0.42;
+    forearm.position.set(0, mm(150), mm(360));
+
+    g.add(palm, knuckles, wrist, forearm);
 
     // Index, middle, ring, little — splayed slightly, because a hand mid-swat is not a paddle.
     const FINGERS: readonly (readonly [number, number, number])[] = [
