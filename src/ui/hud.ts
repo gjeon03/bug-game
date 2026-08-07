@@ -94,6 +94,7 @@ export function createHud(rootId = 'hud'): Hud {
   root.innerHTML = [
     '<div id="objective" class="panel"></div>',
     '<div id="seen"></div>',
+    '<div id="down"></div>',
     '<div id="stores" class="panel"></div>',
     '<div id="routes" class="panel"></div>',
     '<div id="regions" class="panel"></div>',
@@ -120,6 +121,8 @@ export function createHud(rootId = 'hud'): Hud {
   const prompt = slot(promptNode);
   const seenNode = root.querySelector('#seen') as HTMLElement;
   const seen = slot(seenNode);
+  const downNode = root.querySelector('#down') as HTMLElement;
+  const downSlot = slot(downNode);
   const cards = slot(choice.querySelector('.cards') as HTMLElement);
   const sheet = slot(curtainNode.querySelector('.sheet') as HTMLElement);
 
@@ -143,18 +146,36 @@ export function createHud(rootId = 'hud'): Hud {
       }
       toggle(promptNode, promptState !== null);
 
-      // The seen meter only appears when there is something to react to. A permanent risk bar is
-      // wallpaper; one that fades in when the light finds you is information.
-      const visible = seenFraction > 0.06;
+      /*
+       * One meter, two meanings, and the more urgent one wins.
+       *
+       * `seen` is the slow question — is the household about to learn I exist. `caught` is the fast
+       * one — is something about to land on me. They cannot both own the centre of the screen, and
+       * when both are live the second is the only one the player can still do anything about, so it
+       * takes the slot and says so with its own colour.
+       *
+       * Both stay hidden at rest. A permanent risk bar is wallpaper; one that fades in when the
+       * light finds you is information.
+       */
+      const crushing = run.scout.caught > 0.02;
+      const visible = crushing || seenFraction > 0.06;
       if (visible) {
-        const pct = Math.round(seenFraction * 100);
+        const fraction = crushing ? run.scout.caught : seenFraction;
+        const pct = Math.round(fraction * 100);
         write(
           seen,
-          `<div class="label">${esc(t('hud.seen'))}</div>` +
+          `<div class="label">${esc(t(crushing ? 'hud.caught' : 'hud.seen'))}</div>` +
             `<div class="bar"><i style="width:${pct}%"></i></div>`,
         );
       }
+      seenNode.classList.toggle('crush', crushing);
       toggle(seenNode, visible);
+
+      // Losing the scout is the one moment the player has no body. Say so, or the dead controls
+      // read as the game having frozen.
+      const down = run.scout.downFor > 0;
+      if (down) write(downSlot, esc(t('hud.down')));
+      toggle(downNode, down);
 
       const offering = run.colony.adaptationPoints > 0;
       if (offering) renderChoices(cards, run);

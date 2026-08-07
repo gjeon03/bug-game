@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { SWAT_DURATION, SWAT_FALL } from '../colony/household';
 import { mm } from '../world/units';
 import type { Run, Threat } from '../colony/types';
 
@@ -32,6 +33,7 @@ const COLOUR: Readonly<Record<string, number>> = {
   vacuum: 0xe0a45c,
   spray: 0xd2585a,
   sleeper: 0xa0a8c0,
+  swat: 0xe4614e,
 };
 
 interface Slot {
@@ -178,6 +180,22 @@ function draw(
     if (slot.active !== threat.kind) slot.active = threat.kind;
     // A vacuum crosses the floor; everything else arrives and stays.
     if (threat.kind === 'vacuum') body.rotation.y = time * 2.4;
+    /*
+     * The hand actually falls.
+     *
+     * Every other body in this file appears at ground level the instant its threat goes active,
+     * which is fine for a cloth being dragged or a trap being set down — those are slow, and the
+     * ring already carried the warning. A swat is neither. It is the one response aimed at the
+     * player personally and it resolves in under two seconds, so the impact has to be a visible
+     * event or the death reads as the game deciding rather than the household reacting.
+     *
+     * Squared falloff, so the hand is still high for most of the fall and then arrives fast — the
+     * shape of something accelerating, rather than something being lerped.
+     */
+    if (threat.kind === 'swat') {
+      const fallen = Math.min(1, Math.max(0, (SWAT_DURATION - threat.timer) / SWAT_FALL));
+      body.position.y = mm(620) * (1 - fallen) ** 2;
+    }
   }
 }
 
@@ -268,6 +286,49 @@ function buildBody(
     cone.position.y = mm(60);
     cone.rotation.x = Math.PI;
     g.add(can, nozzle, cone);
+  } else if (kind === 'swat') {
+    /*
+     * An open hand, palm down, authored at life size.
+     *
+     * The proportions are a real adult hand in millimetres — 92 mm across the palm, fingers 60–82 mm
+     * — and that is the entire point of the prop. The scout is 35 mm long. Nothing else in the
+     * kitchen states the size difference this plainly, because everything else in the kitchen is
+     * furniture, and furniture is big for reasons that have nothing to do with the player. A hand
+     * is big *relative to the thing it is coming down on*.
+     *
+     * Seen from the game's camera this is the back of the hand, so the knuckle line is the read.
+     */
+    const skin = mat(0xd9a488, 0.72);
+    const palm = new THREE.Mesh(own(new THREE.BoxGeometry(mm(92), mm(26), mm(104))), skin);
+    palm.position.set(0, mm(13), mm(18));
+
+    const knuckles = new THREE.Mesh(own(new THREE.SphereGeometry(mm(46), 14, 10)), skin);
+    knuckles.scale.set(1, 0.3, 0.42);
+    knuckles.position.set(0, mm(24), mm(-32));
+
+    g.add(palm, knuckles);
+
+    // Index, middle, ring, little — splayed slightly, because a hand mid-swat is not a paddle.
+    const FINGERS: readonly (readonly [number, number, number])[] = [
+      [-33, 78, -0.16],
+      [-11, 82, -0.05],
+      [11, 76, 0.05],
+      [31, 60, 0.17],
+    ];
+    for (const [x, length, splay] of FINGERS) {
+      const finger = new THREE.Mesh(
+        own(new THREE.BoxGeometry(mm(19), mm(21), mm(length))),
+        skin,
+      );
+      finger.position.set(mm(x), mm(12), mm(-34 - length / 2));
+      finger.rotation.y = splay;
+      g.add(finger);
+    }
+
+    const thumb = new THREE.Mesh(own(new THREE.BoxGeometry(mm(25), mm(23), mm(62))), skin);
+    thumb.position.set(mm(-56), mm(12), mm(14));
+    thumb.rotation.y = 0.62;
+    g.add(thumb);
   } else if (kind === 'move') {
     const foot = new THREE.Mesh(
       own(new THREE.BoxGeometry(mm(120), mm(120), mm(120))),

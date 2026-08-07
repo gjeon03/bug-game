@@ -406,6 +406,59 @@ body {
   margin-bottom: 3px;
 }
 
+/*
+ * Being crushed is not a louder version of being seen — it is a different event on a different
+ * clock, and it gets a different shape so the player never has to read the label to know which one
+ * is running. Thicker bar, hotter colour, and a pulse fast enough to feel like a countdown.
+ */
+#seen.crush {
+  width: min(340px, 32vw);
+}
+
+#seen.crush .bar {
+  height: 9px;
+  box-shadow: 0 0 12px rgba(228, 97, 78, 0.5);
+}
+
+#seen.crush .bar > i {
+  background: #e4614e;
+}
+
+#seen.crush .label {
+  color: #ff8a72;
+  font-weight: 800;
+  animation: crush-pulse 0.42s ease-in-out infinite alternate;
+}
+
+@keyframes crush-pulse {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── scout lost, centre ──────────────────────────────────────────────────── */
+#down {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: center;
+  align-self: center;
+  display: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: rgba(12, 10, 10, 0.78);
+  border: 1px solid rgba(228, 97, 78, 0.45);
+  color: #ff8a72;
+  font-weight: 800;
+  text-align: center;
+}
+
+#down.on {
+  display: block;
+}
+
 /* ── adaptation choice, centre ───────────────────────────────────────────── */
 #choice {
   position: fixed;

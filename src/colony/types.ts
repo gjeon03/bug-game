@@ -58,6 +58,38 @@ export interface Scout {
    * looks harder for a moment and then goes back to what it was doing.
    */
   seenCooldown: number;
+  /**
+   * How close the scout is to being crushed, 0..1. Reaching 1 kills it.
+   *
+   * Separate from `seen` because they are different failures. `seen` is about information — the
+   * household learns a roach exists here. `caught` is about a body being in the wrong place while
+   * something heavy is already coming down, and it only ever fills inside the kill core of an
+   * ACTIVE threat. Being noticed is survivable; standing under the foot is not.
+   *
+   * A meter rather than a per-second roll, because the brief requires failure to be attributable. A
+   * 0.5/s kill chance produces a death the player cannot narrate; a meter that visibly fills over
+   * roughly a second and a half produces "I stayed too long", which is a lesson.
+   */
+  caught: number;
+  /**
+   * Simulation time of the last tick the scout was inside a kill core.
+   *
+   * The drain needs to know "am I still under it", and the answer cannot come from tick ordering.
+   * The first version drained unconditionally in `updateScout`, one tick's worth every tick, while
+   * `tickThreat` filled one tick's worth every tick — 0.93/s in against 0.85/s out. The meter
+   * reached 0.125 over a swat's entire active window instead of 1.0, so nothing could ever be
+   * crushed and the mechanic was as absent as the one it replaced. It took a printed trace to see
+   * it; the code read as correct.
+   */
+  crushedAt: number;
+  /**
+   * Seconds left of the blackout after a stomp, before the colony's next scout takes over.
+   *
+   * Non-zero means the player has no body: input is ignored and the camera holds on the spot where
+   * the last one died. The pause is the point — it is the only moment in the run where the player
+   * is made to watch instead of act.
+   */
+  downFor: number;
   /** Interpolation source for the renderer — previous tick's transform. */
   prevX: number;
   prevZ: number;
@@ -204,7 +236,7 @@ export interface RoutineState {
 }
 
 export type ThreatKind =
-  'footsteps' | 'wipe' | 'trap' | 'vacuum' | 'spray' | 'move' | 'light' | 'sleeper';
+  'footsteps' | 'wipe' | 'trap' | 'vacuum' | 'spray' | 'move' | 'light' | 'sleeper' | 'swat';
 
 export interface Threat {
   readonly id: number;
@@ -316,6 +348,8 @@ export interface RunStats {
   deliveries: number;
   sightings: number;
   workersLost: number;
+  /** Scouts crushed. The player's own deaths, counted separately from the colony's losses. */
+  scoutsLost: number;
   routesWashed: number;
   regionsOpened: number;
   peakPopulation: number;

@@ -2,6 +2,7 @@ import { paintLiveExposure, resetExposure } from '../world/nav';
 import { mm } from '../world/units';
 import type { RegionId } from '../world/types';
 import {
+  CAUGHT_SECONDS,
   EVIDENCE_DECAY,
   ROUTINES,
   alertFor,
@@ -9,6 +10,7 @@ import {
   logEvent,
   pushCue,
   regionState,
+  stompScout,
   type RoutineSpec,
 } from './state';
 import { panic } from './workers';
@@ -140,6 +142,80 @@ const THREATS: readonly ThreatSpec[] = [
     labelKey: 'threat.spray',
   },
 ];
+
+/**
+ * The reflex.
+ *
+ * Held out of `THREATS` on purpose. Everything in that array is a PLAN — the household noticed
+ * droppings, thought about it, and came back with a cloth or a trap, which is why every one of them
+ * is gated behind an alert level and a forty-second cooldown. A swat is none of that. Somebody
+ * looked down, saw a cockroach, and their hand was already moving.
+ *
+ * Keeping it separate is what lets being seen have a consequence WITHOUT touching the evidence
+ * economy. That economy has been mistuned twice in this file's history, in both directions, and each
+ * correction was paid for with a measured run; `SIGHTING_FLOOR_CAP` sitting below the alert-1
+ * threshold is a deliberate result of those runs, not an oversight. Routing the sighting response
+ * through alert levels would have meant raising that cap and re-breaking what it bought.
+ *
+ * The telegraph is the shortest in the game because a reflex is fast, and still long enough to
+ * clear the radius at walking pace from anywhere inside it.
+ */
+const SWAT: ThreatSpec = {
+  kind: 'swat',
+  minAlert: 0,
+  telegraph: 1.5,
+  duration: 1.6,
+  radiusMm: 300,
+  // Deadliest thing in the game, because it is the only one aimed at the scout personally. It has
+  // to out-run its own 1.6 s duration or standing still would survive it, which is the whole point.
+  lethality: 1.4,
+  wash: 0,
+  labelKey: 'threat.swat',
+};
+
+/**
+ * The swat's timing, shared with the renderer.
+ *
+ * Exported rather than restated in `view/threats.ts` because the hand's fall and the window in
+ * which it kills have to be the same event. A renderer that drops the hand on its own clock shows
+ * the player an impact that is not where the damage is, which is the exact class of defect the
+ * telegraph system exists to prevent.
+ */
+export const SWAT_DURATION = SWAT.duration;
+/** Seconds the hand takes to come down once it is committed. */
+export const SWAT_FALL = 0.22;
+
+function specFor(kind: ThreatKind): ThreatSpec | undefined {
+  return kind === 'swat' ? SWAT : THREATS.find((s) => s.kind === kind);
+}
+
+/**
+ * Somebody saw the scout. Their hand comes down where it was standing.
+ *
+ * Aimed at the sighting, not at the scout's live position — the household is swatting at a memory
+ * half a second old, so moving is genuinely the answer and standing still genuinely is not.
+ */
+export function spawnSwat(run: Run, region: RegionId, surface: string, x: number, z: number): void {
+  // One hand at a time. A second sighting during a swat does not stack a second hand on top.
+  if (run.threats.some((t) => t.kind === 'swat')) return;
+
+  run.threats.push({
+    id: run.nextThreatId++,
+    kind: 'swat',
+    region,
+    surface,
+    x,
+    z,
+    toX: x,
+    toZ: z,
+    phase: 'telegraph',
+    timer: SWAT.telegraph,
+    radius: mm(SWAT.radiusMm),
+    hit: [],
+  });
+  pushCue(run, 'threat.swat.telegraph', x, 0, z);
+  logEvent(run, 'log.threat.swat', 'danger', {});
+}
 
 /* ---------------------------------------------------------------- routines */
 
@@ -367,7 +443,7 @@ export function updateEvidence(run: Run, dt: number): void {
 export function updateDirector(run: Run, dt: number): void {
   for (let i = run.threats.length - 1; i >= 0; i--) {
     const threat = run.threats[i]!;
-    const spec = THREATS.find((s) => s.kind === threat.kind);
+    const spec = specFor(threat.kind);
     if (!spec) {
       run.threats.splice(i, 1);
       continue;
@@ -496,13 +572,30 @@ function tickThreat(run: Run, threat: Threat, spec: ThreatSpec, dt: number): voi
     killWorker(run, worker);
   }
 
-  // The scout is not immune, but it always has the information it needs to leave.
+  /*
+   * The scout's body.
+   *
+   * This block used to raise `scout.seen` and nothing else, which meant that for the whole of this
+   * build being caught under a descending foot cost the player exactly one unit of information and
+   * zero units of anything they could feel. A player reported it in those words: the getting-stomped
+   * content had disappeared. It had — every threat in the table was lethal to workers and harmless
+   * to the person actually holding the keyboard.
+   *
+   * `caught` fills only inside the kill core, which is deliberately tighter than the radius that
+   * kills workers. The scout is the strongest individual in the colony and it gets the benefit of
+   * that: the outer ring of a wipe scatters it, the middle of one kills it.
+   */
   const scout = run.scout;
+  if (scout.downFor > 0) return;
   if (run.house.regionOf.get(scout.surface) !== threat.region) return;
   if (Math.hypot(scout.x - threat.x, scout.z - threat.z) > threat.radius * 0.55) return;
+
   const region = regionState(run, threat.region);
   region.evidence = Math.min(1, region.evidence + dt * 0.05);
   scout.seen = Math.min(1, scout.seen + dt * 0.7);
+  scout.caught = Math.min(1, scout.caught + (dt / CAUGHT_SECONDS) * spec.lethality);
+  scout.crushedAt = run.time;
+  if (scout.caught >= 1) stompScout(run);
 }
 
 /** Damage every foothold in a region. Used by the final extermination. */

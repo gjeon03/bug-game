@@ -118,6 +118,31 @@ export const LOG_CAP = 40;
 export const SEEN_COOLDOWN = 7;
 
 /**
+ * Seconds the scout survives inside a kill core, AT LETHALITY 1.0.
+ *
+ * Each threat scales this by its own lethality, so the number is a reference rather than a literal
+ * timer: a swat (1.4) crushes the scout in 1.07 s, a spray (1.3) in 1.15 s, a trap core (0.8) in
+ * 1.9 s, footsteps (0.5) in 3.0 s. Every one of those is shorter than that threat's active
+ * duration, which is the property that actually matters — a threat the scout can outlast by
+ * standing still is a threat with no consequence, and that is the defect this whole mechanism
+ * exists to fix.
+ *
+ * The floor is set by the scout's own legs: `SCOUT_SPEED` clears the smallest lethal radius (the
+ * trap, 190 mm) in about 0.6 s from dead centre and the largest (the spray, 780 mm) in about 2.4 s.
+ * Anything much under a second would kill players who reacted correctly.
+ */
+export const CAUGHT_SECONDS = 1.5;
+/** How fast `caught` drains once the scout is clear. Faster than it fills — escaping should reward. */
+export const CAUGHT_RECOVER = 0.85;
+/**
+ * Seconds between the scout dying and the colony's replacement arriving.
+ *
+ * Long enough to read as a loss rather than a stumble, short enough that the brief's "restart is
+ * immediate" spirit survives. The player watches their own body get scraped up.
+ */
+export const SCOUT_DOWN_SECONDS = 3.5;
+
+/**
  * Store ceiling.
  *
  * A colony cannot bank an unbounded amount in a crack under a sink. The cap scales with brood
@@ -413,6 +438,9 @@ export function createRun(seed: number): Run {
       working: null,
       seen: 0,
       seenCooldown: 0,
+      caught: 0,
+      crushedAt: -1,
+      downFor: 0,
     },
     colony: {
       food: 8,
@@ -451,6 +479,7 @@ export function createRun(seed: number): Run {
       deliveries: 0,
       sightings: 0,
       workersLost: 0,
+      scoutsLost: 0,
       routesWashed: 0,
       regionsOpened: 1,
       peakPopulation: 0,
@@ -541,6 +570,63 @@ export function killWorker(run: Run, worker: Worker): void {
   run.colony.population = Math.max(0, run.colony.population - 1);
   run.stats.workersLost++;
   pushCue(run, 'worker.died', worker.x, worker.y, worker.z);
+}
+
+/**
+ * The scout is crushed.
+ *
+ * The colony does not end here, and that is the design decision worth stating. Ending the run on
+ * the player's first stomp would make the kitchen's exposed worktop — the most interesting ground
+ * in the room — a place no reasonable player would ever go, and the brief asks for vertical routes
+ * that create real choices, not a single fatal mistake.
+ *
+ * So a death costs a BODY. The replacement scout is promoted out of the workforce, which means the
+ * price is paid in exactly the currency the player has been accumulating all run: one worker, plus
+ * the seconds of blackout, plus a region that now knows for certain. A colony with nobody left to
+ * promote has lost, and that is the only way being seen ends a run outright.
+ */
+export function stompScout(run: Run): void {
+  const scout = run.scout;
+  if (scout.downFor > 0) return;
+
+  scout.state = 'dead';
+  scout.downFor = SCOUT_DOWN_SECONDS;
+  scout.caught = 0;
+  scout.seen = 0;
+  scout.speed = 0;
+  scout.climb = null;
+  scout.working = null;
+  run.stats.scoutsLost++;
+  pushCue(run, 'scout.stomped', scout.x, scout.y, scout.z);
+
+  // The household did not merely glimpse something this time. It got one.
+  const region = run.house.regionOf.get(scout.surface);
+  if (region) {
+    const state = regionState(run, region);
+    state.evidenceFloor = Math.min(SIGHTING_FLOOR_CAP, state.evidenceFloor + SIGHTING_FLOOR_GAIN * 2);
+    state.evidence = Math.max(state.evidence, state.evidenceFloor);
+  }
+
+  /*
+   * Promote a worker. Deliberately NOT `killWorker` — this body is not lost to a threat, it is
+   * reassigned, and counting it under `workersLost` would corrupt the one number the post-run
+   * screen uses to tell the player how much the household actually took from them.
+   */
+  const promoted = run.workers.find((w) => w.alive);
+  if (!promoted) {
+    logEvent(run, 'log.lost.noScout', 'danger', {});
+    run.status = 'lost';
+    return;
+  }
+  promoted.alive = false;
+  promoted.state = 'dead';
+  promoted.route = '';
+  promoted.cargo = 0;
+  promoted.cargoKind = null;
+  promoted.climb = null;
+  run.colony.population = Math.max(0, run.colony.population - 1);
+
+  logEvent(run, 'log.scout.stomped', 'danger', {});
 }
 
 export function pushCue(

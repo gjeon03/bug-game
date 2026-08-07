@@ -63,6 +63,12 @@ export function createAudioBridge(): AudioBridge {
       else audio.trapSnap(pan);
       return;
     }
+    if (cue.kind.startsWith('threat.swat')) {
+      // Close and personal: the warning is a single sharp intake, the impact is a full-weight hit.
+      if (telegraph) audio.footWarn(pan, 0.15);
+      else audio.footHit(pan, 0.05);
+      return;
+    }
     if (cue.kind.startsWith('threat.light')) {
       if (!telegraph) audio.lightOn();
       return;
@@ -105,6 +111,20 @@ export function createAudioBridge(): AudioBridge {
         break;
       case 'scout.seen':
         audio.suspicionUp();
+        break;
+      /*
+       * `scoutDied` and `scoutHurt` were written, mixed and then never called by anything.
+       *
+       * That is the same defect the threat table had, showing up in a second subsystem: the sounds
+       * for the player's own death existed because the design always assumed the player could die,
+       * and nothing in the shipped simulation could kill them. Wiring them is part of the same fix,
+       * not a separate polish pass.
+       */
+      case 'scout.stomped':
+        audio.scoutDied(pan);
+        break;
+      case 'scout.revived':
+        audio.hatch(pan);
         break;
       case 'scout.found':
         audio.routeLinked(pan);

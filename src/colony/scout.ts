@@ -2,6 +2,7 @@ import { exposureAt, isWalkable, nearestWalkable } from '../world/nav';
 import { mm } from '../world/units';
 import type { Gate, Link } from '../world/types';
 import {
+  CAUGHT_RECOVER,
   DISCOVER_RADIUS,
   REACH,
   SCOUT_SPEED,
@@ -17,6 +18,7 @@ import {
   recomputeCapacity,
   regionState,
 } from './state';
+import { spawnSwat } from './household';
 import type { Run } from './types';
 
 /**
@@ -42,6 +44,31 @@ export function updateScout(run: Run, dt: number, input: ScoutInput, stamina: nu
   scout.prevX = scout.x;
   scout.prevZ = scout.z;
   scout.prevY = scout.y;
+
+  if (scout.downFor > 0) {
+    scout.downFor -= dt;
+    scout.speed = 0;
+    if (scout.downFor <= 0) reviveScout(run);
+    return Math.min(1, stamina + dt * SPRINT_RECOVER);
+  }
+
+  /*
+   * Bleed off the crush meter — but only once the scout is actually clear.
+   *
+   * `crushedAt` carries that fact from `tickThreat`, which ran earlier in this same tick. Testing
+   * it rather than relying on the ordering is not defensive style: the first version drained
+   * unconditionally, which subtracted 0.85/s from a 0.93/s fill and left the meter creeping toward
+   * a death that would have arrived twelve seconds after the threat had gone. Both halves read as
+   * correct in isolation, and it took a printed trace — 0.125 after a swat's entire active window,
+   * where 1.0 was expected — to see that they were fighting each other.
+   *
+   * Draining here rather than inside the threat loop is still right: a threat that expires while
+   * the scout is under it must leave a meter that empties, or walking clear of a wipe would leave
+   * the scout permanently one bad step from death.
+   */
+  if (scout.caught > 0 && scout.crushedAt < run.time) {
+    scout.caught = Math.max(0, scout.caught - dt * CAUGHT_RECOVER);
+  }
 
   if (scout.climb) {
     advanceClimb(run, dt);
@@ -135,6 +162,51 @@ function accrueExposure(run: Run, dt: number, multiplier: number): void {
   run.stats.sightings++;
   pushCue(run, 'scout.seen', scout.x, scout.y, scout.z);
   logEvent(run, 'log.sighting', 'danger', { region: `region.${region}` });
+
+  /*
+   * And a hand comes down.
+   *
+   * Aimed at where the sighting happened, captured now, rather than tracked to wherever the scout
+   * is when the telegraph expires. That is what makes running the correct answer and standing still
+   * the wrong one — the household is swinging at a memory, and the memory does not move.
+   */
+  spawnSwat(run, region, scout.surface, scout.x, scout.z);
+}
+
+/**
+ * The colony sends up its next scout.
+ *
+ * At the home nest, not where the last one died. The player is put back at the bottom of the
+ * kitchen and has to make the climb again, which is the part of the loss that is actually felt —
+ * the worker is a number, but re-walking the route to the worktop is time.
+ */
+function reviveScout(run: Run): void {
+  const scout = run.scout;
+  const home = run.house.footholds.get('kitchen.undersink');
+  const spot = home ? nearestWalkable(run.nav, home.surface, home.at.x, home.at.z) : null;
+
+  if (home && spot) {
+    scout.surface = home.surface;
+    scout.x = spot.point.x;
+    scout.z = spot.point.z;
+    scout.y = run.house.surfaces.get(home.surface)?.y ?? 0;
+    scout.prevX = scout.x;
+    scout.prevZ = scout.z;
+    scout.prevY = scout.y;
+  }
+
+  scout.downFor = 0;
+  scout.caught = 0;
+  scout.crushedAt = -1;
+  scout.seen = 0;
+  // The replacement arrives knowing the room is being watched, and gets the same grace a sighting
+  // grants — otherwise it can be seen the instant it steps out and the run spirals.
+  scout.seenCooldown = SEEN_COOLDOWN;
+  scout.state = 'idle';
+  scout.climb = null;
+  scout.working = null;
+  pushCue(run, 'scout.revived', scout.x, scout.y, scout.z);
+  logEvent(run, 'log.scout.revived', 'warn', {});
 }
 
 /** Reveal hidden sites the scout walks past. Scouting is how the map becomes usable. */
