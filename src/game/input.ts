@@ -143,7 +143,20 @@ export function createInput(): Input {
         break;
       }
     }
-    queue.push({ kind: 'dismiss' });
+    /*
+     * Only the keys that MEAN "I have read it" close the control card.
+     *
+     * This used to fire on every keydown, unconditionally, and `help.dismiss` invited it — 「아무
+     * 키나 눌러 시작」, press any key to begin. So a player who reached for W before finishing the
+     * ten lines destroyed them, and `showCurtain('help', …)` has exactly one call site, at boot.
+     *
+     * Most of the bindings get re-taught: F, Space, E and the number keys all appear on the
+     * contextual prompt or the adaptation cards. Three do not — G (erase), H (hold brood) and Shift
+     * (sprint) — and neither does the existence of Esc and R. Those were gone for the session.
+     */
+    if (code === 'Space' || code === 'Enter' || code === 'Escape') {
+      queue.push({ kind: 'dismiss' });
+    }
   };
 
   const onKeyUp = (event: KeyboardEvent): void => {

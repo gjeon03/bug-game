@@ -50,6 +50,11 @@ export async function boot(): Promise<void> {
 
   document.documentElement.lang = 'ko';
   document.title = t('meta.title');
+  // The description is player-facing too — it is what a shared link shows. `index.html` ships it
+  // empty so there is exactly one place these words live.
+  document
+    .querySelector('meta[name="description"]')
+    ?.setAttribute('content', t('meta.description'));
 
   // Text is measured only after the vendored font is actually available. A swap mid-measure is the
   // layout jump the font gate forbids.

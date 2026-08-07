@@ -47,14 +47,35 @@ const step = async (name, data) => {
 await page.screenshot({ path: resolve(OUT, '1-help-card.png') });
 await step('help', { lines: await onScreen() });
 
-await page.keyboard.press('Space');
-await page.waitForTimeout(400);
-// Read from the DOM, not from a debug global — whether the card is GONE is a fact about the screen.
+/*
+ * Read from the DOM, not from a debug global — whether the card is gone is a fact about the screen.
+ *
+ * `offsetParent !== null` is the obvious test and it is WRONG here: `#curtain` is
+ * `position: fixed`, and a fixed-position element reports `offsetParent === null` whether it is
+ * visible or not. So this probe returned false unconditionally, and nobody noticed because the one
+ * place it was used expected false. Computed `display` is the property that actually changes.
+ */
 const curtainVisible = () =>
   page.evaluate(() => {
     const node = document.getElementById('curtain');
-    return node !== null && node.offsetParent !== null;
+    if (!node) return false;
+    return getComputedStyle(node).display !== 'none';
   });
+
+/*
+ * A movement key must NOT destroy the control card.
+ *
+ * Every keydown used to push a `dismiss`, and `help.dismiss` said 「아무 키나 눌러 시작」 — so a
+ * player who reached for W before finishing the ten lines lost them for the session, and three
+ * bindings (G, H, Shift) appear nowhere else in the game. Asserted here rather than in a unit test
+ * because the failure was in the wiring between input, boot and the HUD, which no unit sees.
+ */
+await page.keyboard.press('KeyW');
+await page.waitForTimeout(300);
+await step('afterMovementKey', { curtainVisible: await curtainVisible() });
+
+await page.keyboard.press('Space');
+await page.waitForTimeout(400);
 await step('afterDismiss', { curtainVisible: await curtainVisible() });
 
 // 2 — Esc must bring the controls back. This is the recovery path that did not exist.
@@ -101,6 +122,7 @@ writeFileSync(resolve(OUT, 'prompts.json'), JSON.stringify({ report, errors }, n
 await browser.close();
 
 const ok =
+  report.afterMovementKey.curtainVisible &&
   report.pause.mentionsF &&
   report.promptOnNest.text !== null &&
   report.afterF.trail &&

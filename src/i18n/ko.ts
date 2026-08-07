@@ -342,8 +342,19 @@ export const ko = {
    */
   'prompt.startRoute': '여기서 페로몬 길 시작',
   'prompt.sealRoute': '길 잇기',
-  'prompt.walkingRoute': '길을 놓는 중 — 먹이까지 걸어가라',
-  'prompt.cancelRoute': 'G — 그만두기',
+  /*
+   * The escape hatch rides on the status line rather than on its own key chip.
+   *
+   * `prompt.cancelRoute` had zero references in `src/` — the player could start a route and had no
+   * on-screen way to learn they could stop. Giving it a chip of its own does not work either: the
+   * prompt slot shows one action at a time, and this state has no action, it has a status. So the
+   * status says both things in one line.
+   *
+   * The old string was 'G — 그만두기', which would have rendered as 「GG — 그만두기」 next to the
+   * key chip `hud.ts` draws. Kept as the bare verb for that reason.
+   */
+  'prompt.walkingRoute': '길을 놓는 중 — 먹이까지 걸어가라 · G로 그만두기',
+  'prompt.cancelRoute': '그만두기',
   'help.traverse': 'Space — 전선·배관 타고 오르내리기',
   'help.adapt': '1 2 3 — 적응 선택',
   'help.pause': 'Esc — 잠시 멈춤',
@@ -352,7 +363,8 @@ export const ko = {
   'help.broodHold': 'H — 번식 보류/재개',
   'hud.broodHold': '번식 보류',
   'help.restart': 'R — 다시 시작',
-  'help.dismiss': '아무 키나 눌러 시작',
+  // Was 「아무 키나 눌러 시작」, which invited the player to destroy the card by reaching for W.
+  'help.dismiss': 'Space를 눌러 시작 · Esc로 언제든 다시 열기',
   // The first prose a player ever reads. It promised a flat; the game is one kitchen.
   'help.intro':
     '너는 정찰병 바퀴다. 싱크대 밑 틈 하나에서 시작해, 이 주방을 통째로 군체의 영역으로 만들어라.',

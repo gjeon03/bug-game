@@ -4,11 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <meta
-      name="description"
-      content="사람이 사는 아파트 안에서, 싱크대 밑 틈 하나부터 집 전체까지 바퀴 군체를 넓혀 가는 3D 전략 게임."
-    />
-    <title>집 전체를 점거하라</title>
+    <!--
+      Both of these are filled from the catalog at boot — see `src/game/boot.ts`.
+
+      They used to carry hardcoded Korean written for the five-room scope: "…집 전체까지…" and
+      "집 전체를 점거하라". The kitchen has been the whole game since the reseal, `src/i18n/ko.ts`
+      has said so correctly for just as long, and nothing was reading it: `boot.ts` overwrote the
+      title at runtime but never the description, so the tab was briefly wrong on every load and
+      the description was wrong permanently. §4 puts player-facing strings in the catalog, and a
+      `<meta>` tag is player-facing the moment the page is shared or indexed.
+
+      Left empty rather than pre-filled, so a wiring failure shows as a blank tab and not as a
+      confident lie.
+    -->
+    <meta name="description" content="" />
+    <title></title>
     <!--
       An inline data-URI favicon, not a file. Without it the browser requests /favicon.ico, gets a
       404, and trips the "zero missing asset requests" gate for a resource the page never asked for.

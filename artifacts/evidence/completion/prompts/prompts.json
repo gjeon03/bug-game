@@ -24,8 +24,11 @@
         "H — 번식 보류/재개",
         "Esc — 잠시 멈춤",
         "R — 다시 시작",
-        "아무 키나 눌러 시작"
+        "Space를 눌러 시작 · Esc로 언제든 다시 열기"
       ]
+    },
+    "afterMovementKey": {
+      "curtainVisible": true
     },
     "afterDismiss": {
       "curtainVisible": false
@@ -66,7 +69,7 @@
     },
     "walking": {
       "points": 10,
-      "prompt": "길을 놓는 중 — 먹이까지 걸어가라"
+      "prompt": "길을 놓는 중 — 먹이까지 걸어가라 · G로 그만두기"
     },
     "korean": {
       "latinWords": [],
