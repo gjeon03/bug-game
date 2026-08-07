@@ -334,9 +334,25 @@ function curtainHtml(kind: CurtainKind, run: Run): string {
   }
 
   if (kind === 'pause') {
+    /*
+     * The pause card carries the full control list, because the help card cannot be reopened.
+     *
+     * `input.ts` pushes a `dismiss` on every keydown and `showCurtain('help', …)` has exactly one
+     * call site — at boot. So the ten control lines are on screen until the player's first keypress
+     * and then gone for the rest of the session, including across restarts. Four of those bindings
+     * (F, G, H, Shift) appear nowhere else in the game, and two of them are the pheromone keys.
+     *
+     * Esc already pauses, so the recovery path exists; it just had nothing on it.
+     */
+    // Esc and R are already the two lines framing this card, so they are dropped from the list
+    // rather than printed twice.
+    const lines = HELP_LINES.filter((key) => key !== 'help.pause' && key !== 'help.restart')
+      .map((key) => `<li>${esc(t(key))}</li>`)
+      .join('');
     return (
       `<h1>${esc(t('pause.title'))}</h1>` +
       `<p>${esc(t('pause.resume'))}</p>` +
+      `<ul>${lines}</ul>` +
       `<div class="foot">${esc(t('pause.restart'))}</div>`
     );
   }
@@ -350,7 +366,18 @@ function curtainHtml(kind: CurtainKind, run: Run): string {
     t('result.peak', { count: run.stats.peakPopulation }),
     t('result.sightings', { count: run.stats.sightings }),
     t('result.lost.workers', { count: run.stats.workersLost }),
-    t('result.regions', { count: run.stats.regionsOpened }),
+    /*
+     * Was `result.regions` — "연 구역 {count}곳", regions opened.
+     *
+     * `regionsOpened` starts at 1 and is only ever incremented by `openGate`, and no gate ships, so
+     * the run summary closed with a line that read "opened 1 region" on every run that has ever been
+     * played on this branch. A number that cannot change is not a result.
+     *
+     * Scouts lost is the one it should have been: it is the only stat on this card that is about the
+     * player's own body rather than the colony's, and until this round it was always zero because
+     * nothing in the game could kill them.
+     */
+    t('result.scoutsLost', { count: run.stats.scoutsLost }),
   ]
     .map((line) => `<div>${esc(line)}</div>`)
     .join('');

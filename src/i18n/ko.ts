@@ -175,8 +175,16 @@ export const ko = {
   'objective.kitchen.grow': '군체를 불려라. 거점마다 품을 수 있는 수가 정해져 있다.',
   'objective.kitchen.expand': '남은 거점을 차지해 주방 전체를 군체의 영역으로 만들어라.',
   'objective.final.title': '주방을 지켜라',
+  /*
+   * This is the line the player reads for most of the run, and it described a different game.
+   *
+   * "통로는 모두 열렸다. 이제 네 구역을…" — all the passages are open, now hold four regions —
+   * survived the reseal to one room. There are no passages and there are no four regions; the build
+   * ships with `openGates: []` and one unlocked region, so the sentence was simply false, and it was
+   * false on the very first frame of a new run because `kitchenStepKey` falls through to it.
+   */
   'objective.final.body':
-    '통로는 모두 열렸다. 이제 네 구역을 동시에 유지하면서 집안의 박멸 시도를 견뎌 내야 한다.',
+    '주방은 군체의 것이 됐다. 이제 거점을 하나도 잃지 않고 집안의 박멸 시도를 견뎌 내라.',
 
   /* ── blockers: the single binding constraint, computed from live state ─── */
   'blocker.workers': '일꾼이 부족하다 — {have}/{need}',
@@ -315,8 +323,18 @@ export const ko = {
    * reusing the help-card strings printed "EE — 거점 차지" on screen.
    */
   'prompt.claim': '거점 차지',
+  'prompt.rebuild': '거점 다시 세우기',
   'prompt.working': '통로 작업 중',
   'prompt.climb': '타고 오르기',
+  /*
+   * The route keys had no contextual prompt at all, which meant the game's own differentiating
+   * mechanic was reachable only from a help card that closes on the first keypress and can never be
+   * reopened. A player who blinked never learned that F exists.
+   */
+  'prompt.startRoute': '여기서 페로몬 길 시작',
+  'prompt.sealRoute': '길 잇기',
+  'prompt.walkingRoute': '길을 놓는 중 — 먹이까지 걸어가라',
+  'prompt.cancelRoute': 'G — 그만두기',
   'help.traverse': 'Space — 전선·배관 타고 오르내리기',
   'help.adapt': '1 2 3 — 적응 선택',
   'help.pause': 'Esc — 잠시 멈춤',
@@ -326,14 +344,16 @@ export const ko = {
   'hud.broodHold': '번식 보류',
   'help.restart': 'R — 다시 시작',
   'help.dismiss': '아무 키나 눌러 시작',
+  // The first prose a player ever reads. It promised a flat; the game is one kitchen.
   'help.intro':
-    '너는 정찰병 바퀴다. 싱크대 밑 틈 하나에서 시작해, 이 집 전체를 군체의 영역으로 만들어라.',
+    '너는 정찰병 바퀴다. 싱크대 밑 틈 하나에서 시작해, 이 주방을 통째로 군체의 영역으로 만들어라.',
 
   /* ── pause and results ────────────────────────────────────────────────── */
   'pause.title': '멈춤',
   'pause.resume': 'Esc — 계속',
   'pause.restart': 'R — 다시 시작',
-  'result.won.title': '집 전체를 점거했다',
+  // Was '집 전체를 점거했다', directly contradicting its own body line one row below.
+  'result.won.title': '주방을 점거했다',
   'result.won.body': '주방의 모든 거점이 군체의 것이 됐고, 박멸 시도를 견뎌 냈다.',
   'result.lost.title': '군체가 무너졌다',
   'result.lost.body': '남은 거점이 없다. 숨을 곳도, 알을 깔 자리도 없다.',
@@ -342,7 +362,7 @@ export const ko = {
   'result.peak': '최대 군체 {count}마리',
   'result.sightings': '들킨 횟수 {count}회',
   'result.lost.workers': '잃은 일꾼 {count}마리',
-  'result.regions': '연 구역 {count}곳',
+  'result.scoutsLost': '밟힌 정찰병 {count}마리',
   'result.restart': 'R — 다시 시작',
 
   /* ── loading and recoverable errors ───────────────────────────────────── */

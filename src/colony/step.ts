@@ -194,9 +194,26 @@ function holdProgress(run: Run): number {
   return (main + strength + stores + specialised) / 4;
 }
 
-/** Which victory condition is currently missing. Only one is reported — the most fundamental. */
+/**
+ * What is actually stopping the player, or nothing.
+ *
+ * The distinction this function got wrong is the one its own panel is named for. A blocker is a
+ * thing you cannot currently do anything about; the step in the objective body is a thing you are
+ * being told to go and do. They were the same value, so the panel read
+ *
+ *     먹이까지 페로몬 길을 놓아라.        ← go and do this
+ *     아직 차지하지 않은 거점이 있다      ← in warning amber, permanently
+ *
+ * from the first tick of a new run, and stayed that way through every frame of every capture. The
+ * amber line was not describing an obstacle to laying a route — nothing obstructs laying a route —
+ * it was restating a later step in the ladder as if it were a wall.
+ *
+ * So: while there is still something to GO AND DO, there is no blocker. Only once the room is held
+ * and the player is waiting on the colony itself is there something to report.
+ */
 function holdBlocker(run: Run): string | null {
-  if (kitchenHoldFraction(run) < 1) return 'blocker.holdRegion';
+  if (kitchenHoldFraction(run) < 1) return null;
+  if (run.routes.length === 0) return null;
   if (run.colony.adaptations.length === 0) return 'blocker.adaptation';
   if (run.colony.population < 12) return 'blocker.population';
   if (run.colony.food < 30 || run.colony.moisture < 20) return 'blocker.stores';

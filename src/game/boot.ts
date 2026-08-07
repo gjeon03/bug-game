@@ -4,7 +4,13 @@ import { t } from '../i18n';
 import { mm } from '../world/units';
 import { SIM_DT, createRun, logEvent } from '../colony/state';
 import { stepRun } from '../colony/step';
-import { eraseNearestRoute, sealTrail, startTrail } from '../colony/trail';
+import {
+  eraseNearestRoute,
+  nestInReach,
+  sealTrail,
+  sourceInReach,
+  startTrail,
+} from '../colony/trail';
 import {
   beginClimb,
   claimFoothold,
@@ -105,7 +111,28 @@ export async function boot(): Promise<void> {
         ? { key: 'E', labelKey: 'prompt.claim' }
         : { key: '', labelKey: check.blockerKey ?? 'prompt.claim', params: check.blockerParams };
     }
-    if (footholdInReach(run)) return { key: 'E', labelKey: 'prompt.claim' };
+    /*
+     * The pheromone keys, which had no prompt at all.
+     *
+     * Laying a route is the mechanic the whole design rests on, and the only place F was ever named
+     * was the help card — which `input.ts` dismisses on the first keypress of any kind and which
+     * has exactly one call site, at boot. A player who pressed a key before reading it never saw
+     * the binding again, and the objective panel tells them to lay a route without naming a key.
+     *
+     * Ordered below the refuge prompt so an unclaimed refuge still offers E first, and above the
+     * climb prompt so standing on a claimed refuge offers the thing you actually came to do.
+     */
+    if (run.trail) {
+      return sourceInReach(run)
+        ? { key: 'F', labelKey: 'prompt.sealRoute' }
+        : { key: '', labelKey: 'prompt.walkingRoute' };
+    }
+    const foothold = footholdInReach(run);
+    if (foothold) {
+      const damaged = (run.footholds.get(foothold)?.damage ?? 0) > 0;
+      return { key: 'E', labelKey: damaged ? 'prompt.rebuild' : 'prompt.claim' };
+    }
+    if (nestInReach(run)) return { key: 'F', labelKey: 'prompt.startRoute' };
     if (climbInReach(run)) return { key: 'Space', labelKey: 'prompt.climb' };
     return null;
   }
