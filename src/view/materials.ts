@@ -189,8 +189,29 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
       normalScale: 0.55,
     },
   },
+  /*
+   * The floor is sixty per cent of every frame, so its albedo is the room's brightness.
+   *
+   * It was 0x8d8578, a warm mid-grey, and it rendered at luminance 0.69-0.73 — an art director
+   * measured srgb(207,210,215) and called the result an overcast afternoon rather than a Korean
+   * kitchen at night. That was my doing: I answered §7's "uniform darkness" by adding a doorway
+   * light chosen because it raised frame mean from 41.6 % to 52.2 %, and traded one §7 violation
+   * for its mirror image.
+   *
+   * Swept with the build verified at each step, against BOTH constraints at once — floor mean in
+   * 0.45-0.60 and near-black under 1 %:
+   *
+   *     0x8d8578   floor 0.690   near-black 0.00 %   too bright
+   *     0x6f6a63   floor 0.592   near-black 0.14 %
+   *     0x5b5a5e   floor 0.520   near-black 0.33 %   <- adopted, centre of the band
+   *     0x4a4c55   floor 0.445   near-black 0.38 %   below the band
+   *
+   * And it is dark by being a COLOUR: (91, 90, 94) sits slightly blue of neutral, where the old
+   * value was warm. That is the night direction applied to the largest surface in the game rather
+   * than to the small ones where nobody can see it.
+   */
   floorVinyl: {
-    colour: 0x8d8578,
+    colour: 0x5b5a5e,
     roughness: 0.56,
     metalness: 0.02,
     wear: {

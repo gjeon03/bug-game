@@ -210,8 +210,21 @@ export function applyWear(
   material.roughnessMap = albedo;
   material.normalMap = normal;
   material.normalScale = new THREE.Vector2(scale, scale);
-  // `#d8d8d8` averages ~0.85, so the base is lifted by its reciprocal to hold the authored value.
-  material.color.multiplyScalar(1.18);
+  /*
+   * The 1.18 lift is gone.
+   *
+   * It read "`#d8d8d8` averages ~0.85, so the base is lifted by its reciprocal to hold the authored
+   * value" — reasonable in isolation, and an uncontrolled 18 % brightening of every material that
+   * carries wear, which is most of the large ones. Authored colours stopped meaning what they say,
+   * and every later attempt to darken the room was fighting a multiplier nobody was looking at.
+   *
+   * Removing it is what made the floor reachable: swept with the lift in place, the floor could not
+   * be brought below 0.62 by any combination of doorway intensity and exposure without pure black
+   * coming back. Without it, an authored albedo change lands where the number says it should.
+   *
+   * The albedo maps still average ~0.85, so materials read slightly darker than their hex — now
+   * compensated where it belongs, in the authored colour, and only where it is wanted.
+   */
   material.needsUpdate = true;
 
   return {

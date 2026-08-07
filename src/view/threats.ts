@@ -383,10 +383,7 @@ function buildBody(
     );
     mug.position.y = mm(48);
 
-    const base = new THREE.Mesh(
-      own(new THREE.CylinderGeometry(mm(36), mm(36), mm(6), 18)),
-      china,
-    );
+    const base = new THREE.Mesh(own(new THREE.CylinderGeometry(mm(36), mm(36), mm(6), 18)), china);
     base.position.y = mm(3);
 
     // Cold coffee. At this scale the dark disc inside the rim is most of what says "used".
