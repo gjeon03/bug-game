@@ -56,14 +56,35 @@ describe('a competently played run takes the kitchen', () => {
     expect(played.run.status, `run ended as ${played.run.status}`).toBe('won');
   });
 
-  it('holds every refuge the room offers, physically', () => {
-    // Not "some footholds": the victory check demands all of them, so anything less would let this
-    // pass on a run the game itself would not have ended.
-    for (const id of kitchenRefuges(played.run)) {
+  /*
+   * This asserted that every refuge was held, and its own comment justified that by saying the
+   * victory check demanded all of them. That stopped being true when victory became a majority, so
+   * the assertion was checking a contract the game no longer has — and the honest replacement is
+   * not a looser count, it is the property the count was standing in for.
+   *
+   * What matters is that a won run is physically a won run: enough refuges to satisfy the victory
+   * rule, none of them merely claimed-then-lost, and at least one of them off the floor. That last
+   * clause is the one with teeth. All four original refuges sat on `kitchen.floor`, which made
+   * "hold the kitchen" mean "hold the floor" and made every climb in the room optional. If a run
+   * can win without ever taking a refuge it had to climb to, the vertical routes are decoration.
+   */
+  it('holds a winning share of the room, including ground it had to climb to', () => {
+    const all = kitchenRefuges(played.run);
+    const held = all.filter((id) => {
       const state = played.run.footholds.get(id);
-      expect(state?.claimed, `${id} was never taken`).toBe(true);
-      expect(state!.damage, `${id} was taken and then lost`).toBeLessThan(1);
-    }
+      return state?.claimed === true && state.damage < 1;
+    });
+    expect(held.length, `held ${held.length} of ${all.length}`).toBeGreaterThanOrEqual(
+      Math.ceil(all.length * 0.75),
+    );
+
+    const offFloor = held.filter(
+      (id) => played.run.house.footholds.get(id)?.surface !== 'kitchen.floor',
+    );
+    expect(
+      offFloor.length,
+      `every held refuge was on the floor: ${held.join(', ')}`,
+    ).toBeGreaterThan(0);
   });
 
   /*

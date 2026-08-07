@@ -92,8 +92,20 @@ export const UPKEEP_MOISTURE = 0.0055;
  * The fix is a rule rather than a number: after paying for an egg, the stores still have to cover
  * upkeep for the whole colony for this long. Growth stays automatic and stays free — it just stops
  * being able to spend the last of the pantry. A player who wants to bank harder still has `H`.
+ *
+ * Ninety seconds was enough while four refuges capped the colony near twenty-six. Eight refuges put
+ * capacity at sixty-two, and the rule scales with the colony, so the colony grew to fill it and the
+ * buffer stayed ninety seconds wide — which is narrower than a single extermination sweep. Measured
+ * on seed 20260805: food 58 at t=180, sweep at t=200, food 8 by t=240 and never above 8 again. The
+ * sweep does not have to kill the colony; it only has to stop income for a minute, because `panic`
+ * voids every worker's cargo and the survivors spend that minute running. Twenty-three workers then
+ * starve in sequence and the run ends at one worker with sixty-two capacity standing empty.
+ *
+ * Swept 90 / 150 / 210 across three seeds x two builds. 90 lost one of six; 150 and 210 both won
+ * six of six, and 210 produced the longer runs (3.90-4.67 min against 3.63-4.01). Better on both
+ * measures, so 210 — a buffer wide enough that one bad minute is a setback rather than the run.
  */
-export const BROOD_RESERVE_SECONDS = 90;
+export const BROOD_RESERVE_SECONDS = 210;
 
 /** Route strength decays this fast when nothing walks it. */
 export const ROUTE_DECAY = 0.022;

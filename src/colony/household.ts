@@ -652,13 +652,36 @@ function applyThreat(run: Run, threat: Threat, spec: ThreatSpec): void {
   }
 }
 
+/**
+ * How much of a threat's radius actually kills.
+ *
+ * The rest of it scatters — `panic` is already fired at `radius * 1.5` the moment a threat lands,
+ * so every worker nearby is running before the first death roll. That running was decorative:
+ * `tickThreat` rolled `lethality * dt` against the FULL radius every tick, so a worker sprinting
+ * out of the blast was rolled against on each of the sixty ticks it took to get clear, and fleeing
+ * changed nothing about whether it lived.
+ *
+ * Measured on seed 20260805 with the eight-refuge kitchen: population went 24 to 10 between t=190
+ * and t=200 — seventeen workers in ten seconds — because eight refuges spread across five surfaces
+ * put far more bodies inside one radius at once than four refuges on the floor ever did. The number
+ * that grew was not lethality, it was how many workers a single strike could reach.
+ *
+ * The scout already had this shape, five lines below: an outer ring that scatters it and a tighter
+ * core that kills it. Workers get the same rule and for the same reason — the outer ring of a wipe
+ * should be a scare that costs the colony its cargo and its formation, and the middle of one should
+ * be lethal. That makes fleeing a mechanic rather than an animation, and it keeps a strike's cost
+ * proportional to how badly the player was positioned rather than to how large the colony is.
+ */
+const KILL_CORE = 0.55;
+
 function tickThreat(run: Run, threat: Threat, spec: ThreatSpec, dt: number): void {
   if (spec.lethality <= 0) return;
 
+  const core = threat.radius * KILL_CORE;
   for (const worker of run.workers) {
     if (!worker.alive) continue;
     if (run.house.regionOf.get(worker.surface) !== threat.region) continue;
-    if (Math.hypot(worker.x - threat.x, worker.z - threat.z) > threat.radius) continue;
+    if (Math.hypot(worker.x - threat.x, worker.z - threat.z) > core) continue;
     if (!run.rng.bool(spec.lethality * dt)) continue;
     killWorker(run, worker);
   }
@@ -672,14 +695,14 @@ function tickThreat(run: Run, threat: Threat, spec: ThreatSpec, dt: number): voi
    * content had disappeared. It had — every threat in the table was lethal to workers and harmless
    * to the person actually holding the keyboard.
    *
-   * `caught` fills only inside the kill core, which is deliberately tighter than the radius that
-   * kills workers. The scout is the strongest individual in the colony and it gets the benefit of
-   * that: the outer ring of a wipe scatters it, the middle of one kills it.
+   * `caught` fills only inside `KILL_CORE` — the outer ring of a wipe scatters, the middle of one
+   * kills. The scout shares that shape with the workers rather than being exempt from it; what it
+   * gets instead is a meter it can outrun, where a worker gets a die roll it cannot.
    */
   const scout = run.scout;
   if (scout.downFor > 0) return;
   if (run.house.regionOf.get(scout.surface) !== threat.region) return;
-  if (Math.hypot(scout.x - threat.x, scout.z - threat.z) > threat.radius * 0.55) return;
+  if (Math.hypot(scout.x - threat.x, scout.z - threat.z) > threat.radius * KILL_CORE) return;
 
   const region = regionState(run, threat.region);
   region.evidence = Math.min(1, region.evidence + dt * 0.05);
