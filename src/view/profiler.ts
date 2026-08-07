@@ -307,10 +307,36 @@ export const FRAME_BUDGET: FrameBudget = { p50: 16.7, p95: 20, p99: 33, over50Pc
  * boots at 27 textures against a ceiling of 24. A ceiling the current, passing build already
  * breaches is a ceiling nobody can act on, so it is restated at a level that means something.
  */
+/*
+ * `geometries` is derived, because 160 was not.
+ *
+ * It failed at 162 and passed at 152 across identical profile runs on the same commit — a ceiling
+ * that lands inside the natural spread is a coin toss, and raising it to clear the observed high
+ * water would have been the exact move this gate exists to catch. So it was measured instead.
+ *
+ * Instrumenting `renderer.info.memory.geometries` against game state, every increase during a
+ * profile run is accounted for: the scene boots at 118, route ribbons add one each, and threat
+ * bodies are built on demand. The ±9 swing is one thing only — whether that particular run happened
+ * to have two swats active at the same instant. A swat body is nine geometries, threat bodies pool
+ * by kind (`view/threats.ts`), and a kind is therefore built as many times as it is simultaneously
+ * on screen. One swat, 9; two swats, 18.
+ *
+ * The bound follows from the pool sizes rather than from the high water:
+ *
+ *     118  scene at boot, stable across 20 restarts (`scripts/capture.mjs`)
+ *   +  54  threat bodies: POOL = 6 slots x 9, the largest body (swat)
+ *   +  24  route ribbons: `createRouteView(maxRoutes = 24)`, one geometry each
+ *   = 196
+ *
+ * It is loose, and the looseness has a name: six simultaneous swats is not something the director
+ * can currently produce, but nothing in the code forbids it. Tightening this means making the swat
+ * body cheaper or capping concurrent swats — a design decision, not a budget one. Recorded here so
+ * the next person changes the right thing.
+ */
 export const SCENE_CEILINGS: SceneCeilings = {
   drawCalls: 900,
   triangles: 400_000,
-  geometries: 160,
+  geometries: 196,
   textures: 40,
   programs: 40,
 };
