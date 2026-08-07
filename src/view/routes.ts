@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { mm } from '../world/units';
-import type { Route, RouteHealth, Run } from '../colony/types';
+import type { NavPoint, RouteHealth, Run } from '../colony/types';
+
+/** Slot marker for the line being walked. Not a route id — no Route exists until it is sealed. */
+const LIVE_TRAIL_ID = '__trail';
 
 /**
  * Drawing pheromone routes.
@@ -126,7 +129,42 @@ export function createRouteView(maxRoutes = 24): RouteView {
         buildRibbon(ribbon, route, run, time);
         ribbon.mesh.visible = true;
       }
-      for (let i = count; i < pool.length; i++) {
+      /*
+       * The line being walked RIGHT NOW.
+       *
+       * `run.trail` had no reader in the renderer at all — `createRoute()` is called only inside
+       * `sealTrail`, so no `Route` object exists until the walk finishes, and this loop iterates
+       * `run.routes`. The player therefore held F, walked the length of the kitchen laying the
+       * mechanic the whole design rests on, and saw nothing on the floor until the moment they
+       * sealed it. Cancelling discarded a line that had never been drawn.
+       *
+       * Rendered in the `incomplete` colour and pulsed, so it reads as "in progress" rather than as
+       * a finished route that has gone wrong — those two states share a ribbon and must not share a
+       * look.
+       */
+      let used = count;
+      const trail = run.trail;
+      if (trail && trail.points.length >= 2 && used < maxRoutes) {
+        const ribbon = acquire(used);
+        ribbon.routeId = LIVE_TRAIL_ID;
+        buildRibbon(
+          ribbon,
+          {
+            points: trail.points,
+            health: 'incomplete',
+            // Full width: this is the line the player is actively making, not a faded memory.
+            strength: 1,
+            assigned: 0,
+          },
+          run,
+          time,
+        );
+        ribbon.material.opacity = 0.5 + 0.35 * Math.sin(time * 6);
+        ribbon.mesh.visible = true;
+        used++;
+      }
+
+      for (let i = used; i < pool.length; i++) {
         const ribbon = pool[i];
         if (ribbon) ribbon.mesh.visible = false;
       }
@@ -137,6 +175,18 @@ export function createRouteView(maxRoutes = 24): RouteView {
       // expensive and wrong (fading a sofa because a route passes behind it in another room).
       const points: THREE.Vector3[] = [];
       const s = run.scout;
+
+      // The trail being walked comes first: it is the thing the player is looking at, so it is the
+      // thing that must not be hidden behind a cabinet door.
+      if (run.trail) {
+        for (const point of run.trail.points) {
+          if (points.length >= limit) return points;
+          if (Math.hypot(point.x - s.x, point.z - s.z) > mm(600)) continue;
+          const y = run.house.surfaces.get(point.surface)?.y ?? 0;
+          points.push(new THREE.Vector3(point.x, y + mm(6), point.z));
+        }
+      }
+
       for (const route of run.routes) {
         for (const point of route.points) {
           if (points.length >= limit) return points;
@@ -167,7 +217,21 @@ export function createRouteView(maxRoutes = 24): RouteView {
   };
 }
 
-function buildRibbon(ribbon: Ribbon, route: Route, run: Run, time: number): void {
+/**
+ * What a ribbon actually needs to be drawn.
+ *
+ * Narrower than `Route` on purpose: the trail being walked is not a Route and never will be — it
+ * has no id, no target and no delivery history until it is sealed — so asking for the whole
+ * interface would have forced a fake Route into existence just to draw a line.
+ */
+interface RibbonSource {
+  readonly points: readonly NavPoint[];
+  readonly health: RouteHealth;
+  readonly strength: number;
+  readonly assigned: number;
+}
+
+function buildRibbon(ribbon: Ribbon, route: RibbonSource, run: Run, time: number): void {
   const points = route.points;
   const n = Math.min(points.length, RIBBON_CAPACITY);
   if (n < 2) {
