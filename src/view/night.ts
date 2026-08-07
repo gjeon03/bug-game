@@ -45,8 +45,63 @@ import * as THREE from 'three';
  * their programs, and §10's "zero shader-compilation stalls during validated active play" gate
  * starts failing on a frame nobody can predict.
  */
-function patch(_shader: THREE.WebGLProgramParametersWithUniforms): void {
-  /* phase one: plumbing only — see the note above */
+/**
+ * Per-material rim settings, read off the material itself.
+ *
+ * `onBeforeCompile` is invoked as a method, so `this` is the material being compiled. That is what
+ * lets ONE shared function serve forty-two differently-tuned materials: the GLSL is identical (so
+ * `customProgramCacheKey` yields one key and the program count does not move) and everything that
+ * differs is a uniform.
+ */
+export interface RimSettings {
+  /** Rim colour. Warm on wood, cool on steel and plaster — it is a light, not an outline. */
+  readonly colour: number;
+  /** 0 disables. Above ~0.5 it stops reading as light and starts reading as a sticker. */
+  readonly strength: number;
+}
+
+const NO_RIM: RimSettings = { colour: 0x000000, strength: 0 };
+
+/**
+ * The shared shader hook.
+ *
+ * A Fresnel rim: surfaces turning away from the viewer pick up a little light along their
+ * silhouette. It is the mechanism the night direction rests on, because it separates two objects of
+ * similar albedo WITHOUT giving either of them a texture — the thing this build has repeatedly
+ * failed to do by other means.
+ *
+ * It also reaches the specific pixels that stayed pure black through phase one. Those turned out
+ * not to be "the room is dark" at all: measured by tile, they clustered on the vertical slot
+ * between cabinet doors and the backs of props in the lower left — `laminateDark` and
+ * `plasticBlack`, whose albedos are so low that no amount of ambient irradiance survives the tone
+ * curve. A rim is additive and independent of albedo, so it lifts exactly those.
+ *
+ * Must stay a SINGLE function for the whole library. Two functions means two cache keys, every
+ * material splits its program, and §10's "zero shader-compilation stalls" gate fails on a frame
+ * nobody can predict.
+ */
+function patch(this: THREE.Material, shader: THREE.WebGLProgramParametersWithUniforms): void {
+  const rim = (this.userData.rim as RimSettings | undefined) ?? NO_RIM;
+  shader.uniforms.uRimColour = { value: new THREE.Color(rim.colour) };
+  shader.uniforms.uRimStrength = { value: rim.strength };
+
+  shader.fragmentShader = shader.fragmentShader
+    .replace(
+      '#include <common>',
+      '#include <common>\nuniform vec3 uRimColour;\nuniform float uRimStrength;',
+    )
+    .replace(
+      '#include <opaque_fragment>',
+      [
+        // `vViewPosition` is the fragment-to-camera vector in view space; `normal` is the shaded
+        // normal. Their disagreement is the silhouette.
+        'float nightRim = 1.0 - clamp( abs( dot( normalize( vViewPosition ), normal ) ), 0.0, 1.0 );',
+        // Cubed so the rim stays a narrow band at the edge rather than a wash across the whole
+        // surface, which is how a Fresnel term turns into the "glowing circle" §7 bans.
+        'outgoingLight += uRimColour * pow( nightRim, 3.0 ) * uRimStrength;',
+        '#include <opaque_fragment>',
+      ].join('\n'),
+    );
 }
 
 export class NightStandardMaterial extends THREE.MeshStandardMaterial {

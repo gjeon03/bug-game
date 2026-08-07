@@ -15,7 +15,7 @@
     },
     {
       "label": "sighting",
-      "time": 3.2,
+      "time": 3.1,
       "state": "moving",
       "seen": 0,
       "caught": 0,
@@ -73,7 +73,7 @@
       "state": "dead",
       "seen": 0,
       "caught": 0,
-      "downFor": 3.03,
+      "downFor": 3.02,
       "scoutsLost": 1,
       "sightings": 1,
       "population": 1,

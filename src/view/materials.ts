@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { NightStandardMaterial } from './night';
+import { NightStandardMaterial, type RimSettings } from './night';
 import { applyWear } from './surfaces';
 
 /**
@@ -89,6 +89,15 @@ interface Spec {
   readonly emissiveIntensity?: number;
   readonly transparent?: boolean;
   readonly opacity?: number;
+  /**
+   * Silhouette light, from the night direction.
+   *
+   * Authored per material rather than globally because a rim is a claim about what the surface is
+   * made of: steel catches a hard cool edge, plaster catches almost nothing, wood catches a soft
+   * warm one. A single global rim reads as an outline filter, which is the failure mode §7 calls
+   * "flat vector icons used as world objects".
+   */
+  readonly rim?: RimSettings;
 }
 
 /* Colours are authored against a night interior: nothing here is at full saturation, because
@@ -101,11 +110,25 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
     metalness: 0.02,
     wear: { streaks: 900, grain: 'horizontal', seed: 3, normalScale: 0.5 },
   },
+  /*
+   * The dark end of the palette is authored as HUE, not as value.
+   *
+   * `laminateDark` was 0x4a4038 — a warm neutral three shades below `laminate`, which is the same
+   * material at a different brightness and reads that way. Measured by tile on the stomp capture,
+   * this material and `plasticBlack` were where the remaining pure #000000 lived: albedos that low
+   * leave nothing for the tone curve to recover, so they clip to zero and become the "large
+   * unbroken blue-black rectangles" §7 bans.
+   *
+   * Shifting toward plum keeps them reading as dark — they are still the darkest things in the
+   * frame — while giving the eye a hue difference to separate them by, and giving ACES something
+   * above zero to map. The rim then draws their edges out of the dark without touching their fill.
+   */
   laminateDark: {
-    colour: 0x4a4038,
+    colour: 0x453e4c,
     roughness: 0.58,
     metalness: 0.02,
     wear: { streaks: 800, grain: 'vertical', seed: 11, normalScale: 0.45 },
+    rim: { colour: 0x8fa7c4, strength: 0.16 },
   },
   worktop: {
     colour: 0x9d968b,
@@ -118,12 +141,17 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
     roughness: 0.5,
     metalness: 0.03,
     wear: { streaks: 700, scuffs: 90, grain: 'vertical', seed: 17, normalScale: 0.5 },
+    // The largest vertical area in the frame. Its rim is what makes each door a separate panel
+    // instead of one slab with lines drawn on it.
+    rim: { colour: 0xb8c6d6, strength: 0.2 },
   },
   steelBrushed: {
     colour: 0x8f949a,
     roughness: 0.34,
     metalness: 0.92,
     wear: { streaks: 1400, grain: 'horizontal', seed: 23, normalScale: 0.32 },
+    // Hard and cool. Metal is the one material where a bright narrow rim is literally what happens.
+    rim: { colour: 0xdfe9f4, strength: 0.34 },
   },
   steelPolished: { colour: 0xaab0b6, roughness: 0.16, metalness: 0.96 },
   chrome: { colour: 0xc6ccd2, roughness: 0.08, metalness: 1 },
@@ -173,6 +201,9 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
       seed: 43,
       normalScale: 0.5,
     },
+    // Sixty per cent of every frame. A weak, cool rim picks out the plank seams and the edge where
+    // the floor meets the toe-kick, which is the only silhouette the floor has.
+    rim: { colour: 0x9fb3c6, strength: 0.12 },
   },
   skirting: {
     colour: 0xcfc7bb,
@@ -189,7 +220,13 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
     opacity: 0.55,
   },
   plasticWhite: { colour: 0xd8d6d0, roughness: 0.42, metalness: 0.02 },
-  plasticBlack: { colour: 0x25272b, roughness: 0.38, metalness: 0.04 },
+  // Deep slate-blue rather than neutral near-black — see the note on `laminateDark`.
+  plasticBlack: {
+    colour: 0x2b3040,
+    roughness: 0.38,
+    metalness: 0.04,
+    rim: { colour: 0x9ab4d0, strength: 0.2 },
+  },
   plasticClear: {
     colour: 0xc4cfd2,
     roughness: 0.12,
@@ -239,6 +276,9 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
     roughness: 0.6,
     metalness: 0.02,
     wear: { streaks: 1000, grain: 'horizontal', seed: 73, normalScale: 0.5 },
+    // Warm and soft: the table and chair legs are the props a scout is most often silhouetted
+    // against, and they must not compete with steel for the eye.
+    rim: { colour: 0xc9a884, strength: 0.18 },
   },
   woodDark: {
     colour: 0x4e3d2c,
@@ -285,6 +325,17 @@ export function createMaterials(): MaterialLibrary {
       roughness: spec.roughness,
       metalness: spec.metalness,
     });
+    /*
+     * The rim rides on `userData`, not on a constructor parameter.
+     *
+     * `onBeforeCompile` runs as a method, so the shared hook in `night.ts` reads it off `this`. That
+     * keeps the GLSL byte-identical across all forty-two materials — one `customProgramCacheKey`,
+     * one program — while every material still gets its own rim colour and strength as uniforms.
+     * `userData` also survives `clone()`, which is what the occlusion system does to occluders.
+     */
+    if (spec.rim) material.userData.rim = spec.rim;
+
+
     if (spec.emissive !== undefined) {
       material.emissive = new THREE.Color(spec.emissive);
       material.emissiveIntensity = spec.emissiveIntensity ?? 1;
