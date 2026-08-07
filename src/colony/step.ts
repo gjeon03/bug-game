@@ -68,7 +68,6 @@ export function stepRun(run: Run, dt: number, input: StepInput): StepResult {
    */
   extendTrail(run);
 
-
   // 5 — read the state back for the player.
   run.idleFor += dt;
   run.deadFor = run.colony.population === 0 ? run.deadFor + dt : 0;
@@ -173,7 +172,6 @@ function nextGate(run: Run): Gate | null {
   }
   return null;
 }
-
 
 /** How close the colony is to the victory condition, as a fraction. */
 function kitchenHoldFraction(run: Run): number {

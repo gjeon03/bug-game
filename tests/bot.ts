@@ -334,7 +334,6 @@ function signature(run: Run): string {
   ].join('|');
 }
 
-
 function samePlace(a: Steering, b: Steering): boolean {
   return a.surface === b.surface && Math.hypot(a.x - b.x, a.z - b.z) < mm(120);
 }
@@ -440,11 +439,17 @@ function planRoute(run: Run): RouteMission | null {
     }
 
     if (bestId)
-      return { nest: nestId, target: bestId, path: bestPath, index: 0, laying: false, progressAt: run.time };
+      return {
+        nest: nestId,
+        target: bestId,
+        path: bestPath,
+        index: 0,
+        laying: false,
+        progressAt: run.time,
+      };
   }
   return null;
 }
-
 
 /** A refuge the colony could take right now, if any. */
 function affordableFoothold(run: Run, options: BotOptions): string {

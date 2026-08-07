@@ -531,9 +531,7 @@ export function updateDirector(run: Run, dt: number): void {
      * live traps by t=300, each denying another route, until the colony had nowhere left to walk.
      * A household that has put down a trap waits to see whether it worked.
      */
-    const hasPersistent = run.threats.some(
-      (t) => t.region === region.id && isPersistent(t.kind),
-    );
+    const hasPersistent = run.threats.some((t) => t.region === region.id && isPersistent(t.kind));
     const candidates = THREATS.filter(
       (s) => s.minAlert <= region.alert && !(hasPersistent && s.duration >= PERSISTENT),
     );

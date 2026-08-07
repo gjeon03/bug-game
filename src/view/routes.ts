@@ -35,6 +35,13 @@ const HEALTH_COLOUR: Readonly<Record<RouteHealth, number>> = {
 /** Half-width of a route at zero traffic and at full traffic. */
 const WIDTH_MIN_MM = 5;
 const WIDTH_MAX_MM = 17;
+/**
+ * Narrowest a ribbon end may get, as a fraction of its half-width.
+ *
+ * Without a floor the end-cap taper multiplies the width by exactly zero at both ends, which for a
+ * two-point route is every vertex it has. See the note at the taper itself.
+ */
+const TAPER_FLOOR = 0.42;
 /** Lifted off the floor so it never z-fights, but low enough to read as lying on it. */
 const LIFT_MM = 1.1;
 
@@ -195,9 +202,20 @@ function buildRibbon(ribbon: Ribbon, route: Route, run: Run, time: number): void
     const pz = dx;
 
     const t = i / (n - 1);
-    // Taper to zero at both ends: a trail fades out, it does not stop with a straight edge.
+    /*
+     * Taper toward the ends, but never to zero.
+     *
+     * This was `sin(pi*t) ** 0.45` with no floor, and `t = i/(n-1)`. For a two-point route that
+     * makes `t ∈ {0, 1}`, both vertices get `sin = 0`, and EVERY triangle in the ribbon has zero
+     * area. `trail.ts` accepts a two-point trail, so the first route a player ever lays rendered
+     * exactly nothing — the route panel said `배수 트랩 물기 · 2 · 정상` while the floor was empty,
+     * and an art review reported the game's differentiating mechanic as "literally nothing at all".
+     *
+     * The floor also fixes the general case: with 30 points the second vertex sat at 10 % width, so
+     * the head and tail of every ribbon were a hairline the eye reads as a break rather than a fade.
+     */
     const taper = Math.sin(Math.PI * Math.min(1, Math.max(0, t))) ** 0.45;
-    const w = halfWidth * taper;
+    const w = halfWidth * Math.max(TAPER_FLOOR, taper);
 
     const y = (run.house.surfaces.get(p.surface)?.y ?? 0) + mm(LIFT_MM);
 

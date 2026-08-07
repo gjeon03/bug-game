@@ -84,6 +84,19 @@ export interface RegionLights {
   /** Re-point the pool. Called once per frame with the camera's focus. */
   retarget(focus: THREE.Vector3, routineLevel: (routine: string) => number): void;
   /**
+   * Hand back the shadow render targets.
+   *
+   * Needed on restart even though the pool itself survives. A shadow map is a `WebGLRenderTarget`
+   * that three.js allocates lazily on first shadow render, and swapping the entire scene graph
+   * underneath it leaves the old target counted against `renderer.info.memory.textures` while a
+   * fresh one is allocated for the new scene. Measured with the restart gate armed: textures
+   * 25 -> 45 across twenty restarts, exactly +1 each, and 21 -> 21 with `SHADOW_SLOTS` set to zero.
+   *
+   * Separate from `dispose()` because the lights, their targets and their tuning must NOT be torn
+   * down here — only the GPU memory that is about to be re-derived.
+   */
+  releaseShadows(): void;
+  /**
    * Force every routine light on, for room portraits.
    *
    * A room at night with its television, lamp and ceiling fitting all off is genuinely dark, and
@@ -184,6 +197,16 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
         slot.distance = pick.a.distance;
         slot.target.updateMatrixWorld();
         live++;
+      }
+    },
+
+    releaseShadows() {
+      for (const slot of slots) {
+        if (!slot.castShadow) continue;
+        slot.shadow.map?.dispose();
+        slot.shadow.map = null;
+        slot.shadow.mapPass?.dispose();
+        slot.shadow.mapPass = null;
       }
     },
 

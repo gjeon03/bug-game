@@ -284,3 +284,90 @@ So the honest headline is not "the run is 6.4 minutes and needs lengthening". It
 (threat kind, starvation, stuck-recovery) per minute for the brood build, alongside the objective
 blocker at each stall. The question to answer first is *why gate four never opens* — not why the run
 is short. Nothing about length is worth tuning while a whole specialization cannot finish.
+
+---
+
+## 14. Six-persona scoring, and what it cost me to find out the instrument was broken
+
+Six independent personas scored the build against `CLAUDE.md` and then a skeptic tried to refute
+each one's three highest-value findings. Fourteen survived.
+
+| persona | score | one-line verdict |
+| --- | --- | --- |
+| 3D 아트 디렉터 | 41 | every delivered frame contains at least two items from §7's banned list |
+| 신규 플레이어 | 41 | ten control lines that self-destruct on the first keypress and never return |
+| 게임 디자이너 | 33 | run length arithmetically fixed at ~4 minutes by two constants |
+| 한국 UX 비평가 | 43 | 주방만 남긴 게임이 아직도 "이 집 전체"라고 말한다 |
+| 기술 검증자 | 44 | the evidence harness drives a mouse mechanic deleted 22 commits ago |
+| 공간 · 레벨 디자이너 | 34 | 2 of 6 climbs sit inside their own blockers |
+
+**Average 39.3.** My own earlier estimate was 51.8. The gap is not that the build got worse between
+the two — it is that these personas were made to cite `file:line` or an image filename for every
+deduction, and a skeptic then opened each citation. Sixteen of the earlier round's findings would
+not have survived that.
+
+### The finding that mattered most was about my own measurements
+
+`capture.mjs` and `perf.mjs` drew pheromone routes with `page.mouse.down/move/up`. Pointer route
+drawing was deleted from `src/game/input.ts` twenty-two commits earlier — that file says outright
+that there is no pointer path. Both harnesses were miming, and both reported success. The proof was
+sitting in their own committed output the whole time:
+
+```
+afterRoute   routes 0, deliveries 0
+t=40         routes 0, deliveries 0, population 2
+```
+
+`02-kitchen-start.png` and `05-colony-working.png` had identical HUDs. Every visual and performance
+claim on this branch rested on forty seconds of an empty room.
+
+The same class of error was in `tests/bot.ts`, and I had already been burned by it once this
+session: `samePlace` treats anything within 120 mm as the same destination, mission waypoints are
+one 60 mm cell apart, so the steering path was never recomputed and the scout stood at the end of a
+stale polyline at speed 0 while the colony starved. I read that as a game balance defect — "the
+brood build dies at 3.8 minutes" — and chased it as one. One line later, the same seed and the same
+build wins. §13 above is therefore **retracted**: the brood build's failure to complete was the
+harness, not the specialization.
+
+**Rule going forward, and it is the same one §13 already stated and I did not apply to myself:**
+numbers produced by an instrument nobody has controlled are not evidence about the thing measured.
+Before diagnosing the game, diagnose the thing doing the looking.
+
+### Round 1 results (all verified by control comparison or real browser)
+
+| defect | how it was found | evidence it is fixed |
+| --- | --- | --- |
+| 2 of 6 climbs unenterable | persona cited `kitchen.ts:267` / `:217` against `nav.ts:489` | new guard is RED on the old file, GREEN on the new; `bin.inside.food` reachable |
+| 2 chair climb mouths 134 mm apart | **my new guard**, not the personas | guard GREEN at 267 mm |
+| trap ground the colony 14 → 2 in 40 s | traced the run at 20 s intervals | routes through a kill zone are refused; population holds |
+| one sweep made the run unwinnable | worklist predicted it before it fired | refuges rebuild; damage clears on retake |
+| alert 3 stopped every worker silently | deliveries froze at 158 for 160 s | rule removed; run 3.47 → 6.07 → win |
+| household could trap the nest doorstep | routes 8 → 2, moisture 85 with food 0 | aim walks outward past a 350 mm sanctuary |
+| Korean described a sealed five-room flat | persona quoted `ko.ts:328/335/177` | `grep` clean outside sealed blocks |
+| F named nowhere on screen | persona traced `boot.ts:99-111` | browser: "F 여기서 페로몬 길 시작" |
+| help card unrecoverable | persona traced `input.ts:146` | browser: Esc restores all 10 lines |
+| floor stains were grey rectangles | persona cited `shapes.ts:151` + the frames | organic outline; puddle contained |
+
+**First honest performance measurement on this branch** — real Chrome, Apple M1, GPU timer query,
+three routes walked, population 2 → 9, one live threat:
+
+```
+presented ms  p50 16.70   p95 17.70   p99 18.50   worst 18.80
+GPU ms        p50 6.69    p99 9.31    (2728 samples)
+tails         >33ms 0     >50ms 0     >100ms 0
+```
+
+That passes §10. The previously recorded `GPU p50 3.97` was an empty room and is not comparable.
+
+### Still open, in the personas' own priority order
+
+1. **Run length.** 25–35 minutes is the target; the loop closes in single-digit minutes. The brief
+   forbids buying it with prices, and thirteen recorded attempts confirm that. It has to come from
+   density: more claimable positions, refuge tiers that grant verbs, six kitchen routines instead of
+   two, staged sweeps that deny specific sites.
+2. **Art.** Near-black untextured cabinet slabs; floor with no incident at play scale; only three
+   authored lights in the kitchen, one of them gated behind the dishes routine — so the middle of
+   the room, where the dining table now is, has no authored light at all while `exposureZones`
+   claims 0.72 exposure there. The simulation says lit and the renderer draws black.
+3. **Adaptations are scalar multipliers.** Three families, zero new verbs, zero surfaces unlocked.
+4. `scoutHidden: true` at t=38 in the capture — §10 requires the scout is never persistently hidden.

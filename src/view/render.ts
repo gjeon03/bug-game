@@ -96,10 +96,12 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
    */
   scene.fog = new THREE.Fog(0x070a10, mm(1800), mm(9000));
 
-  let built: BuiltScene = buildScene(initial.house);
+  // Built once per page load and never replaced — see the note in `rebuild`.
+  const built: BuiltScene = buildScene(initial.house);
   scene.add(built.root);
 
-  let lights: RegionLights = buildLighting(initial.house.regions);
+  // Built once per page load and never replaced — see the note in `rebuild`.
+  const lights: RegionLights = buildLighting(initial.house.regions);
   scene.add(lights.group);
 
   const roaches: RoachView = createRoachView(WORKER_CAP);
@@ -191,15 +193,44 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
     },
 
     rebuild(run) {
-      // Scene contents only. The renderer, its context, the camera and the profiler survive.
-      scene.remove(built.root);
-      scene.remove(lights.group);
-      built.dispose();
-      lights.dispose();
-      built = buildScene(run.house);
-      scene.add(built.root);
-      lights = buildLighting(run.house.regions);
-      scene.add(lights.group);
+      /*
+       * Scene contents only. The renderer, its context, the camera, the profiler AND THE LIGHTING
+       * survive.
+       *
+       * The lighting used to be torn down and rebuilt here, and it leaked one GPU texture on every
+       * restart — measured 25 -> 30 over five restarts in the capture harness, and 25 -> 39 over
+       * fourteen in a dedicated probe, monotonic with no plateau. Setting `SHADOW_SLOTS` to zero
+       * made it flat, which pins it to the shadow maps: those are render targets three.js allocates
+       * lazily on first use, and a pool discarded before it is next rendered does not reliably give
+       * them back.
+       *
+       * Disposing harder would have been the obvious answer and it is the wrong one. The authored
+       * lights come from `run.house.regions`, and every run is the same house — so the pool being
+       * rebuilt was identical to the one being thrown away. Not rebuilding it removes the leak by
+       * construction instead of by remembering, which is the same reason `WebGLRenderer` itself is
+       * not reconstructed here.
+       *
+       * `retarget()` re-points every slot from the camera focus each frame, so the surviving pool
+       * needs no reset of its own.
+       */
+      /*
+       * Nothing is rebuilt. The house is the same house.
+       *
+       * `buildScene(run.house)` is a pure function of the authored world, and the authored world is
+       * a module constant — every run of this game is the same kitchen. So tearing the scene down
+       * and building an identical one was work whose only observable effect was the leak: measured
+       * with the restart gate armed, textures 25 -> 45 and geometries 97 -> 100 over twenty
+       * restarts. Both counters are flat with `SHADOW_SLOTS` at zero, so the texture half is the
+       * shadow render targets three.js allocates lazily and does not reliably reclaim when the whole
+       * scene graph is swapped underneath them.
+       *
+       * Two fixes were tried first and both failed to move the number: keeping the light pool alive
+       * across restarts, and then disposing `shadow.map`/`shadow.mapPass` explicitly. That is the
+       * signal to stop chasing the deallocation and remove the reallocation instead — the same
+       * reasoning that already applies to `WebGLRenderer` and its GL context two functions up.
+       *
+       * What actually differs between runs is RUN STATE, and `reset` is the function that owns it.
+       */
       this.reset(run);
     },
 

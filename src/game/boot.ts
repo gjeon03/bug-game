@@ -84,7 +84,6 @@ export async function boot(): Promise<void> {
 
   hud.showCurtain('help', session.run);
 
-
   function start(target: HTMLCanvasElement, withSeed: number): Session {
     const run = createRun(withSeed);
     const renderer = createRenderer(target, run);
@@ -99,7 +98,6 @@ export async function boot(): Promise<void> {
   }
 
   /** Screen point to a world position on the plane the scout is currently standing on. */
-
 
   /** What the scout could do right now, if anything. Drives the contextual prompt. */
   function currentPrompt(run: Run): PromptState | null {
@@ -241,8 +239,6 @@ export async function boot(): Promise<void> {
           break;
       }
     }
-
-
 
     const blocked = paused || run.status !== 'playing' || hud.curtain === 'help';
     const move = blocked ? { x: 0, z: 0 } : input.movement();

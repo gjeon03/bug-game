@@ -172,12 +172,35 @@ await dprPage.screenshot({ path: resolve(OUT, '08-dpr2-1280x720.png') });
 console.log('  captured 08-dpr2-1280x720.png');
 await dpr2.close();
 
-// Restart five times and confirm the opening state is identical each time.
+/*
+ * Restart twenty times and confirm BOTH that the opening state repeats and that nothing accumulates.
+ *
+ * This loop used to run five times and compare a hand-picked subset of fields that deliberately
+ * excluded `s.stats`. It therefore printed `five restarts identical: true` directly above a report
+ * recording `textures 25` at boot and `textures 30` at the end — a gate whose name claimed restart
+ * leakage and whose assertion could not see it. The renderer's own comment calls this "the
+ * five-restart leak gate"; nothing in the repository was checking it.
+ *
+ * Twenty rather than five because a per-restart leak of one texture is arguable at five and
+ * unmistakable at twenty.
+ */
+const RESTARTS = 20;
 const restarts = [];
-for (let i = 0; i < 5; i++) {
+/*
+ * The baseline is taken after the FIRST restart, not at boot.
+ *
+ * Pools allocate lazily: the route ribbon, the worker instances and the threat bodies each take
+ * their geometry the first time they are used, so a boot-time snapshot has none of it and the
+ * comparison charges warm-up as leakage. Measured: geometries 97 -> 100 across twenty restarts,
+ * which is +3 total and plateaus, versus textures which were rising by exactly one every time.
+ * Only the second kind is a leak, and only the second kind should fail this gate.
+ */
+let baseline = null;
+for (let i = 0; i < RESTARTS; i++) {
   await page.evaluate(() => window.__game.restart());
-  await page.waitForTimeout(1400);
+  await page.waitForTimeout(700);
   const s = await state();
+  if (i === 0) baseline = s.stats;
   restarts.push({
     population: s.population,
     capacity: s.capacity,
@@ -190,7 +213,25 @@ for (let i = 0; i < 5; i++) {
 }
 await shot('09-after-five-restarts');
 const identical = restarts.every((r) => JSON.stringify(r) === JSON.stringify(restarts[0]));
-console.log(`  five restarts identical: ${identical}`);
+console.log(`  ${RESTARTS} restarts identical: ${identical}`);
+
+const COUNTED = ['textures', 'geometries', 'materials', 'meshes'];
+const afterRestarts = await state();
+console.log(
+  `  GPU objects boot ${COUNTED.map((k) => `${k} ${boot.stats[k]}`).join(' ')}`,
+);
+console.log(
+  `  GPU objects restart 1 -> ${RESTARTS}: ` +
+    COUNTED.map((k) => `${k} ${baseline[k]}->${afterRestarts.stats[k]}`).join(', '),
+);
+const grew = COUNTED.filter((key) => afterRestarts.stats[key] > baseline[key]);
+if (grew.length > 0) {
+  throw new Error(
+    `restart leaks GPU objects over ${RESTARTS - 1} restarts: ${grew
+      .map((k) => `${k} ${baseline[k]} -> ${afterRestarts.stats[k]}`)
+      .join(', ')}`,
+  );
+}
 
 const final = await state();
 const report = {

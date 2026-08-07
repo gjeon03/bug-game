@@ -262,9 +262,10 @@ describe('the rest of the flat is absent, not merely locked', () => {
     const house = buildHouse();
     const nav = buildNav(house, new Set());
     for (const id of nav.grids.keys()) {
-      expect(id.startsWith('kitchen.'), `${id} should not exist while the kitchen is the game`).toBe(
-        true,
-      );
+      expect(
+        id.startsWith('kitchen.'),
+        `${id} should not exist while the kitchen is the game`,
+      ).toBe(true);
     }
     for (const link of nav.links) {
       expect(link.from.startsWith('kitchen.')).toBe(true);

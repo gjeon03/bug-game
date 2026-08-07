@@ -316,10 +316,7 @@ function buildBody(
       [31, 60, 0.17],
     ];
     for (const [x, length, splay] of FINGERS) {
-      const finger = new THREE.Mesh(
-        own(new THREE.BoxGeometry(mm(19), mm(21), mm(length))),
-        skin,
-      );
+      const finger = new THREE.Mesh(own(new THREE.BoxGeometry(mm(19), mm(21), mm(length))), skin);
       finger.position.set(mm(x), mm(12), mm(-34 - length / 2));
       finger.rotation.y = splay;
       g.add(finger);

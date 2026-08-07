@@ -31,6 +31,21 @@ const TRAIL_STEP = mm(70);
 /** The scout must be this close to a refuge to start, or to a source to seal. */
 export const TRAIL_REACH = LINK_RADIUS;
 
+/**
+ * Fewest samples a sealed trail may hold.
+ *
+ * Two, and it stays two. Raising it to four looked like the right hardening after a two-point route
+ * turned out to render as nothing — and it immediately refused the first route the game offers,
+ * because `kitchen.drip.trap` sits under the same sink as `kitchen.undersink` and a supply line
+ * between them is legitimately about 150 mm long. A minimum length would have deleted real content
+ * to paper over a renderer bug.
+ *
+ * The invisibility was never about the number of points. `view/routes.ts` tapered its ribbon to
+ * exactly zero width at both ends, so a two-point line had no non-degenerate triangles at all; the
+ * taper now has a floor and a short route draws as a short route.
+ */
+const MIN_TRAIL_POINTS = 2;
+
 export interface Trail {
   readonly nest: string;
   readonly points: DrawnPoint[];
@@ -114,7 +129,16 @@ export function sealTrail(run: Run): boolean {
     logEvent(run, 'log.route.needSource', 'warn', {});
     return false;
   }
-  if (trail.points.length < 2) {
+  /*
+   * A line has to be long enough to be a line.
+   *
+   * Two points is 70 mm — half the scout's own reach, and shorter than the 230 mm radius that
+   * decides whether the ends are attached to anything. It produced routes the HUD listed as
+   * `· 2 · 정상` and the renderer drew as a stub, which is how a two-vertex ribbon with a
+   * taper-to-zero end cap ended up invisible without anybody noticing the route was degenerate
+   * either. Four points is a walk, not a twitch.
+   */
+  if (trail.points.length < MIN_TRAIL_POINTS) {
     logEvent(run, 'log.route.tooShort', 'warn', {});
     return false;
   }

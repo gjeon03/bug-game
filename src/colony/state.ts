@@ -469,7 +469,7 @@ export function createRun(seed: number): Run {
       starvedFor: 0,
       adaptations: [],
       adaptationPoints: 0,
-    broodHold: false,
+      broodHold: false,
     },
     workers,
     routes: [],
@@ -621,7 +621,10 @@ export function stompScout(run: Run): void {
   const region = run.house.regionOf.get(scout.surface);
   if (region) {
     const state = regionState(run, region);
-    state.evidenceFloor = Math.min(SIGHTING_FLOOR_CAP, state.evidenceFloor + SIGHTING_FLOOR_GAIN * 2);
+    state.evidenceFloor = Math.min(
+      SIGHTING_FLOOR_CAP,
+      state.evidenceFloor + SIGHTING_FLOOR_GAIN * 2,
+    );
     state.evidence = Math.max(state.evidence, state.evidenceFloor);
   }
 

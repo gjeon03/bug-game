@@ -142,7 +142,11 @@ export function createHud(rootId = 'hud'): Hud {
 
       if (promptState) {
         const label = t(promptState.labelKey, resolveParams(promptState.params ?? {}));
-        write(prompt, `<span class="key">${esc(promptState.key)}</span>${esc(label)}`);
+        // An empty key means "this is a status line, not an action" — draw no chip. It used to
+        // render an empty bordered box, which is what the player saw for the whole of the walk
+        // between starting a route and sealing it.
+        const chip = promptState.key ? `<span class="key">${esc(promptState.key)}</span>` : '';
+        write(prompt, `${chip}${esc(label)}`);
       }
       toggle(promptNode, promptState !== null);
 

@@ -344,6 +344,18 @@ body {
 }
 
 /* ── contextual prompt, centre-bottom ────────────────────────────────────── */
+/*
+ * The prompt sits over the FLOOR, and the floor is the brightest thing in the game.
+ *
+ * It had no background, no border and no text-shadow, so the label inherited `--text` (#cfd8e0)
+ * and was measured at 1.05:1 against pale kitchen vinyl — the orange key chip was visible and the
+ * words beside it were not. That label is the only place the game ever names the key for its own
+ * differentiating mechanic, so "unreadable" and "absent" were the same thing.
+ *
+ * It gets the same panel treatment as every other HUD block rather than a bespoke text-shadow,
+ * because the problem is not contrast in the abstract — it is that a floating string over a live 3D
+ * scene has no guaranteed backdrop at all.
+ */
 #prompt {
   grid-column: 2;
   grid-row: 3;
@@ -351,6 +363,12 @@ body {
   align-self: end;
   text-align: center;
   font-weight: 700;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+  padding: 7px 14px;
+  margin-bottom: 6px;
   opacity: 0;
   transition: opacity 0.18s ease;
 }
