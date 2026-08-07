@@ -5,6 +5,7 @@ import type { Run } from '../colony/types';
 import { WORKER_CAP } from '../colony/state';
 import { GameCamera } from './camera';
 import { buildLighting, configureRenderer, type RegionLights } from './lighting';
+import { makeGradientEnv } from './night';
 import { buildScene, openGateVisual, updateGateVisuals, type BuiltScene } from './scene';
 import { createRoachView, type RoachView } from './roaches';
 import { createRouteView, type RouteView } from './routes';
@@ -85,16 +86,31 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
   configureRenderer(renderer);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x05070b);
   /*
-   * Fog far plane.
+   * Aerial perspective at insect scale.
    *
-   * The previous build set this to 2100 units = 2827 mm, which is shorter than the diagonal of a
-   * single room — every long sightline rendered as flat fog colour. The apartment is roughly
-   * 9800 x 9000 mm, so the far plane has to clear ~13 300 mm of diagonal. Set well beyond it: fog
-   * here is for atmospheric depth on the far side of a room, not for hiding the world.
+   * It was `Fog(0x070a10, mm(1800), mm(9000))` — sized for a whole flat, on a room 3800 x 3000 mm.
+   * The near plane sat beyond the far wall, so the one depth cue that costs zero milliseconds was
+   * switched off by its own numbers, and its near-black colour meant that wherever it DID apply it
+   * was adding to the pure-black problem rather than to depth.
+   *
+   * ## The range is measured from the CAMERA, not from the scout
+   *
+   * The first correction here was `mm(320)` to `mm(2600)`, taken from an art proposal that quoted
+   * subject-relative distances. The camera sits `CAM_DEFAULT_MM` = 1900 mm BEHIND the scout, so
+   * that range put the player's own body at 69 % fog and rendered the entire room as milk. Every
+   * pixel in the frame is between 1900 mm and roughly 5700 mm from the lens; the useful range is
+   * the part of that span the room actually occupies.
+   *
+   * Near at the framing distance leaves the scout and its immediate surroundings clear. Far at the
+   * camera distance plus the room diagonal means the opposite corner is fully hazed and nothing
+   * beyond it exists to be flattened.
    */
-  scene.fog = new THREE.Fog(0x070a10, mm(1800), mm(9000));
+  scene.fog = new THREE.Fog(0x8fa0ab, mm(1950), mm(5400));
+  // The background has to agree with the fog, or the room ends against a wall of a different colour
+  // than the air in front of it.
+  scene.background = new THREE.Color(0x8fa0ab);
+  scene.environment = makeGradientEnv(renderer);
 
   // Built once per page load and never replaced — see the note in `rebuild`.
   const built: BuiltScene = buildScene(initial.house);

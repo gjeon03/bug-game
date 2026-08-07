@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+import { NightStandardMaterial } from './night';
 import { applyWear } from './surfaces';
 
 /**
@@ -271,7 +272,15 @@ export function createMaterials(): MaterialLibrary {
 
   const build = (id: MaterialId): THREE.MeshStandardMaterial => {
     const spec = SPECS[id];
-    const material = new THREE.MeshStandardMaterial({
+    /*
+     * `NightStandardMaterial`, not `MeshStandardMaterial`.
+     *
+     * The only line in this file the night direction touches, and deliberately the only one: the
+     * forty-two specs below stay exactly as authored while the shading model changes underneath
+     * them. The subclass carries the shared `onBeforeCompile` on its prototype, which is what makes
+     * the hook survive `occlusion.ts` cloning occluder materials — see `view/night.ts`.
+     */
+    const material = new NightStandardMaterial({
       color: spec.colour,
       roughness: spec.roughness,
       metalness: spec.metalness,

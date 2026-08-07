@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { makeWhitePixel } from './night';
 import { MM_PER_UNIT, mm } from '../world/units';
 import type { LightSpec, RegionSpec } from '../world/types';
 
@@ -39,13 +40,17 @@ import type { LightSpec, RegionSpec } from '../world/types';
 const UNITS_PER_METRE = 1000 / MM_PER_UNIT;
 const CANDELA_SCALE = UNITS_PER_METRE * UNITS_PER_METRE;
 
-/** Baseline so a room is never pure black. Deliberately small and cool — this is night. */
-const NIGHT_AMBIENT = 0.16;
+/**
+ * What is left of the flat fill once `scene.environment` is doing the work.
+ *
+ * Not zero, and not the old 0.16 either. The environment lights everything that has a normal; this
+ * covers the small number of fragments that effectively do not — coplanar decals and the insides of
+ * thin geometry — so they sit slightly above the floor of the tone curve instead of clamping to it.
+ * Anything larger and it starts flattening the normal-driven separation the environment exists to
+ * create, which is the defect it replaced.
+ */
+const NIGHT_AMBIENT_RESIDUAL = 0.04;
 const NIGHT_AMBIENT_COLOUR = 0x22303f;
-
-const SKY_COLOUR = 0x33465c;
-const GROUND_COLOUR = 0x271f18;
-const HEMI_INTENSITY = 0.34;
 
 /** Positional lights live in the shader at once. Never changes at runtime. */
 const LIGHT_SLOTS = 6;
@@ -110,9 +115,26 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
   const group = new THREE.Group();
   group.name = 'lighting';
 
-  const ambient = new THREE.AmbientLight(NIGHT_AMBIENT_COLOUR, NIGHT_AMBIENT);
-  const hemi = new THREE.HemisphereLight(SKY_COLOUR, GROUND_COLOUR, HEMI_INTENSITY);
-  group.add(ambient, hemi);
+  /*
+   * The flat fill is gone. `scene.environment` replaces it — see `view/night.ts`.
+   *
+   * An `AmbientLight` adds the same value to every fragment no matter which way it faces, and a
+   * `HemisphereLight` varies it only by the Y component of the normal. Between them they were the
+   * reason three large planes in this room sat within 12° of hue of each other: the floor, the
+   * cabinet fronts and the worktop all received the same fill and differed only by their own
+   * albedo, which is a difference the eye reads as "one material, unevenly lit".
+   *
+   * A pre-filtered environment gradient is the cheapest thing in three.js that makes the dark side
+   * of a surface depend on where that surface points. It costs one texture and no lights.
+   *
+   * Kept as a deliberate cliff: if the environment fails to bind, the room goes dark and the first
+   * measurement of this phase says so. Better than a fallback that hides it.
+   */
+  const ambient = new THREE.AmbientLight(NIGHT_AMBIENT_COLOUR, NIGHT_AMBIENT_RESIDUAL);
+  group.add(ambient);
+
+  // Shared by every spot slot; disposed with the pool.
+  const whitePixel = makeWhitePixel();
 
   const authored: Authored[] = [];
   for (const region of regions) {
@@ -147,6 +169,17 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
       light.shadow.camera.far = mm(3000);
       light.shadow.focus = 1;
     }
+    /*
+     * Every slot carries a map, even the ones with nothing to project.
+     *
+     * `WebGLLights` counts spot lights that have a `.map` and folds the count into the program
+     * cache key. This pool re-points its six slots by irradiance every frame, so a map on only some
+     * of them would make the count change mid-play and recompile every shader in the scene — the
+     * shader-compilation stall §10 forbids outright. A white 1×1 on all six pins the count at six
+     * and costs four bytes.
+     */
+    light.map = whitePixel;
+
     // The target must be in the scene graph or three.js never updates its world matrix and the
     // spot silently aims at the world origin — which is exactly what happened before this line
     // existed: the whole flat was lit by one patch in the kitchen's north-west floor corner.
@@ -217,7 +250,7 @@ export function buildLighting(regions: readonly RegionSpec[]): RegionLights {
         slot.dispose();
       }
       ambient.removeFromParent();
-      hemi.removeFromParent();
+      whitePixel.dispose();
       slots.length = 0;
       authored.length = 0;
     },
