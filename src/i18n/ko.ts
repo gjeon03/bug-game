@@ -168,6 +168,18 @@ export const ko = {
   'resource.kitchen.tablering': '컵 자국',
   'resource.kitchen.binfood': '음식물 쓰레기',
   'foothold.kitchen.tableleg': '식탁 다리 안쪽',
+  'foothold.kitchen.splashseam': '조리대 뒤 실리콘 틈',
+  'foothold.kitchen.splashseam.desc':
+    '상판과 뒷벽이 만나는 자리의 실리콘이 갈라져 있다. 집안이 가장 자주 쓰는 면 위라 위험하지만, 여기를 잡지 않으면 상판은 영원히 남의 땅이다.',
+  'foothold.kitchen.tablelip': '식탁 상판 가장자리 홈',
+  'foothold.kitchen.tablelip.desc':
+    '식탁 상판이 앞테와 만나는 홈. 부스러기가 모이고 사람 눈은 닿지 않는다.',
+  'foothold.kitchen.chairjoint': '의자 등받이 이음매',
+  'foothold.kitchen.chairjoint.desc':
+    '좌판과 등받이가 물린 틈. 의자는 밀어 넣었다 빼는 물건이라, 여기는 자리를 옮기는 유일한 거점이다.',
+  'foothold.kitchen.binrim': '쓰레기통 테두리 밑',
+  'foothold.kitchen.binrim.desc':
+    '뚜껑 테두리 안쪽의 빈 곳. 방에서 가장 좋은 먹이가 여기 있고, 누가 통을 비울 때 방에서 가장 나쁜 자리도 여기다.',
   'foothold.kitchen.tableleg.desc':
     '식탁 다리를 잇는 받침 안쪽 빈 곳. 방의 반대쪽 끝을 잡으려면 여기가 있어야 한다.',
   'objective.kitchen.firstHold': '싱크대 밑 틈을 거점으로 삼아라. E를 눌러 차지한다.',

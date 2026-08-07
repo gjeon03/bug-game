@@ -506,6 +506,78 @@ export const KITCHEN: RegionSpec = {
       concealment: 0.74,
       cost: { food: 14, moisture: 10, workers: 3 },
     },
+    /*
+     * ## The raised half of the room had no home in it
+     *
+     * All four refuges above sit on `kitchen.floor`. The kitchen has FIVE walkable surfaces, and
+     * victory asks the colony to hold every refuge the room offers — so "hold the kitchen" meant
+     * "hold the floor", and the worktop, the table, the chair and the bin were places you visited.
+     *
+     * That is also why the run is three minutes long. Measured across twelve bot runs, adding four
+     * more household routines moved the event count from 1-2 to 2-5 per run and moved the run
+     * length by nothing at all: the finish line is a fixed list (four refuges, one adaptation,
+     * twelve workers, stores, one sweep) and no amount of activity in the room gates any item on
+     * it. The bot completes that list in two and a half minutes whether the night is busy or empty.
+     *
+     * Content that lengthens a run has to be ON the finish line. Each of these is a refuge the
+     * victory check will demand, on a surface that can only be reached by a climb, so taking them
+     * is what forces the vertical routing the whole design is about.
+     */
+    {
+      // Behind the bowl stack, where the worktop meets the splashback. The only home on the plane
+      // the household actually uses, and the most exposed refuge in the game.
+      id: 'kitchen.splashseam',
+      region: 'kitchen',
+      surface: 'kitchen.counter',
+      at: { x: mm(700), z: mm(Z0 + 150) },
+      role: 'relay',
+      labelKey: 'foothold.kitchen.splashseam',
+      descriptionKey: 'foothold.kitchen.splashseam.desc',
+      capacity: 4,
+      concealment: 0.44,
+      cost: { food: 24, moisture: 16, workers: 2 },
+    },
+    {
+      // The lip under the table's far edge, where crumbs collect and nobody's eyes go.
+      id: 'kitchen.tablelip',
+      region: 'kitchen',
+      surface: 'kitchen.table.top',
+      at: { x: mm(TABLE_X0 + 120), z: mm(TABLE_Z0 + 60) },
+      role: 'satellite',
+      labelKey: 'foothold.kitchen.tablelip',
+      descriptionKey: 'foothold.kitchen.tablelip.desc',
+      capacity: 5,
+      concealment: 0.58,
+      cost: { food: 26, moisture: 14, workers: 3 },
+    },
+    {
+      // Where the seat boards meet the back. A chair gets pushed in and pulled out; this refuge is
+      // the one that moves.
+      id: 'kitchen.chairjoint',
+      region: 'kitchen',
+      surface: 'kitchen.chair.seat',
+      at: { x: mm(CHAIR_X + CHAIR_HALF - 70), z: mm(CHAIR_Z + CHAIR_HALF - 70) },
+      role: 'relay',
+      labelKey: 'foothold.kitchen.chairjoint',
+      descriptionKey: 'foothold.kitchen.chairjoint.desc',
+      capacity: 3,
+      concealment: 0.66,
+      cost: { food: 18, moisture: 12, workers: 2 },
+    },
+    {
+      // The gap under the bin's rim. The richest food in the room is here and so is the worst place
+      // in the room to be standing when somebody empties it.
+      id: 'kitchen.binrim',
+      region: 'kitchen',
+      surface: 'kitchen.bin.inside',
+      at: { x: mm(BIN_X - BIN_HALF + 60), z: mm(BIN_Z) },
+      role: 'satellite',
+      labelKey: 'foothold.kitchen.binrim',
+      descriptionKey: 'foothold.kitchen.binrim.desc',
+      capacity: 6,
+      concealment: 0.7,
+      cost: { food: 30, moisture: 18, workers: 4 },
+    },
   ],
 
   walls: [
