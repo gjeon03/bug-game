@@ -691,10 +691,41 @@ function tickThreat(run: Run, threat: Threat, spec: ThreatSpec, dt: number): voi
 
 /** Damage every foothold in a region. Used by the final extermination. */
 export function strikeFootholds(run: Run, region: RegionId, amount: number): void {
+  /*
+   * A sweep FINDS one refuge and wrecks it. It does not spread evenly.
+   *
+   * Evenly-spread damage is why the finale used to resolve inside a single simulation tick. The
+   * first sweep's severity is `0.3 + pressure * 0.35`, so at most 0.65 — below the 1.0 that
+   * destroys anything. Every refuge survived, `holdsAll` stayed true, and `evaluateRun` ran later
+   * in the SAME tick and declared victory. "The colony has to still be standing afterwards" was
+   * literally unfalsifiable: measured across twelve bot runs (three builds x four seeds) every one
+   * won in 2.51-3.29 minutes, with the finale lasting one tick.
+   *
+   * So the sweep is aimed. The refuge holding the most brood is the one the household has watched
+   * the most traffic go into, and it is destroyed outright; the rest take a glancing share. That
+   * makes the ending something the player works back from — rebuild the lost refuge, hold all four
+   * again — instead of a die roll that lands on "you win".
+   *
+   * It is also the attributable version: the refuge you used hardest is the refuge they found.
+   */
+  let focus = '';
+  let mostBrood = -1;
   for (const [id, state] of run.footholds) {
     const site = run.house.footholds.get(id);
     if (!site || site.region !== region || !state.claimed) continue;
-    state.damage = Math.min(1, state.damage + amount);
+    if (state.brood <= mostBrood) continue;
+    mostBrood = state.brood;
+    focus = id;
+  }
+
+  for (const [id, state] of run.footholds) {
+    const site = run.house.footholds.get(id);
+    if (!site || site.region !== region || !state.claimed) continue;
+
+    // The glancing share is deliberately small: a sweep that half-wrecks everything leaves the
+    // player with four repairs and no priority, which reads as attrition rather than as an event.
+    state.damage = id === focus ? 1 : Math.min(1, state.damage + amount * 0.35);
+
     if (state.damage >= 1) {
       state.claimed = false;
       state.brood = 0;

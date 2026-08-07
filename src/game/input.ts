@@ -78,7 +78,6 @@ const FAMILY_KEYS: Readonly<Record<string, AdaptationFamily>> = {
   Digit3: 'shadow',
 };
 
-
 export interface Input {
   /** Camera-relative movement vector for this tick, already normalised. */
   movement(): { readonly x: number; readonly z: number };
@@ -208,7 +207,6 @@ export function createInput(): Input {
       queue.length = 0;
     },
   };
-
 }
 
 /** True when the run is in a state where world input should be ignored. */

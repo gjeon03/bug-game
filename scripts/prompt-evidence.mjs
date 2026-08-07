@@ -59,7 +59,7 @@ const curtainVisible = () =>
   page.evaluate(() => {
     const node = document.getElementById('curtain');
     if (!node) return false;
-    return getComputedStyle(node).display !== 'none';
+    return window.getComputedStyle(node).display !== 'none';
   });
 
 /*
