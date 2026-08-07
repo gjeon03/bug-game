@@ -700,6 +700,46 @@ export const KITCHEN: RegionSpec = {
       intensity: 0.7,
       distance: mm(900),
     },
+    {
+      /*
+       * Light borrowed from the hallway, through the kitchen doorway.
+       *
+       * The room had three authored lights: a window on the east wall, an under-cabinet strip gated
+       * behind the dishes routine, and a 0.7-intensity glow at the fridge. So with no routine
+       * running, everything from about x = 700 to x = 3000 across the middle of the floor had NO
+       * authored light reaching it — which is exactly where the dining table now stands, and why
+       * captured frames of that half of the room measured 79 % black. §7 bans uniform darkness by
+       * name.
+       *
+       * The evidence that this is a missing light rather than a dark room by design is in this
+       * file: `exposureZones` puts the open middle floor at 0.72 with the comment "the doorway light
+       * lands here". The simulation has been charging the player for standing in a light the
+       * renderer never drew. That is the worst kind of unfairness — being seen in what looks like
+       * cover — and it was authored as a contradiction rather than introduced as a bug.
+       *
+       * Modest, because it is spill and not a fitting. A `rect` aims at the room centre by
+       * construction, so the falloff runs the length of the floor the way light through a doorway
+       * actually does.
+       */
+      kind: 'rect',
+      at: { x: mm(3050), y: mm(1500), z: mm(Z1 - 30) },
+      colour: 0xe8d9bc,
+      /*
+       * Swept, not chosen. Frame mean luminance and near-black fraction of the same seed and camera:
+       *
+       *   none   mean 41.6 %   near-black 3.56 %   <- the shipped state, §7's banned darkness
+       *   1.35   mean 74.7 %   near-black 0 %      <- flat warm beige, reads as daylight
+       *   0.33   mean 57.0 %   near-black 0 %
+       *   0.20   mean 52.2 %   near-black 0 %      <- adopted
+       *
+       * Spill through a doorway is a fraction of the window it competes with (1.5), not a match for
+       * it. The first attempt at 1.35 stopped the cabinets being dark objects at all, which trades
+       * one §7 violation for another.
+       */
+      intensity: 0.2,
+      width: mm(820),
+      height: mm(1900),
+    },
   ],
 
   exposureZones: [
