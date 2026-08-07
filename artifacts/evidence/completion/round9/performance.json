@@ -1,0 +1,67 @@
+{
+  "headSha": "85fcf929cba005d682cec118708595ae6a72cb05",
+  "hardware": {
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
+    "vendor": "Google Inc. (Apple)",
+    "timerQuery": true
+  },
+  "window": {
+    "seconds": 45,
+    "frames": 2729,
+    "measuredSeconds": 45.50610000002384
+  },
+  "duringCapture": {
+    "time": 95,
+    "population": 9,
+    "workers": 9,
+    "routes": 2,
+    "threats": 1,
+    "deliveries": 107
+  },
+  "audio": {
+    "started": true,
+    "voices": 2
+  },
+  "presented": {
+    "p50": 16.69999999999709,
+    "p95": 17.60000000000582,
+    "p99": 18.5,
+    "worst": 18.700000000004366
+  },
+  "cpu": {
+    "p50": 3.700000047683716,
+    "p99": 5.300000011920929
+  },
+  "gpu": {
+    "p50": 6.295249,
+    "p99": 9.546333,
+    "samples": 2729
+  },
+  "frameTails": {
+    "over16": 715,
+    "over33": 0,
+    "over50": 0,
+    "over100": 0,
+    "over50Pct": 0
+  },
+  "scene": {
+    "scoutHidden": true,
+    "props": 26,
+    "meshes": 357,
+    "merged": 348,
+    "geometries": 125,
+    "materials": 52,
+    "textures": 25,
+    "drawCalls": 387,
+    "triangles": 167139,
+    "lights": 3,
+    "occluders": 16,
+    "occluderTests": 11,
+    "occluderCandidates": 16,
+    "fading": 1,
+    "visibleRoaches": 9,
+    "cameraPulledIn": 66.85714285714289,
+    "missingProps": []
+  },
+  "consoleErrors": []
+}
