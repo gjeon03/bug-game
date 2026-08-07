@@ -450,8 +450,17 @@ function planRoute(run: Run): RouteMission | null {
 function affordableFoothold(run: Run, options: BotOptions): string {
   for (const [id, site] of run.house.footholds) {
     if (options.skipBathroom && site.region === 'bathroom') continue;
+    /*
+     * A refuge is worth walking to when it is unclaimed, or when it is broken enough to matter.
+     *
+     * `damage <= 0` was the first attempt and it wrecked the run: after the first sweep every
+     * refuge carries some scratch, so this returned a target on every tick, and the caller drops
+     * the live route mission whenever it does — routes fell 8 to 2 and the colony starved with a
+     * scout that spent the whole late game topping up cosmetic damage. Half gone is the line where
+     * rebuilding beats supplying.
+     */
     const state = run.footholds.get(id);
-    if (state?.claimed && state.damage < 1) continue;
+    if (state?.claimed && state.damage < 0.5) continue;
     if (!run.regions.get(site.region)?.unlocked) continue;
     if (run.colony.food < site.cost.food || run.colony.moisture < site.cost.moisture) continue;
     if (run.colony.population < site.cost.workers) continue;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GATES, SEALED_GATES, SEALED_REGIONS, buildHouse, buildNav } from '../../src/world/house';
-import { cellCentre, isWalkable, nearestWalkable } from '../../src/world/nav';
+import { cellCentre, findPath, isWalkable, nearestWalkable } from '../../src/world/nav';
 import { mm, toMm } from '../../src/world/units';
 
 /**
@@ -91,6 +91,149 @@ describe('every authored site stands somewhere a cockroach can stand', () => {
       expect(toMm(hit!.moved)).toBeLessThan(MAX_MOVE_MM);
     },
   );
+});
+
+/**
+ * A climb whose mouth is inside a blocker is not a climb.
+ *
+ * `nav.ts` offers a link only from the exact cell the mouth occupies, and A* never expands a blocked
+ * cell — so a mouth authored one cell inside a cabinet carcass can never be entered, by the scout or
+ * by a worker, ever. Nothing else in this file catches it: the existing checks all run
+ * `nearestWalkable`, which cheerfully relocates the query to the nearest open cell and reports
+ * success about a cell the pathfinder will never actually offer.
+ *
+ * Two of the kitchen's six climbs shipped in exactly that state, and both were introduced by fixes:
+ * `kitchen.seam.corner` was pushed 190 mm east to stop it colliding with the cable climb's reach and
+ * landed inside the east cabinet; `kitchen.gap.binlid` was authored at the waste bin's own footprint
+ * blocker. The consequences were invisible in every gate — `kitchen.bin.inside` (a whole walkable
+ * surface) and `kitchen.bin.inside.food` (the largest single food source in the game) were simply
+ * unreachable, and floor-to-worktop collapsed onto one remaining link.
+ *
+ * The blocker rasterises by CELL CENTRE, which is the part that makes this hard to eyeball: the bin
+ * blocker starts at x = 3180 mm, and a mouth at x = 3210 mm looks 30 mm clear on paper while sitting
+ * dead centre of the first blocked cell.
+ */
+describe('every climb can actually be entered from both ends', () => {
+  it.each(openNav.links.map((l) => [l.id, l] as const))(
+    'climb %s has an enterable mouth and a standable landing',
+    (_id, link) => {
+      const mouth = link.at;
+      const landing = link.exitAt ?? link.at;
+
+      expect(
+        isWalkable(openNav, link.from, mouth.x, mouth.z),
+        `${link.id}: its mouth on ${link.from} at (${Math.round(toMm(mouth.x))}, ` +
+          `${Math.round(toMm(mouth.z))}) mm is inside a blocker, so nothing can ever start the climb`,
+      ).toBe(true);
+
+      expect(
+        isWalkable(openNav, link.to, landing.x, landing.z),
+        `${link.id}: its landing on ${link.to} at (${Math.round(toMm(landing.x))}, ` +
+          `${Math.round(toMm(landing.z))}) mm is inside a blocker, so the climb arrives inside solid`,
+      ).toBe(true);
+    },
+  );
+
+  /**
+   * Two mouths on one surface closer than the scout's reach means one of them is unselectable.
+   *
+   * `climbInReach` returns the single NEAREST link within `CLIMB_REACH` (210 mm). Two mouths 143 mm
+   * apart therefore hide one of them from the player permanently — the far one can never be the
+   * nearest from any standable cell. This was found once by hand and fixed by moving a mouth, which
+   * is how that mouth ended up inside a cabinet; keeping both constraints in the suite is what stops
+   * the next fix from trading one defect for the other.
+   */
+  it('no two climb mouths on one surface are closer than the scout can distinguish', () => {
+    const CLIMB_REACH_MM = 210;
+    const mouths = openNav.links.flatMap((l) => [
+      { id: l.id, surface: l.from, at: l.at },
+      { id: l.id, surface: l.to, at: l.exitAt ?? l.at },
+    ]);
+
+    const tooClose: string[] = [];
+    for (let i = 0; i < mouths.length; i++) {
+      for (let j = i + 1; j < mouths.length; j++) {
+        const a = mouths[i]!;
+        const b = mouths[j]!;
+        if (a.id === b.id || a.surface !== b.surface) continue;
+        const gap = toMm(Math.hypot(a.at.x - b.at.x, a.at.z - b.at.z));
+        if (gap < CLIMB_REACH_MM) {
+          tooClose.push(`${a.id} and ${b.id} on ${a.surface} are ${Math.round(gap)} mm apart`);
+        }
+      }
+    }
+
+    expect(tooClose, tooClose.join('; ')).toEqual([]);
+  });
+});
+
+/**
+ * Can the colony actually get to the food?
+ *
+ * The cheapest possible statement of "the room works", and the one nothing was making. Every other
+ * check in this file is local — this site is standable, that grid is the right size — and a room can
+ * pass all of them while being cut into islands. It was: `kitchen.bin.inside.food` is the largest
+ * single food source in the game and no path to it existed, because the only climb that reaches its
+ * surface had its mouth inside a blocker.
+ *
+ * Searched from the starting refuge, because that is where every worker in the run departs from.
+ */
+describe('everything worth walking to can be walked to', () => {
+  const home = house.footholds.get('kitchen.undersink');
+
+  it('the run has a starting refuge to search from', () => {
+    expect(home, 'kitchen.undersink is gone — every other case here is vacuous').toBeDefined();
+  });
+
+  it.each([...house.resources.values()].map((r) => [r.id, r] as const))(
+    'resource %s is reachable from the nest',
+    (_id, resource) => {
+      const found = findPath(
+        openNav,
+        { surface: home!.surface, x: home!.at.x, z: home!.at.z },
+        { surface: resource.surface, x: resource.at.x, z: resource.at.z },
+      );
+      expect(
+        found.ok,
+        `${resource.id} on ${resource.surface} cannot be reached from the nest — it is content ` +
+          `nobody can ever collect`,
+      ).toBe(true);
+    },
+  );
+
+  it.each([...house.footholds.values()].map((f) => [f.id, f] as const))(
+    'refuge %s is reachable from the nest',
+    (_id, foothold) => {
+      const found = findPath(
+        openNav,
+        { surface: home!.surface, x: home!.at.x, z: home!.at.z },
+        { surface: foothold.surface, x: foothold.at.x, z: foothold.at.z },
+      );
+      expect(
+        found.ok,
+        `${foothold.id} cannot be reached from the nest — victory requires holding every kitchen ` +
+          `refuge, so an unreachable one makes the run unwinnable by construction`,
+      ).toBe(true);
+    },
+  );
+
+  it('every walkable surface is reachable from the nest', () => {
+    const stranded: string[] = [];
+    for (const surface of house.surfaces.values()) {
+      const spot = nearestWalkable(openNav, surface.id, surface.bounds.x0, surface.bounds.z0);
+      if (!spot) {
+        stranded.push(`${surface.id} has no walkable cell at all`);
+        continue;
+      }
+      const found = findPath(
+        openNav,
+        { surface: home!.surface, x: home!.at.x, z: home!.at.z },
+        { surface: surface.id, x: spot.point.x, z: spot.point.z },
+      );
+      if (!found.ok) stranded.push(surface.id);
+    }
+    expect(stranded, `unreachable surfaces: ${stranded.join(', ')}`).toEqual([]);
+  });
 });
 
 describe('the rest of the flat is absent, not merely locked', () => {

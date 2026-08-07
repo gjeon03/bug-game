@@ -297,13 +297,21 @@ function advanceClimb(run: Run, dt: number): void {
 
 /* ------------------------------------------------------------- interaction */
 
+/**
+ * A refuge the scout could take — or rebuild — right now.
+ *
+ * A held refuge with damage on it is offered too, because rebuilding it is the same action: the
+ * colony carries stores to a place and makes it liveable again. Before this, a damaged refuge was
+ * invisible to the player entirely — `state?.claimed` skipped it — and since `damage` only ever
+ * increases, the first sweep that landed made the run unwinnable and said nothing.
+ */
 export function footholdInReach(run: Run): string | null {
   const scout = run.scout;
   for (const [id, site] of run.house.footholds) {
     if (site.surface !== scout.surface) continue;
     if (Math.hypot(site.at.x - scout.x, site.at.z - scout.z) > REACH) continue;
     const state = run.footholds.get(id);
-    if (state?.claimed) continue;
+    if (state?.claimed && state.damage <= 0) continue;
     return id;
   }
   return null;
@@ -321,21 +329,47 @@ export function gateInReach(run: Run): Gate | null {
 }
 
 /**
- * Take a foothold.
+ * Take a refuge, or rebuild a damaged one.
  *
- * Deducted immediately and in full. A foothold you cannot afford is a foothold you have to build
- * toward, which is the entire economy of the first two chapters.
+ * ## Damage used to be permanent, and that made every sweep terminal
+ *
+ * `strikeFootholds` is the only writer of `state.damage` and it only ever adds. `claimFoothold` did
+ * not clear it. So a refuge destroyed by an extermination went `claimed = false, damage = 1`, and
+ * retaking it produced `claimed = true, damage = 1` — which fails every `damage < 1` test in the
+ * game, including both halves of the victory check. Measured on seed 20260805 once traps stopped
+ * wiping the colony outright: all four refuges sat at `damage: 1.00` and the run was arithmetically
+ * unwinnable while the player was still playing it and still being told to take refuges.
+ *
+ * Rebuilding is priced by how much is broken, so a glancing hit is cheap to answer and a levelled
+ * refuge costs what it originally did. That is the recovery loop the brief asks for — a setback the
+ * player can work back from, rather than a scoreboard entry.
  */
 export function claimFoothold(run: Run, id: string): boolean {
   const site = run.house.footholds.get(id);
   const state = run.footholds.get(id);
-  if (!site || !state || state.claimed) return false;
-  if (run.colony.food < site.cost.food || run.colony.moisture < site.cost.moisture) return false;
+  if (!site || !state) return false;
+  if (state.claimed && state.damage <= 0) return false;
+
+  // A fresh take is the whole price; a repair is the fraction that was broken.
+  const share = state.claimed ? Math.max(0.2, Math.min(1, state.damage)) : 1;
+  const food = site.cost.food * share;
+  const moisture = site.cost.moisture * share;
+
+  if (run.colony.food < food || run.colony.moisture < moisture) return false;
   if (run.colony.population < site.cost.workers) return false;
 
-  run.colony.food -= site.cost.food;
-  run.colony.moisture -= site.cost.moisture;
+  /*
+   * The specialization is earned by REACHING somewhere new, so only a first, undamaged take pays it.
+   * A refuge that was levelled carries `damage = 1` into its retake, which is what distinguishes the
+   * two cases without needing another field — and without letting a player farm points by losing
+   * the same refuge repeatedly.
+   */
+  const isFirstTake = !state.claimed && state.damage <= 0;
+
+  run.colony.food -= food;
+  run.colony.moisture -= moisture;
   state.claimed = true;
+  state.damage = 0;
   state.progress = 1;
   state.brood = 1;
   recomputeCapacity(run);
@@ -351,12 +385,16 @@ export function claimFoothold(run: Run, id: string): boolean {
    * A foothold is the right new source, and not merely a convenient one. It is the same beat the
    * gate was carrying — the colony physically reaches somewhere new, and the reach is what makes it
    * capable of something new — expressed in the vocabulary of a one-room game.
+   *
+   * Rebuilding is not reaching. It restores what was there, so it pays nothing.
    */
-  run.colony.adaptationPoints++;
+  if (isFirstTake) run.colony.adaptationPoints++;
 
   const y = run.house.surfaces.get(site.surface)?.y ?? 0;
   pushCue(run, 'foothold.claimed', site.at.x, y, site.at.z);
-  logEvent(run, 'log.foothold.claimed', 'good', { foothold: site.labelKey });
+  logEvent(run, isFirstTake ? 'log.foothold.claimed' : 'log.foothold.rebuilt', 'good', {
+    foothold: site.labelKey,
+  });
   run.idleFor = 0;
   return true;
 }

@@ -1,6 +1,7 @@
 import { findPath, isWalkable, nearestWalkable, type NavPoint } from '../world/nav';
 import { mm } from '../world/units';
 import type { RegionId } from '../world/types';
+import { inKillZone } from './household';
 import { ROUTE_DECAY, logEvent, pushCue } from './state';
 import type { Route, RouteHealth, Run } from './types';
 
@@ -239,11 +240,33 @@ export function evaluate(run: Run, route: Route): RouteHealth {
     if (users > link.capacity) return 'congested';
   }
 
-  const region = route.regions[route.regions.length - 1];
-  if (region) {
-    const state = run.regions.get(region);
-    if (state && state.alert >= 3) return 'compromised';
+  /*
+   * A line that runs through something lethal is not a line the colony will walk.
+   *
+   * Checked before the alert test because it is the more specific and more urgent statement: the
+   * region being nervous is a reason to be careful, a trap sitting on the third leg is a reason to
+   * stop. Workers only serve `ok` and `congested` routes, so this single predicate is what stands
+   * between a placed trap and the colony feeding itself into it one body at a time.
+   */
+  for (const point of route.points) {
+    if (inKillZone(run, point.surface, point.x, point.z)) return 'compromised';
   }
+
+  /*
+   * A high alert level does NOT compromise a route, and used to.
+   *
+   * `if (state.alert >= 3) return 'compromised'` looks like flavour and is actually a kill switch:
+   * `workers.ts:144` serves only `ok` and `congested`, so at alert 3 every supply line in the region
+   * stopped at once. The only way down from alert 3 is less traffic, and the only source of traffic
+   * is the routes that just stopped — so the colony could not lower the alert by playing well, it
+   * could only starve. Measured on seed 20260805: deliveries froze at 158 from t=340 to the end of
+   * the run while six healthy routes sat listed in the HUD and food went 13 to 0.
+   *
+   * The alert level already has teeth — it decides which responses the director may reach for. Those
+   * responses land somewhere specific, and the kill-zone test above is the version of "this line is
+   * compromised" the player can actually see and re-route around. Charging twice for the same
+   * escalation, once physically and once as an invisible global, is what made it terminal.
+   */
 
   return 'ok';
 }

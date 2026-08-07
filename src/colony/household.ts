@@ -190,6 +190,48 @@ function specFor(kind: ThreatKind): ThreatSpec | undefined {
 }
 
 /**
+ * Is this point inside something that is currently killing things?
+ *
+ * Exported so `routes.ts` can mark a supply line that runs through one. Colonies do not march into
+ * glue: measured on seed 20260805, a trap landed on the busiest route at t=120 and the population
+ * went 14 to 2 in forty seconds — 21 workers walked into a 190 mm circle one after another because
+ * nothing in route evaluation knew the circle was there. The trap's duration is 900 s, four times
+ * the whole run, so it was not an event the colony survived; it was furniture that ate them.
+ *
+ * The answer is not a gentler trap. A trap SHOULD be lethal and it SHOULD persist — that is what a
+ * sticky pad is. The answer is that the route through it stops being a route, which hands the player
+ * the counter-play the design is built on: the line is denied, and a new one has to be walked.
+ */
+export function inKillZone(run: Run, surface: string, x: number, z: number): boolean {
+  const region = run.house.regionOf.get(surface);
+  if (!region) return false;
+
+  for (const threat of run.threats) {
+    if (threat.phase !== 'active' || threat.region !== region) continue;
+    const spec = specFor(threat.kind);
+    if (!spec || spec.lethality <= 0) continue;
+    if (Math.hypot(x - threat.x, z - threat.z) <= threat.radius) return true;
+  }
+  return false;
+}
+
+/**
+ * A trap outlives every other response by two orders of magnitude.
+ *
+ * `RESPONSE_COOLDOWN` and the one-threat-per-region rule assume a response is an EVENT — it arrives,
+ * it does its damage, it leaves, and the region is free to be answered again. A trap's 900 s
+ * duration breaks that assumption: one pad placed at alert 2 froze the whole director for longer
+ * than any run lasts, so nothing ever escalated past it and four of the seven authored responses
+ * stayed unreachable content for a second reason.
+ */
+const PERSISTENT = 60;
+
+function isPersistent(kind: ThreatKind): boolean {
+  const spec = specFor(kind);
+  return spec !== undefined && spec.duration >= PERSISTENT;
+}
+
+/**
  * Somebody saw the scout. Their hand comes down where it was standing.
  *
  * Aimed at the sighting, not at the scout's live position — the household is swatting at a memory
@@ -478,9 +520,23 @@ export function updateDirector(run: Run, dt: number): void {
   for (const region of run.regions.values()) {
     if (!region.unlocked || region.alert < 1) continue;
     if (region.quietFor < RESPONSE_COOLDOWN) continue;
-    if (run.threats.some((t) => t.region === region.id)) continue;
+    // A trap left on the floor must not stand in for "the household is already busy here".
+    if (run.threats.some((t) => t.region === region.id && !isPersistent(t.kind))) continue;
 
-    const candidates = THREATS.filter((s) => s.minAlert <= region.alert);
+    /*
+     * One pad on the floor at a time.
+     *
+     * Once persistent threats stopped blocking the director (so escalation could continue past
+     * them), nothing stopped it laying another trap every cooldown: measured on seed 20260805, four
+     * live traps by t=300, each denying another route, until the colony had nowhere left to walk.
+     * A household that has put down a trap waits to see whether it worked.
+     */
+    const hasPersistent = run.threats.some(
+      (t) => t.region === region.id && isPersistent(t.kind),
+    );
+    const candidates = THREATS.filter(
+      (s) => s.minAlert <= region.alert && !(hasPersistent && s.duration >= PERSISTENT),
+    );
     if (candidates.length === 0) continue;
 
     // Weighted toward the strongest response the alert level permits, but never only that — a
@@ -514,6 +570,31 @@ export function updateDirector(run: Run, dt: number): void {
   }
 }
 
+/**
+ * Nobody can put a sticky pad inside the crack under the sink.
+ *
+ * Without this the director aims at the midpoint of the busiest route, and every route in a one-room
+ * game leaves the same refuge by the same toe-kick slot — so a trap landing there is not a threat to
+ * a supply line, it is a lid on the colony. Measured on seed 20260805: eight routes went to two, the
+ * delivery count stopped moving, and the run ended with 85 banked moisture and zero food. There was
+ * no play available; the only route out of the nest was lethal and re-laying it put the new line
+ * through the same cell.
+ *
+ * A household aims at where it has SEEN traffic, and it cannot reach into the gap the traffic comes
+ * out of. Keeping the doorstep clear is what leaves the player something to do about a trap.
+ */
+const NEST_SANCTUARY = mm(350);
+
+function tooCloseToRefuge(run: Run, surface: string, x: number, z: number): boolean {
+  for (const [id, state] of run.footholds) {
+    if (!state.claimed) continue;
+    const site = run.house.footholds.get(id);
+    if (!site || site.surface !== surface) continue;
+    if (Math.hypot(site.at.x - x, site.at.z - z) < NEST_SANCTUARY) return true;
+  }
+  return false;
+}
+
 /** Where in this region does the colony's own history say to look? */
 function aimPoint(run: Run, region: RegionId): { surface: string; x: number; z: number } | null {
   let best: { surface: string; x: number; z: number } | null = null;
@@ -523,7 +604,19 @@ function aimPoint(run: Run, region: RegionId): { surface: string; x: number; z: 
     if (!route.regions.includes(region)) continue;
     const score = route.deliveries * (0.4 + route.exposure);
     if (score <= bestScore) continue;
-    const point = route.points[Math.floor(route.points.length / 2)];
+    /*
+     * Walk outward from the midpoint until the aim clears every refuge doorstep, rather than
+     * discarding the route. The busiest line still gets answered — just further along it.
+     */
+    const mid = Math.floor(route.points.length / 2);
+    let point: { surface: string; x: number; z: number } | undefined;
+    for (let step = 0; step < route.points.length; step++) {
+      const candidate = route.points[mid + step] ?? route.points[mid - step];
+      if (!candidate) continue;
+      if (tooCloseToRefuge(run, candidate.surface, candidate.x, candidate.z)) continue;
+      point = candidate;
+      break;
+    }
     if (!point || run.house.regionOf.get(point.surface) !== region) continue;
     bestScore = score;
     best = { surface: point.surface, x: point.x, z: point.z };

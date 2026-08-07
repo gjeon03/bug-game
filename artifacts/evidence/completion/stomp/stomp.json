@@ -1,0 +1,112 @@
+{
+  "log": [
+    {
+      "label": "boot",
+      "time": 0.6,
+      "state": "idle",
+      "seen": 0,
+      "caught": 0,
+      "downFor": 0,
+      "scoutsLost": 0,
+      "sightings": 0,
+      "population": 2,
+      "threats": [],
+      "status": "playing"
+    },
+    {
+      "label": "sighting",
+      "time": 3.1,
+      "state": "moving",
+      "seen": 0,
+      "caught": 0,
+      "downFor": 0,
+      "scoutsLost": 0,
+      "sightings": 1,
+      "population": 2,
+      "threats": [
+        {
+          "kind": "swat",
+          "phase": "telegraph"
+        }
+      ],
+      "status": "playing"
+    },
+    {
+      "label": "stomped",
+      "time": 5.8,
+      "state": "dead",
+      "seen": 0,
+      "caught": 0,
+      "downFor": 3.45,
+      "scoutsLost": 1,
+      "sightings": 1,
+      "population": 1,
+      "threats": [
+        {
+          "kind": "swat",
+          "phase": "active"
+        }
+      ],
+      "status": "playing"
+    },
+    {
+      "label": "hand-down",
+      "time": 4.6,
+      "state": "idle",
+      "seen": 0,
+      "caught": 0,
+      "downFor": 0,
+      "scoutsLost": 0,
+      "sightings": 1,
+      "population": 2,
+      "threats": [
+        {
+          "kind": "swat",
+          "phase": "active"
+        }
+      ],
+      "status": "playing"
+    },
+    {
+      "label": "after",
+      "time": 5.9,
+      "state": "dead",
+      "seen": 0,
+      "caught": 0,
+      "downFor": 3.32,
+      "scoutsLost": 1,
+      "sightings": 1,
+      "population": 1,
+      "threats": [
+        {
+          "kind": "swat",
+          "phase": "active"
+        }
+      ],
+      "status": "playing"
+    },
+    {
+      "label": "revived",
+      "time": 10.4,
+      "state": "idle",
+      "seen": 0,
+      "caught": 0,
+      "downFor": 0,
+      "scoutsLost": 1,
+      "sightings": 1,
+      "population": 1,
+      "threats": [],
+      "status": "playing"
+    },
+    {
+      "label": "replacement-walks",
+      "moved": 279
+    },
+    {
+      "label": "korean",
+      "latinWords": [],
+      "consoleErrors": 0
+    }
+  ],
+  "errors": []
+}

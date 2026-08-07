@@ -251,6 +251,7 @@ export const ko = {
   'log.found': '{site}{site?을/를} 찾았다.',
   'log.foothold.claimed': '{foothold}{foothold?을/를} 차지했다.',
   'log.foothold.lost': '{foothold}{foothold?이/가} 무너졌다.',
+  'log.foothold.rebuilt': '{foothold}{foothold?을/를} 다시 세웠다.',
   'log.gate.opened': '{region}{region?으로/로} 가는 길이 열렸다.',
   'log.gate.interrupted': '{gate} 작업이 중단됐다.',
   'log.chapter': '{chapter}',

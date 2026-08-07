@@ -1,4 +1,4 @@
-import { mm } from '../units';
+import { GRID_CELL_MM, mm } from '../units';
 import type { RegionSpec } from '../types';
 
 /**
@@ -58,6 +58,15 @@ const CHAIR_H = 440;
 const BIN_X = 3400;
 const BIN_Z = -860;
 const BIN_HALF = 160;
+/**
+ * How far the bin's FLOOR BLOCKER extends beyond its shell.
+ *
+ * The moulding flares at the base and the lid overhangs, so blocking only the nominal footprint let
+ * bodies stand visibly inside the plastic. Named rather than folded into the blocker rectangle
+ * because the bin lid climb has to start OUTSIDE it, and the two numbers drifting apart is exactly
+ * how that climb became unenterable.
+ */
+const BIN_CLEAR = 60;
 const BIN_INSIDE_H = 300;
 
 const FRIDGE_W = 700;
@@ -176,7 +185,15 @@ export const KITCHEN: RegionSpec = {
       rect: { x0: mm(X0), z0: mm(FRIDGE_Z0), x1: mm(X0 + FRIDGE_W), z1: mm(FRIDGE_Z0 + FRIDGE_D) },
     },
     // Food waste bin and recycling stack by the doorway.
-    { surface: 'kitchen.floor', rect: { x0: mm(3180), z0: mm(-1080), x1: mm(3620), z1: mm(-640) } },
+    {
+      surface: 'kitchen.floor',
+      rect: {
+        x0: mm(BIN_X - BIN_HALF - BIN_CLEAR),
+        z0: mm(BIN_Z - BIN_HALF - BIN_CLEAR),
+        x1: mm(BIN_X + BIN_HALF + BIN_CLEAR),
+        z1: mm(BIN_Z + BIN_HALF + BIN_CLEAR),
+      },
+    },
     { surface: 'kitchen.floor', rect: { x0: mm(2560), z0: mm(-900), x1: mm(3060), z1: mm(-520) } },
     // On the worktop: the rice cooker body is solid to a cockroach.
     {
@@ -210,11 +227,26 @@ export const KITCHEN: RegionSpec = {
       labelKey: 'link.kitchen.cable',
     },
     {
-      // Where the two runs meet, the carcasses do not quite close. Wider, slower, hidden.
+      /*
+       * Where the two runs meet, the carcasses do not quite close. Wider, slower, hidden.
+       *
+       * The mouth sits in the EAST toe-kick slot, `EAST_FACE`…`EAST_CARCASS`, which is the only
+       * standable ground at this corner — the carcass itself is blocked from `EAST_CARCASS` out.
+       * It was authored at `EAST_FACE + 190` = 3330 mm, which is 90 mm INSIDE that carcass, so the
+       * climb could never be entered by anything. `nav.ts` offers a link only from the exact cell
+       * its mouth occupies and A* never expands a blocked cell, so this was not a near miss; it was
+       * a link that did not exist, and it took floor-to-worktop down to a single capacity-1 cable.
+       *
+       * That authoring error was itself a fix: the mouth used to be at `EAST_FACE - 40` and sat
+       * 143 mm from the rice cooker cable, inside `CLIMB_REACH`, so `climbInReach` could never
+       * return it. Both constraints now have guards in `tests/unit/house.test.ts`, because fixing
+       * one by hand is exactly how the other was broken.
+       */
       id: 'kitchen.seam.corner',
       from: 'kitchen.floor',
       to: 'kitchen.counter',
-      at: { x: mm(EAST_FACE + 190), z: mm(NORTH_FACE - 40) },
+      at: { x: mm(EAST_CARCASS - 30), z: mm(NORTH_FACE - 60) },
+      exitAt: { x: mm(EAST_CARCASS + 20), z: mm(NORTH_FACE - 120) },
       seconds: 3.4,
       capacity: 2,
       kind: 'seam',
@@ -236,12 +268,19 @@ export const KITCHEN: RegionSpec = {
       labelKey: 'link.kitchen.chairleg',
     },
     {
-      /** The gap from the pulled-out chair to the table edge. The reason the chair is pulled out. */
+      /*
+       * The gap from the pulled-out chair to the table edge. The reason the chair is pulled out.
+       *
+       * Crossed at the SOUTH end of the seat's west edge, not the middle. In the middle it sat
+       * 134 mm from where the leg climb lands, and `climbInReach` returns only the nearest mouth
+       * within 210 mm — so a scout arriving up the leg could never select the crossing, and the
+       * chair was a dead end that looked like a route.
+       */
       id: 'kitchen.gap.chairedge',
       from: 'kitchen.chair.seat',
       to: 'kitchen.table.top',
-      at: { x: mm(CHAIR_X - CHAIR_HALF + 30), z: mm(CHAIR_Z) },
-      exitAt: { x: mm(TABLE_X1 - 60), z: mm(CHAIR_Z) },
+      at: { x: mm(CHAIR_X - CHAIR_HALF + 30), z: mm(CHAIR_Z - CHAIR_HALF + 70) },
+      exitAt: { x: mm(TABLE_X1 - 60), z: mm(CHAIR_Z - CHAIR_HALF + 70) },
       seconds: 1.3,
       capacity: 2,
       kind: 'gap',
@@ -260,11 +299,22 @@ export const KITCHEN: RegionSpec = {
       labelKey: 'link.kitchen.charger',
     },
     {
-      /** Over the tipped bin lid. Short, rich, and standing in the doorway's light. */
+      /*
+       * Over the tipped bin lid. Short, rich, and standing in the doorway's light.
+       *
+       * The mouth has to clear the bin's FLOOR BLOCKER, which is deliberately wider than the bin
+       * shell by `BIN_CLEAR` so a body never ends up inside the moulding. Authored at
+       * `BIN_X - BIN_HALF - 30` it was 30 mm clear of the shell and 30 mm INSIDE the blocker, which
+       * made `kitchen.bin.inside` — a whole walkable surface — and the largest food source in the
+       * game permanently unreachable.
+       *
+       * The half-cell is what makes it safe rather than lucky: blockers rasterise by cell CENTRE, so
+       * a mouth exactly on the blocker edge still lands in the first blocked cell.
+       */
       id: 'kitchen.gap.binlid',
       from: 'kitchen.floor',
       to: 'kitchen.bin.inside',
-      at: { x: mm(BIN_X - BIN_HALF - 30), z: mm(BIN_Z) },
+      at: { x: mm(BIN_X - BIN_HALF - BIN_CLEAR - GRID_CELL_MM / 2), z: mm(BIN_Z) },
       exitAt: { x: mm(BIN_X - 40), z: mm(BIN_Z) },
       seconds: 3.0,
       capacity: 1,
