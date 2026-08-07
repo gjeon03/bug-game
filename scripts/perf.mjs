@@ -10,6 +10,7 @@
  * profiles ACTIVE PLAY, not an idle title screen.
  */
 import { chromium } from '@playwright/test';
+import { layRoute } from './lib/walk.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -50,40 +51,41 @@ console.log('timer query available:', renderer.timerQuery);
 await page.keyboard.press('Space');
 await page.waitForTimeout(800);
 
-// Build up some actual load: two routes and a working colony, then profile while it runs.
-const drag = await page.evaluate(() => {
-  const g = window.__game,
-    run = g.run;
-  const nest = run.house.footholds.get('kitchen.undersink');
-  const out = [];
-  for (const id of ['kitchen.drip.trap', 'kitchen.crumbs.toekick', 'kitchen.bin']) {
-    const site = run.house.resources.get(id);
-    if (!run.resources.get(id)?.found) continue;
-    const y = run.house.surfaces.get(nest.surface)?.y ?? 0;
-    const steps = [];
-    for (let i = 0; i <= 14; i++) {
-      const t = i / 14;
-      steps.push(
-        g.project(
-          nest.at.x + (site.at.x - nest.at.x) * t,
-          y,
-          nest.at.z + (site.at.z - nest.at.z) * t,
-        ),
-      );
-    }
-    out.push(steps);
-  }
-  return out;
+/*
+ * Build up some actual load: routes walked with the keyboard, then a colony working them.
+ *
+ * This was three `page.mouse` drags at a mechanic deleted from the game twenty-two commits earlier,
+ * so the profile it produced was of an empty room with two idle workers in it — the exact
+ * "screensaver profile" the comment below warns against, written by somebody who had already
+ * spotted the risk and then measured it anyway. Every frame-time number on this branch came from
+ * that run.
+ */
+const nest = await page.evaluate(() => {
+  const site = window.__game.run.house.footholds.get('kitchen.undersink');
+  return site ? { x: site.at.x, z: site.at.z } : null;
 });
-for (const steps of drag) {
-  await page.mouse.move(steps[0].x, steps[0].y);
-  await page.mouse.down();
-  for (const p of steps.slice(1)) {
-    await page.mouse.move(p.x, p.y);
-    await page.waitForTimeout(22);
+if (!nest) throw new Error('no starting refuge — nothing to route from');
+
+const wanted = ['kitchen.drip.trap', 'kitchen.crumbs.toekick', 'kitchen.bin'];
+let laidCount = 0;
+for (const id of wanted) {
+  const source = await page.evaluate((resourceId) => {
+    const run = window.__game.run;
+    const site = run.house.resources.get(resourceId);
+    if (!site || !run.resources.get(resourceId)?.found) return null;
+    return { id: resourceId, x: site.at.x, z: site.at.z };
+  }, id);
+  if (!source) {
+    console.log(`  ${id}: not discovered yet, skipped`);
+    continue;
   }
-  await page.mouse.up();
-  await page.waitForTimeout(600);
+  const result = await layRoute(page, { nest, source });
+  console.log(`  ${id}: ${JSON.stringify(result)}`);
+  if (result.ok) laidCount++;
+  await page.waitForTimeout(400);
+}
+if (laidCount === 0) {
+  throw new Error('no route was laid — this would profile an empty room, which proves nothing');
 }
 
 // Let the colony grow so the profile covers a POPULATED scene. A profile of an empty room is a

@@ -5,17 +5,17 @@
     "timerQuery": true
   },
   "window": {
-    "seconds": 25,
-    "frames": 1537,
-    "measuredSeconds": 25.637
+    "seconds": 45,
+    "frames": 2728,
+    "measuredSeconds": 45.47780000001192
   },
   "duringCapture": {
-    "time": 70,
+    "time": 96,
     "population": 9,
     "workers": 9,
-    "routes": 3,
-    "threats": 0,
-    "deliveries": 50
+    "routes": 2,
+    "threats": 1,
+    "deliveries": 108
   },
   "audio": {
     "started": true,
@@ -23,40 +23,41 @@
   },
   "presented": {
     "p50": 16.69999999999709,
-    "p95": 17.5,
+    "p95": 17.70000000001164,
     "p99": 18.5,
     "worst": 18.80000000000291
   },
   "cpu": {
-    "p50": 4.5999999940395355,
-    "p99": 5.399999976158142
+    "p50": 4,
+    "p99": 7
   },
   "gpu": {
-    "p50": 4.022583,
-    "p99": 7.09525,
-    "samples": 1537
+    "p50": 6.6915,
+    "p99": 9.314499,
+    "samples": 2728
   },
   "frameTails": {
-    "over16": 448,
+    "over16": 728,
     "over33": 0,
     "over50": 0,
     "over100": 0,
     "over50Pct": 0
   },
   "scene": {
-    "props": 187,
-    "meshes": 2073,
-    "merged": 1940,
-    "geometries": 70,
-    "materials": 228,
-    "textures": 21,
-    "drawCalls": 297,
-    "triangles": 51752,
-    "lights": 6,
-    "occluders": 98,
-    "occluderTests": 70,
-    "occluderCandidates": 13,
-    "fading": 0,
+    "scoutHidden": true,
+    "props": 26,
+    "meshes": 357,
+    "merged": 348,
+    "geometries": 121,
+    "materials": 52,
+    "textures": 25,
+    "drawCalls": 385,
+    "triangles": 166903,
+    "lights": 2,
+    "occluders": 16,
+    "occluderTests": 11,
+    "occluderCandidates": 16,
+    "fading": 1,
     "visibleRoaches": 9,
     "cameraPulledIn": 66.85714285714289,
     "missingProps": []
