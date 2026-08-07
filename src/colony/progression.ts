@@ -4,6 +4,7 @@ import { revalidateRoutes } from './routes';
 import {
   BROOD_FOOD_PER_WORKER,
   BROOD_MOISTURE_PER_WORKER,
+  BROOD_RESERVE_SECONDS,
   BROOD_SECONDS,
   UPKEEP_FOOD,
   UPKEEP_MOISTURE,
@@ -322,7 +323,18 @@ export function updateColony(run: Run, dt: number): void {
     return;
   }
 
-  if (colony.food < BROOD_FOOD_PER_WORKER || colony.moisture < BROOD_MOISTURE_PER_WORKER) {
+  /*
+   * Affording the egg is not the same as affording the worker.
+   *
+   * The reserve is what the colony must still be holding once the egg is paid for — enough to keep
+   * everyone, including the new body, fed for `BROOD_RESERVE_SECONDS`. Without it the opening state
+   * is a trap that springs itself: see the note on the constant.
+   */
+  const next = colony.population + 1;
+  const foodNeeded = BROOD_FOOD_PER_WORKER + next * UPKEEP_FOOD * BROOD_RESERVE_SECONDS;
+  const moistureNeeded = BROOD_MOISTURE_PER_WORKER + next * UPKEEP_MOISTURE * BROOD_RESERVE_SECONDS;
+
+  if (colony.food < foodNeeded || colony.moisture < moistureNeeded) {
     colony.broodProgress = Math.max(0, colony.broodProgress - dt * 0.1);
     return;
   }
@@ -382,8 +394,27 @@ export interface FinalState {
  */
 const SWEEP_COOLDOWN = 110;
 
-/** Claimed kitchen refuges before the household mounts its full response. */
-const FINALE_HOLDS = 2;
+/**
+ * The household mounts its full response once the colony holds the WHOLE kitchen.
+ *
+ * It was two refuges of four, and measured on seed 20260805 that fired at 2 minutes against a
+ * colony of ten. One sweep took it apart, and the run was over at 2.29 minutes with all four
+ * refuges still nominally claimed — the endgame arrived before the midgame had started.
+ *
+ * Two-of-four was a guess at "enough that the infestation is no longer a rumour". Holding all of it
+ * is not a guess: it is the same statement the victory check makes, which gives the run an actual
+ * shape — take the room, THEN be come for, then still be standing. It also means a sweep that takes
+ * a refuge back genuinely postpones the ending, because retaking it is now on the path to both the
+ * finale and the win.
+ */
+function finaleArmed(run: Run): boolean {
+  const sites = [...run.house.footholds.values()].filter((f) => f.region === 'kitchen');
+  if (sites.length === 0) return false;
+  return sites.every((site) => {
+    const state = run.footholds.get(site.id);
+    return state?.claimed === true && state.damage < 1;
+  });
+}
 
 /** Seconds a colony may sit at zero before it starts losing bodies. */
 const STARVE_GRACE = 14;
@@ -407,10 +438,7 @@ export function updateFinal(run: Run, dt: number): FinalState {
    * win — would simply never have happened. Two claimed refuges is the one-room equivalent: enough
    * that the infestation is no longer a rumour.
    */
-  const kitchenHolds = [...run.footholds.entries()].filter(
-    ([id, state]) => state.claimed && state.damage < 1 && run.house.footholds.get(id)?.region === 'kitchen',
-  ).length;
-  if (kitchenHolds < FINALE_HOLDS) return { pressure: 0, struck: false };
+  if (!finaleArmed(run)) return { pressure: 0, struck: false };
 
   let total = 0;
   let unlocked = 0;

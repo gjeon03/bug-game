@@ -77,6 +77,24 @@ export const CARGO_VALUE = 3.1;
 export const UPKEEP_FOOD = 0.0075;
 export const UPKEEP_MOISTURE = 0.0055;
 
+/**
+ * A colony does not hatch a worker it cannot then feed.
+ *
+ * Measured on an untouched run where the player does nothing: at t=0 the colony holds 8 food and 2
+ * workers, at t=15 it has spent 6.5 of that food on a third worker, and at t=60 food is zero. The
+ * first worker starves at t=90, the last at t=120, and the run is lost at 140 seconds — with no
+ * threat in the game having done anything, every region at alert 0.
+ *
+ * The colony ate itself, and it did so with the player's entire opening buffer, before a player
+ * could reasonably have got a first delivery in. The design target for that first delivery is
+ * around 60 seconds; the runway the auto-breed left behind was 67.
+ *
+ * The fix is a rule rather than a number: after paying for an egg, the stores still have to cover
+ * upkeep for the whole colony for this long. Growth stays automatic and stays free — it just stops
+ * being able to spend the last of the pantry. A player who wants to bank harder still has `H`.
+ */
+export const BROOD_RESERVE_SECONDS = 90;
+
 /** Route strength decays this fast when nothing walks it. */
 export const ROUTE_DECAY = 0.022;
 /** ...and is reinforced this much by each delivery. */

@@ -177,7 +177,23 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
         mission = null;
       }
       const target = mission ? missionStep(run, mission) : chooseTarget(run, options);
-      if (target && (!steering || !samePlace(steering, target))) {
+      /*
+       * Ask again when the walk has run out of path but has not arrived.
+       *
+       * `samePlace` treats anything within 120 mm as the same destination, and the points on a
+       * mission line are one 60 mm grid cell apart. So every time a mission advanced to its next
+       * point, the new target looked like the old one, the steering path was NOT recomputed, and
+       * the scout kept following a polyline it had already finished. It then stood on the last
+       * point of that stale path forever, 129 mm short of a waypoint whose arrival threshold is
+       * 120 mm — close enough to look arrived, far enough never to be.
+       *
+       * Measured on the brood build at seed 20260805: the scout froze at (1249, -1918) at speed 0
+       * and stayed there, re-planning the same route to the table crumbs every twelve seconds for
+       * the whole run, while the colony banked 84 moisture and starved at 4.8 food. Every "brood
+       * dies early" number I had was this, not the game.
+       */
+      const exhausted = pathIndex >= path.length;
+      if (target && (!steering || !samePlace(steering, target) || exhausted)) {
         steering = target;
         const found = findPath(
           run.nav,
