@@ -42,7 +42,8 @@ interface Slot {
   readonly ringMaterial: THREE.MeshBasicMaterial;
   readonly fill: THREE.Mesh;
   readonly fillMaterial: THREE.MeshBasicMaterial;
-  readonly bodies: Map<string, THREE.Object3D>;
+  /** The body currently parented here, or null while this slot shows only a telegraph ring. */
+  body: THREE.Object3D | null;
   active: string;
 }
 
@@ -99,13 +100,37 @@ export function createThreatView(): ThreatView {
 
     root.add(ring, fill);
     group.add(root);
-    slots.push({ root, ring, ringMaterial, fill, fillMaterial, bodies: new Map(), active: '' });
+    slots.push({ root, ring, ringMaterial, fill, fillMaterial, body: null, active: '' });
   }
 
-  /** The physical thing making the threat, built once per (slot, kind) and then reused. */
-  const bodyFor = (slot: Slot, kind: string): THREE.Object3D => {
-    const existing = slot.bodies.get(kind);
-    if (existing) return existing;
+  /**
+   * Bodies are pooled by kind across every slot, not built once per (slot, kind).
+   *
+   * They used to live in a `Map` on each slot and were never given back, so a slot that showed a
+   * vacuum and later a hand kept both forever. Six slots x seven kinds with bodies is 42 bodies —
+   * 126 geometries — against a hard maximum of six visible at any instant, and which of those 42
+   * got built depended on which threat kinds the director happened to route through which slot
+   * index. That is why `peak geometries` varied 152-162 between identical profile runs and tripped
+   * a 160 ceiling non-deterministically: the ceiling was not a bound, it was a coin toss against a
+   * true constructed maximum of roughly 271.
+   *
+   * Pooling by kind makes the count follow what is actually on screen. A kind is only ever built as
+   * many times as that kind is simultaneously active, which the director caps at one per region.
+   */
+  const free = new Map<string, THREE.Object3D[]>();
+
+  const release = (slot: Slot): void => {
+    if (!slot.body) return;
+    slot.body.visible = false;
+    slot.root.remove(slot.body);
+    const pool = free.get(slot.active);
+    if (pool) pool.push(slot.body);
+    else free.set(slot.active, [slot.body]);
+    slot.body = null;
+    slot.active = '';
+  };
+
+  const buildOnce = (kind: string): THREE.Object3D => {
     const body = buildBody(kind, own, materials);
     /*
      * Threat bodies cast shadows.
@@ -121,9 +146,16 @@ export function createThreatView(): ThreatView {
       mesh.castShadow = true;
       mesh.receiveShadow = true;
     });
-    body.visible = false;
+    return body;
+  };
+
+  const acquire = (slot: Slot, kind: string): THREE.Object3D => {
+    if (slot.body && slot.active === kind) return slot.body;
+    release(slot);
+    const body = free.get(kind)?.pop() ?? buildOnce(kind);
     slot.root.add(body);
-    slot.bodies.set(kind, body);
+    slot.body = body;
+    slot.active = kind;
     return body;
   };
 
@@ -139,15 +171,20 @@ export function createThreatView(): ThreatView {
         const threat = run.threats[i];
         if (!threat) {
           slot.root.visible = false;
+          // Hand the body back the moment the slot goes quiet, or the pool never refills.
+          release(slot);
           continue;
         }
-        draw(slot, threat, run, time, bodyFor);
+        draw(slot, threat, run, time, acquire, release);
       }
     },
 
     reset() {
       time = 0;
-      for (const slot of slots) slot.root.visible = false;
+      for (const slot of slots) {
+        slot.root.visible = false;
+        release(slot);
+      }
     },
 
     dispose() {
@@ -155,6 +192,7 @@ export function createThreatView(): ThreatView {
       for (const m of materials) m.dispose();
       geometries.length = 0;
       materials.length = 0;
+      free.clear();
       group.clear();
       slots.length = 0;
     },
@@ -166,7 +204,8 @@ function draw(
   threat: Threat,
   run: Run,
   time: number,
-  bodyFor: (slot: Slot, kind: string) => THREE.Object3D,
+  acquire: (slot: Slot, kind: string) => THREE.Object3D,
+  release: (slot: Slot) => void,
 ): void {
   const y = run.house.surfaces.get(threat.surface)?.y ?? 0;
   slot.root.position.set(threat.x, y, threat.z);
@@ -187,11 +226,13 @@ function draw(
   slot.fillMaterial.color.setHex(colour);
   slot.fillMaterial.opacity = telegraphing ? 0.04 : 0.16 + 0.08 * pulse;
 
-  for (const [kind, body] of slot.bodies) body.visible = kind === threat.kind && !telegraphing;
-  if (!telegraphing) {
-    const body = bodyFor(slot, threat.kind);
+  // A telegraph is a ring and nothing else, so the body goes back to the pool rather than being
+  // held invisible — that holding is what let one slot accumulate every kind it had ever shown.
+  if (telegraphing) {
+    release(slot);
+  } else {
+    const body = acquire(slot, threat.kind);
     body.visible = true;
-    if (slot.active !== threat.kind) slot.active = threat.kind;
     // A vacuum crosses the floor; everything else arrives and stays.
     if (threat.kind === 'vacuum') body.rotation.y = time * 2.4;
     /*
