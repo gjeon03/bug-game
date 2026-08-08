@@ -382,12 +382,6 @@ export class GameAudio {
     }
   }
 
-  /** The colony gets its first mouthful out of a routine. */
-  routineTaken(pan: number): void {
-    if (!this.sfxBus) return;
-    this.toneVoice(this.sfxBus, 'triangle', 520, 780, 0.16, 0.07, pan);
-    this.toneVoice(this.sfxBus, 'sine', 780, 1170, 0.2, 0.05, pan, 0.02);
-  }
 
   routineEnd(pan: number): void {
     if (!this.sfxBus) return;
@@ -440,23 +434,6 @@ export class GameAudio {
     this.toneVoice(this.uiBus, 'sine', 330, 220, 0.4, 0.07, 0, 0.02);
   }
 
-  /** An operation is completed. */
-  operationCard(index: number): void {
-    if (!this.uiBus) return;
-    const base = 174 + index * 22;
-    for (let i = 0; i < 3; i++) {
-      this.toneVoice(
-        this.uiBus,
-        'triangle',
-        base * (1 + i * 0.5),
-        base * (1.5 + i * 0.5),
-        0.6,
-        0.075 - i * 0.018,
-        0,
-        0.02 + i * 0.05,
-      );
-    }
-  }
 
   /** The household commits to extermination. */
   finalResponse(): void {
@@ -544,12 +521,6 @@ export class GameAudio {
     this.toneVoice(this.sfxBus, 'sine', 300, 720, 0.2, 0.05, pan, 0.01);
   }
 
-  upgrade(pan: number): void {
-    if (!this.sfxBus) return;
-    this.toneVoice(this.sfxBus, 'sine', 120, 190, 1.1, 0.12, pan, 0.08);
-    this.toneVoice(this.sfxBus, 'triangle', 480, 640, 0.9, 0.06, pan, 0.05);
-    this.toneVoice(this.sfxBus, 'sine', 1440, 1600, 0.7, 0.035, pan, 0.02);
-  }
 
   footWarn(pan: number, distance: number): void {
     if (!this.sfxBus || !this.gate('footWarn', 0.2)) return;
@@ -606,11 +577,6 @@ export class GameAudio {
     this.toneVoice(this.uiBus, 'sine', 240, 200, 0.32, 0.045, 0, 0.02);
   }
 
-  tierUp(): void {
-    if (!this.uiBus) return;
-    this.toneVoice(this.uiBus, 'sine', 180, 130, 1.3, 0.11, 0, 0.06);
-    this.toneVoice(this.uiBus, 'triangle', 92, 74, 1.6, 0.09, 0, 0.1);
-  }
 
   uiTick(): void {
     if (!this.uiBus || !this.gate('ui', 0.04)) return;

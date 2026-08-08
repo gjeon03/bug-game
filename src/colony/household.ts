@@ -307,6 +307,9 @@ export function updateRoutines(run: Run, dt: number): void {
         break;
       case 'active':
         state.phase = 'aftermath';
+        // The household finishing at the sink is information: the light goes off, the route is
+        // usable again. `audio.routineEnd` was written for exactly this and had no caller.
+        pushRoutineCue(run, spec, 'routine.end');
         state.timer = spec.aftermath;
         break;
       default:
@@ -797,6 +800,12 @@ function tickThreat(run: Run, threat: Threat, spec: ThreatSpec, dt: number): voi
   scout.seen = Math.min(1, scout.seen + dt * 0.7);
   scout.caught = Math.min(1, scout.caught + (dt / CAUGHT_SECONDS) * spec.lethality);
   scout.crushedAt = run.time;
+  /*
+   * Being hurt was silent. `audio.scoutHurt` existed with zero callers, so the one meter the player
+   * cannot afford to miss filled with no sound at all — and §10 asks for audio on core interactions.
+   * Pushed every tick inside the kill core; the synthesiser self-throttles.
+   */
+  pushCue(run, 'scout.hurt', scout.x, scout.y, scout.z);
   if (scout.caught >= 1) stompScout(run);
 }
 

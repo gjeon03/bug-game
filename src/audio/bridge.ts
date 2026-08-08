@@ -162,6 +162,12 @@ export function createAudioBridge(): AudioBridge {
       case 'scout.sprint':
         audio.sprint(pan);
         break;
+      case 'routine.end':
+        audio.routineEnd(pan);
+        break;
+      case 'scout.hurt':
+        audio.scoutHurt(pan);
+        break;
       case 'run.won':
         audio.victory();
         break;
