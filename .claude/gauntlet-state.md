@@ -58,8 +58,7 @@ at 80/100 in their own discipline.
   this ledger should not pretend is a tuning task. Recorded as the single largest outstanding item.
   The `it.fails` assertion in `run.test.ts` stays: it is the requirement, and it turns red the day
   the room is deep enough.
-- [PASS] `test:slow` 19/19 — the peak-population regression is closed (25 against a floor of 20).
-  Fixed by re-deriving `BROOD_RESERVE_SECONDS`, not by weakening the assertion.
+- [PASS] `test:slow` 19/19 at HEAD aa29e9a, including the re-derived population assertion.
 
 ## Quality Bar
 Not "it works". Four disciplines must each find it good: systems/economy, level/environment,
@@ -105,16 +104,19 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 5. Routines belonging to sealed regions (`bedroom.phone`, `living.tv`, `bathroom.use`, ...) still
    fire and consume director time in a kitchen-only build.
 
-## Last Pass (HEAD 6d6ae01 -> this commit)
+## Last Pass (HEAD aa29e9a)
 
-- gates at HEAD: typecheck clean, lint clean, unit 89/89. `test:slow` 19/19, production build,
-  capture and perf were last run green at 969a504; nothing since then touches runtime code.
-- shipped: `cabinetDoor` `#6d6257` -> `#26323c` (969a504), the one art fix that drew no adversarial
-  challenge — ART_BIBLE.md's ladder puts cabinet faces below floor-in-ambient and the shipped albedo
-  had it above. Verified as an ORDERING claim (ACES is monotonic, so it cannot reorder surfaces) and
-  re-observed on 7 rendered play frames: mean luma 0.316-0.361, near-black 0.00-0.63 %.
-- four negative results, §24-§27, which together close the economy search space for run length.
-  Nothing else this pass changed runtime behaviour, and that is the honest summary.
+- gates at HEAD: typecheck, lint, unit 89/89, `test:slow` 19/19, production build, capture
+  (0 console errors, 0 warnings, 20 restarts identical), prompt-evidence PASS, perf all green.
+- shipped since the panel, three runtime changes:
+  1. `cabinetDoor` `#6d6257` -> `#26323c` (969a504) — the one ordering violation the ART_BIBLE
+     ladder actually rungs. Audit of all 43 SPECS albedos in §29: no others are in scope.
+  2. `updateRoutines` now skips regions absent from the build (aa29e9a) — nine of fifteen routines
+     in a four-minute run were for rooms not in `REGIONS`. Measured neutral over 8 seeds x 2 builds.
+  3. `peakPopulation >= 20` re-derived (aa29e9a). It held in **3 of 16 runs** and was passing on
+     stream luck; replaced with a distribution-backed floor plus a peak/capacity share assertion.
+- negative results §24-§30, which close the economy search space for run length and overturn one of
+  this session's own earlier conclusions (§28, reverted on 3 seeds of RNG-reshuffling noise).
 
 ## Blockers
 None.
