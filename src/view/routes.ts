@@ -102,6 +102,18 @@ export function createRouteView(maxRoutes = 24): RouteView {
       transparent: true,
       opacity: 0.85,
       depthWrite: false,
+      /*
+       * Never depth-tested. §3 names the hazard ring and the route ribbon as things a prop may not
+       * hide, and `depthWrite:false` alone does not deliver that: a faded occluder is itself in the
+       * transparent queue, `reversePainterSortStable` orders that queue by `renderOrder` first, and
+       * the occluder sits at 0 against this overlay's higher order — so it draws first, writes
+       * depth (`occlusion.ts:366`), and rejects the overlay behind it. The comment there is right
+       * about OPAQUE geometry drawing earlier and wrong about these two.
+       *
+       * `renderOrder` already establishes the layering, so switching the depth test off costs
+       * nothing and makes the guarantee the contract states.
+       */
+      depthTest: false,
       side: THREE.DoubleSide,
       toneMapped: false,
     });
