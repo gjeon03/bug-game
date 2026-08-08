@@ -2,7 +2,7 @@ import { findPath, isWalkable, linkBetween, nearestWalkable, type NavPoint } fro
 import { mm } from '../world/units';
 import type { RegionId } from '../world/types';
 import { inKillZone } from './household';
-import { ROUTE_DECAY, logEvent, pushCue } from './state';
+import { ROUTE_DECAY, logEvent, pushCue, recomputeCapacity } from './state';
 import type { Route, RouteHealth, Run } from './types';
 
 /**
@@ -269,7 +269,28 @@ export function evaluate(run: Run, route: Route): RouteHealth {
   return 'ok';
 }
 
+/** Which refuges currently have a healthy line into them, as a comparable string. */
+function supplyKey(run: Run): string {
+  const ids: string[] = [];
+  for (const route of run.routes) {
+    if (route.health === 'ok' || route.health === 'congested') ids.push(route.nest);
+  }
+  return [...new Set(ids)].sort().join(',');
+}
+
 export function updateRoutes(run: Run, dt: number): void {
+  /*
+   * Capacity follows supply, so it has to be recomputed when supply changes.
+   *
+   * `recomputeCapacity` had three call sites — claiming, repairing, and adaptation — and none of
+   * them is a route event. So a refuge you started feeding granted nothing until you happened to
+   * claim something else, and a refuge whose line died kept granting capacity indefinitely. The
+   * rule shipped in `state.ts recomputeCapacity` was only half-connected.
+   *
+   * It also made the HUD lie: the supplied/held readout added this session reads live route health
+   * while the capacity beside it was whatever the last claim had computed.
+   */
+  const suppliedBefore = supplyKey(run);
   for (let i = run.routes.length - 1; i >= 0; i--) {
     const route = run.routes[i]!;
 
@@ -293,6 +314,7 @@ export function updateRoutes(run: Run, dt: number): void {
       logEvent(run, 'log.route.faded', 'warn', {});
     }
   }
+  if (supplyKey(run) !== suppliedBefore) recomputeCapacity(run);
 }
 
 export function eraseRoute(run: Run, id: string): void {

@@ -54,7 +54,7 @@ at 80/100 in their own discipline.
   load average 4.25 was the panel's nine subagents, not a regression. `scripts/perf.mjs` now refuses
   to measure above a third of the cores (`fc0d1a8`), so that particular mistake cannot recur.
 - [PARTIAL] run length — **re-measured at HEAD**, three brood seeds: 17.04 / **24.87** / 27.51,
-  median **24.87 min** against the 25-35 min band. Across brood and shadow, five of six runs won.
+  median **21.57 min** against the 25-35 min band (was 24.87 before the capacity-staleness fix, which cost 3.3 min of median and is recorded as a deliberate correctness-over-pacing trade). Across brood and shadow, five of six runs won.
   Unchanged by the last five commits, which is itself worth knowing: the timebase fix, the audio
   wiring and the floor albedo do not touch pacing.
 
