@@ -104,8 +104,34 @@ export const UPKEEP_MOISTURE = 0.0055;
  * Swept 90 / 150 / 210 across three seeds x two builds. 90 lost one of six; 150 and 210 both won
  * six of six, and 210 produced the longer runs (3.90-4.67 min against 3.63-4.01). Better on both
  * measures, so 210 — a buffer wide enough that one bad minute is a setback rather than the run.
+ *
+ * **Re-swept and lowered to 150 after `kitchen.crumbs.toekick` moved off the starting nest.** That
+ * relocation made income slow for the first time, and this constant is a tax on income: the rule is
+ * `food >= 6.5 + pop * 0.0075 * RESERVE`, so at population 13 it demanded 27 food against a measured
+ * range of 9-32 and the colony simply stopped breeding. Peak population fell to 13 against the
+ * design floor of 20 and `run.test.ts` went red.
+ *
+ * Two other sweeps were run first and both came back empty, which is what narrowed it to this
+ * constant: the distant source's collection `rate` (1.5 / 2.6 / 3.6) and carriers-per-route
+ * (`crowding` 0.85 / 0.45 / 0.22) each left peak population at 12-16. Workers spend their time
+ * walking, not loading, so neither term is in the round-trip equation. See COMPLETION_RECOVERY.md
+ * §20 and §21.
+ *
+ * Judged on three coupled numbers together, because tuning this for one of them has already broken
+ * another twice this session:
+ *
+ *   reserve | wins | peak pop (test seed) | finale dipped | run length
+ *   --------|------|----------------------|---------------|----------------
+ *   90      | 5/6  | 28                   | 6/6           | 10.06-34.23 min
+ *   150     | 6/6  | 25                   | 6/6           | 8.69-23.70 min
+ *   210     | 6/6  | 13                   | 6/6           | 9.51-19.53 min
+ *
+ * 90 reaches the 25-35 minute design band for the first time ever (34.23 min on 4242/brood) and is
+ * still rejected: seed 20260805/brood loses. A buffer that thin cannot absorb one bad minute, which
+ * is the whole reason this constant exists. 210 wins everywhere and starves the colony to 13.
+ * 150 is the only value that wins six of six AND clears the population floor.
  */
-export const BROOD_RESERVE_SECONDS = 210;
+export const BROOD_RESERVE_SECONDS = 150;
 
 /** Route strength decays this fast when nothing walks it. */
 export const ROUTE_DECAY = 0.022;
