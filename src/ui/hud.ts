@@ -358,6 +358,7 @@ function renderChoices(target: Slot, run: Run): void {
 const HELP_LINES: readonly string[] = [
   'help.move',
   'help.sprint',
+  'help.recall',
   'help.route',
   'help.erase',
   'help.interact',

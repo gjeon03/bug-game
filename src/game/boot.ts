@@ -3,6 +3,7 @@ import '../ui/styles.css';
 import { t } from '../i18n';
 import { mm } from '../world/units';
 import { SIM_DT, createRun, logEvent } from '../colony/state';
+import { RECALL_COOLDOWN_SECONDS, panic } from '../colony/workers';
 import { stepRun } from '../colony/step';
 import {
   eraseNearestRoute,
@@ -219,6 +220,31 @@ export async function boot(): Promise<void> {
             'info',
             {},
           );
+          break;
+        }
+        /*
+         * Emergency recall.
+         *
+         * Three independent critics scored the gameplay loop lowest of everything, and all three
+         * named the same cause: after a route is drawn there is nothing to decide, and the whole
+         * answer to a threat is "erase the line and draw it again". `panic()` — the thing that
+         * makes a colony drop cargo and run — already existed and was reachable only by the
+         * household. The player could watch it happen and could not cause it.
+         *
+         * Wiring it to a key turns a threat telegraph into a question with a price. Recalling
+         * saves the workers standing in the spray and throws away every crumb in transit; the
+         * cooldown means spending it on a false alarm leaves the colony unable to run from the
+         * next one. That is a decision, and it repeats all run.
+         */
+        case 'recall': {
+          if (run.time < run.colony.recallReadyAt) {
+            logEvent(run, 'log.recall.cooling', 'warn', {});
+            break;
+          }
+          run.colony.recallReadyAt = run.time + RECALL_COOLDOWN_SECONDS;
+          const running = run.workers.filter((w) => w.alive && !w.climb).length;
+          panic(run, run.scout.x, run.scout.z, Number.POSITIVE_INFINITY);
+          logEvent(run, 'log.recall.ordered', 'warn', { count: running });
           break;
         }
         case 'interact': {

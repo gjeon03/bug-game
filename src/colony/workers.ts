@@ -472,6 +472,14 @@ function flee(run: Run, worker: Worker, dt: number): void {
   if (remaining <= ARRIVE) worker.state = 'idle';
 }
 
+/**
+ * How long the player must wait between emergency recalls.
+ *
+ * Long enough that a recall is a commitment rather than a reflex, short enough that a run which
+ * spends one early is not simply lost. Threat telegraphs are the clock this is measured against.
+ */
+export const RECALL_COOLDOWN_SECONDS = 45;
+
 /** Send everything within `radius` of a point running for its home nest. */
 export function panic(run: Run, x: number, z: number, radius: number): void {
   for (const worker of run.workers) {

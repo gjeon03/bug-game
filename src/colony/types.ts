@@ -325,6 +325,15 @@ export interface Colony {
    * cautious build the acceptance list asks to be distinguishable from the aggressive one.
    */
   broodHold: boolean;
+
+  /**
+   * Simulation time before which an emergency recall cannot be ordered again.
+   *
+   * A recall with no cooldown is not a decision — it is a button you hold down whenever anything
+   * moves, and the threat system stops mattering. The wait is what makes spending it a commitment:
+   * call it early on a false alarm and the next real spray lands on a colony that cannot run.
+   */
+  recallReadyAt: number;
 }
 
 /** The pheromone line the scout is currently walking, or `null`. See `colony/trail.ts`. */

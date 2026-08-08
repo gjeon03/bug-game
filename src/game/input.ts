@@ -29,6 +29,7 @@ export type Action =
   | { readonly kind: 'adapt'; readonly family: AdaptationFamily }
   | { readonly kind: 'erase' }
   | { readonly kind: 'broodHold' }
+  | { readonly kind: 'recall' }
   | { readonly kind: 'trail' }
   | { readonly kind: 'eraseNearest' }
   | { readonly kind: 'zoom'; readonly delta: number };
@@ -55,6 +56,7 @@ const HANGUL_TO_CODE: Readonly<Record<string, string>> = {
   ㄷ: 'KeyE',
   ㄱ: 'KeyR',
   ㅗ: 'KeyH',
+  ㅂ: 'KeyQ',
 };
 
 /**
@@ -122,6 +124,9 @@ export function createInput(): Input {
         break;
       case 'KeyH':
         queue.push({ kind: 'broodHold' });
+        break;
+      case 'KeyQ':
+        queue.push({ kind: 'recall' });
         break;
       case 'KeyF':
         queue.push({ kind: 'trail' });

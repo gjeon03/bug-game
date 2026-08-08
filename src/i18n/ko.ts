@@ -392,6 +392,9 @@ export const ko = {
   'log.broodHold.on': '번식 보류 — 잉여를 비축한다',
   'log.broodHold.off': '번식 재개',
   'help.broodHold': 'H — 번식 보류/재개',
+  'log.recall.ordered': '긴급 소환 — 일꾼 {count}마리가 짐을 버리고 거점으로 뛴다',
+  'log.recall.cooling': '아직 숨을 고르는 중이다 — 다시 부를 수 없다',
+  'help.recall': 'Q — 긴급 소환 (짐을 버린다)',
   'hud.broodHold': '번식 보류',
   'help.restart': 'R — 다시 시작',
   // Was 「아무 키나 눌러 시작」, which invited the player to destroy the card by reaching for W.

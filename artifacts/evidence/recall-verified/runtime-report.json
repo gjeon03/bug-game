@@ -1,0 +1,409 @@
+{
+  "base": "http://127.0.0.1:4280/bug-game/",
+  "bootState": {
+    "status": "playing",
+    "time": 0,
+    "chapter": "kitchen",
+    "population": 2,
+    "capacity": 9,
+    "food": 8,
+    "moisture": 6,
+    "routes": 0,
+    "deliveries": 0,
+    "openGates": [],
+    "claimed": 1,
+    "objectiveTitle": "objective.kitchen.title",
+    "blocker": null,
+    "scout": {
+      "surface": "kitchen.floor",
+      "x": 1315,
+      "z": -1983
+    },
+    "stats": {
+      "scoutHidden": false,
+      "props": 26,
+      "meshes": 393,
+      "merged": 384,
+      "geometries": 121,
+      "materials": 52,
+      "textures": 27,
+      "drawCalls": 328,
+      "triangles": 158758,
+      "lights": 3,
+      "occluders": 16,
+      "occluderTests": 10,
+      "occluderCandidates": 16,
+      "fading": 0,
+      "visibleRoaches": 2,
+      "cameraPulledIn": 66.85714285714289,
+      "missingProps": []
+    },
+    "frame": 113
+  },
+  "afterRoute": {
+    "status": "playing",
+    "time": 5,
+    "chapter": "kitchen",
+    "population": 2,
+    "capacity": 9,
+    "food": 8,
+    "moisture": 6,
+    "routes": 1,
+    "deliveries": 0,
+    "openGates": [],
+    "claimed": 1,
+    "objectiveTitle": "objective.kitchen.title",
+    "blocker": null,
+    "scout": {
+      "surface": "kitchen.floor",
+      "x": 1399,
+      "z": -1987
+    },
+    "stats": {
+      "scoutHidden": false,
+      "props": 26,
+      "meshes": 393,
+      "merged": 384,
+      "geometries": 124,
+      "materials": 52,
+      "textures": 27,
+      "drawCalls": 337,
+      "triangles": 158914,
+      "lights": 3,
+      "occluders": 16,
+      "occluderTests": 30,
+      "occluderCandidates": 16,
+      "fading": 0,
+      "visibleRoaches": 2,
+      "cameraPulledIn": 66.85714285714289,
+      "missingProps": []
+    },
+    "frame": 303
+  },
+  "working": {
+    "status": "playing",
+    "time": 39,
+    "chapter": "kitchen",
+    "population": 2,
+    "capacity": 9,
+    "food": 7,
+    "moisture": 68,
+    "routes": 1,
+    "deliveries": 20,
+    "openGates": [],
+    "claimed": 1,
+    "objectiveTitle": "objective.kitchen.title",
+    "blocker": null,
+    "scout": {
+      "surface": "kitchen.floor",
+      "x": 1233,
+      "z": -2048
+    },
+    "stats": {
+      "scoutHidden": true,
+      "props": 26,
+      "meshes": 393,
+      "merged": 384,
+      "geometries": 124,
+      "materials": 52,
+      "textures": 27,
+      "drawCalls": 325,
+      "triangles": 146822,
+      "lights": 3,
+      "occluders": 16,
+      "occluderTests": 16,
+      "occluderCandidates": 16,
+      "fading": 1,
+      "visibleRoaches": 2,
+      "cameraPulledIn": 66.85714285714289,
+      "missingProps": []
+    },
+    "frame": 1153
+  },
+  "restarts": [
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    },
+    {
+      "population": 2,
+      "capacity": 9,
+      "routes": 0,
+      "gates": 0,
+      "claimed": 1,
+      "scout": {
+        "surface": "kitchen.floor",
+        "x": 1315,
+        "z": -1983
+      },
+      "status": "playing"
+    }
+  ],
+  "restartsIdentical": true,
+  "finalStats": {
+    "scoutHidden": false,
+    "props": 26,
+    "meshes": 393,
+    "merged": 384,
+    "geometries": 124,
+    "materials": 52,
+    "textures": 27,
+    "drawCalls": 328,
+    "triangles": 158758,
+    "lights": 3,
+    "occluders": 16,
+    "occluderTests": 10,
+    "occluderCandidates": 16,
+    "fading": 0,
+    "visibleRoaches": 2,
+    "cameraPulledIn": 66.85714285714289,
+    "missingProps": []
+  },
+  "consoleErrors": [],
+  "failedRequests": [],
+  "externalRequests": [],
+  "note": "Headless SwiftShader. Screenshot and logic evidence only — NOT frame-time evidence."
+}

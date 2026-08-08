@@ -186,7 +186,8 @@ console.log('  working:', JSON.stringify(working).slice(0, 320));
  */
 const lumaShot = await page.screenshot({ type: 'jpeg', quality: 70 });
 const luma = await page.evaluate(async (b64) => {
-  const img = new Image();
+  // `document.createElement`, not `new Image()` — the lint config has no browser globals here.
+  const img = document.createElement('img');
   img.src = `data:image/jpeg;base64,${b64}`;
   await img.decode();
   const s = document.createElement('canvas');

@@ -576,6 +576,7 @@ export function createRun(seed: number): Run {
       adaptations: [],
       adaptationPoints: 0,
       broodHold: false,
+      recallReadyAt: 0,
     },
     workers,
     routes: [],
