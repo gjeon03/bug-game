@@ -14,6 +14,34 @@ import { layRoute } from './lib/walk.mjs';
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { cpus, loadavg } from 'node:os';
+
+/*
+ * Refuse to measure a busy machine, for the same reason the dirty-tree guard below refuses to stamp
+ * a profile with a hash it does not describe.
+ *
+ * Measured: this profile reported p50 16.70 ms on an idle machine and **32.20 ms** on the same
+ * commit while a nine-agent workflow was running, load average 4.25. The commit under test added
+ * one boolean flag to one resource and had no path to frame cost at all. Without this guard that
+ * number goes into `performance.json`, gets read back as a regression, and somebody spends a
+ * session bisecting a load average.
+ *
+ * The line is a third of the cores. It is not a physical constant and it is deliberately
+ * conservative: the bad reading happened at 4.25 on eight cores, and nobody has measured where
+ * below that the timings go clean again. A refused measurement costs a wait; a believed one costs
+ * a session — this repo has thirteen recorded instances of the second. `PERF_ALLOW_BUSY=1`
+ * overrides it for anyone who knows what they are doing and says so out loud.
+ */
+const CORES = cpus().length;
+const LOAD_LIMIT = CORES / 3;
+const load1 = loadavg()[0];
+if (load1 > LOAD_LIMIT && process.env.PERF_ALLOW_BUSY !== '1') {
+  throw new Error(
+    `machine is busy — load average ${load1.toFixed(2)} against a limit of ${LOAD_LIMIT.toFixed(1)} ` +
+      `on ${CORES} cores. Frame timings measured under load describe the load, not the build. ` +
+      `Wait, or set PERF_ALLOW_BUSY=1 to override.`,
+  );
+}
 
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:4273/';
 const OUT = resolve(process.argv[2] ?? 'artifacts/evidence/whole-home-reboot-final');
