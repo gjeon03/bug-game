@@ -172,23 +172,36 @@ console.log('  working:', JSON.stringify(working).slice(0, 320));
  * luminance band live in the art notes — it is a smoke test for "the lights are on". Committed
  * frames measure ~0.40-0.43; the all-dark failure measures ~0.01. Anything inside 0.15-0.75 is
  * left alone.
+ *
+ * MEASURE THE SCREENSHOT, NEVER THE CANVAS (verified 2026-08-08, §55).
+ *
+ * The first version of this gate did `drawImage(canvas)` on the live WebGL canvas. That reads
+ * blank: the context is created without `preserveDrawingBuffer`, so the drawing buffer is gone by
+ * the time an outside caller looks at it. The gate measured 0.0000 on a frame whose real mean was
+ * 0.4103 — it would have failed every future capture run for a room that was fully lit.
+ *
+ * The same readback is the likeliest source of the fourth-panel "0.0105" quoted above, which is
+ * why that number is no longer treated as established. Compositing the screenshot into an
+ * `HTMLImageElement` works because the encoded bytes already exist outside the GL buffer.
  */
-const luma = await page.evaluate(() => {
-  const c = document.querySelector('canvas');
-  if (!c) return null;
+const lumaShot = await page.screenshot({ type: 'jpeg', quality: 70 });
+const luma = await page.evaluate(async (b64) => {
+  const img = new Image();
+  img.src = `data:image/jpeg;base64,${b64}`;
+  await img.decode();
   const s = document.createElement('canvas');
   s.width = 160;
   s.height = 90;
   const ctx = s.getContext('2d');
   if (!ctx) return null;
-  ctx.drawImage(c, 0, 0, s.width, s.height);
+  ctx.drawImage(img, 0, 0, s.width, s.height);
   const d = ctx.getImageData(0, 0, s.width, s.height).data;
   let sum = 0;
   for (let i = 0; i < d.length; i += 4) {
     sum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
   }
   return sum / (d.length / 4);
-});
+}, lumaShot.toString('base64'));
 console.log('frame luminance:', luma === null ? 'unreadable' : luma.toFixed(4));
 if (luma !== null && (luma < 0.15 || luma > 0.75)) {
   throw new Error(
