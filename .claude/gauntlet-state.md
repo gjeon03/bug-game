@@ -136,17 +136,24 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 - **Routines carry no position** — CLOSED in `082f21d` (`routineAt` derives it from `refilledBy`;
   six distinct cue positions where there was one).
 
-## Last Pass (HEAD: the overlay fix below)
+## Last Pass (HEAD `cf26b07`)
 
-- gates re-run at this HEAD: typecheck, lint, unit 89/89, `test:slow` 19/19, production build,
-  capture (0 console errors, 0 warnings, 20 restarts identical), prompt-evidence PASS, perf green.
-- `wlgsvl62q` re-score: systems 36->44, level 38->47, art 52->56, feel 53->57. Average 51.0,
-  lowest 44. The consolidator's own arithmetic: even if every surviving worklist item lands,
-  systems reaches 73, level 72, art 75, feel 81 — only game feel signs off from its own list.
-- landed since that panel: `9db096e` kitchen discovery, `da42d43` layTick + sprint audio,
-  `daeca36` repaired the bot's brood control and restored `it.fails`, and the overlay fix — the
-  ring and ribbon are now `depthTest:false`, which is the only panel top-blocker that survived
-  adversarial challenge (§3 names both as things a prop may never hide).
+- gates at HEAD: typecheck, lint, unit 89/89, `test:slow` 19/19, build, capture (0 console errors,
+  20 restarts identical), prompt-evidence PASS, perf all green (measured at `1e81ddb` on an idle
+  machine; nothing since touches the render path).
+- **`cf26b07` — the kitchen's second act.** `ChapterId` gains `hold`, one Korean string, and the
+  transition hangs on a colony milestone rather than a door. Three acts now fire in every run:
+  `kitchen@0 -> hold@3.9-4.4 min -> final@8.5-9.5 min`. The first attempt used the full winning
+  share as the trigger and never appeared, because `finaleArmed` tests the same threshold and
+  `final` overwrote `hold` in the same tick — two acts on one event are one act. Moved to half the
+  share, which is where the job actually changes.
+- Run length and win rate are unchanged by it (17.04 / 23.25 / 21.57, five of six won). **This act
+  names time that already existed; it does not create any.** The band still needs content.
+- `695bc84` (capacity follows supply) cost 3.3 min of brood median as a deliberate
+  correctness-over-pacing trade — the supplied/held HUD added this session was reading live route
+  health beside a capacity number that had gone stale.
+- `2f6ced1` corrected a stale note: the ART_BIBLE ladder order HOLDS at HEAD
+  (`cabinetDoor` L* 42.3 below `floorVinyl` L* 46.3).
 
 ## Blockers
 
