@@ -208,6 +208,20 @@ export function createRoachView(workerCap: number): RoachView {
       body.visible = true;
     }
 
+    /*
+     * Every worker was the same size, and the baseline audit calls that CRITICAL for a reason:
+     * `audits/04-workers.md` W3 — "there is essentially no per-worker visual variation, which is
+     * what turns overlap into one animal". A column of identical bodies at 35 mm scale reads as a
+     * single crawling mass rather than as individuals, and CLAUDE.md §10 asks for workers that are
+     * "individually legible".
+     *
+     * Derived from the id rather than stored, so it is stable for a worker's whole life, identical
+     * across restarts on the same seed, and costs nothing to keep in sync. The spread is +/-12 %,
+     * which at this scale separates neighbours without any of them reading as a different species.
+     */
+    const wobble = Math.sin(worker.id * 12.9898) * 43758.5453;
+    body.roach.root.scale.setScalar(0.88 + (wobble - Math.floor(wobble)) * 0.24);
+
     const carrying = worker.cargo > 0.02 && worker.cargoKind !== null;
     body.roach.setCargo(carrying);
     body.cargo.visible = carrying;
