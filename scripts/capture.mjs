@@ -159,6 +159,45 @@ await shot('05-colony-working');
 const working = await state();
 console.log('  working:', JSON.stringify(working).slice(0, 320));
 
+/*
+ * Is there a picture at all?
+ *
+ * A fourth-panel critic built this HEAD, served it, and measured a frame mean of **0.0105** — a
+ * black room, all six spotlights at intensity 0 — while this script printed `console errors 0 ·
+ * warns 0 · failed requests 0 · missing props 0 · restarts equal true`. Every counter here is about
+ * whether the machinery ran, and none of them looks at the image. A renderer that lights nothing
+ * passes all of them.
+ *
+ * The band is deliberately wide. It is not a quality judgement — §7's darkness ban and the
+ * luminance band live in the art notes — it is a smoke test for "the lights are on". Committed
+ * frames measure ~0.40-0.43; the all-dark failure measures ~0.01. Anything inside 0.15-0.75 is
+ * left alone.
+ */
+const luma = await page.evaluate(() => {
+  const c = document.querySelector('canvas');
+  if (!c) return null;
+  const s = document.createElement('canvas');
+  s.width = 160;
+  s.height = 90;
+  const ctx = s.getContext('2d');
+  if (!ctx) return null;
+  ctx.drawImage(c, 0, 0, s.width, s.height);
+  const d = ctx.getImageData(0, 0, s.width, s.height).data;
+  let sum = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    sum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+  }
+  return sum / (d.length / 4);
+});
+console.log('frame luminance:', luma === null ? 'unreadable' : luma.toFixed(4));
+if (luma !== null && (luma < 0.15 || luma > 0.75)) {
+  throw new Error(
+    `frame luminance ${luma.toFixed(4)} is outside 0.15-0.75 — the room is not lit (or is blown out). ` +
+      `Every other counter in this script can pass while the screen is black; this one cannot.`,
+  );
+}
+
+
 // Resolution sweep.
 for (const [w, h, name] of [
   [1280, 720, '06-1280x720'],
@@ -272,6 +311,7 @@ console.log(
 );
 console.log('draw calls     :', final.stats?.drawCalls, 'triangles:', final.stats?.triangles);
 console.log('restarts equal :', identical);
+
 
 await browser.close();
 process.exit(errors.length === 0 && missingRequests.length === 0 ? 0 : 1);
