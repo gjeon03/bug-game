@@ -142,9 +142,15 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 - **Zero-caller audio methods** — CLOSED at `4012b29`. Thirteen at the session's start, **zero** now:
   four deleted as remnants of removed mechanics (`operationCard`, `tierUp`, `upgrade`,
   `routineTaken`), the rest wired to real events.
-- **ART_BIBLE value ladder** — CLOSED from the floor side, and the ORDER NOW HOLDS at HEAD:
-  `cabinetDoor` L* 42.3 below `floorVinyl` L* 46.3, which is what the bible requires. Notes calling
-  it "re-opened" predate `f2f7837`. `floorVinyl` #5b5a5e -> #6e6d72 lifts it
+- **ART_BIBLE value ladder** — **DELIBERATELY VIOLATED at HEAD, and it must stay that way.**
+  Two attempts, two regressions: darkening `cabinetDoor` put 61.5 % of the playable region below
+  L* 20 (§7 uniform darkness, art 47); lifting `floorVinyl` instead satisfied the order and
+  overshot the other way to playable-region mean L* 50.2, brighter than a value this project had
+  already swept and rejected (art 47 again). `f462e05` reverts to `#5b5a5e` and demotes the ladder
+  from a governing constraint to guidance — the measured luminance band is the real constraint.
+  **Do not chase the ordering a third time by moving albedos.** The bible's rungs are SCREEN values
+  and these are albedos; the lever that could satisfy both is lighting, and that mechanism is
+  recorded as measured-dead at `night.ts:119-138`. See `COMPLETION_RECOVERY.md` §50. `floorVinyl` #5b5a5e -> #6e6d72 lifts it
   to L* 46.3 above `cabinetDoor`'s 42.3, so the documented order holds without darkening the largest
   vertical area — the move that caused the §42 regression. Playable-region histogram at HEAD:
   dark 1.3 % / mid 49.1 % / light 49.6 %, against 61.5 % / 3.0 % under the regression.
