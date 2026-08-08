@@ -44,6 +44,13 @@ at 80/100 in their own discipline.
   `695bc84` cost.
 
   Four panels in, the mean has barely moved (51.0 -> 52.75 -> 52.0) while the spread has widened.
+
+  **Provenance checked.** The workflow brief still says "at HEAD 2de6a8e" — stale prose in the
+  script, 54 commits behind. The critics do not check out a SHA; they read the working tree on disk,
+  and their own citations prove which tree that was: art cites `f2f7837` (the floor lift) and
+  `3b68df4` (the cabinet revert), level cites `b094a43` (a docblock sync from this session). All
+  HEAD-side. The third panel's consolidator caught the same stale prose itself and said so — "scored
+  tree f2f7837, not the briefed 2de6a8e". The 47 is the shipped tree's score.
 - [PASS] typecheck, lint clean — verified this pass
 - [PASS] unit 89/89 — verified this pass
 - [PASS] test:slow 19/19 — verified at commit 894a101
