@@ -151,6 +151,7 @@ export const ko = {
 
   /* ── chapters and objectives ──────────────────────────────────────────── */
   'chapter.kitchen': '1장 · 주방에서 버티기',
+  'chapter.hold': '2장 · 주방을 지켜내기',
   'chapter.hallway': '2장 · 드러난 복도를 건너기',
   'chapter.living': '3장 · 여러 갈래를 동시에 굴리기',
   'chapter.bedroom': '4장 · 사람이 있는 방으로',

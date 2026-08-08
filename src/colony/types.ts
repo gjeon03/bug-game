@@ -25,7 +25,15 @@ import type { RegionId } from '../world/types';
 export type RunStatus = 'playing' | 'won' | 'lost';
 
 /** The four chapters plus the finale. Chapter identity drives pacing, not just labelling. */
-export type ChapterId = 'kitchen' | 'hallway' | 'living' | 'bedroom' | 'final';
+/**
+ * `hold` is the kitchen's second act, and it is the only one of these the shipped build reaches.
+ *
+ * The other three name rooms that are sealed out of `REGIONS`, so `advanceChapter` — which keys on
+ * gates — was unreachable code and every run was labelled 「1장」 from start to finish. Acts now hang
+ * on colony milestones instead of doors: `kitchen` -> `hold` when the room is first held, `hold` ->
+ * `final` when the household commits to exterminating.
+ */
+export type ChapterId = 'kitchen' | 'hold' | 'hallway' | 'living' | 'bedroom' | 'final';
 
 /* ------------------------------------------------------------------- scout */
 

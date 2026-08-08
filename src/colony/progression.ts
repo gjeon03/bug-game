@@ -38,7 +38,14 @@ const GATE_CHAPTER: Readonly<Record<string, ChapterId>> = {
   'gate.hallway.bedroom': 'living',
 };
 
-const CHAPTER_ORDER: readonly ChapterId[] = ['kitchen', 'hallway', 'living', 'bedroom', 'final'];
+const CHAPTER_ORDER: readonly ChapterId[] = [
+  'kitchen',
+  'hold',
+  'hallway',
+  'living',
+  'bedroom',
+  'final',
+];
 
 /* ------------------------------------------------------------- gate checks */
 
@@ -499,6 +506,26 @@ export function updateFinal(run: Run, dt: number): FinalState {
    * win — would simply never have happened. Two claimed refuges is the one-room equivalent: enough
    * that the infestation is no longer a rumour.
    */
+  /*
+   * Act two: the room is held.
+   *
+   * The trigger is HALF the winning share, not the whole of it. The first attempt used the full
+   * share and the act never appeared in any run: `finaleArmed` tests the same threshold, so both
+   * became true on the same tick and `final` overwrote `hold` before a frame could render it. Two
+   * acts hanging on one event are one act.
+   *
+   * Half is the point where the job changes. Up to there the player is taking ground; past it the
+   * question is which of the remaining refuges is worth the traffic it costs — which is the
+   * decision the holding tax exists to pose. Until now the HUD called all of that 「1장」.
+   */
+  if (
+    run.chapter === 'kitchen' &&
+    heldKitchenRefuges(run) >= Math.max(1, Math.ceil(refugesToHold(run) / 2))
+  ) {
+    run.chapter = 'hold';
+    logEvent(run, 'log.chapter', 'good', { chapter: 'chapter.hold' });
+  }
+
   if (!finaleArmed(run)) return { pressure: 0, struck: false };
 
   /*
@@ -514,7 +541,7 @@ export function updateFinal(run: Run, dt: number): FinalState {
    * the finale IS that milestone — it is the moment the household stops treating the infestation as
    * a rumour, and `chapter.final` / `objective.final.*` were already written for it.
    */
-  if (run.chapter === 'kitchen') {
+  if (run.chapter !== 'final') {
     run.chapter = 'final';
     logEvent(run, 'log.chapter', 'good', { chapter: 'chapter.final' });
   }
