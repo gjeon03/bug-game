@@ -1,5 +1,5 @@
 {
-  "headSha": "082f21d820304a1cea89b597ea6f597f9e4b658e",
+  "headSha": "6ca7d73143f6f026826a1f6a828eff8e3b467808",
   "hardware": {
     "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
     "vendor": "Google Inc. (Apple)",
@@ -8,12 +8,12 @@
   "window": {
     "seconds": 45,
     "frames": 2727,
-    "measuredSeconds": 45.465
+    "measuredSeconds": 45.47330000001192
   },
   "duringCapture": {
     "time": 96,
-    "population": 8,
-    "workers": 8,
+    "population": 9,
+    "workers": 9,
     "routes": 3,
     "threats": 1,
     "deliveries": 100
@@ -29,16 +29,16 @@
     "worst": 18.80000000000291
   },
   "cpu": {
-    "p50": 3.699999988079071,
-    "p99": 4.699999988079071
+    "p50": 3.700000047683716,
+    "p99": 5.100000023841858
   },
   "gpu": {
-    "p50": 12.25575,
-    "p99": 15.099375,
+    "p50": 12.260875,
+    "p99": 15.091166,
     "samples": 2727
   },
   "frameTails": {
-    "over16": 1070,
+    "over16": 1036,
     "over33": 0,
     "over50": 0,
     "over100": 0,
@@ -52,14 +52,14 @@
     "geometries": 144,
     "materials": 52,
     "textures": 27,
-    "drawCalls": 384,
-    "triangles": 163935,
+    "drawCalls": 438,
+    "triangles": 171355,
     "lights": 3,
     "occluders": 16,
-    "occluderTests": 109,
+    "occluderTests": 106,
     "occluderCandidates": 16,
     "fading": 1,
-    "visibleRoaches": 8,
+    "visibleRoaches": 9,
     "cameraPulledIn": 66.85714285714289,
     "missingProps": []
   },
@@ -97,20 +97,20 @@
     },
     {
       "metric": "gpu p99",
-      "value": 15.099375,
+      "value": 15.091166,
       "budget": 33,
       "pass": true,
       "note": "2727 samples"
     },
     {
       "metric": "peak draw calls",
-      "value": 384,
+      "value": 438,
       "budget": 900,
       "pass": true
     },
     {
       "metric": "peak triangles",
-      "value": 163935,
+      "value": 171355,
       "budget": 400000,
       "pass": true
     },
