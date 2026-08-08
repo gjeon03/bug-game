@@ -241,6 +241,21 @@ function renderStores(target: Slot, run: Run): void {
   const c = run.colony;
   const atCap = c.food >= cap - 0.5 || c.moisture >= cap - 0.5;
 
+  let held = 0;
+  let supplied = 0;
+  for (const [id, state] of run.footholds) {
+    if (!state.claimed || state.damage >= 1) continue;
+    held++;
+    const site = run.house.footholds.get(id);
+    if (!site) continue;
+    if (
+      site.role === 'home' ||
+      run.routes.some((r) => r.nest === id && (r.health === 'ok' || r.health === 'congested'))
+    ) {
+      supplied++;
+    }
+  }
+
   write(
     target,
     `<div class="stat food"><span class="label">${esc(t('hud.food'))}</span>` +
@@ -250,6 +265,20 @@ function renderStores(target: Slot, run: Run): void {
       `<div class="stat population"><span class="label">${esc(t('hud.population'))}</span>` +
       `${bar(c.population, Math.max(1, c.capacity))}` +
       `<span class="value">${c.population}/${c.capacity}</span></div>` +
+      /*
+       * Where the capacity number comes from, and what the room is charging for it.
+       *
+       * Two live rules had no surface at all. Capacity is granted only by refuges a healthy route
+       * reaches (`state.ts recomputeCapacity`), and every held refuge slows how fast the room
+       * forgets the colony (`household.ts`, 4 % each). The player saw the RESULT — a number that
+       * moved for no visible reason — and `hud.capacity` sat in the catalog with zero consumers.
+       *
+       * Shown as supplied-of-held because that is the decision: the gap between the two numbers is
+       * refuges being paid for and returning nothing.
+       */
+      `<div class="stat supply"><span class="label">${esc(t('hud.capacity'))}</span>` +
+      `${bar(supplied, Math.max(1, held))}` +
+      `<span class="value">${supplied}/${held}</span></div>` +
       (atCap ? `<div class="blocker">${esc(t('hud.stores'))}</div>` : '') +
       (c.broodHold ? `<div class="blocker">${esc(t('hud.broodHold'))}</div>` : ''),
   );
