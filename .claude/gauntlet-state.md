@@ -37,7 +37,11 @@ at 80/100 in their own discipline.
 - [PASS] 20 restarts leave no GPU leak (121 -> 121)
 - [PASS] all on-screen text Korean, zero latin words (prompt-evidence PASS)
 - [PASS] perf @1080p: every budget line green with a derived geometry ceiling
-- [FAIL] run length 3.1-4.9 min against a 25-35 min design target (`it.fails` in run.test.ts)
+- [FAIL] run length — now **9.91-19.53 min** (was 3.1-4.9) against a 25-35 min target. Moved by one
+  data change: `kitchen.crumbs.toekick` from x1500 to x700, off the starting nest. `it.fails` still
+  holds because seed 20260805/brood reads 10.51 against its 12.5 floor.
+- [FAIL] `test:slow` 18/19 — peak population 13 against a floor of 20 (`run.test.ts`). Caused by the
+  relocation: food is further, so the colony settles smaller. Recorded, not weakened.
 
 ## Quality Bar
 Not "it works". Four disciplines must each find it good: systems/economy, level/environment,
@@ -97,6 +101,17 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 - caught by a gate, not by me: wiring cover lowered sightings 8 -> 6, which lowered sweep severity,
   which silently un-did last pass's failable finale (0/9 runs dipped). `test:slow` went red and the
   coefficient was re-derived by sweep rather than by guess.
+
+## Open question that gates the run-length claim
+
+Across 630 s of a brood run, four of nine resources are **never touched** (`rice`, `sponge`,
+`table.crumbs`, `fridge.seal` all at their starting amount) while the colony sits in chronic food
+famine at 9-32 and banks moisture to 166. `fridge.seal` is on the floor and needs no climb.
+
+This is an allocation defect, not a distance one — and until its cause is known, the 9.91-19.53 min
+figure may be describing `tests/bot.ts` rather than the game. `bot.ts:411-431` does consider every
+found resource and does bias toward the scarcer store, so the bot is not blind; the cause is
+unidentified. **Do not quote the new run length as a game property until this is resolved.**
 
 ## Blockers
 None.
