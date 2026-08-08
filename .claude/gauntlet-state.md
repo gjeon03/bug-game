@@ -1,7 +1,29 @@
 # Gauntlet State
 
 ## Status
-ACTIVE
+CANCELLED
+
+> Cancelled by the user on 2026-08-08 via `/gauntlet-mode cancel`, mid-run. Nothing below is
+> retracted: the Goal Ledger, every measurement, and the remaining gaps are preserved exactly as
+> they stood so a later `/gauntlet-mode <task>` can pick the thread back up.
+>
+> State at cancellation — the scoring bar had been reset twice by the user (5 @ 90 -> 4 @ 80 ->
+> 3 @ 80), and the most recent panel was run through **Codex**, not Claude personas, to break the
+> build-and-grade-with-the-same-model loop: bug/technical **72**, direction **57**, art **58**,
+> gameplay **43**. Gameplay was the binding constraint and all three critics named the same cause —
+> after a route is drawn there is nothing to decide.
+>
+> Landed and verified this run: emergency recall (§60, kept). Landed and then **reverted on
+> measurement**: the bait (§61 -> §62) — skipping the 75-second sweep cooldown lost the run even
+> when its evidence cost was dropped to near zero, because the colony spends that window repairing
+> refuges and rebuilding stores. The wait is unengaging, not wasted, and those need different fixes.
+>
+> Also corrected here for whoever resumes: `pnpm test` does NOT run the run-length or victory
+> tests. Only `pnpm test:slow` executes `tests/unit/run.test.ts`. Simulation changes verified
+> against the fast suite alone are not verified.
+>
+> Full narrative, including 27 instrument failures and the reversals they caused, is in
+> `COMPLETION_RECOVERY.md` §54-§62.
 
 ## Phase
 ADDRESS
