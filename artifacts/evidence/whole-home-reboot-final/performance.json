@@ -1,5 +1,5 @@
 {
-  "headSha": "b03b56fc651636988908cc2c7e71f4d2bc10a813",
+  "headSha": "e4d769a6399c2206414250a8d41402754db84a67",
   "hardware": {
     "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
     "vendor": "Google Inc. (Apple)",
@@ -14,13 +14,13 @@
     "time": 96,
     "population": 9,
     "workers": 9,
-    "routes": 2,
+    "routes": 3,
     "threats": 1,
-    "deliveries": 105
+    "deliveries": 90
   },
   "audio": {
     "started": true,
-    "voices": 0
+    "voices": 1
   },
   "presented": {
     "p50": 16.69999999999709,
@@ -29,16 +29,16 @@
     "worst": 18.80000000000291
   },
   "cpu": {
-    "p50": 4.100000023841858,
-    "p99": 6.699999988079071
+    "p50": 4.300000011920929,
+    "p99": 6.700000047683716
   },
   "gpu": {
-    "p50": 12.259374,
-    "p99": 15.023,
+    "p50": 12.541249,
+    "p99": 17.715875,
     "samples": 2727
   },
   "frameTails": {
-    "over16": 974,
+    "over16": 1096,
     "over33": 0,
     "over50": 0,
     "over100": 0,
@@ -49,14 +49,14 @@
     "props": 26,
     "meshes": 357,
     "merged": 348,
-    "geometries": 153,
+    "geometries": 161,
     "materials": 52,
     "textures": 27,
-    "drawCalls": 399,
-    "triangles": 167323,
+    "drawCalls": 503,
+    "triangles": 161235,
     "lights": 3,
     "occluders": 16,
-    "occluderTests": 11,
+    "occluderTests": 108,
     "occluderCandidates": 16,
     "fading": 1,
     "visibleRoaches": 9,
@@ -97,26 +97,26 @@
     },
     {
       "metric": "gpu p99",
-      "value": 15.023,
+      "value": 17.715875,
       "budget": 33,
       "pass": true,
       "note": "2727 samples"
     },
     {
       "metric": "peak draw calls",
-      "value": 399,
+      "value": 503,
       "budget": 900,
       "pass": true
     },
     {
       "metric": "peak triangles",
-      "value": 167323,
+      "value": 161235,
       "budget": 400000,
       "pass": true
     },
     {
       "metric": "peak geometries",
-      "value": 153,
+      "value": 161,
       "budget": 196,
       "pass": true
     },

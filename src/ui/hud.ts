@@ -314,7 +314,11 @@ function renderChoices(target: Slot, run: Run): void {
       `<div class="card panel${spent ? ' spent' : ''}">` +
       `<div class="key">${index + 1}</div>` +
       `<div class="name">${esc(t(offer.labelKey))}</div>` +
-      `<div class="desc">${esc(t(offer.bodyKey))}</div></div>`
+      `<div class="desc">${esc(t(offer.bodyKey))}</div>` +
+      // The price was computed, catalogued in six near-identical strings, and never drawn. A choice
+      // whose cost is invisible is not a choice — the player could not see that going deeper in one
+      // family is what they give up a second family for.
+      `<div class="cost">${esc(t(offer.costKey, { points: offer.cost }))}</div></div>`
     );
   });
   write(target, cards.join(''));

@@ -220,22 +220,55 @@ export interface AdaptationOffer {
   readonly labelKey: string;
   readonly bodyKey: string;
   readonly costKey: string;
+  /** Adaptation points this offer costs right now. */
+  readonly cost: number;
   readonly available: boolean;
 }
 
 const FAMILIES: readonly AdaptationFamily[] = ['brood', 'scavenging', 'shadow'];
 
+/**
+ * What each tier costs, and why the second one is not one point.
+ *
+ * The comment on `chooseAdaptation` said a normal run earns three or four points "so the player
+ * cannot have everything — and each tier past the first costs a point that could have started a
+ * second family. That is the whole opportunity cost." It stopped being true the moment the kitchen
+ * went from four refuges to eight, because a point is granted on first taking one. Measured across
+ * nine bot runs: **seven points earned, six slots in the entire tree.** A player could max all three
+ * families and still have a point in hand. The sentence describing the design was the only place
+ * the opportunity cost still existed.
+ *
+ * Restoring it by granting fewer points would make the room's own content pay for a balance
+ * problem. Making depth cost more says the intended thing directly: going deeper in one family is
+ * what you give up a second family for. The full tree is now 3 x (1 + 2) = 9 against seven earned,
+ * so no run can buy it, and `run.test.ts` asserts that against what a run actually earns rather
+ * than against a constant — adding refuges will fail there instead of silently deleting the choice
+ * a second time.
+ *
+ * Two and three were both swept across three seeds x three builds. Both restore the shortfall.
+ * Three costs more than it buys: it delays the second tier enough that brood/20260805 peaks at 19
+ * workers against a floor of 20, and its finale stops dipping under the hold threshold. Two keeps
+ * both (peak 28, trough 5) and still cannot buy the tree. Measured, not preferred.
+ *
+ * This is not "buying length with prices". That rule is about paying resources for run time; this
+ * changes nothing about pacing and adds no walking. It restores a choice between contents the
+ * player already had access to.
+ */
+const TIER_COST: Readonly<Record<1 | 2, number>> = { 1: 1, 2: 2 };
+
 export function adaptationOffers(run: Run): readonly AdaptationOffer[] {
   return FAMILIES.map((family) => {
     const owned = run.colony.adaptations.filter((a) => a.family === family).length;
     const tier: 1 | 2 = owned >= 1 ? 2 : 1;
+    const cost = TIER_COST[tier];
     return {
       family,
       tier,
       labelKey: `adaptation.${family}.${tier}`,
       bodyKey: `adaptation.${family}.${tier}.desc`,
-      costKey: `adaptation.${family}.${tier}.cost`,
-      available: owned < 2 && run.colony.adaptationPoints > 0,
+      costKey: 'adaptation.cost',
+      cost,
+      available: owned < 2 && run.colony.adaptationPoints >= cost,
     };
   });
 }
@@ -243,17 +276,16 @@ export function adaptationOffers(run: Run): readonly AdaptationOffer[] {
 /**
  * Commit to a specialization.
  *
- * Three families, and a normal run earns three or four points, so the player cannot have
- * everything — and each tier past the first costs a point that could have started a second family.
- * That is the whole opportunity cost, and it is why two runs look different.
+ * Three families and two tiers each, priced so a run cannot afford all of it — see `TIER_COST` for
+ * what that used to claim and what it actually was.
  */
 export function chooseAdaptation(run: Run, family: AdaptationFamily): boolean {
-  if (run.colony.adaptationPoints <= 0) return false;
   const owned = run.colony.adaptations.filter((a) => a.family === family).length;
   if (owned >= 2) return false;
-
-  run.colony.adaptationPoints--;
   const tier: 1 | 2 = owned >= 1 ? 2 : 1;
+  if (run.colony.adaptationPoints < TIER_COST[tier]) return false;
+
+  run.colony.adaptationPoints -= TIER_COST[tier];
   run.colony.adaptations.push({ family, tier });
   recomputeCapacity(run);
 

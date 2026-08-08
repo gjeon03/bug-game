@@ -524,6 +524,14 @@ body {
   color: var(--text-dim);
 }
 
+/* The price. It was computed and catalogued for the whole project and never drawn. */
+.card .cost {
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 0.92em;
+  color: var(--accent, #e8c07a);
+}
+
 .card.spent {
   opacity: 0.35;
 }

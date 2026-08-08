@@ -66,6 +66,11 @@ function play(seed: number, build: AdaptationFamily): Played {
   return { run, trace, troughAfterPeak: trough, cues };
 }
 
+/** Points already committed to adaptations, priced the way `chooseAdaptation` prices them. */
+function spentPoints(run: Run): number {
+  return run.colony.adaptations.reduce((total, a) => total + (a.tier === 1 ? 1 : 2), 0);
+}
+
 /** Every refuge the kitchen offers. Victory is defined against this set, so the tests are too. */
 function kitchenRefuges(run: Run): readonly string[] {
   return [...run.house.footholds.values()].filter((f) => f.region === 'kitchen').map((f) => f.id);
@@ -177,6 +182,24 @@ describe('a competently played run takes the kitchen', () => {
       'run.extermination',
     );
     expect([...played.cues].sort(), 'losing a refuge was inaudible').toContain('foothold.lost');
+  });
+
+  it('cannot afford the whole adaptation tree', () => {
+    /*
+     * The design comment claimed "a normal run earns three or four points, so the player cannot
+     * have everything". Measured across nine bot runs after the kitchen went from four refuges to
+     * eight — a point is granted on first taking one — it earns SEVEN, against a tree of six slots.
+     * Every run could max all three families and keep a point in hand. The only place the
+     * opportunity cost still existed was the sentence describing it.
+     *
+     * Asserted against what a run actually earns rather than against a constant, so adding refuges
+     * to the room fails here instead of quietly deleting the choice again.
+     */
+    const earned = played.run.colony.adaptationPoints + spentPoints(played.run);
+    const wholeTree = 3 * (1 + 2);
+    expect(earned, `a run earns ${earned} points and the tree costs ${wholeTree}`).toBeLessThan(
+      wholeTree,
+    );
   });
 
   it('grows a colony that is visible rather than numerical', () => {

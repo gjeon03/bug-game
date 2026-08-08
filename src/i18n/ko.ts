@@ -212,24 +212,19 @@ export const ko = {
   'blocker.stores': '비축이 모자라다 — 먹이 30, 수분 20',
 
   /* ── adaptations ──────────────────────────────────────────────────────── */
+  'adaptation.cost': '적응 {points}점',
   'adaptation.brood.1': '번식 강화',
   'adaptation.brood.1.desc': '거점 수용력이 늘고 알이 더 빨리 깬다. 대신 먹이 소모가 커진다.',
-  'adaptation.brood.1.cost': '적응 1',
   'adaptation.brood.2': '집단 번식',
   'adaptation.brood.2.desc': '수용력이 한 번 더 늘고 손실 회복이 빨라진다.',
-  'adaptation.brood.2.cost': '적응 1',
   'adaptation.scavenging.1': '수집 강화',
   'adaptation.scavenging.1.desc': '일꾼이 더 빨리 움직이고 한 번에 더 많이 가져온다.',
-  'adaptation.scavenging.1.cost': '적응 1',
   'adaptation.scavenging.2': '집단 수집',
   'adaptation.scavenging.2.desc': '채집 속도가 한 번 더 오른다. 대신 흔적이 더 크게 남는다.',
-  'adaptation.scavenging.2.cost': '적응 1',
   'adaptation.shadow.1': '은신 배선',
   'adaptation.shadow.1.desc': '정찰병과 길이 눈에 덜 띈다. 통로 작업도 빨라진다.',
-  'adaptation.shadow.1.cost': '적응 1',
   'adaptation.shadow.2': '그림자 연결망',
   'adaptation.shadow.2.desc': '흔적이 크게 줄고, 길이 끊겨도 회복이 빠르다.',
-  'adaptation.shadow.2.cost': '적응 1',
 
   /* ── household routines ───────────────────────────────────────────────── */
   'routine.kitchen.dishes': '설거지',
