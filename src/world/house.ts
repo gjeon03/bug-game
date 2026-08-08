@@ -267,7 +267,6 @@ export const SEALED_GATES: readonly Gate[] = [
  */
 export const GATES: readonly Gate[] = [];
 
-
 /* ------------------------------------------------------------------- house */
 
 export interface House {
