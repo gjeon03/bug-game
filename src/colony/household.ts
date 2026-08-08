@@ -297,12 +297,44 @@ export function updateRoutines(run: Run, dt: number): void {
   applyRoutineExposure(run);
 }
 
-function pushRoutineCue(run: Run, spec: RoutineSpec, kind: string): void {
+/**
+ * Where a routine happens.
+ *
+ * It used to be the centre of the region, which meant every routine cue in the game came from the
+ * same point. `audio/bridge.ts` pans a cue against the camera basis specifically so that "most of
+ * the danger is off-screen" has a channel — and then the sink being run, the bin lid going up and
+ * the fridge opening all arrived from the middle of the kitchen. The one piece of information the
+ * warning could carry, it did not carry.
+ *
+ * Derived rather than authored. Each of the six kitchen routines refills exactly one resource and
+ * every resource already has a position, so `refilledBy` states where the household will be
+ * standing without a single new coordinate to get wrong — and a routine that later refills two
+ * sources averages them instead of needing a third fact maintained by hand.
+ */
+function routineAt(run: Run, spec: RoutineSpec): { x: number; z: number } | null {
+  let x = 0;
+  let z = 0;
+  let count = 0;
+  for (const site of run.house.resources.values()) {
+    if (site.refilledBy !== spec.id) continue;
+    x += site.at.x;
+    z += site.at.z;
+    count++;
+  }
+  if (count > 0) return { x: x / count, z: z / count };
+
   const region = run.house.regions.find((r) => r.id === spec.region);
-  if (!region) return;
-  const x = (region.bounds.x0 + region.bounds.x1) / 2;
-  const z = (region.bounds.z0 + region.bounds.z1) / 2;
-  pushCue(run, kind, x, 0, z);
+  if (!region) return null;
+  return {
+    x: (region.bounds.x0 + region.bounds.x1) / 2,
+    z: (region.bounds.z0 + region.bounds.z1) / 2,
+  };
+}
+
+function pushRoutineCue(run: Run, spec: RoutineSpec, kind: string): void {
+  const at = routineAt(run, spec);
+  if (!at) return;
+  pushCue(run, kind, at.x, 0, at.z);
   if (kind === 'routine.incoming' && run.regions.get(spec.region)?.unlocked) {
     logEvent(run, 'log.routine.incoming', 'warn', { routine: spec.labelKey });
   }
