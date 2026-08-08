@@ -1,5 +1,5 @@
 {
-  "headSha": "fc0d1a8fe2c9db6d6969c4918f06347f61dcd3c0",
+  "headSha": "a430a228c7786ebac3d3d3cdf2d5e63d88f146da",
   "hardware": {
     "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
     "vendor": "Google Inc. (Apple)",
@@ -7,8 +7,8 @@
   },
   "window": {
     "seconds": 45,
-    "frames": 2726,
-    "measuredSeconds": 45.45780000001192
+    "frames": 2727,
+    "measuredSeconds": 45.4695
   },
   "duringCapture": {
     "time": 99,
@@ -16,29 +16,29 @@
     "workers": 9,
     "routes": 3,
     "threats": 0,
-    "deliveries": 50
+    "deliveries": 52
   },
   "audio": {
     "started": true,
-    "voices": 0
+    "voices": 2
   },
   "presented": {
     "p50": 16.69999999999709,
     "p95": 18.60000000000582,
-    "p99": 18.70000000001164,
+    "p99": 18.69999999999709,
     "worst": 18.80000000000291
   },
   "cpu": {
-    "p50": 4.199999988079071,
-    "p99": 6.600000023841858
+    "p50": 4.099999964237213,
+    "p99": 6.300000011920929
   },
   "gpu": {
-    "p50": 12.395208,
-    "p99": 13.728916,
-    "samples": 2726
+    "p50": 12.278041,
+    "p99": 13.80675,
+    "samples": 2727
   },
   "frameTails": {
-    "over16": 1065,
+    "over16": 1023,
     "over33": 0,
     "over50": 0,
     "over100": 0,
@@ -52,11 +52,11 @@
     "geometries": 141,
     "materials": 52,
     "textures": 27,
-    "drawCalls": 464,
-    "triangles": 174535,
+    "drawCalls": 438,
+    "triangles": 173575,
     "lights": 3,
     "occluders": 16,
-    "occluderTests": 108,
+    "occluderTests": 110,
     "occluderCandidates": 16,
     "fading": 1,
     "visibleRoaches": 9,
@@ -79,7 +79,7 @@
     },
     {
       "metric": "p99",
-      "value": 18.70000000001164,
+      "value": 18.69999999999709,
       "budget": 33,
       "pass": true
     },
@@ -97,20 +97,20 @@
     },
     {
       "metric": "gpu p99",
-      "value": 13.728916,
+      "value": 13.80675,
       "budget": 33,
       "pass": true,
-      "note": "2726 samples"
+      "note": "2727 samples"
     },
     {
       "metric": "peak draw calls",
-      "value": 464,
+      "value": 438,
       "budget": 900,
       "pass": true
     },
     {
       "metric": "peak triangles",
-      "value": 174535,
+      "value": 173575,
       "budget": 400000,
       "pass": true
     },
