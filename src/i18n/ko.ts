@@ -195,8 +195,7 @@ export const ko = {
    * lines were pushing the player toward the play the economy had just started charging for.
    */
   'objective.kitchen.grow': '군체를 불려라. 거점은 보급선이 닿아 있을 때만 식구를 늘려 준다.',
-  'objective.kitchen.expand':
-    '필요한 만큼만 차지해라. 거점을 늘릴수록 집이 너희를 더 오래 기억한다.',
+  'objective.kitchen.expand': '필요한 만큼만 차지해라. 거점을 늘릴수록 집이 너희를 더 오래 기억한다.',
   'objective.final.title': '주방을 지켜라',
   /*
    * This is the line the player reads for most of the run, and it described a different game.
@@ -396,9 +395,6 @@ export const ko = {
   'log.recall.ordered': '긴급 소환 — 일꾼 {count}마리가 짐을 버리고 거점으로 뛴다',
   'log.recall.cooling': '아직 숨을 고르는 중이다 — 다시 부를 수 없다',
   'help.recall': 'Q — 긴급 소환 (짐을 버린다)',
-  'log.bait.laid': '일부러 흔적을 남긴다 — 사람이 지금 온다. 더 세게 온다.',
-  'log.bait.pointless': '지금은 남길 흔적이 없다',
-  'help.bait': 'B — 미끼 (박멸을 앞당긴다)',
   'hud.broodHold': '번식 보류',
   'help.restart': 'R — 다시 시작',
   // Was 「아무 키나 눌러 시작」, which invited the player to destroy the card by reaching for W.

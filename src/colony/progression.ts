@@ -434,16 +434,6 @@ export interface FinalState {
 const SWEEP_COOLDOWN = 110;
 
 /**
- * How much evidence a deliberate bait plants in the scout's own region.
- *
- * This is the price of ending the wait early, and it is not a flat fee: `severity` below reads
- * `pressure`, which reads regional evidence, so the sweep the player summoned hits harder than the
- * one they would have received by staying quiet. Large enough to feel like a wager, small enough
- * that a strong colony can take it.
- */
-export const BAIT_EVIDENCE = 0.25;
-
-/**
  * The household mounts its full response once the colony holds the WHOLE kitchen.
  *
  * It was two refuges of four, and measured on seed 20260805 that fired at 2 minutes against a
