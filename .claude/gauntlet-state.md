@@ -26,7 +26,9 @@ A kitchen-only 3D infestation game that four independent game-discipline critics
 at 80/100 in their own discipline.
 
 ## Mandatory Criteria
-- [UNVERIFIED] Four distinct persona critics each score >= 80
+- [FAIL] Four distinct persona critics each score >= 80 — measured 2026-08-08, panel `w72dck7a3`:
+  systems/economy **36**, level/environment **38**, art direction **52**, game feel **53**.
+  Lowest 36, average 44.8 against a bar of 80 for every one of them.
 - [PASS] typecheck, lint clean — verified this pass
 - [PASS] unit 89/89 — verified this pass
 - [PASS] test:slow 19/19 — verified at commit 894a101
@@ -40,6 +42,23 @@ at 80/100 in their own discipline.
 ## Quality Bar
 Not "it works". Four disciplines must each find it good: systems/economy, level/environment,
 art direction (stylised is explicitly acceptable — photorealism is NOT the bar), and game feel.
+
+## Persona Panel — 2026-08-08 (run wf_575f0e85-da4, 4 critics + 4 adversarial challengers)
+
+| Discipline | Score | Their top fix | Challenge |
+| --- | --- | --- | --- |
+| Systems & economy | 36 | per-refuge `heat` rising with deliveries routed out of it, wired into the three places that read nothing | **holdsUp=false**, +2 — challenger re-ran `tests/bot.ts` on three seeds with traffic/busy/evidence/alert instrumented and found the premise did not hold |
+| Level & environment | 38 | a graded cover-and-light field in `exposureZones`, with `concealment` feeding it | **holdsUp=false**, +3 — "most of the change is already in the tree", which is correct: it landed in 4ffc882 while the panel was running |
+| Art direction (stylised) | 52 | put the shipped materials back on the value ladder ART_BIBLE.md already specifies; edit the SPECS hex literals only | — |
+| Game feel & technical | 53 | feed the view layer real elapsed seconds rather than simulation steps; fix the fade time constant | **holdsUp=false**, +3 — the prescribed patch is algebraically inverted and would ship a regression (`occlusion.ts:330`) |
+
+**All four prescriptions failed adversarial verification.** The diagnoses are not thereby wrong; the
+prescriptions were. Weight the next pass toward the two lowest scores (36 and 38), not the mean.
+
+Sharpest new finding, from art at 52: *"a frame that has no palette, no value hierarchy and no
+night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder down and the shipped
+`SPECS` hex literals do not follow it. That is the fifth instance this session of the same shape:
+**documented, and not honoured.**
 
 ## Evidence Ledger
 - gates -> `pnpm typecheck | lint | test | test:slow | build`
