@@ -328,7 +328,23 @@ export const KITCHEN: RegionSpec = {
       id: 'kitchen.crumbs.toekick',
       region: 'kitchen',
       surface: 'kitchen.floor',
-      at: { x: mm(1500), z: mm(NORTH_FACE - 50) },
+      /*
+       * Moved west, to the fridge end of the toe-kick, because the whole game was happening in a
+       * 480 mm strip.
+       *
+       * `kitchen.undersink` — the nest every run starts in — sits at x 1760 on this same line. This
+       * source was at 1500 and `kitchen.drip.trap` is at 1980, so the colony began life with its
+       * food 260 mm to one side and its water 220 mm to the other. Measured across five bot seeds:
+       * undersink took 45-93 % of every delivery in the run and `cornerseam` and `fridgeback` took
+       * between zero and four. The pheromone route — the thing this design says it is about — was
+       * four navigation cells long, ran at the exposure floor, and was never a decision.
+       *
+       * This is not buying length with a longer walk. There was no walk: the mechanic the whole game
+       * rests on had nothing to operate on. Crumbs under a toe-kick are wherever somebody dropped
+       * them, so the fiction is indifferent to x — and at the fridge end they are the natural
+       * business of `kitchen.fridgeback`, which is a refuge that had almost no traffic at all.
+       */
+      at: { x: mm(700), z: mm(NORTH_FACE - 50) },
       kind: 'food',
       /*
        * The opening food source, and it has to sustain the opening.
