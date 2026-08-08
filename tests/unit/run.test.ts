@@ -143,11 +143,16 @@ describe('a competently played run takes the kitchen', () => {
    * (`household.ts`, coefficient swept). Eleven measured sweeps of economy CONSTANTS
    * (COMPLETION_RECOVERY.md §19-§27) moved nothing.
    *
-   * Measured at HEAD, three brood seeds: 17.04 / 27.51 / 24.87, **median 24.87 min**, against a
-   * design band of 25-35 and a starting point of 3.1-4.9. The floor here stays at 12.5 — half the
-   * band, the loosest honest reading for a bot with perfect pathing that never hesitates — because
-   * one of the three sits at 17.04 and a floor fitted to the median would be brittle. The band
-   * itself is not asserted yet; the median reaching it is recorded, not claimed as met.
+   * Measured at HEAD, three brood seeds: 17.04 / 21.57 / 23.25, **median 21.57 min**, against a
+   * design band of 25-35 and a starting point of 3.1-4.9. It peaked at 24.87 and gave 3.3 min back
+   * when `recomputeCapacity` was wired to route changes — a deliberate correctness-over-pacing
+   * trade, since the supplied/held HUD was reading live route health beside a stale capacity.
+   *
+   * The floor here stays at 12.5 — half the band, the loosest honest reading for a bot with perfect
+   * pathing that never hesitates — because one of the three sits at 17.04 and a floor fitted to the
+   * median would be brittle. The band itself is deliberately NOT asserted: the median does not
+   * reach it, and a test that fails by design is a wish, not a gate. Three separate settings have
+   * put the median inside the band and every one cost win rate (COMPLETION_RECOVERY.md §47).
    */
   it('fills a sitting rather than a coffee break', () => {
     const minutes = [20260805, 777, 4242]
