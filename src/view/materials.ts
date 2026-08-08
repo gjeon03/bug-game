@@ -137,7 +137,26 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
     wear: { blotches: 80, streaks: 1100, rings: 5, grain: 'horizontal', seed: 5, normalScale: 0.6 },
   },
   cabinetDoor: {
-    colour: 0x6d6257,
+    /*
+     * `ART_BIBLE.md` writes a value ladder and says "this order is never violated". It was.
+     *
+     * The bible puts cabinet faces at `#1c242c` (L* 13.8) BELOW floor-in-ambient `#2a3742`
+     * (L* 22.4), and names `steel #26323c` as the cabinetry hue. Shipped, `cabinetDoor` was
+     * `#6d6257` at L* 42.3 against `floorVinyl` at L* 38.5 — lighter than the floor, and warm where
+     * the palette says cold. The single largest vertical area in the frame was the surface most out
+     * of step with the document describing it.
+     *
+     * Checked as an ORDERING claim rather than an absolute one, which is what makes it checkable at
+     * all: these are albedos and the bible's rungs are screen values, but ACES tone mapping is
+     * monotonic, so it cannot reorder two surfaces. Whatever the exposure, cabinet-lighter-than-
+     * floor stays cabinet-lighter-than-floor.
+     *
+     * `#26323c` is the bible's own steel. Adopted only after measuring the rendered frame — making
+     * the largest area darker risks §7's banned uniform darkness, and this repo already records one
+     * attempt that turned the room into an overcast afternoon and another that pushed near-black to
+     * 3.56 %.
+     */
+    colour: 0x26323c,
     roughness: 0.5,
     metalness: 0.03,
     wear: { streaks: 700, scuffs: 90, grain: 'vertical', seed: 17, normalScale: 0.5 },
