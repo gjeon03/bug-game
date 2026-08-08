@@ -72,7 +72,7 @@
       "prompt": "F길 잇기"
     },
     "walking": {
-      "points": 10,
+      "points": 9,
       "prompt": "길을 놓는 중 — 먹이까지 걸어가라 · G로 그만두기"
     },
     "korean": {

@@ -173,6 +173,9 @@ export async function boot(): Promise<void> {
 
   clock.start(performance.now());
 
+  /** Wall-clock stamp of the previous frame, for the visual `dt` below. */
+  let lastFrame = performance.now();
+
   function tick(now: number): void {
     frame++;
     const run = session.run;
@@ -263,7 +266,28 @@ export async function boot(): Promise<void> {
       finalPressure = result.finalPressure;
     }
 
-    const dt = Math.min(0.05, steps * SIM_DT || 1 / 60);
+    /*
+     * Visual time is WALL time, not simulation steps.
+     *
+     * This was `Math.min(0.05, steps * SIM_DT || 1 / 60)`. A frame that produces no simulation step
+     * — which above 60 Hz is most of them — got charged a full 1/60 s anyway, so the view layer's
+     * clock ran fast in proportion to the refresh rate. Measured by replicating both paths:
+     *
+     *   60 Hz 1.00x · 120 Hz 2.00x · 144 Hz 2.40x · 240 Hz 4.00x
+     *
+     * This `dt` reaches occlusion fading, camera damping, gait, threat pulse and the audio beds.
+     * `DEFAULT_FADE_SECONDS = 0.22` became 92 ms at 144 Hz, under the 150-300 ms floor §3 states as
+     * a contract clause — so the build broke a numbered requirement on any high-refresh display.
+     *
+     * Every piece of evidence in this repo missed it because the capture and perf harnesses run at
+     * 60 Hz, where the old expression happens to be exactly right. The condition that breaks it has
+     * never existed in our own measurements.
+     *
+     * The simulation is untouched: it still advances in fixed `SIM_DT` steps through `clock`. Only
+     * the interpolated presentation reads real elapsed time, which is what it always meant to do.
+     */
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+    lastFrame = now;
 
     // Cues are produced by the simulation and consumed here, once — by audio, then discarded.
     // Nothing reads them back, which is why the simulation can push them without knowing whether
