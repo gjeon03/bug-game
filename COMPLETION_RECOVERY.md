@@ -1789,3 +1789,31 @@ lights-zero+white    mean=0.4049  pureBlack=0.21%
 **가설은 검사되지 않았다.** 다음 사람은 `rim`을 무시하는 얇은 어댑터를 두고 갈아끼우거나,
 `NightStandardMaterial` 하나에만 `customProgramCacheKey`를 지워 프로그램을 분리시킨 뒤
 같은 프로브를 돌리면 된다.
+
+### §52 확정 — 환경은 약한 게 아니라 연결돼 있지 않다
+
+조명을 전부 끈 상태(`mean 0.0119`)에서 `scene.environmentIntensity = 40`을 걸었다.
+**0.0119. 변화 없음.**
+
+이제 네 가지 독립적 조작이 전부 무반응이다:
+
+| 조작 | 결과 |
+| --- | --- |
+| 하늘 `#4d6b82` → `#ffffff` | 무변화 |
+| `scene.environment = null` | 무변화 (저장소 기존 기록) |
+| `envMapIntensity` 1 → 6 | 무변화 (저장소 기존 기록) |
+| **`scene.environmentIntensity` 1 → 40** | **무변화** |
+
+값의 문제가 아니다. 환경 항이 셰이더에 **존재하지 않는다.** `night.ts:131`이
+"거의 기여하지 않는데 이유를 모르겠다"로 남긴 것은 이제 "기여 경로가 없다"로
+확정됐고, 남은 질문은 왜 그 경로가 없느냐 하나다.
+
+`scene.environment` 대입 시점은 아니다(`render.ts:124`가 `buildScene`보다 앞선다).
+`envMapIntensity`도 아니다(반응 없음). 남은 것은 재질이 컴파일될 때 `USE_ENVMAP`
+디파인이 서지 않는 경로이고, 이 저장소가 그 재질에 대해 손댄 것이 정확히 프로그램
+캐시 키다(`night.ts:29`).
+
+다음 사람이 처음 볼 한 줄: `NightStandardMaterial` 하나를 평범한
+`MeshStandardMaterial`로 두고(스펙의 `rim`은 무시하는 어댑터로) 같은 프로브를 돌린다.
+갈라지면 원인은 그 재질이고, 안 갈라지면 `makeGradientEnv`가 돌려주는 텍스처 쪽이다
+— `pmrem.dispose()`가 `target.texture` 반환 앞에 있다.
