@@ -25,7 +25,20 @@ import * as THREE from 'three';
 const MM_PER_UNIT = 35 / 26;
 const mm = (millimetres: number): number => millimetres / MM_PER_UNIT;
 
-/** Reference body length every dimension below is quoted against. */
+/**
+ * Reference body length every dimension below is quoted against.
+ *
+ * THIS IS A DIVISOR, NOT A SIZE (verified the hard way, 2026-08-08).
+ *
+ * The mesh's absolute size comes from `MM_PER_UNIT` and the mm-quoted dimensions below. This
+ * constant only sets what `bodyMm` is measured *against*: `scale = bodyMm / REFERENCE_BODY_MM`.
+ * Raising it on its own is a no-op for anyone who does not pass `bodyMm` — the scout defaults to
+ * `bodyMm = REFERENCE_BODY_MM`, so its scale stays exactly 1 no matter what number sits here.
+ *
+ * That mistake was made and caught by re-observation: 35 → 50 changed nothing on screen, and
+ * because the workers are quoted against the same divisor, moving 26 → 37 alongside it held their
+ * ratio at 0.74 and changed nothing either. To resize a roach, pass `bodyMm` — see `roaches.ts`.
+ */
 const REFERENCE_BODY_MM = 35;
 
 /*

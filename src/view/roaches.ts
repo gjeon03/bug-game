@@ -61,7 +61,25 @@ export function createRoachView(workerCap: number): RoachView {
     metalness: 0.1,
   });
 
-  const scout = assets.build({ isScout: true, palette: 'scout' });
+  /*
+   * SCOUT_BODY_MM — the hero's on-screen size, and the only lever that actually moves it.
+   *
+   * MEASURED 2026-08-08: at the default 35 mm the scout rendered 24 px long on a 1200 px frame,
+   * 2 % of the width (`artifacts/evidence/mcp-playwright-pass/02-scout-zoom-4x.png`). Zoomed 4× the
+   * mesh is excellent — legs, antennae and pronotum markings all survive — so the model was never
+   * the problem; a player-controlled hero you have to hunt for was.
+   *
+   * The other lever, pulling the camera in, is deliberately NOT used: `CAM_DEFAULT_MM` was *raised*
+   * 1320 → 1900 because a visual critic could not name the room at the tighter framing. Growing the
+   * scout leaves the room framing untouched, and costs no draw calls — it is a uniform scale on an
+   * existing mesh.
+   *
+   * 50 mm keeps the insect honest. Blattella germanica runs 13–16 mm, so 35 mm was already a 2.2×
+   * heroic read; 50 mm is 3.2×, and the workers stay at 26–30 mm so the hero is clearly the largest
+   * roach on screen.
+   */
+  const SCOUT_BODY_MM = 50;
+  const scout = assets.build({ isScout: true, palette: 'scout', bodyMm: SCOUT_BODY_MM });
   scout.root.castShadow = true;
   group.add(scout.root);
 
