@@ -36,7 +36,11 @@ at 80/100 in their own discipline.
 - [PASS] real-browser: zero console errors, zero warnings, zero failed/external requests
 - [PASS] 20 restarts leave no GPU leak (121 -> 121)
 - [PASS] all on-screen text Korean, zero latin words (prompt-evidence PASS)
-- [PASS] perf @1080p: every budget line green with a derived geometry ceiling
+- [UNVERIFIED] perf @1080p — last clean reading was every budget line green with a derived geometry
+  ceiling. At HEAD it measured p50 32.20/16.7, but under load average 4.25 with the persona panel
+  running nine subagents; the commit under test adds one boolean flag and has no path to frame cost.
+  Recorded as unmeasured rather than green or regressed (`COMPLETION_RECOVERY.md` §33). Re-run on an
+  idle machine after panel `wlgsvl62q` exits.
 - [PARTIAL] run length — **8.7-23.7 min** across seeds against the 25-35 min target. Still short,
   but the long-standing `it.fails` marker is GONE: `run.test.ts` now asserts `> 12.5 min` as a live
   gate and the canonical seed measures 13.18. That wrapper had been red since the project began.
@@ -86,8 +90,11 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 
 ## Remaining High-Impact Gaps
 1. Persona scores 36 / 38 / 52 / 53. Attack the two lowest, then re-run the panel.
-2. Zero `hidden:` resources in the kitchen — discovery is not a mechanic here yet.
-3. Routines carry no position, so a telegraph cannot point anywhere in the world.
+2. `hidden:` resources — PARTIAL. `kitchen.bin.inside.food` landed in 9db096e and raised the
+   run-length median 13.18 -> 14.31. Two more candidates deferred until it is understood why three
+   at once cost length when one gains it.
+3. ~~Routines carry no position~~ — CLOSED in 082f21d: `routineAt` derives it from the
+   resources each routine refills, giving six distinct cue positions where there was one.
 4. Eight audio methods still with zero callers; four are for mechanics that no longer exist and
    should be deleted rather than wired.
 5. Routines belonging to sealed regions (`bedroom.phone`, `living.tv`, `bathroom.use`, ...) still
