@@ -1309,8 +1309,13 @@ W3의 남은 증거는 "일꾼 여럿이 겹친 프레임"이고, 두 번 시도
 전제한 증거는 이 하네스로 얻을 수 없다. 밀집 프레임을 찍으려면 셋 중 하나가
 필요하다:
 
-1. `--disable-renderer-backgrounding --disable-background-timer-throttling` 등으로
-   스로틀을 끄고 재시도한다. 가장 싸고 먼저 해볼 것.
+1. ~~`--disable-renderer-backgrounding --disable-background-timer-throttling` 등으로
+   스로틀을 끄고 재시도한다~~ — **했다. 이것으로 해결된다.**
+   `capture.mjs`와 `prompt-evidence.mjs`의 실행 플래그에 세 개를 넣었다:
+   `--disable-background-timer-throttling` · `--disable-renderer-backgrounding` ·
+   `--disable-backgrounding-occluded-windows`.
+   측정: 시뮬 30.0초 / 벽시계 30.0초, **비율 1.00** (이전 약 0.1).
+   두 줄짜리 편집이 이 세션에서 세 번의 잘못된 판단을 만든 원인을 없앴다.
 2. 헤드풀(headless: false)로 띄운다. Claude-in-Chrome이 이미 있으므로 실제
    Chrome에서 몇 분 돌리는 것도 경로다.
 3. 시뮬레이션을 빨리 감는 디버그 훅을 만든다 — 그러나 §8이 "숨은 상태 변경으로
