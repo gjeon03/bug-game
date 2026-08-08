@@ -242,7 +242,22 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
    * than to the small ones where nobody can see it.
    */
   floorVinyl: {
-    colour: 0x5b5a5e,
+    /*
+     * Lifted so the bible's ladder holds, from the FLOOR side.
+     *
+     * `ART_BIBLE.md` puts cabinet faces below floor-in-ambient and says the order is never
+     * violated. It was: cabinet L* 42.3 against this at 38.5. The first fix darkened the cabinet to
+     * the bible's steel and shipped a §7 uniform-darkness regression — the playable region's
+     * midtones fell 39.6 % -> 3.0 % and L* < 20 rose to 61.5 % — because the cabinet doors are the
+     * largest vertical area in frame and taking them down takes the whole image with them
+     * (§42, reverted in 3b68df4).
+     *
+     * The floor is the other side of the same comparison and a far smaller share of the image, and
+     * lifting it moves AWAY from the darkness the ban is about. #6e6d72 is L* 46.3, above the
+     * cabinet's 42.3, so the order holds without touching the biggest surface. Judged on the
+     * playable-region L* histogram, which is the instrument the last attempt lacked.
+     */
+    colour: 0x6e6d72,
     roughness: 0.56,
     metalness: 0.02,
     wear: {

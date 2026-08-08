@@ -104,14 +104,20 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
    scored on `969a504`, reverted by `3b68df4`; it has no valid score for the shipped tree. Panel
    `w5ygqggh8` is re-scoring at `97c1846`.
 2. **Run length** — median 24.87 min, one seed 17.04, one of six runs lost, band not asserted.
-3. **ART_BIBLE value ladder** — deliberately re-opened after the revert. Next approach is the floor
-   side of the comparison, not the widest vertical face (`materials.ts cabinetDoor` comment).
-4. **Eight audio methods with zero callers**, four of them for mechanics that no longer exist and
-   should be deleted rather than wired.
-5. **W2 / W3 visual evidence** — both confirmed in source and in the running bundle, neither shown
+3. **W2 / W3 visual evidence** — both confirmed in source and in the running bundle, neither shown
+   in a frame. `COMPLETION_RECOVERY.md` §36, §39, §41.
+4. **W2 / W3 visual evidence** — both confirmed in source and in the running bundle, neither shown
    in a frame. `COMPLETION_RECOVERY.md` §36, §39, §41.
 
 ### Closed, and recorded here because they keep being re-opened from stale notes
+
+- **Zero-caller audio methods** — CLOSED at `4012b29`. Thirteen at the session's start, **zero** now:
+  four deleted as remnants of removed mechanics (`operationCard`, `tierUp`, `upgrade`,
+  `routineTaken`), the rest wired to real events.
+- **ART_BIBLE value ladder** — CLOSED from the floor side. `floorVinyl` #5b5a5e -> #6e6d72 lifts it
+  to L* 46.3 above `cabinetDoor`'s 42.3, so the documented order holds without darkening the largest
+  vertical area — the move that caused the §42 regression. Playable-region histogram at HEAD:
+  dark 1.3 % / mid 49.1 % / light 49.6 %, against 61.5 % / 3.0 % under the regression.
 
 - **Sealed-region routines** — CLOSED in `aa29e9a`. The gate is `household.ts:290`
   (`if (!run.house.regions.some((r) => r.id === spec.region)) continue;`). The `ROUTINES` entries

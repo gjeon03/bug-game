@@ -38,7 +38,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 172
+    "frame": 173
   },
   "afterRoute": {
     "status": "playing",
@@ -82,7 +82,7 @@
   },
   "working": {
     "status": "playing",
-    "time": 39,
+    "time": 38,
     "chapter": "kitchen",
     "population": 2,
     "capacity": 9,
@@ -118,7 +118,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 2185
+    "frame": 2183
   },
   "restarts": [
     {
