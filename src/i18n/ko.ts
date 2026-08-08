@@ -195,8 +195,17 @@ export const ko = {
    * ships with `openGates: []` and one unlocked region, so the sentence was simply false, and it was
    * false on the very first frame of a new run because `kitchenStepKey` falls through to it.
    */
+  /*
+   * "하나도 잃지 않고" — without losing a single one — was false by the time it was read.
+   *
+   * The sweep now levels a share of what is held, up to three refuges at high severity, and victory
+   * needs a majority rather than all of them. So the line asked the player for something the game
+   * does not require and, at the same severities it actually produces, makes impossible. It is the
+   * same failure as the passages-and-four-regions sentence above: a string that survived the change
+   * it described.
+   */
   'objective.final.body':
-    '주방은 군체의 것이 됐다. 이제 거점을 하나도 잃지 않고 집안의 박멸 시도를 견뎌 내라.',
+    '주방은 군체의 것이 됐다. 집안이 박멸에 나선다 — 거점을 잃더라도 다시 세워 방을 놓지 마라.',
 
   /* ── blockers: the single binding constraint, computed from live state ─── */
   'blocker.workers': '일꾼이 부족하다 — {have}/{need}',
@@ -210,6 +219,7 @@ export const ko = {
   'blocker.holdRegion': '아직 차지하지 않은 거점이 있다',
   'blocker.population': '군체가 더 커져야 한다 — 일꾼 12마리',
   'blocker.stores': '비축이 모자라다 — 먹이 30, 수분 20',
+  'blocker.extermination': '준비는 끝났다. 집안이 움직이기 전에 자리를 잡아라',
 
   /* ── adaptations ──────────────────────────────────────────────────────── */
   'adaptation.cost': '적응 {points}점',

@@ -468,7 +468,7 @@ function heldKitchenRefuges(run: Run): number {
  * are better left cold. That is a better statement of "the colony has taken the room" than a
  * checklist, and it is the difference between a list and a decision.
  */
-function refugesToHold(run: Run): number {
+export function refugesToHold(run: Run): number {
   let total = 0;
   for (const site of run.house.footholds.values()) {
     if (site.region === 'kitchen') total++;

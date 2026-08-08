@@ -1,6 +1,13 @@
 import type { Gate, RegionId } from '../world/types';
 import { updateDirector, updateEvidence, updateRoutines } from './household';
-import { checkGate, evaluateRun, updateColony, updateFinal, updateGateWork } from './progression';
+import {
+  checkGate,
+  evaluateRun,
+  refugesToHold,
+  updateColony,
+  updateFinal,
+  updateGateWork,
+} from './progression';
 import { updateRoutes } from './routes';
 import { updateScout, type ScoutInput } from './scout';
 import { extendTrail } from './trail';
@@ -173,15 +180,29 @@ function nextGate(run: Run): Gate | null {
   return null;
 }
 
-/** How close the colony is to the victory condition, as a fraction. */
-function kitchenHoldFraction(run: Run): number {
-  const sites = [...run.house.footholds.values()].filter((f) => f.region === HOLD_TARGET_REGION);
-  if (sites.length === 0) return 1;
-  const held = sites.filter((site) => {
+/** Refuges currently claimed and standing. */
+function kitchenHeld(run: Run): number {
+  let held = 0;
+  for (const site of run.house.footholds.values()) {
+    if (site.region !== HOLD_TARGET_REGION) continue;
     const state = run.footholds.get(site.id);
-    return state?.claimed === true && state.damage < 1;
-  }).length;
-  return held / sites.length;
+    if (state?.claimed === true && state.damage < 1) held++;
+  }
+  return held;
+}
+
+/**
+ * How close the colony is to the victory condition, as a fraction.
+ *
+ * Against `refugesToHold`, not against every refuge in the room. Victory needs a majority and the
+ * panel was demanding all eight, so the two disagreed by two refuges: the objective told the player
+ * to keep taking ground the game had already decided was enough, and a sweep that levelled one
+ * flipped the ladder back a step even though nothing about the win had changed.
+ */
+function kitchenHoldFraction(run: Run): number {
+  const need = refugesToHold(run);
+  if (need <= 0) return 1;
+  return Math.min(1, kitchenHeld(run) / need);
 }
 
 function holdProgress(run: Run): number {
@@ -215,5 +236,18 @@ function holdBlocker(run: Run): string | null {
   if (run.colony.adaptations.length === 0) return 'blocker.adaptation';
   if (run.colony.population < 12) return 'blocker.population';
   if (run.colony.food < 30 || run.colony.moisture < 20) return 'blocker.stores';
-  return null;
+
+  /*
+   * The waiting room, named.
+   *
+   * Measured on four bot runs: every gameplay condition is satisfied by 169 s at the latest, and the
+   * run ends at 242-252 s. That is 75-77 seconds — 31 % of a brood run and 37 % of a scavenging one
+   * — in which the player has done everything the game asks and the only thing left is the sweep
+   * cooldown counting down. It was reported as `null`, so the objective panel showed a blocker-free
+   * final objective and the HUD said nothing at all about why the run had not ended.
+   *
+   * A player cannot act on this, which is exactly why it has to be stated. "You are waiting" is a
+   * legitimate thing for a game to say; silence for a third of the run is not.
+   */
+  return 'blocker.extermination';
 }
