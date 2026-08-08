@@ -1,5 +1,5 @@
 import { LINK_RADIUS, createRoute, eraseRoute, type DrawnPoint } from './routes';
-import { logEvent } from './state';
+import { logEvent, pushCue } from './state';
 import { mm } from '../world/units';
 import type { Run } from './types';
 
@@ -116,7 +116,18 @@ export function extendTrail(run: Run): void {
     !last ||
     last.surface !== run.scout.surface ||
     Math.hypot(last.x - run.scout.x, last.z - run.scout.z) >= TRAIL_STEP;
-  if (moved) trail.points.push({ surface: run.scout.surface, x: run.scout.x, z: run.scout.z });
+  if (moved) {
+    trail.points.push({ surface: run.scout.surface, x: run.scout.x, z: run.scout.z });
+    /*
+     * Laying a pheromone line was silent.
+     *
+     * `audio.layTick` was written, tuned, and had zero callers — so the one action this design calls
+     * its differentiator produced no sound at all while the player performed it. The synthesiser
+     * self-throttles (`gate('lay', 0.075)`), which is why a cue per point is safe: it is the trail
+     * that decides the rhythm, and a fast scout ticks faster.
+     */
+    pushCue(run, 'trail.point', run.scout.x, run.scout.y, run.scout.z);
+  }
 }
 
 /** Finish at a source. Returns whether a route was created. */

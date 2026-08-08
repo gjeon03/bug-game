@@ -94,6 +94,9 @@ export function updateScout(run: Run, dt: number, input: ScoutInput, stamina: nu
   }
 
   const sprinting = input.sprint && stamina > 0.04;
+  // Sprinting was silent too — `audio.sprint` had no caller. It gates itself at 0.5 s, so pushing
+  // while held gives a repeating effort rather than one lost blip at the edge.
+  if (sprinting) pushCue(run, 'scout.sprint', scout.x, scout.y, scout.z);
   const speed = sprinting ? SCOUT_SPRINT : SCOUT_SPEED;
   const nextStamina = sprinting
     ? Math.max(0, stamina - dt * SPRINT_DRAIN)
