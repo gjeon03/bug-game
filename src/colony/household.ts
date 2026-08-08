@@ -755,11 +755,20 @@ export function strikeFootholds(run: Run, region: RegionId, amount: number): voi
    * win still lands in the sweep's own tick. Measured: nine of nine runs, unchanged.
    *
    * As a share it says the right thing at any size — the household found the colony, and how much
-   * of it they wreck depends on how loudly it announced itself. A quiet colony at severity 0.3
-   * loses one and gets the old survivable event; a provoked one at 0.65 loses three and drops under
-   * the line it needs, so the ending is something to work back from.
+   * of it they wreck depends on how loudly it announced itself.
+   *
+   * The coefficient was 0.6 and had to be re-measured once refuge `concealment` started reaching
+   * the exposure grid. Cover works, so the scout is seen less (brood/20260805: 8 sightings before,
+   * 6 after), so `pressure` is lower, so severity is lower — and at 0.6 the finale stopped biting
+   * entirely: nine of nine runs held the line through the sweep. Swept 0.6 / 0.75 / 0.9 across
+   * three seeds x three builds: 0/9 dipped, 4/9 dipped, 9/9 dipped, and all twenty-seven runs were
+   * still won. 0.9 on evidence.
+   *
+   * What that buys is the right shape. The extermination is always an ordeal — it is the household
+   * acting on everything they have learned, not a routine — and how deep the hole is still depends
+   * on play: the loudest run measured drops to four refuges held, the quietest to five.
    */
-  const levelled = Math.max(1, Math.min(held.length, Math.round(held.length * amount * 0.6)));
+  const levelled = Math.max(1, Math.min(held.length, Math.round(held.length * amount * 0.9)));
 
   for (let i = 0; i < held.length; i++) {
     const entry = held[i]!;

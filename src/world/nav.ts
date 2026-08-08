@@ -174,6 +174,33 @@ export function paintExposure(grid: SurfaceGrid, rect: Rect, level: number): voi
   paintInto(grid, grid.baseExposure, rect, level, false);
 }
 
+/**
+ * Take cover out of the static exposure layer.
+ *
+ * `FootholdSite.concealment` is documented in `world/types.ts` as "how well it hides traffic passing
+ * through it, 0..1. Subtracted from local exposure." Eight kitchen refuges author it, from 0.44 at
+ * the open table lip to 0.92 under the sink — and nothing in the codebase read it. Every one of
+ * those numbers was a designer's statement about the room that the room did not make.
+ *
+ * Subtractive, matching the documented wording, and baked into `baseExposure` at build time so it
+ * costs nothing per frame and survives `resetExposure`. It reaches the scout's `seen` accrual and a
+ * route's exposure score through the same grid, which is the point: cover has to mean the same
+ * thing to the player's body and to the supply line they draw.
+ */
+export function shadeExposure(grid: SurfaceGrid, rect: Rect, amount: number): void {
+  if (amount <= 0) return;
+  const c0 = Math.max(0, Math.floor((rect.x0 - grid.x0) / grid.cell));
+  const c1 = Math.min(grid.cols - 1, Math.ceil((rect.x1 - grid.x0) / grid.cell) - 1);
+  const r0 = Math.max(0, Math.floor((rect.z0 - grid.z0) / grid.cell));
+  const r1 = Math.min(grid.rows - 1, Math.ceil((rect.z1 - grid.z0) / grid.cell) - 1);
+  for (let r = r0; r <= r1; r++) {
+    for (let c = c0; c <= c1; c++) {
+      const i = r * grid.cols + c;
+      grid.baseExposure[i] = Math.max(0, (grid.baseExposure[i] ?? 0) - amount);
+    }
+  }
+}
+
 /** Reset live exposure to the static layer. Routine zones are painted on top each time they change. */
 export function resetExposure(grid: SurfaceGrid): void {
   grid.exposure.set(grid.baseExposure);

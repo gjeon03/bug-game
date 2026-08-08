@@ -843,5 +843,79 @@ export const KITCHEN: RegionSpec = {
       level: 1,
       routine: 'kitchen.dishes',
     },
+
+    /*
+     * The other three surfaces had no light authored at all.
+     *
+     * Four zones existed: three on the counter and one on the floor. On the table top, the chair
+     * seat and the inside of the bin, `exposureAt` returned a uniform zero — every route across
+     * them was exactly as safe as every other, and the stealth mechanic did not exist on three of
+     * the five walkable surfaces. It only became visible once refuge `concealment` was wired into
+     * the grid: measured, `kitchen.tablelip`, `kitchen.chairjoint` and `kitchen.binrim` all read
+     * 0.000 both at the refuge and 700 mm away, because cover with nothing to subtract from is not
+     * cover.
+     *
+     * The floor and the counter were also the only surfaces the player had a reason to think about,
+     * which is the same defect stated as level design rather than as data.
+     */
+
+    /*
+     * The table top is the most exposed horizontal surface in a dark kitchen: raised, open, nothing
+     * above it. Graded toward the window so crossing it has a cheap side and a costly one rather
+     * than one flat price.
+     */
+    {
+      surface: 'kitchen.table.top',
+      rect: { x0: mm(TABLE_X0), z0: mm(TABLE_Z0), x1: mm(TABLE_X1), z1: mm(TABLE_Z0 + 340) },
+      level: 0.62,
+    },
+    {
+      surface: 'kitchen.table.top',
+      rect: { x0: mm(TABLE_X0), z0: mm(TABLE_Z0 + 340), x1: mm(TABLE_X1), z1: mm(TABLE_Z1) },
+      level: 0.34,
+    },
+    /*
+     * Dinner puts a person AT the table with the pendant on. The table stops being a shortcut and
+     * becomes the worst place in the room, on a schedule the player can learn — which is what the
+     * brief means by a routine creating opportunity and danger out of the same event.
+     */
+    {
+      surface: 'kitchen.table.top',
+      rect: { x0: mm(TABLE_X0), z0: mm(TABLE_Z0), x1: mm(TABLE_X1), z1: mm(TABLE_Z1) },
+      level: 1,
+      routine: 'kitchen.dinner',
+    },
+    /*
+     * The seat sits half under the table's overhang, so it is the quiet way up onto the tabletop.
+     * One modest level rather than a gradient: the seat is 340 mm across and anything finer than
+     * that reads as noise at 60 mm cells.
+     */
+    {
+      surface: 'kitchen.chair.seat',
+      rect: {
+        x0: mm(CHAIR_X - CHAIR_HALF),
+        z0: mm(CHAIR_Z - CHAIR_HALF),
+        x1: mm(CHAIR_X + CHAIR_HALF),
+        z1: mm(CHAIR_Z + CHAIR_HALF),
+      },
+      level: 0.3,
+    },
+    /*
+     * Inside the bin is the darkest place in the kitchen and the single best refuge — until someone
+     * lifts the lid. Then it is a lit bowl with a person looking into it, and the colony's safest
+     * ground is briefly its most dangerous. Same shape as the sink zone above, which is the proof
+     * this mechanic already worked and had only ever been used once.
+     */
+    {
+      surface: 'kitchen.bin.inside',
+      rect: {
+        x0: mm(BIN_X - BIN_HALF),
+        z0: mm(BIN_Z - BIN_HALF),
+        x1: mm(BIN_X + BIN_HALF),
+        z1: mm(BIN_Z + BIN_HALF),
+      },
+      level: 1,
+      routine: 'kitchen.bin',
+    },
   ],
 };

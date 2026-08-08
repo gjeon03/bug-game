@@ -1,10 +1,18 @@
 import { mm } from './units';
 import { VIEW_DIR_X, VIEW_DIR_Z, facesViewer } from './viewpoint';
-import { buildGrid, paintExposure, resetExposure, type Nav, type SurfaceGrid } from './nav';
+import {
+  buildGrid,
+  paintExposure,
+  resetExposure,
+  shadeExposure,
+  type Nav,
+  type SurfaceGrid,
+} from './nav';
 import type {
   FootholdSite,
   Gate,
   Link,
+  Rect,
   RegionId,
   RegionSpec,
   ResourceSite,
@@ -383,6 +391,22 @@ export function buildNav(house: House, openGates: ReadonlySet<string>): Nav {
   const grids = new Map<string, SurfaceGrid>();
   const order: string[] = [];
 
+  /*
+   * How far a refuge's cover reaches.
+   *
+   * Roughly seven body lengths of a 35 mm insect. Small enough that cover is a place rather than a
+   * region — crossing the open floor between two refuges has to stay the exposed thing it looks
+   * like — and large enough that the approach to a refuge is safer than the middle of the room,
+   * which is what makes a route drawn through cover different from the direct one.
+   */
+  const COVER_REACH = mm(250);
+  const coverRect = (at: { x: number; z: number }): Rect => ({
+    x0: at.x - COVER_REACH,
+    x1: at.x + COVER_REACH,
+    z0: at.z - COVER_REACH,
+    z1: at.z + COVER_REACH,
+  });
+
   for (const region of house.regions) {
     for (const surface of region.surfaces) {
       const blockers = region.blockers.filter((b) => b.surface === surface.id).map((b) => b.rect);
@@ -402,6 +426,17 @@ export function buildNav(house: House, openGates: ReadonlySet<string>): Nav {
        * 4 428 hallway cells at 0.43, which made the safe route and the fast route identical and
        * removed chapter 2's entire mechanic without failing anything.
        */
+      /*
+       * Cover, second — after the zones, because it is subtracted from them.
+       *
+       * Order matters and this is the only order that works: a refuge under a lit worktop has to
+       * remove the light the worktop zone put down, so the shading cannot precede the painting. And
+       * it has to precede `resetExposure`, which copies the static layer into the live one.
+       */
+      for (const site of region.footholds) {
+        if (site.surface !== surface.id || site.concealment <= 0) continue;
+        shadeExposure(grid, coverRect(site.at), site.concealment);
+      }
       resetExposure(grid);
       grids.set(surface.id, grid);
       order.push(surface.id);
