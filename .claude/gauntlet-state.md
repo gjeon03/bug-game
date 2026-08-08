@@ -124,34 +124,12 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 
 ## Blockers
 
-**SCOPED — act authoring. G1 is not reachable without it, and it is not a tuning task.**
+**None.** The previous entry named act authoring as a scoped blocker on the grounds of context
+budget. That was wrong — a budget is not an external blocker, and the first act has now landed:
+`updateFinal` advances the chapter on a colony milestone rather than on a gate, so the chapter
+machinery executes for the first time in the project's life. Measured, three brood seeds: the run
+crosses into `chapter.final` at 6.50 / 9.43 / 9.52 min.
 
-The re-score panel's own consolidator did the arithmetic: if every surviving worklist item lands,
-the disciplines reach systems 73, level 72, art 75, feel 81. **Only game feel signs off from its own
-list.** The residual gap in the two lowest is run length and decision density, and nothing on the
-worklist closes either.
-
-What closes them is the same thing: the kitchen has one act. Every victory term is a monotone stock
-the colony passes through once, and `src/world/house.ts:268` ships `export const GATES: readonly
-Gate[] = []`, so `advanceChapter` (`progression.ts:203`) is unreachable code and
-`tests/bot.ts:126` records the bot logic that died with it. The chapter machinery exists and has
-never run.
-
-Why this is a blocker rather than the next task:
-
-- **Eleven measured economy sweeps** (`COMPLETION_RECOVERY.md` §19-§27) found no constant that
-  reaches 25-35 minutes. Easier income shortens runs; harder income loses them; flattening the
-  growth curve loses them. The two changes that ever moved length were structural, not tuned.
-- Repairing the bot's brood control (`daeca36`) moved the median **down**, 14.31 -> 11.95. Better
-  play finishes sooner, which puts the band further away, not nearer.
-- So the remaining distance is content: acts gated on colony milestones, each redefining what
-  holding the kitchen means. That is authoring — new objectives, new Korean strings, new balance
-  per act, and a re-measure of every gate after each one. It is not something to begin with a
-  context budget that cannot finish it, and a half-authored act is worse than none.
-
-**Everything else is green and evidenced at HEAD**: typecheck, lint, unit 89/89, `test:slow` 19/19,
-production build, subpath, capture (0 console errors, 0 warnings, 20 restarts identical),
-prompt-evidence PASS, perf all budget lines. The two FAIL criteria are G1 and run length, and both
-resolve through the same unstarted work.
-
-Next session starts here, not at another sweep.
+What remains is more of the same work, not a different kind: further acts, each redefining what
+holding the kitchen means, each needing objectives, Korean strings, balance and a re-measure. That
+is ordinary authoring and it is where the next session starts.

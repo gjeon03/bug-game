@@ -501,6 +501,24 @@ export function updateFinal(run: Run, dt: number): FinalState {
    */
   if (!finaleArmed(run)) return { pressure: 0, struck: false };
 
+  /*
+   * The room's second act, and the first time the chapter machinery has ever executed.
+   *
+   * `advanceChapter` keys on gates. `GATES` is `[]` in the kitchen-only build, so it was
+   * unreachable code and every run spent its whole length labelled 「1장」 — a game with exactly one
+   * room telling the player there were more chapters coming, and never delivering one.
+   *
+   * A gate cannot be the trigger here without unsealing a region, which the scope forbids. So the
+   * act turns on a colony milestone instead, which is what §19 of COMPLETION_RECOVERY.md concluded
+   * after eleven economy sweeps: hang the acts on what the colony has done, not on doors. Arming
+   * the finale IS that milestone — it is the moment the household stops treating the infestation as
+   * a rumour, and `chapter.final` / `objective.final.*` were already written for it.
+   */
+  if (run.chapter === 'kitchen') {
+    run.chapter = 'final';
+    logEvent(run, 'log.chapter', 'good', { chapter: 'chapter.final' });
+  }
+
   let total = 0;
   let unlocked = 0;
   for (const region of run.regions.values()) {
