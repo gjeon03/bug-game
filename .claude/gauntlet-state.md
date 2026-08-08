@@ -26,9 +26,20 @@ A kitchen-only 3D infestation game that four independent game-discipline critics
 at 80/100 in their own discipline.
 
 ## Mandatory Criteria
-- [FAIL] Four distinct persona critics each score >= 80 — measured 2026-08-08, panel `w72dck7a3`:
-  systems/economy **36**, level/environment **38**, art direction **52**, game feel **53**.
-  Lowest 36, average 44.8 against a bar of 80 for every one of them.
+- [FAIL] Four distinct persona critics each score >= 80. **Re-measured at HEAD, panel `wlgsvl62q`:**
+
+  | discipline | first panel | re-score | delta |
+  | --- | --- | --- | --- |
+  | Systems & economy | 36 | **44** | +8 |
+  | Level & environment | 38 | **47** | +9 |
+  | Art direction | 52 | **56** | +4 |
+  | Game feel & technical | 53 | **57** | +4 |
+
+  Lowest 36 -> 44, average 44.8 -> 51.0. **Every discipline moved up** — the first measured movement
+  since the gauntlet opened, and it followed the four runtime changes (`969a504` art ladder,
+  `aa29e9a` sealed-region routines + re-derived assertion, `2de6a8e` capacity-follows-supply,
+  `9db096e` kitchen discovery). Still far from the bar: 80 is required of every one of the four,
+  and the lowest is 44. Consolidated worklist from this panel pending.
 - [PASS] typecheck, lint clean — verified this pass
 - [PASS] unit 89/89 — verified this pass
 - [PASS] test:slow 19/19 — verified at commit 894a101
