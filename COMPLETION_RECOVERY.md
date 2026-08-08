@@ -1848,3 +1848,31 @@ lights-zero+white    mean=0.4049  pureBlack=0.21%
 
 이 세션은 여기까지 좁혔다. 네 번의 무반응 조작으로 증상을 확정했고, 두 개의 유력
 용의자를 배제했다. 남은 것은 셰이더가 실제로 무엇으로 컴파일됐는지 보는 일이다.
+
+### §53 후속 — 환경은 씬에 붙어 있다. 죽은 것은 대체 경로다
+
+런타임 덤프:
+
+```
+scene.environment      설정됨 (텍스처)
+environmentIntensity   1
+표준 재질              3834개
+envMap을 가진 재질     0개
+표본                   type "MeshStandardMaterial", 생성자 W2 (= NightStandardMaterial)
+```
+
+**환경은 씬에 정상적으로 붙어 있다.** 재질이 자기 `envMap`을 들고 있지 않은 것도
+정상이다 — three.js는 `material.envMap`이 없으면 `scene.environment`로 대체한다.
+
+그러므로 배제가 하나 더 는다: **대입은 성공했다.** 죽은 것은 그 대체가 이 재질들의
+셰이더에 도달하는 경로다. 생성자가 `W2`(minified `NightStandardMaterial`)라는 것이
+같이 나왔으므로, 남은 곳은 그 서브클래스가 `onBeforeCompile`로 프래그먼트 셰이더를
+갈아끼우는 지점 하나다.
+
+재질이 3834개라는 것도 기록해 둔다 — 43개 스펙이 프롭마다 복제되어 그만큼 존재한다.
+`onBeforeCompile`이 프로토타입에 있고 `customProgramCacheKey`가 하나로 접히는 이유가
+그것이고, 그 설계 자체는 §22의 주석이 정당화한다.
+
+**다음 한 줄**: `patch()`가 무엇을 `replace`하는지 읽고, 그 대상 문자열이 three.js
+r185의 표준 프래그먼트에서 환경 항을 담고 있는 청크인지 확인한다. 담고 있다면
+그것이 원인이고, 아니라면 남은 것은 `NightStandardMaterial`의 생성자뿐이다.
