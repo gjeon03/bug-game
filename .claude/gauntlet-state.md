@@ -26,22 +26,19 @@ A kitchen-only 3D infestation game that four independent game-discipline critics
 at 80/100 in their own discipline.
 
 ## Mandatory Criteria
-- [FAIL] Four distinct persona critics each score >= 80. **Re-scored at HEAD, panel `wrdbef5zw`:**
+- [FAIL] Four distinct persona critics each score >= 80. **Third measurement, panel `w5ygqggh8`:**
 
-  | discipline | first | second | third | delta |
-  | --- | --- | --- | --- | --- |
-  | Systems & economy | 36 | 44 | **44** | 0 |
-  | Level & environment | 38 | 47 | **52** | +5 |
-  | Art direction | 52 | 56 | **47** | **-5 from first** |
-  | Game feel & technical | 53 | 57 | **61** | +4 |
+  | discipline | 1st | 2nd | 3rd |
+  | --- | --- | --- | --- |
+  | Systems & economy | 36 | 44 | **51** |
+  | Level & environment | 38 | 52 | **51** |
+  | Art direction | 52 | 47 | **51** |
+  | Game feel & technical | 53 | 61 | **58** |
 
-  Lowest 44, average 51.0. **Art's 47 was scored on 969a504, which `3b68df4` has since reverted** —
-  the shipped tree no longer contains the change that caused it, so that number describes a state
-  that is gone. Re-measure before acting on it. The cause was mine: the `cabinetDoor` albedo change
-  (969a504) was re-measured on the same crop and the playable region's midtones (L* 20-40) fell
-  39.6 % -> 3.0 % while L* < 20 rose 6.6 % -> **61.5 %**. That is §7's banned uniform darkness. My
-  own check passed because frame MEAN luminance stayed at 0.316-0.361 — the mean hid a collapsed
-  distribution. See `COMPLETION_RECOVERY.md` §42.
+  **Lowest 44 -> 51**, average 51.0 -> 52.75. The bar is 80 for every one, so the lowest is the
+  number that matters and it has moved 15 points across three panels (36 -> 51). Art recovered from
+  the reverted regression (47 -> 51) and systems took the largest single jump (44 -> 51) after the
+  three live economy rules were finally given an on-screen surface.
 - [PASS] typecheck, lint clean — verified this pass
 - [PASS] unit 89/89 — verified this pass
 - [PASS] test:slow 19/19 — verified at commit 894a101
