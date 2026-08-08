@@ -37,11 +37,12 @@ at 80/100 in their own discipline.
 - [PASS] 20 restarts leave no GPU leak (121 -> 121)
 - [PASS] all on-screen text Korean, zero latin words (prompt-evidence PASS)
 - [PASS] perf @1080p: every budget line green with a derived geometry ceiling
-- [FAIL] run length — now **9.91-19.53 min** (was 3.1-4.9) against a 25-35 min target. Moved by one
-  data change: `kitchen.crumbs.toekick` from x1500 to x700, off the starting nest. `it.fails` still
-  holds because seed 20260805/brood reads 10.51 against its 12.5 floor.
-- [FAIL] `test:slow` 18/19 — peak population 13 against a floor of 20 (`run.test.ts`). Caused by the
-  relocation: food is further, so the colony settles smaller. Recorded, not weakened.
+- [FAIL] run length — **8.69-23.70 min** at the shipped `BROOD_RESERVE_SECONDS = 150`, against a
+  25-35 min target. Was 3.1-4.9 before `kitchen.crumbs.toekick` moved off the starting nest.
+  At reserve 90 the same sweep reached **34.23 min** (4242/brood) — the first evidence the target
+  band is reachable at all — but that setting loses seed 20260805/brood, so it is rejected.
+- [PASS] `test:slow` 19/19 — the peak-population regression is closed (25 against a floor of 20).
+  Fixed by re-deriving `BROOD_RESERVE_SECONDS`, not by weakening the assertion.
 
 ## Quality Bar
 Not "it works". Four disciplines must each find it good: systems/economy, level/environment,
@@ -79,8 +80,7 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
   cluster is suspected to be the same shape.
 
 ## Remaining High-Impact Gaps
-1. Peak population 13 against the floor of 20 — a regression this session introduced with the
-   crumbs relocation. `test:slow` is 18/19. Highest priority; do not weaken the assertion.
+1. Persona scores 36 / 38 / 52 / 53. Attack the two lowest, then re-run the panel.
 2. Zero `hidden:` resources in the kitchen — discovery is not a mechanic here yet.
 3. Routines carry no position, so a telegraph cannot point anywhere in the world.
 4. Eight audio methods still with zero callers; four are for mechanics that no longer exist and
