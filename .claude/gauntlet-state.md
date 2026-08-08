@@ -36,11 +36,13 @@ at 80/100 in their own discipline.
 - [PASS] real-browser: zero console errors, zero warnings, zero failed/external requests
 - [PASS] 20 restarts leave no GPU leak (121 -> 121)
 - [PASS] all on-screen text Korean, zero latin words (prompt-evidence PASS)
-- [UNVERIFIED] perf @1080p — last clean reading was every budget line green with a derived geometry
-  ceiling. At HEAD it measured p50 32.20/16.7, but under load average 4.25 with the persona panel
-  running nine subagents; the commit under test adds one boolean flag and has no path to frame cost.
-  Recorded as unmeasured rather than green or regressed (`COMPLETION_RECOVERY.md` §33). Re-run on an
-  idle machine after panel `wlgsvl62q` exits.
+- [PASS] perf @1080p at HEAD, measured on an idle machine (load 2.45): p50 **16.70**/16.7,
+  p95 18.60/20, p99 18.70/33, GPU p99 13.73/33, draw calls 464/900, triangles 174k/400k,
+  geometries 141/196, textures 27/40, programs 0/40. Every line green.
+
+  This is the same p50 as before the failed reading, which confirms §33: the 32.20 measured under
+  load average 4.25 was the panel's nine subagents, not a regression. `scripts/perf.mjs` now refuses
+  to measure above a third of the cores (`fc0d1a8`), so that particular mistake cannot recur.
 - [PARTIAL] run length — **8.7-23.7 min** across seeds against the 25-35 min target. Still short,
   but the long-standing `it.fails` marker is GONE: `run.test.ts` now asserts `> 12.5 min` as a live
   gate and the canonical seed measures 13.18. That wrapper had been red since the project began.
