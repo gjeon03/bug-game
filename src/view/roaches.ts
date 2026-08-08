@@ -108,7 +108,6 @@ export function createRoachView(workerCap: number): RoachView {
     group,
     scoutPosition,
 
-
     update(run, interp, dt) {
       phase += dt;
       const a = interp.alpha;

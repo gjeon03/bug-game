@@ -37,6 +37,11 @@ const WORKTOP_OVERHANG_MM = 20;
 const TOEKICK_HEIGHT_MM = 150;
 const TOEKICK_DEPTH_MM = 100;
 const DOOR_THICK_MM = 18;
+/** Bar-pull hardware. Sized so the bar survives as a lit edge at the gameplay camera, not a hair. */
+const HANDLE_MAX_LEN_MM = 128;
+const HANDLE_RADIUS_MM = 5.5;
+const HANDLE_STANDOFF_MM = 17;
+const HANDLE_INSET_MM = 52;
 const DOOR_REVEAL_MM = 5;
 const TARGET_DOOR_WIDTH_MM = 620;
 
@@ -101,7 +106,45 @@ function cabinetDoor(kit: Kit, widthMm: number, heightMm: number): THREE.Group {
     0,
     DOOR_THICK_MM / 2 + 2,
   );
-  return group(slab, panel);
+
+  /*
+   * The pull.
+   *
+   * An art director reviewing the captured frames scored the doors P0 — "large flat brown slabs, no
+   * panel depth, no hardware". The raised panel above was already there; what the eye was missing is
+   * hardware. A door without a handle is a rectangle, and no amount of bevel fixes that, because the
+   * bevel is the same colour as the door while a steel pull is a different material entirely.
+   *
+   * It is also the cheapest specular hit in the room: `steelBrushed` catches the spotlights at an
+   * angle the matte door never will, so each door gains a highlight that moves with the camera. That
+   * is what stops a run of cabinets reading as one painted wall.
+   *
+   * Bar-and-standoff, not a knob — flat-front bar pulls are what modern Korean apartment kitchens
+   * actually use, and a bar reads at insect scale where a knob would be three pixels.
+   */
+  const barLength = Math.min(HANDLE_MAX_LEN_MM, widthMm * 0.46);
+  const barY = heightMm / 2 - HANDLE_INSET_MM;
+  const barZ = DOOR_THICK_MM / 2 + HANDLE_STANDOFF_MM;
+
+  const bar = cylinder(kit, HANDLE_RADIUS_MM, HANDLE_RADIUS_MM, barLength, 'steelBrushed', 10);
+  bar.rotation.z = Math.PI / 2;
+  bar.position.set(0, barY, barZ);
+
+  const posts = [-1, 1].map((side) => {
+    const post = cylinder(
+      kit,
+      HANDLE_RADIUS_MM * 0.7,
+      HANDLE_RADIUS_MM * 0.7,
+      HANDLE_STANDOFF_MM,
+      'steelBrushed',
+      8,
+    );
+    post.rotation.x = Math.PI / 2;
+    post.position.set((side * barLength) / 2.6, barY, DOOR_THICK_MM / 2 + HANDLE_STANDOFF_MM / 2);
+    return post;
+  });
+
+  return group(slab, panel, bar, ...posts);
 }
 
 /** A bottle with an actual shoulder and neck — a plain cylinder reads as a placeholder up close. */
