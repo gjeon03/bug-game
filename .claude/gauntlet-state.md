@@ -119,7 +119,9 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 - **Zero-caller audio methods** — CLOSED at `4012b29`. Thirteen at the session's start, **zero** now:
   four deleted as remnants of removed mechanics (`operationCard`, `tierUp`, `upgrade`,
   `routineTaken`), the rest wired to real events.
-- **ART_BIBLE value ladder** — CLOSED from the floor side. `floorVinyl` #5b5a5e -> #6e6d72 lifts it
+- **ART_BIBLE value ladder** — CLOSED from the floor side, and the ORDER NOW HOLDS at HEAD:
+  `cabinetDoor` L* 42.3 below `floorVinyl` L* 46.3, which is what the bible requires. Notes calling
+  it "re-opened" predate `f2f7837`. `floorVinyl` #5b5a5e -> #6e6d72 lifts it
   to L* 46.3 above `cabinetDoor`'s 42.3, so the documented order holds without darkening the largest
   vertical area — the move that caused the §42 regression. Playable-region histogram at HEAD:
   dark 1.3 % / mid 49.1 % / light 49.6 %, against 61.5 % / 3.0 % under the regression.

@@ -162,11 +162,11 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
      * the bright window and the dark cabinet erase each other — and a 4 % threshold cannot see a
      * pile-up at L* 20. The right instrument is a playable-region L* histogram.
      *
-     * The ordering violation is therefore RE-OPENED and deliberately so: the bible's rungs are
-     * SCREEN values and this is an albedo, a distinction §29 states and then failed to apply when
-     * picking the number. Satisfying the order by darkening the largest vertical surface in frame
-     * is the wrong lever; the floor is the other side of the same comparison and is a far smaller
-     * share of the image. Whoever takes it next must judge on the histogram, not the mean.
+     * The violation was then CLOSED from the other side. `floorVinyl` was lifted #5b5a5e -> #6e6d72
+     * (L* 38.5 -> 46.3), which puts this at 42.3 BELOW the floor exactly as the bible requires,
+     * without touching the largest vertical surface in frame. Measured on the playable-region
+     * histogram — dark 1.3 % / mid 49.1 % / light 49.6 % — against 61.5 % / 3.0 % when the cabinet
+     * was darkened instead. Same rule satisfied, opposite lever, and the frame survived.
      */
     colour: 0x6d6257,
     roughness: 0.5,
