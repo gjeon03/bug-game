@@ -26,19 +26,24 @@ A kitchen-only 3D infestation game that four independent game-discipline critics
 at 80/100 in their own discipline.
 
 ## Mandatory Criteria
-- [FAIL] Four distinct persona critics each score >= 80. **Third measurement, panel `w5ygqggh8`:**
+- [FAIL] Four distinct persona critics each score >= 80. **Fourth measurement, panel `wpy2b4fkp`
+  at HEAD:**
 
-  | discipline | 1st | 2nd | 3rd |
-  | --- | --- | --- | --- |
-  | Systems & economy | 36 | 44 | **51** |
-  | Level & environment | 38 | 52 | **51** |
-  | Art direction | 52 | 47 | **51** |
-  | Game feel & technical | 53 | 61 | **58** |
+  | discipline | 1st | 2nd | 3rd | 4th |
+  | --- | --- | --- | --- | --- |
+  | Systems & economy | 36 | 44 | 51 | **48** |
+  | Level & environment | 38 | 52 | 51 | **55** |
+  | Art direction | 52 | 47 | 51 | **47** |
+  | Game feel & technical | 53 | 61 | 58 | **58** |
 
-  **Lowest 44 -> 51**, average 51.0 -> 52.75. The bar is 80 for every one, so the lowest is the
-  number that matters and it has moved 15 points across three panels (36 -> 51). Art recovered from
-  the reverted regression (47 -> 51) and systems took the largest single jump (44 -> 51) after the
-  three live economy rules were finally given an on-screen surface.
+  **Lowest 51 -> 47. That is backwards**, and it is the number the bar is measured on. Level is the
+  only discipline still climbing (38 -> 55). Art has now scored 47 twice — once with the cabinetDoor
+  regression in the tree and once after it was reverted and the ladder fixed from the floor side, so
+  the second 47 is a different judgement about a different tree and needs reading rather than
+  assuming. Systems gave back 3 points, which is the same direction as the 3.3 min of pacing
+  `695bc84` cost.
+
+  Four panels in, the mean has barely moved (51.0 -> 52.75 -> 52.0) while the spread has widened.
 - [PASS] typecheck, lint clean — verified this pass
 - [PASS] unit 89/89 — verified this pass
 - [PASS] test:slow 19/19 — verified at commit 894a101
