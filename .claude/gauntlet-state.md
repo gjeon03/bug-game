@@ -110,7 +110,12 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 1. **Persona bar.** Third panel: systems 51 · level 51 · art 51 · feel 58, against 80 for each.
    Scored at `97c1846`; **three behaviour changes have landed since** — `a430a22` visual timebase,
    `695bc84` capacity/supply wiring, `cf26b07` the second act — so the shipped tree has no valid
-   score. A fourth panel was launched and returned nothing (0-byte output).
+   score. The fourth panel is IN FLIGHT, not failed: its task output file is written only at
+   completion, so a 0-byte read mid-run means "still going", and the run directory shows agent
+   transcripts growing (1.8 MB at last check) with the journal at 8 entries. Two separate readings
+   of that 0-byte file were both taken mid-flight and read as a harness failure. These panels take
+   roughly 30-35 minutes; check `subagents/workflows/<runId>/journal.jsonl` for progress, not the
+   task output.
 2. **Run length** — brood median **21.57 min** at HEAD (17.04 / 21.57 / 23.25), one of six runs
    lost, band not asserted. It peaked at 24.87 and gave 3.3 min back to `695bc84`. Three settings
    have put the median inside the band and all three cost win rate (§47), so the remaining path is
