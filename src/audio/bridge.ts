@@ -134,10 +134,33 @@ export function createAudioBridge(): AudioBridge {
         break;
       case 'foothold.claimed':
         audio.fitOut(pan);
-        break;
-      case 'gate.opened':
-        // The single most important sound in the game: the world just changed shape.
         audio.zoneHeld();
+        break;
+      /*
+       * The sounds below existed and nothing called them.
+       *
+       * `zoneLost`, `repair`, `finalResponse`, `victory` and `defeat` were written, tuned, and then
+       * left with zero callers — a run reached its ending in silence, which §10 names as a
+       * completion gate in its own right ("core interactions have visual AND audio feedback").
+       * `zoneHeld` was reachable only through `gate.opened`, and every gate in the kitchen-only
+       * build is sealed, so the sound this file described as "the single most important in the
+       * game" had in fact never played once. It belongs on taking a refuge, which is what changes
+       * the world's shape now that there are no gates left to open.
+       */
+      case 'foothold.repaired':
+        audio.repair(pan);
+        break;
+      case 'foothold.lost':
+        audio.zoneLost();
+        break;
+      case 'run.extermination':
+        audio.finalResponse();
+        break;
+      case 'run.won':
+        audio.victory();
+        break;
+      case 'run.lost':
+        audio.defeat();
         break;
       case 'adaptation.chosen':
         audio.adapt('brood');

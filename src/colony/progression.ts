@@ -493,6 +493,7 @@ export function updateFinal(run: Run, dt: number): FinalState {
   recomputeCapacity(run);
   run.stats.exterminationSweeps++;
   logEvent(run, 'log.extermination', 'danger', { region: `region.${target}` });
+  pushCue(run, 'run.extermination', run.scout.x, run.scout.y, run.scout.z);
   return { pressure, struck: true };
 }
 
@@ -522,6 +523,7 @@ export function evaluateRun(run: Run): void {
   if (claimed.length === 0) {
     run.status = 'lost';
     logEvent(run, 'log.lost', 'danger', {});
+    pushCue(run, 'run.lost', run.scout.x, run.scout.y, run.scout.z);
     return;
   }
 
@@ -541,6 +543,7 @@ export function evaluateRun(run: Run): void {
     if (run.deadFor > COLONY_DEAD_GRACE) {
       run.status = 'lost';
       logEvent(run, 'log.lost.extinct', 'danger', {});
+      pushCue(run, 'run.lost', run.scout.x, run.scout.y, run.scout.z);
       return;
     }
   }
@@ -567,4 +570,5 @@ export function evaluateRun(run: Run): void {
 
   run.status = 'won';
   logEvent(run, 'log.won', 'good', {});
+  pushCue(run, 'run.won', run.scout.x, run.scout.y, run.scout.z);
 }

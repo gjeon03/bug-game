@@ -786,5 +786,6 @@ export function strikeFootholds(run: Run, region: RegionId, amount: number): voi
     state.damage = 1;
     state.brood = 0;
     logEvent(run, 'log.foothold.lost', 'danger', { foothold: site.labelKey });
+    pushCue(run, 'foothold.lost', site.at.x, 0, site.at.z);
   }
 }

@@ -400,7 +400,10 @@ export function claimFoothold(run: Run, id: string): boolean {
   if (isFirstTake) run.colony.adaptationPoints++;
 
   const y = run.house.surfaces.get(site.surface)?.y ?? 0;
-  pushCue(run, 'foothold.claimed', site.at.x, y, site.at.z);
+  // The log already distinguishes a first take from a rebuild; the ear should get the same
+  // distinction rather than hearing the same fanfare for arriving somewhere new and for patching
+  // something the household just wrecked.
+  pushCue(run, isFirstTake ? 'foothold.claimed' : 'foothold.repaired', site.at.x, y, site.at.z);
   logEvent(run, isFirstTake ? 'log.foothold.claimed' : 'log.foothold.rebuilt', 'good', {
     foothold: site.labelKey,
   });

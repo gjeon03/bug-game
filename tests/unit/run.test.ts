@@ -38,17 +38,21 @@ interface Played {
   readonly trace: BotTrace;
   /** Fewest refuges held at once AFTER the colony first reached the winning share. */
   readonly troughAfterPeak: number;
+  /** Every cue kind the simulation pushed during the run. */
+  readonly cues: ReadonlySet<string>;
 }
 
 function play(seed: number, build: AdaptationFamily): Played {
   const run = createRun(seed);
   let peak = 0;
   let trough = Infinity;
+  const cues = new Set<string>();
   const trace = playRun(run, {
     build,
     skipBathroom: false,
     maxSeconds: 50 * MINUTE,
     sample: (r) => {
+      for (const cue of r.cues) cues.add(cue.kind);
       const ids = kitchenRefuges(r);
       const held = ids.filter((id) => {
         const state = r.footholds.get(id);
@@ -58,7 +62,8 @@ function play(seed: number, build: AdaptationFamily): Played {
       if (peak >= Math.ceil(ids.length * 0.75) && held < trough) trough = held;
     },
   });
-  return { run, trace, troughAfterPeak: trough };
+  for (const cue of run.cues) cues.add(cue.kind);
+  return { run, trace, troughAfterPeak: trough, cues };
 }
 
 /** Every refuge the kitchen offers. Victory is defined against this set, so the tests are too. */
@@ -153,6 +158,25 @@ describe('a competently played run takes the kitchen', () => {
       played.troughAfterPeak,
       `held never dropped below ${need} after the sweep — the finale did nothing`,
     ).toBeLessThan(need);
+  });
+
+  it('does not reach its ending in silence', () => {
+    /*
+     * Thirteen methods on `GameAudio` had zero callers, and five of them were the run's own
+     * punctuation: `victory`, `defeat`, `finalResponse`, `zoneLost`, `repair`. They were written and
+     * tuned and never once played. §10 lists audio feedback on core interactions as a completion
+     * gate, so this is a gate, not a nicety.
+     *
+     * Asserted on cues rather than on the synthesiser, because the sim's contract is that it pushes
+     * cues and never learns whether anyone is listening — the bridge is the only thing that maps
+     * one to the other, and a test that reached into `GameAudio` would need an AudioContext to say
+     * anything at all.
+     */
+    expect([...played.cues].sort(), 'the run pushed no ending cue').toContain('run.won');
+    expect([...played.cues].sort(), 'the extermination was inaudible').toContain(
+      'run.extermination',
+    );
+    expect([...played.cues].sort(), 'losing a refuge was inaudible').toContain('foothold.lost');
   });
 
   it('grows a colony that is visible rather than numerical', () => {
