@@ -79,7 +79,8 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
   cluster is suspected to be the same shape.
 
 ## Remaining High-Impact Gaps
-1. Run length 3.1-4.9 min vs 25-35 target. Still the only mandatory FAIL.
+1. Peak population 13 against the floor of 20 — a regression this session introduced with the
+   crumbs relocation. `test:slow` is 18/19. Highest priority; do not weaken the assertion.
 2. Zero `hidden:` resources in the kitchen — discovery is not a mechanic here yet.
 3. Routines carry no position, so a telegraph cannot point anywhere in the world.
 4. Eight audio methods still with zero callers; four are for mechanics that no longer exist and
@@ -112,6 +113,17 @@ This is an allocation defect, not a distance one — and until its cause is know
 figure may be describing `tests/bot.ts` rather than the game. `bot.ts:411-431` does consider every
 found resource and does bias toward the scarcer store, so the bot is not blind; the cause is
 unidentified. **Do not quote the new run length as a game property until this is resolved.**
+
+## Next action, derived not guessed
+
+Two negative sweeps (`COMPLETION_RECOVERY.md` §20, §21) eliminated collection rate and
+carriers-per-route. The remaining candidate is arithmetic rather than a guess:
+`BROOD_RESERVE_SECONDS` was raised 90 -> 210 two passes ago, and at population 13 the breeding rule
+`food >= 6.5 + pop * 0.0075 * RESERVE` demands 27 food against a measured range of 9-32. At 90 it
+demanded 15.3. Income was nearly free when refuges sat on the resources; it is not now.
+
+Sweep 90/150/210 again, but judge peak population, run length AND the finale trough together — all
+three hang off this one constant, and this session has already broken one by tuning for another.
 
 ## Blockers
 None.
