@@ -49,6 +49,16 @@ export interface RenderStats {
 
 export interface GameRenderer {
   readonly camera: GameCamera;
+  /**
+   * The scene graph, for evidence capture only.
+   *
+   * Exposed because a visual claim could not be checked without it: `be8dda4` made the hazard ring
+   * and the route ribbon `depthTest: false` so a prop can never hide them, and verifying that meant
+   * either traversing the graph or staging a threat behind a cabinet — neither reachable from the
+   * debug global as it stood. §11 asks for recorded browser evidence for the specific claim being
+   * made, and a claim nothing can observe is one nobody can hold you to.
+   */
+  readonly scene: THREE.Scene;
   readonly domElement: HTMLCanvasElement;
   readonly profiler: Profiler;
   resize(width: number, height: number, dpr: number): void;
@@ -147,6 +157,7 @@ export function createRenderer(canvas: HTMLCanvasElement, initial: Run): GameRen
 
   return {
     camera,
+    scene,
     profiler,
     domElement: renderer.domElement,
 

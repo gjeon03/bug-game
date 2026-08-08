@@ -293,6 +293,10 @@ export async function boot(): Promise<void> {
       get stats() {
         return session.renderer.stats();
       },
+      /** Scene graph, for evidence capture. See the note on `GameRenderer.scene`. */
+      get scene() {
+        return session.renderer.scene;
+      },
       get frame() {
         return frame;
       },
