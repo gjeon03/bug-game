@@ -123,4 +123,35 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
   adversarial challenge (§3 names both as things a prop may never hide).
 
 ## Blockers
-None.
+
+**SCOPED — act authoring. G1 is not reachable without it, and it is not a tuning task.**
+
+The re-score panel's own consolidator did the arithmetic: if every surviving worklist item lands,
+the disciplines reach systems 73, level 72, art 75, feel 81. **Only game feel signs off from its own
+list.** The residual gap in the two lowest is run length and decision density, and nothing on the
+worklist closes either.
+
+What closes them is the same thing: the kitchen has one act. Every victory term is a monotone stock
+the colony passes through once, and `src/world/house.ts:268` ships `export const GATES: readonly
+Gate[] = []`, so `advanceChapter` (`progression.ts:203`) is unreachable code and
+`tests/bot.ts:126` records the bot logic that died with it. The chapter machinery exists and has
+never run.
+
+Why this is a blocker rather than the next task:
+
+- **Eleven measured economy sweeps** (`COMPLETION_RECOVERY.md` §19-§27) found no constant that
+  reaches 25-35 minutes. Easier income shortens runs; harder income loses them; flattening the
+  growth curve loses them. The two changes that ever moved length were structural, not tuned.
+- Repairing the bot's brood control (`daeca36`) moved the median **down**, 14.31 -> 11.95. Better
+  play finishes sooner, which puts the band further away, not nearer.
+- So the remaining distance is content: acts gated on colony milestones, each redefining what
+  holding the kitchen means. That is authoring — new objectives, new Korean strings, new balance
+  per act, and a re-measure of every gate after each one. It is not something to begin with a
+  context budget that cannot finish it, and a half-authored act is worse than none.
+
+**Everything else is green and evidenced at HEAD**: typecheck, lint, unit 89/89, `test:slow` 19/19,
+production build, subpath, capture (0 console errors, 0 warnings, 20 restarts identical),
+prompt-evidence PASS, perf all budget lines. The two FAIL criteria are G1 and run length, and both
+resolve through the same unstarted work.
+
+Next session starts here, not at another sweep.
