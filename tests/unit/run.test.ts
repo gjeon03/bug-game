@@ -131,19 +131,25 @@ describe('a competently played run takes the kitchen', () => {
    * the halfway marker and it is a real gate.
    */
   /*
-   * BACK TO `it.fails`, and the reason is uncomfortable: the wrapper came off on a broken harness.
+   * The wrapper is off, and this time the harness underneath it is sound.
    *
-   * `tests/bot.ts` gated `broodHold` on `blocker.food`, a key `checkGate` alone emits and `GATES` is
-   * `[]` — so the bot never once used the player's H control, and every run this gate ever measured
-   * was played without brood management. With the trigger repaired the same three seeds read
-   * 11.22 / 11.95 / 12.17, median **11.95**, against 14.31 before.
+   * It came off once before on a broken one — `tests/bot.ts` gated `broodHold` on a key `GATES` can
+   * never emit, so every run measured had been played without brood management, and repairing that
+   * dropped the median from 14.31 to 11.95. The wrapper went back on.
    *
-   * A competent player finishes FASTER, because managing brood avoids the starvation spiral that
-   * was padding the old numbers. So the requirement was never met; it looked met because the
-   * instrument was broken. That also strengthens rather than weakens §27 — if better play shortens
-   * the run, the 25-35 minute band is further from the economy, not nearer.
+   * What moved it for real was pricing what used to be free. Three changes, in order: the starting
+   * food moved off the nest so a supply line had to exist; capacity was made to follow supply
+   * rather than claiming; and holding a refuge now slows how fast that room forgets
+   * (`household.ts`, coefficient swept). Eleven measured sweeps of economy CONSTANTS
+   * (COMPLETION_RECOVERY.md §19-§27) moved nothing.
+   *
+   * Measured at HEAD, three brood seeds: 17.04 / 27.51 / 24.87, **median 24.87 min**, against a
+   * design band of 25-35 and a starting point of 3.1-4.9. The floor here stays at 12.5 — half the
+   * band, the loosest honest reading for a bot with perfect pathing that never hesitates — because
+   * one of the three sits at 17.04 and a floor fitted to the median would be brittle. The band
+   * itself is not asserted yet; the median reaching it is recorded, not claimed as met.
    */
-  it.fails('fills a sitting rather than a coffee break', () => {
+  it('fills a sitting rather than a coffee break', () => {
     const minutes = [20260805, 777, 4242]
       .map((seed) => play(seed, 'brood').trace.seconds / MINUTE)
       .sort((a, b) => a - b);

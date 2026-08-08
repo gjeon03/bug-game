@@ -54,13 +54,11 @@ at 80/100 in their own discipline.
   This is the same p50 as before the failed reading, which confirms §33: the 32.20 measured under
   load average 4.25 was the panel's nine subagents, not a regression. `scripts/perf.mjs` now refuses
   to measure above a third of the cores (`fc0d1a8`), so that particular mistake cannot recur.
-- [FAIL] run length — median **11.95 min** (11.22 / 11.95 / 12.17, three brood seeds at HEAD)
-  against the 25-35 min target. `it.fails` is BACK in `run.test.ts`, and the reason matters: the
-  wrapper came off on a broken harness. `tests/bot.ts` gated `broodHold` on a key `GATES` can never
-  emit, so every run this gate had ever measured was played without brood management. With the
-  control repaired the median falls 14.31 -> 11.95, because a competent player avoids the starvation
-  spiral that was padding the old numbers. The requirement was never met; it looked met.
-  That also strengthens §27 rather than weakening it — better play moves the run AWAY from the band.
+- [PARTIAL] run length — **median 24.87 min** (17.04 / 27.51 / 24.87, three brood seeds at HEAD)
+  against the 25-35 min target. The median is at the band's threshold for the first time in the
+  project, from a starting point of 3.1-4.9 min. `it.fails` is off, on a repaired harness this time.
+  Not yet PASS: one seed sits at 17.04, one of six runs is lost, and the band itself is not asserted
+  — only the 12.5 min halfway floor is. See `COMPLETION_RECOVERY.md` §38.
 - [PASS] `test:slow` 19/19 at HEAD aa29e9a, including the re-derived population assertion.
 
 ## Quality Bar
