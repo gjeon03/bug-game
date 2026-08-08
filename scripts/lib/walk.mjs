@@ -165,3 +165,45 @@ export async function nearestSupplyPair(page) {
     return { nest: { x: nest.at.x, z: nest.at.z }, source: best };
   });
 }
+
+/**
+ * Walk to the nearest takeable refuge and claim it.
+ *
+ * The harness could walk and it could lay a route, and that was all — so every capture ran a colony
+ * of two. The bot reaches thirteen to seventeen workers because it presses `E` at refuges, and
+ * capacity comes from refuges; without this helper the capture harness structurally could not
+ * produce a crowded frame, which is why three attempts at W3's dense-frame evidence came back with
+ * two workers and were read as the colony failing to grow (COMPLETION_RECOVERY.md §39-§41).
+ *
+ * Returns the id claimed, or null if none was affordable and in reach.
+ */
+export async function claimNearest(page) {
+  const target = await page.evaluate(() => {
+    const g = window.__game;
+    const s = g.run.scout;
+    let best = null;
+    let bestD = Infinity;
+    for (const [id, site] of g.run.house.footholds) {
+      const state = g.run.footholds.get(id);
+      if (state?.claimed && state.damage < 0.5) continue;
+      if (g.run.colony.food < site.cost.food || g.run.colony.moisture < site.cost.moisture) continue;
+      const d = Math.hypot(site.at.x - s.x, site.at.z - s.z);
+      if (d < bestD) {
+        bestD = d;
+        best = { id, surface: site.surface, x: site.at.x, z: site.at.z };
+      }
+    }
+    return best;
+  });
+  if (!target) return null;
+
+  await walkTo(page, target, { tolerance: 90, timeoutMs: 25000 });
+  await page.keyboard.press('KeyE');
+  await page.waitForTimeout(400);
+
+  const claimed = await page.evaluate(
+    (id) => window.__game.run.footholds.get(id)?.claimed === true,
+    target.id,
+  );
+  return claimed ? target.id : null;
+}
