@@ -38,7 +38,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 182
+    "frame": 173
   },
   "afterRoute": {
     "status": "playing",
@@ -78,25 +78,25 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 484
+    "frame": 462
   },
   "working": {
     "status": "playing",
-    "time": 39,
+    "time": 38,
     "chapter": "kitchen",
     "population": 2,
     "capacity": 9,
     "food": 7,
-    "moisture": 71,
+    "moisture": 68,
     "routes": 1,
-    "deliveries": 21,
+    "deliveries": 20,
     "openGates": [],
     "claimed": 1,
     "objectiveTitle": "objective.kitchen.title",
     "blocker": null,
     "scout": {
       "surface": "kitchen.floor",
-      "x": 1236,
+      "x": 1233,
       "z": -2048
     },
     "stats": {
@@ -107,8 +107,8 @@
       "geometries": 121,
       "materials": 52,
       "textures": 27,
-      "drawCalls": 319,
-      "triangles": 145274,
+      "drawCalls": 322,
+      "triangles": 145574,
       "lights": 3,
       "occluders": 16,
       "occluderTests": 16,
@@ -118,7 +118,7 @@
       "cameraPulledIn": 66.85714285714289,
       "missingProps": []
     },
-    "frame": 2094
+    "frame": 2179
   },
   "restarts": [
     {

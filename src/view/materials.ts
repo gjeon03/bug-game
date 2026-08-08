@@ -243,7 +243,24 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
    */
   floorVinyl: {
     /*
-     * Lifted so the bible's ladder holds, from the FLOOR side.
+     * REVERTED to #5b5a5e. The ladder is not the governing constraint here — the measured band is.
+     *
+     * I chased `ART_BIBLE.md`'s ordering rule twice and made the frame worse both times. Darkening
+     * the cabinet put 61.5 % of the playable region below L* 20 (§42, §7's banned uniform darkness).
+     * Lifting the floor instead fixed the order and overshot the other way: the fourth art panel
+     * measured the shipped floor patch at 0.688 and the playable region at mean **L* 50.2**,
+     * brighter than the value this project's own earlier sweep had already rejected as too bright.
+     * Two opposite edits, one document, both regressions — the document is describing screen values
+     * for a night interior and I kept applying it to albedos.
+     *
+     * So the ladder is demoted to guidance and the measured band governs. #5b5a5e measures 0.520,
+     * the centre of that band. The cabinet-above-floor ordering is left VIOLATED on purpose, and
+     * that is the honest state: satisfying it costs the frame from either side, so it is not a
+     * constraint this build can honour by moving albedos. Whoever revisits it should change what
+     * LIGHTS these surfaces, not what colour they are — see `night.ts:119-138`, where the ambient
+     * mechanism that would do it is recorded as measured-dead.
+     *
+     * Original note, kept because the reasoning about WHY the floor was the right side to try:
      *
      * `ART_BIBLE.md` puts cabinet faces below floor-in-ambient and says the order is never
      * violated. It was: cabinet L* 42.3 against this at 38.5. The first fix darkened the cabinet to
@@ -257,7 +274,7 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
      * cabinet's 42.3, so the order holds without touching the biggest surface. Judged on the
      * playable-region L* histogram, which is the instrument the last attempt lacked.
      */
-    colour: 0x6e6d72,
+    colour: 0x5b5a5e,
     roughness: 0.56,
     metalness: 0.02,
     wear: {
