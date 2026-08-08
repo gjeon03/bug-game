@@ -53,14 +53,21 @@ at 80/100 in their own discipline.
   This is the same p50 as before the failed reading, which confirms §33: the 32.20 measured under
   load average 4.25 was the panel's nine subagents, not a regression. `scripts/perf.mjs` now refuses
   to measure above a third of the cores (`fc0d1a8`), so that particular mistake cannot recur.
-- [PARTIAL] run length — **re-measured at HEAD**, three brood seeds: 17.04 / **24.87** / 27.51,
-  median **21.57 min** against the 25-35 min band (was 24.87 before the capacity-staleness fix, which cost 3.3 min of median and is recorded as a deliberate correctness-over-pacing trade). Across brood and shadow, five of six runs won.
-  Unchanged by the last five commits, which is itself worth knowing: the timebase fix, the audio
-  wiring and the floor albedo do not touch pacing.
+- [PARTIAL] run length — **measured at HEAD `695bc84`, six runs, five won:**
 
-  The median is **0.13 min short of the band's floor**. The 12.5-minute halfway floor IS asserted
-  (`tests/unit/run.test.ts:158`, three-seed median); the 25-35 band is not, and asserting it today
-  would ship a red suite. Recorded as PARTIAL rather than forced green.
+  | seed | brood | shadow |
+  | --- | --- | --- |
+  | 20260805 | 17.04 won | 19.70 won |
+  | 777 | 23.25 won | 16.31 won |
+  | 4242 | 21.57 **lost** | 12.75 won |
+
+  Brood median **21.57 min** against the 25-35 band — 3.43 short. It was 0.13 short before
+  `695bc84` wired capacity to supply changes; that fix cost 3.3 min of brood median and is a
+  deliberate correctness-over-pacing trade, recorded in its commit. Shadow improved on two of three
+  seeds (11.29 -> 19.70, 14.29 -> 16.31), so the loss is not uniform.
+
+  The 12.5-minute halfway floor IS asserted (`tests/unit/run.test.ts:158`, three-seed median). The
+  25-35 band is not, and asserting it today would ship a red suite.
 - [PASS] `test:slow` 19/19 at HEAD aa29e9a, including the re-derived population assertion.
 
 ## Quality Bar
@@ -100,13 +107,11 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 
 ## Remaining High-Impact Gaps
 
-1. **Persona bar.** systems 44 · level 52 · art 47 · feel 61, against 80 for each. Art's 47 was
-   scored on `969a504`, reverted by `3b68df4`; it has no valid score for the shipped tree. Panel
-   `w5ygqggh8` is re-scoring at `97c1846`.
+1. **Persona bar.** Third panel: systems 51 · level 51 · art 51 · feel 58, against 80 for each.
+   Scored at `97c1846`; nine commits have landed since, two of them behaviour changes (`a430a22`
+   visual timebase, `695bc84` capacity/supply wiring), so the shipped tree has no valid score.
 2. **Run length** — median 24.87 min, one seed 17.04, one of six runs lost, band not asserted.
 3. **W2 / W3 visual evidence** — both confirmed in source and in the running bundle, neither shown
-   in a frame. `COMPLETION_RECOVERY.md` §36, §39, §41.
-4. **W2 / W3 visual evidence** — both confirmed in source and in the running bundle, neither shown
    in a frame. `COMPLETION_RECOVERY.md` §36, §39, §41.
 
 ### Closed, and recorded here because they keep being re-opened from stale notes
