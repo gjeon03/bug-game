@@ -1770,3 +1770,22 @@ lights-zero+white    mean=0.4049  pureBlack=0.21%
 `onBeforeCompile`로 셰이더를 갈아끼울 때 환경 항이 살아남는지. 마지막이 유력하다:
 이 저장소는 그 재질을 위해 프로그램 캐시 키까지 손댔고, 환경 샘플링이 그 과정에서
 빠졌다면 정확히 이 증상이 나온다.
+
+### §52 후속 — 용의자를 좁혔고 검사는 못 했다
+
+`scene.environment`는 `render.ts:124`에서 `buildScene`(:127)보다 **먼저** 설정된다.
+순서 문제가 아니다.
+
+남은 유력 용의자는 `night.ts:29`가 스스로 적어둔 것이다 — `customProgramCacheKey()`가
+`onBeforeCompile.toString()`을 반환하므로 **모든 야간 재질이 프로그램 하나를 공유한다.**
+그리고 같은 파일 :131이 이미 기록한다: `scene.environment`를 null로 토글해도, 
+`envMapIntensity`를 1에서 6으로 올려도 아무것도 움직이지 않는다. 셰이더가 환경을
+**샘플링하지 않는다**는 뜻이고, 공유 프로그램이 그 이유일 수 있다.
+
+결정적 검사는 하나다: `NightStandardMaterial`을 평범한 `MeshStandardMaterial`로 갈고
+같은 A/B/C를 돌려, C가 B와 갈라지는지 본다. 시도했고 **빌드가 깨졌다** — 재질 스펙의
+`rim` 필드가 표준 재질에 없어서 단순 치환으로는 안 된다. 트리는 복원했다.
+
+**가설은 검사되지 않았다.** 다음 사람은 `rim`을 무시하는 얇은 어댑터를 두고 갈아끼우거나,
+`NightStandardMaterial` 하나에만 `customProgramCacheKey`를 지워 프로그램을 분리시킨 뒤
+같은 프로브를 돌리면 된다.
