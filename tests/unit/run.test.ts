@@ -115,23 +115,25 @@ describe('a competently played run takes the kitchen', () => {
   });
 
   /*
-   * KNOWN FAILING, deliberately, with `it.fails`.
+   * This was `it.fails` for the whole life of the project, and the wrapper came off here.
    *
-   * The design target is one complete run of 25–35 minutes in one excellent room. Measured on seed
-   * 20260805 with a working harness the brood build wins in 3.9 minutes — the loop closes, and
-   * there is nowhere near enough in the room to fill a sitting.
+   * It read "KNOWN FAILING, deliberately... it turns RED the moment the room is deep enough, at
+   * which point remove the wrapper." The room got deep enough. Seed 20260805/brood measured 3.9
+   * minutes when that note was written; it measures 13.18 now.
    *
-   * The brief is explicit that the room has to earn that duration "through density — surfaces to
-   * reach, refuges to take, routines to exploit, debris to work — never through longer walks or
-   * costlier prices", and thirteen recorded attempts to buy length with prices all failed. So this
-   * is a content requirement, and it stays in the suite as a requirement rather than being deleted
-   * into a wish. It turns RED the moment the room is deep enough, at which point remove the wrapper.
+   * What moved it was not a constant. Eleven sweeps of the economy are recorded in
+   * COMPLETION_RECOVERY.md §19-§27 and every one of them either shortened the run or lost it. The
+   * two changes that worked were structural: moving the starting food off the nest so a supply line
+   * had to exist at all, and making brood capacity follow supply rather than claiming, so holding a
+   * refuge you do not serve stops being free.
+   *
+   * The bar is deliberately half the design floor. The bot has perfect pathing and never hesitates,
+   * so it belongs at the bottom of the human band rather than inside it — and 25-35 minutes is
+   * still NOT met. This asserts the halfway marker, and it is now a real gate rather than a wish.
    */
-  it.fails('fills a sitting rather than a coffee break', () => {
+  it('fills a sitting rather than a coffee break', () => {
     const minutes = played.trace.seconds / MINUTE;
-    // The bot has perfect pathing and never hesitates, so it is expected at the bottom of the human
-    // band, not inside it. Half the target floor is the loosest honest reading of "25–35 minutes".
-    expect(minutes).toBeGreaterThan(12.5);
+    expect(minutes, `run lasted ${minutes.toFixed(2)} min`).toBeGreaterThan(12.5);
   });
 
   it('gets the player acting and delivering quickly', () => {
@@ -228,12 +230,21 @@ describe('a competently played run takes the kitchen', () => {
       `peak population ${played.trace.peakPopulation}`,
     ).toBeGreaterThanOrEqual(12);
 
+    /*
+     * The share threshold is pinned to the measurement taken BEFORE capacity became supply-gated,
+     * so the mechanic cannot pass a gate it wrote for itself.
+     *
+     * Claim-gated capacity, nine runs (three seeds x three builds): share 0.32-0.66, median 0.47,
+     * and the colony was at capacity for 0 % of every single run. Supply-gated: share 0.56-1.00,
+     * median 0.83, at capacity 2-24 % in eight of nine. 0.5 sits just above the old median, so the
+     * old code fails this and the new code clears it with margin.
+     */
     const capacity = played.run.colony.capacity;
     const share = capacity > 0 ? played.trace.peakPopulation / capacity : 0;
     expect(
       share,
-      `peak ${played.trace.peakPopulation} against capacity ${capacity} — the colony claims refuges it never fills`,
-    ).toBeGreaterThan(0.25);
+      `peak ${played.trace.peakPopulation} against capacity ${capacity} — the colony claims room it never fills`,
+    ).toBeGreaterThan(0.5);
   });
 
   it('costs the player something on the way', () => {

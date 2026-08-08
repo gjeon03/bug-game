@@ -627,13 +627,33 @@ export function createRun(seed: number): Run {
   return run;
 }
 
-/** Total brood capacity across every claimed, undestroyed foothold. */
+/**
+ * Total brood capacity across every claimed, undestroyed foothold **that a supply line reaches**.
+ *
+ * Claiming used to be enough, and that made capacity a number the room handed out for walking to a
+ * crack. Measured over 616 samples: the colony was AT capacity 0 % of the run and blocked by the
+ * food reserve 70 % of it, because capacity scales with how many refuges are held and income does
+ * not. Taking a ninth refuge added room the colony could never fill, so the decision "is this
+ * refuge worth taking" had no downside and therefore was not a decision.
+ *
+ * A refuge that no route serves is a hole in the wall with nothing coming into it. Making capacity
+ * follow supply puts the game's own differentiator — pheromone logistics — underneath the growth
+ * curve: a refuge is worth taking when you intend to run a line to it, and holding eight while
+ * supplying two now costs what it should.
+ *
+ * The home nest always counts. It is where the colony starts, before any route can exist, and a
+ * capacity of zero on frame one would end the run before the player pressed a key.
+ */
 export function recomputeCapacity(run: Run): void {
   let capacity = 0;
   for (const [id, state] of run.footholds) {
     if (!state.claimed || state.damage >= 1) continue;
     const site = run.house.footholds.get(id);
-    if (site) capacity += site.capacity;
+    if (!site) continue;
+    const supplied =
+      site.role === 'home' ||
+      run.routes.some((r) => r.nest === id && (r.health === 'ok' || r.health === 'congested'));
+    if (supplied) capacity += site.capacity;
   }
   const broodTier = run.colony.adaptations.filter((a) => a.family === 'brood').length;
   run.colony.capacity = Math.round(capacity * (1 + 0.22 * broodTier));
