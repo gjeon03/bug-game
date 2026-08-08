@@ -30,6 +30,7 @@ export type Action =
   | { readonly kind: 'erase' }
   | { readonly kind: 'broodHold' }
   | { readonly kind: 'recall' }
+  | { readonly kind: 'bait' }
   | { readonly kind: 'trail' }
   | { readonly kind: 'eraseNearest' }
   | { readonly kind: 'zoom'; readonly delta: number };
@@ -57,6 +58,7 @@ const HANGUL_TO_CODE: Readonly<Record<string, string>> = {
   ㄱ: 'KeyR',
   ㅗ: 'KeyH',
   ㅂ: 'KeyQ',
+  ㅠ: 'KeyB',
 };
 
 /**
@@ -127,6 +129,9 @@ export function createInput(): Input {
         break;
       case 'KeyQ':
         queue.push({ kind: 'recall' });
+        break;
+      case 'KeyB':
+        queue.push({ kind: 'bait' });
         break;
       case 'KeyF':
         queue.push({ kind: 'trail' });

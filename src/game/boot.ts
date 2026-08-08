@@ -19,7 +19,13 @@ import {
   footholdInReach,
   gateInReach,
 } from '../colony/scout';
-import { beginGateWork, checkGate, chooseAdaptation, stopGateWork } from '../colony/progression';
+import {
+  BAIT_EVIDENCE,
+  beginGateWork,
+  checkGate,
+  chooseAdaptation,
+  stopGateWork,
+} from '../colony/progression';
 import { createRenderer, type GameRenderer } from '../view/render';
 import { FRAME_BUDGET, SCENE_CEILINGS, judge } from '../view/profiler';
 import { createHud, type Hud, type PromptState } from '../ui/hud';
@@ -245,6 +251,37 @@ export async function boot(): Promise<void> {
           const running = run.workers.filter((w) => w.alive && !w.climb).length;
           panic(run, run.scout.x, run.scout.z, Number.POSITIVE_INFINITY);
           logEvent(run, 'log.recall.ordered', 'warn', { count: running });
+          break;
+        }
+        /*
+         * Bait the sweep.
+         *
+         * `step.ts` measured the defect and then only named it: every gameplay condition is met by
+         * 169 s, the run ends at 242-252 s, and the 75-77 seconds between them are the sweep
+         * cooldown ticking down with nothing to decide — 31-37 % of a run. Calling it
+         * `blocker.extermination` in the objective panel made the silence explained. It did not
+         * make it shorter, and a designer reviewing the loop scored it a P0 anyway. Naming a wait
+         * is not removing it.
+         *
+         * Baiting removes it the only honest way: by letting the player end the wait on their own
+         * terms. Leave a deliberate trace and the household comes now instead of eventually — but
+         * it comes angrier, because the evidence you just planted is the same number that sets the
+         * sweep's severity. Wait and stay quiet, or finish it while the colony is still strong.
+         *
+         * Gated to the final chapter with a cooldown actually pending, because that is exactly the
+         * situation the measurement describes. Offering it earlier would be a different feature
+         * with a balance cost nobody has measured.
+         */
+        case 'bait': {
+          if (run.chapter !== 'final' || run.sweepCooldown <= 0) {
+            logEvent(run, 'log.bait.pointless', 'info', {});
+            break;
+          }
+          const region = run.house.regionOf.get(run.scout.surface);
+          const state = region ? run.regions.get(region) : undefined;
+          if (state) state.evidence = Math.min(1, state.evidence + BAIT_EVIDENCE);
+          run.sweepCooldown = 0;
+          logEvent(run, 'log.bait.laid', 'danger', {});
           break;
         }
         case 'interact': {

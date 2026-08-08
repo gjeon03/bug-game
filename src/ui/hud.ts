@@ -359,6 +359,7 @@ const HELP_LINES: readonly string[] = [
   'help.move',
   'help.sprint',
   'help.recall',
+  'help.bait',
   'help.route',
   'help.erase',
   'help.interact',
