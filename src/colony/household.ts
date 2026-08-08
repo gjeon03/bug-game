@@ -266,8 +266,29 @@ export function updateRoutines(run: Run, dt: number): void {
     const state = run.routines.get(spec.id);
     if (!state) continue;
 
-    // A routine in a region the colony has never opened still runs — the flat does not wait for
-    // the player — but it costs nothing beyond its timer.
+    /*
+     * A routine in a region the colony has never OPENED still runs — the flat does not wait for the
+     * player. A routine in a region that does not EXIST is a different thing, and it was being
+     * treated the same.
+     *
+     * `ROUTINES` still lists seven entries for the living room, bathroom and bedroom. Those regions
+     * are sealed out of `REGIONS` entirely, so `run.house.regions` has no entry for them: their
+     * exposure zones land nowhere, their resource refills match nothing, and `pushRoutineCue` bails
+     * on the missing region. What they do reach is the director's schedule, which it spends on
+     * rooms the player cannot walk to. Measured: fifteen routines fire in a four-minute run and
+     * nine of them are for rooms that are not in the build.
+     *
+     * Skipped rather than deleted, because `SEALED_REGIONS` is a reactivation list and these come
+     * back with their rooms. The test is whether the room is assembled, not whether it is unlocked.
+     *
+     * A first attempt at this was reverted on three seeds that showed it "breaking the game"
+     * (COMPLETION_RECOVERY.md §28). That was wrong: removing nine RNG consumers reshuffles a seeded
+     * deterministic stream, so three seeds cannot separate effect from reseeding. Re-measured over
+     * eight seeds x two builds, it is neutral — 15/16 wins against 14/16, median run 11.7 min
+     * against 10.2 (§30).
+     */
+    if (!run.house.regions.some((r) => r.id === spec.region)) continue;
+
     state.timer -= dt;
     if (state.timer > 0) continue;
 
