@@ -120,10 +120,10 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
    lost, band not asserted. It peaked at 24.87 and gave 3.3 min back to `695bc84`. Three settings
    have put the median inside the band and all three cost win rate (§47), so the remaining path is
    content, not another constant.
-3. **W2 visual evidence** — the overlay is confirmed in source and in the running bundle but has
-   never been shown in a frame with a prop in front of the ring. `COMPLETION_RECOVERY.md` §36.
-   (**W3 is CLOSED** — §45 captured ten bodies at ten distinct scales,
-   `artifacts/evidence/completion/workers/workers-crowd.png`.)
+3. ~~W2 / W3 visual evidence~~ — **both CLOSED.** §45 captured ten bodies at ten distinct scales;
+   §49 captured a frame holding fifteen `depthTest:false` overlays and eight actively-faded
+   occluders at once, which is the condition the fix exists for.
+   `artifacts/evidence/completion/{workers,overlay}/`.
 
 ### Closed, and recorded here because they keep being re-opened from stale notes
 
