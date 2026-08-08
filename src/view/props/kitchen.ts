@@ -742,7 +742,12 @@ export const KITCHEN_PROPS: PropRegistry = {
     for (const sx of [-1, 1]) {
       for (const sz of [-1, 1]) {
         legs.add(
-          at(cylinder(kit, 20, 24, seatH - 30, wood, 12), sx * (w / 2 - 34), (seatH - 30) / 2, sz * (d / 2 - 34)),
+          at(
+            cylinder(kit, 20, 24, seatH - 30, wood, 12),
+            sx * (w / 2 - 34),
+            (seatH - 30) / 2,
+            sz * (d / 2 - 34),
+          ),
         );
       }
     }
@@ -756,7 +761,9 @@ export const KITCHEN_PROPS: PropRegistry = {
     const back = new THREE.Group();
     back.add(at(bevelledBox(kit, w, 300, 26, wood, 3), 0, seatH + 170, -d / 2 + 16));
     for (const sx of [-1, 1]) {
-      back.add(at(bevelledBox(kit, 34, 340, 30, wood, 3), sx * (w / 2 - 24), seatH + 170, -d / 2 + 16));
+      back.add(
+        at(bevelledBox(kit, 34, 340, 30, wood, 3), sx * (w / 2 - 24), seatH + 170, -d / 2 + 16),
+      );
     }
 
     return shadows(group(seat, legs, rails, back));
