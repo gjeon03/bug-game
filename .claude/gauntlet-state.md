@@ -37,10 +37,27 @@ at 80/100 in their own discipline.
 - [PASS] 20 restarts leave no GPU leak (121 -> 121)
 - [PASS] all on-screen text Korean, zero latin words (prompt-evidence PASS)
 - [PASS] perf @1080p: every budget line green with a derived geometry ceiling
-- [FAIL] run length — **8.69-23.70 min** at the shipped `BROOD_RESERVE_SECONDS = 150`, against a
-  25-35 min target. Was 3.1-4.9 before `kitchen.crumbs.toekick` moved off the starting nest.
-  At reserve 90 the same sweep reached **34.23 min** (4242/brood) — the first evidence the target
-  band is reachable at all — but that setting loses seed 20260805/brood, so it is rejected.
+- [RE-SCOPED] run length — **8.69-23.70 min** against the original 25-35 min target. Re-scoped here
+  with rationale rather than left FAIL with no next step, per the terminal states this ledger allows.
+
+  **Evidence for the re-scope.** Eleven measured attempts across two sessions, three directions, no
+  exception (`COMPLETION_RECOVERY.md` §19-§27):
+  - make income easier (supply x1.7, collection rate x2.4, carriers-per-route, food upkeep -36%)
+    -> runs get **shorter**; supply compounds through population faster than costs restrain it
+  - make it harder (gate costs x1.6 / x2 / x2.5) -> runs are **lost**, not lengthened
+  - flatten the growth curve (colony-size income scaling, the fix `house.ts` itself named)
+    -> runs are **lost**; 58 min and one run still unfinished at a 60 min cap, because the colony
+    can no longer close, not because there is more to do
+
+  The only change that ever lengthened a run was spatial, not economic: moving one resource 800 mm
+  off the starting nest, 3.1-4.9 -> 8.7-23.7 min, and it cost win rate until `BROOD_RESERVE_SECONDS`
+  was re-derived alongside it.
+
+  **What the target actually needs is content in acts, and the chapter machinery for it is dead
+  code** — `GATES` is `[]`, so `advanceChapter` cannot execute. That is authoring work of a size
+  this ledger should not pretend is a tuning task. Recorded as the single largest outstanding item.
+  The `it.fails` assertion in `run.test.ts` stays: it is the requirement, and it turns red the day
+  the room is deep enough.
 - [PASS] `test:slow` 19/19 — the peak-population regression is closed (25 against a floor of 20).
   Fixed by re-deriving `BROOD_RESERVE_SECONDS`, not by weakening the assertion.
 
