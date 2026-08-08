@@ -162,11 +162,11 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
      * the bright window and the dark cabinet erase each other — and a 4 % threshold cannot see a
      * pile-up at L* 20. The right instrument is a playable-region L* histogram.
      *
-     * The violation was then CLOSED from the other side. `floorVinyl` was lifted #5b5a5e -> #6e6d72
-     * (L* 38.5 -> 46.3), which puts this at 42.3 BELOW the floor exactly as the bible requires,
-     * without touching the largest vertical surface in frame. Measured on the playable-region
-     * histogram — dark 1.3 % / mid 49.1 % / light 49.6 % — against 61.5 % / 3.0 % when the cabinet
-     * was darkened instead. Same rule satisfied, opposite lever, and the frame survived.
+     * Closing it from the floor side was then tried and also reverted: lifting `floorVinyl` to
+     * #6e6d72 satisfied the order and overshot to playable-region mean L* 50.2, brighter than a
+     * value this project had already swept and rejected. Art scored 47 both times. The ladder is
+     * now demoted to guidance and this ordering is VIOLATED on purpose — see the note on
+     * `floorVinyl` and COMPLETION_RECOVERY.md §50.
      */
     colour: 0x6d6257,
     roughness: 0.5,

@@ -1817,3 +1817,34 @@ lights-zero+white    mean=0.4049  pureBlack=0.21%
 `MeshStandardMaterial`로 두고(스펙의 `rim`은 무시하는 어댑터로) 같은 프로브를 돌린다.
 갈라지면 원인은 그 재질이고, 안 갈라지면 `makeGradientEnv`가 돌려주는 텍스처 쪽이다
 — `pmrem.dispose()`가 `target.texture` 반환 앞에 있다.
+
+
+## 53. 두 용의자를 모두 배제했다 — 환경이 죽은 이유는 아직 모른다
+
+§52가 확정한 것(환경 기여가 정확히 0)에 대해 용의자 둘을 측정으로 검사했다.
+둘 다 아니다.
+
+| 검사 | 결과 |
+| --- | --- |
+| 조명 0 (대조) | mean **0.0119** |
+| 조명 0 + `pmrem.dispose()` 제거 + 흰 하늘 | mean **0.0119** |
+
+`pmrem.dispose()`가 `target.texture` 반환 앞에 있는 것은 원인이 아니다. 제거하고
+하늘을 흰색으로 바꿔도 한 픽셀도 안 움직인다.
+
+공유 프로그램 가설도 약하다 — 검증자가 지적한 대로 three.js는 `customProgramCacheKey`를
+표준 파라미터 키에 **덧붙이지** 대체하지 않으므로, `USE_ENVMAP` 디파인은 그것과 무관하게
+서야 한다.
+
+### 남은 것
+
+배제된 것: 대입 시점(`render.ts:124` < `buildScene`), `envMapIntensity`,
+`scene.environmentIntensity`, `pmrem.dispose()` 순서, 그리고 (이론상) 프로그램 캐시 키.
+
+다음에 볼 곳은 **재질이 실제로 어떤 프로그램으로 컴파일됐는지**다. 런타임에서
+`renderer.info.programs`를 열어 `USE_ENVMAP`이 디파인에 있는지 직접 보는 것이 추측을
+끝낸다. 그게 없으면 three.js가 이 재질들에 환경을 붙이지 않기로 결정한 것이고,
+이유는 `NightStandardMaterial`의 생성 경로 어딘가에 있다.
+
+이 세션은 여기까지 좁혔다. 네 번의 무반응 조작으로 증상을 확정했고, 두 개의 유력
+용의자를 배제했다. 남은 것은 셰이더가 실제로 무엇으로 컴파일됐는지 보는 일이다.
