@@ -103,27 +103,17 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
   which silently un-did last pass's failable finale (0/9 runs dipped). `test:slow` went red and the
   coefficient was re-derived by sweep rather than by guess.
 
-## Open question that gates the run-length claim
+## Resolved: the run-length claim is not gated any more
 
-Across 630 s of a brood run, four of nine resources are **never touched** (`rice`, `sponge`,
-`table.crumbs`, `fridge.seal` all at their starting amount) while the colony sits in chronic food
-famine at 9-32 and banks moisture to 166. `fridge.seal` is on the floor and needs no climb.
+The "four of nine resources never touched" observation was not an allocation defect. Instrumenting
+`bot.ts:411-431` directly across a whole run: `notFound` 0, `empty` 0, `noPath` 0 — every resource is
+considered on every pass, and six of nine end the run with a route. The losers lose on score, which
+is the intended rule, and `fridge.seal` losing 28 times in a row is correct: it is a moisture source
+and moisture is banked at 166.
 
-This is an allocation defect, not a distance one — and until its cause is known, the 9.91-19.53 min
-figure may be describing `tests/bot.ts` rather than the game. `bot.ts:411-431` does consider every
-found resource and does bias toward the scarcer store, so the bot is not blind; the cause is
-unidentified. **Do not quote the new run length as a game property until this is resolved.**
-
-## Next action, derived not guessed
-
-Two negative sweeps (`COMPLETION_RECOVERY.md` §20, §21) eliminated collection rate and
-carriers-per-route. The remaining candidate is arithmetic rather than a guess:
-`BROOD_RESERVE_SECONDS` was raised 90 -> 210 two passes ago, and at population 13 the breeding rule
-`food >= 6.5 + pop * 0.0075 * RESERVE` demands 27 food against a measured range of 9-32. At 90 it
-demanded 15.3. Income was nearly free when refuges sat on the resources; it is not now.
-
-Sweep 90/150/210 again, but judge peak population, run length AND the finale trough together — all
-three hang off this one constant, and this session has already broken one by tuning for another.
+The original observation was doubly wrong — a mid-run snapshot taken while `BROOD_RESERVE_SECONDS`
+was starving the colony at 13, and read off `remaining`, which routines refill. See
+`COMPLETION_RECOVERY.md` §23. Run length 8.69-23.70 min may be quoted as a game property.
 
 ## Blockers
 None.
