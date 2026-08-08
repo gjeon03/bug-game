@@ -151,12 +151,24 @@ const SPECS: Readonly<Record<MaterialId, Spec>> = {
      * monotonic, so it cannot reorder two surfaces. Whatever the exposure, cabinet-lighter-than-
      * floor stays cabinet-lighter-than-floor.
      *
-     * `#26323c` is the bible's own steel. Adopted only after measuring the rendered frame — making
-     * the largest area darker risks §7's banned uniform darkness, and this repo already records one
-     * attempt that turned the room into an overcast afternoon and another that pushed near-black to
-     * 3.56 %.
+     * `#26323c` was adopted and **reverted**. It is the bible's steel and it did fix the ordering,
+     * and it broke the frame: measured on the same crop, the playable region's midtones (L* 20-40)
+     * fell 39.6 % -> 3.0 % while L* < 20 rose 6.6 % -> **61.5 %**. Sixty per cent of the frame
+     * collapsed toward black — §7's banned uniform darkness — and the art discipline scored 47
+     * against a 52 baseline, the only score in the panel to go DOWN.
+     *
+     * My check passed because it measured frame MEAN luminance (0.316-0.361, unchanged) and a
+     * near-black fraction at a 4 % threshold. A mean does not move when a distribution collapses —
+     * the bright window and the dark cabinet erase each other — and a 4 % threshold cannot see a
+     * pile-up at L* 20. The right instrument is a playable-region L* histogram.
+     *
+     * The ordering violation is therefore RE-OPENED and deliberately so: the bible's rungs are
+     * SCREEN values and this is an albedo, a distinction §29 states and then failed to apply when
+     * picking the number. Satisfying the order by darkening the largest vertical surface in frame
+     * is the wrong lever; the floor is the other side of the same comparison and is a far smaller
+     * share of the image. Whoever takes it next must judge on the histogram, not the mean.
      */
-    colour: 0x26323c,
+    colour: 0x6d6257,
     roughness: 0.5,
     metalness: 0.03,
     wear: { streaks: 700, scuffs: 90, grain: 'vertical', seed: 17, normalScale: 0.5 },
