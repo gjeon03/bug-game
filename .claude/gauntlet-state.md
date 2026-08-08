@@ -53,11 +53,14 @@ at 80/100 in their own discipline.
   This is the same p50 as before the failed reading, which confirms §33: the 32.20 measured under
   load average 4.25 was the panel's nine subagents, not a regression. `scripts/perf.mjs` now refuses
   to measure above a third of the cores (`fc0d1a8`), so that particular mistake cannot recur.
-- [PARTIAL] run length — **median 24.87 min** (17.04 / 27.51 / 24.87, three brood seeds at HEAD)
-  against the 25-35 min target. The median is at the band's threshold for the first time in the
-  project, from a starting point of 3.1-4.9 min. `it.fails` is off, on a repaired harness this time.
-  Not yet PASS: one seed sits at 17.04, one of six runs is lost, and the band itself is not asserted
-  — only the 12.5 min halfway floor is. See `COMPLETION_RECOVERY.md` §38.
+- [PARTIAL] run length — **re-measured at HEAD**, three brood seeds: 17.04 / **24.87** / 27.51,
+  median **24.87 min** against the 25-35 min band. Across brood and shadow, five of six runs won.
+  Unchanged by the last five commits, which is itself worth knowing: the timebase fix, the audio
+  wiring and the floor albedo do not touch pacing.
+
+  The median is **0.13 min short of the band's floor**. The 12.5-minute halfway floor IS asserted
+  (`tests/unit/run.test.ts:158`, three-seed median); the 25-35 band is not, and asserting it today
+  would ship a red suite. Recorded as PARTIAL rather than forced green.
 - [PASS] `test:slow` 19/19 at HEAD aa29e9a, including the re-derived population assertion.
 
 ## Quality Bar
