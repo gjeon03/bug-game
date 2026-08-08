@@ -4,7 +4,7 @@
 ACTIVE
 
 ## Phase
-REVIEW
+ADDRESS
 
 ## Depth
 DEEP — a game with visual, gameplay, audio and performance surfaces; multi-system coupling; and a
@@ -56,16 +56,28 @@ art direction (stylised is explicitly acceptable — photorealism is NOT the bar
   cluster is suspected to be the same shape.
 
 ## Remaining High-Impact Gaps
-1. Room density: `concealment` has no reader, the kitchen declares zero `hidden:` resources, and
-   5 of 6 routines have no position (worklist item 6, ~28 pts across two personas).
-2. Run length 3.1-4.9 min vs 25-35 target.
-3. Eight audio methods still with zero callers; four of those are for mechanics that no longer
-   exist and should be deleted rather than wired.
+1. Run length 3.1-4.9 min vs 25-35 target. Still the only mandatory FAIL.
+2. Zero `hidden:` resources in the kitchen — discovery is not a mechanic here yet.
+3. Routines carry no position, so a telegraph cannot point anywhere in the world.
+4. Eight audio methods still with zero callers; four are for mechanics that no longer exist and
+   should be deleted rather than wired.
+5. Routines belonging to sealed regions (`bedroom.phone`, `living.tv`, `bathroom.use`, ...) still
+   fire and consume director time in a kitchen-only build.
 
-## Last Pass
-- observed: gates green on a clean tree at 894a101
-- changed: nothing yet — this pass starts from review
-- re-verified: typecheck, unit 89/89
+## Last Pass (commit 4ffc882)
+- observed: `concealment` authored on 8 kitchen refuges (0.44-0.92) and read by NOTHING; the kitchen
+  declared 4 exposure zones, 3 on the counter and 1 on the floor, so table top / chair seat / bin
+  interior returned a uniform 0 and the stealth mechanic did not exist on 3 of 5 surfaces.
+- changed: `shadeExposure()` bakes refuge cover into `baseExposure` at build time (zero frame cost);
+  authored 4 exposure zones for the three dark surfaces, two of them routine-gated (dinner lights
+  the table, an open bin lid lights its inside); re-measured the sweep coefficient 0.6 -> 0.9.
+- re-verified: cover contrast measured at every refuge (0.000-0.110 at cover vs up to 0.720 away);
+  15 routines fire in a 4-min run with all 6 kitchen ones reachable; both routine zones light to
+  1.000; 27 bot runs across the coefficient sweep, all won; typecheck, lint, unit 89/89,
+  test:slow 19/19, build, prompt-evidence PASS, capture clean, perf all green.
+- caught by a gate, not by me: wiring cover lowered sightings 8 -> 6, which lowered sweep severity,
+  which silently un-did last pass's failable finale (0/9 runs dipped). `test:slow` went red and the
+  coefficient was re-derived by sweep rather than by guess.
 
 ## Blockers
 None.
