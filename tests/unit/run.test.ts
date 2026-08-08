@@ -130,7 +130,20 @@ describe('a competently played run takes the kitchen', () => {
    * at the bottom of the human range rather than inside it. 25-35 minutes is still NOT met; this is
    * the halfway marker and it is a real gate.
    */
-  it('fills a sitting rather than a coffee break', () => {
+  /*
+   * BACK TO `it.fails`, and the reason is uncomfortable: the wrapper came off on a broken harness.
+   *
+   * `tests/bot.ts` gated `broodHold` on `blocker.food`, a key `checkGate` alone emits and `GATES` is
+   * `[]` — so the bot never once used the player's H control, and every run this gate ever measured
+   * was played without brood management. With the trigger repaired the same three seeds read
+   * 11.22 / 11.95 / 12.17, median **11.95**, against 14.31 before.
+   *
+   * A competent player finishes FASTER, because managing brood avoids the starvation spiral that
+   * was padding the old numbers. So the requirement was never met; it looked met because the
+   * instrument was broken. That also strengthens rather than weakens §27 — if better play shortens
+   * the run, the 25-35 minute band is further from the economy, not nearer.
+   */
+  it.fails('fills a sitting rather than a coffee break', () => {
     const minutes = [20260805, 777, 4242]
       .map((seed) => play(seed, 'brood').trace.seconds / MINUTE)
       .sort((a, b) => a - b);

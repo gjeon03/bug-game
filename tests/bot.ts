@@ -1,6 +1,13 @@
 import { findPath } from '../src/world/nav';
 import { mm } from '../src/world/units';
-import { SIM_DT } from '../src/colony/state';
+import {
+  BROOD_FOOD_PER_WORKER,
+  BROOD_MOISTURE_PER_WORKER,
+  BROOD_RESERVE_SECONDS,
+  SIM_DT,
+  UPKEEP_FOOD,
+  UPKEEP_MOISTURE,
+} from '../src/colony/state';
 import { eraseRoute, type DrawnPoint } from '../src/colony/routes';
 import { TRAIL_REACH, cancelTrail, nestInReach, sealTrail, startTrail } from '../src/colony/trail';
 import {
@@ -112,9 +119,26 @@ export function playRun(run: Run, options: BotOptions): BotTrace {
        * stall that made escalation unlandable. This is the same toggle the H key drives; the bot
        * has no privileged access.
        */
-      const waitingOnStores =
-        run.objective.blockerKey === 'blocker.food' ||
-        run.objective.blockerKey === 'blocker.moisture';
+      /*
+       * This read `blocker.food` / `blocker.moisture`, and those keys can never appear.
+       *
+       * They are produced only by `checkGate` (`progression.ts:112`), `checkGate` is only reachable
+       * through `GATES`, and `GATES` is `[]` in the kitchen-only build. So `waitingOnStores` was
+       * always false and **`broodHold` was dead in the harness** — every economy sweep recorded in
+       * COMPLETION_RECOVERY.md §20-§27, eleven of them, ran with the player's H control untouched.
+       * The bot was not playing badly; it could not reach the button. Found by an adversarial
+       * reviewer, not by me.
+       *
+       * The replacement asks the question the blocker key was standing in for, directly: can the
+       * colony afford the next egg AND still hold its reserve? That is `progression.ts`'s own
+       * breeding rule, restated where the harness can see it, so it moves with the rule instead of
+       * with a string that a sealed subsystem happens to emit.
+       */
+      const next = run.colony.population + 1;
+      const foodLine = BROOD_FOOD_PER_WORKER + next * UPKEEP_FOOD * BROOD_RESERVE_SECONDS;
+      const moistureLine =
+        BROOD_MOISTURE_PER_WORKER + next * UPKEEP_MOISTURE * BROOD_RESERVE_SECONDS;
+      const waitingOnStores = run.colony.food < foodLine || run.colony.moisture < moistureLine;
       /*
        * Only once the colony is big enough to be worth protecting.
        *
