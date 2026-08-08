@@ -1,3 +1,14 @@
+> **FROZEN 2026-08-09 at §62. Do not append to this file.**
+>
+> It reached 2,155 lines and was edited in **61 of the kitchen phase's 147 commits** — more often
+> than any source file in the repository, and roughly three times more often than the most-edited
+> one (`src/i18n/ko.ts`, 18). The writing had become the work.
+>
+> Read it to find out whether something was already tried, and especially for the twenty-seven
+> instrument failures it records — several were read as game defects and chased as game defects.
+> **New narrative goes in the commit message; new state goes in `.claude/gauntlet-state.md`.**
+> See `CLAUDE.md` §0a.
+
 # COMPLETION_RECOVERY
 
 Takeover of an incomplete whole-home infestation build. The previous session's final report,
@@ -12,26 +23,26 @@ everything below was re-checked against the actual build on this branch.
 
 ## 1. Verified working (re-run, not taken on trust)
 
-| System | Evidence |
-| --- | --- |
-| Build and static gates | `typecheck` / `lint` / `format:check` clean; `pnpm test` 79/79 in <1 s; `vite build` 953 ms, 806 kB (222 kB gzip) |
-| Real-browser boot | 187 props, ~2 000 meshes; **0 console errors, 0 failed requests, 0 external requests, 0 missing prop builders** |
-| Restart | five consecutive restarts produce byte-identical opening state |
-| Nested subpath | `/bug-game/` serves clean, same zero-error result |
+| System                                                                     | Evidence                                                                                                                               |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Build and static gates                                                     | `typecheck` / `lint` / `format:check` clean; `pnpm test` 79/79 in <1 s; `vite build` 953 ms, 806 kB (222 kB gzip)                      |
+| Real-browser boot                                                          | 187 props, ~2 000 meshes; **0 console errors, 0 failed requests, 0 external requests, 0 missing prop builders**                        |
+| Restart                                                                    | five consecutive restarts produce byte-identical opening state                                                                         |
+| Nested subpath                                                             | `/bug-game/` serves clean, same zero-error result                                                                                      |
 | Performance (real Chrome, Apple M1, Metal, GPU timer queries, active play) | presented **p50 16.70 / p95 17.50 / p99 18.50 ms**, worst 18.80; CPU 4.60/5.40; GPU 4.02/7.10; **0 frames over 33 ms**; 297 draw calls |
-| Audio | wired to simulation cues, panned from world positions; `started: true` in browser |
-| Region gating | sealed navigation graph has **no edge** into unopened regions — proven by `house.test.ts`, not by a flag check |
-| Korean UI | 242-key catalog, all 157 code-referenced keys present; NanumSquareNeo vendored, relative URLs, no tofu at four viewports |
+| Audio                                                                      | wired to simulation cues, panned from world positions; `started: true` in browser                                                      |
+| Region gating                                                              | sealed navigation graph has **no edge** into unopened regions — proven by `house.test.ts`, not by a flag check                         |
+| Korean UI                                                                  | 242-key catalog, all 157 code-referenced keys present; NanumSquareNeo vendored, relative URLs, no tofu at four viewports               |
 
 ## 2. Unresolved blockers — confirmed by reproduction
 
-| # | Reported | Reproduced? | Actual finding |
-| --- | --- | --- | --- |
-| 1 | Run is ~9.7 min, not 25–35 | **YES** | shadow won 9.7 min; brood never finished |
-| 2 | Breeding build cannot complete | **YES — still open.** One root cause found and fixed (§3); the build still does not complete through `tests/bot.ts` — see the retraction in §6 |
-| 3 | Rooms unreadable without HUD labels | **YES** | only the kitchen has ever been seen; four regions never rendered to a human |
-| 4 | Critics FAIL, blockers open | **PARTLY OBSOLETE** | of 14 blockers, 10 were closed with re-measurements last session; the remaining live ones are room identity, run length, and the brood build |
-| 5 | No proof of a full kitchen→bedroom run | **NO — this is obsolete** | shadow seed 4242 reaches all four main regions, 12 footholds, survives an extermination sweep, and wins. What is missing is a run of the right *length*, not a run that connects |
+| #   | Reported                               | Reproduced?                                                                                                                                    | Actual finding                                                                                                                                                                   |
+| --- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Run is ~9.7 min, not 25–35             | **YES**                                                                                                                                        | shadow won 9.7 min; brood never finished                                                                                                                                         |
+| 2   | Breeding build cannot complete         | **YES — still open.** One root cause found and fixed (§3); the build still does not complete through `tests/bot.ts` — see the retraction in §6 |
+| 3   | Rooms unreadable without HUD labels    | **YES**                                                                                                                                        | only the kitchen has ever been seen; four regions never rendered to a human                                                                                                      |
+| 4   | Critics FAIL, blockers open            | **PARTLY OBSOLETE**                                                                                                                            | of 14 blockers, 10 were closed with re-measurements last session; the remaining live ones are room identity, run length, and the brood build                                     |
+| 5   | No proof of a full kitchen→bedroom run | **NO — this is obsolete**                                                                                                                      | shadow seed 4242 reaches all four main regions, 12 footholds, survives an extermination sweep, and wins. What is missing is a run of the right _length_, not a run that connects |
 
 ## 3. Root cause of the breeding-build failure — verified, not guessed
 
@@ -56,7 +67,7 @@ Two compounding defects in `assignRoutes`, both in labour allocation, neither in
    worker cycles outbound→collecting→inbound→delivering→outbound forever. Labour was frozen at
    whatever the network looked like when each body hatched. No play could move it.
 2. **The load metric was length-normalised, which inverts its own intent.**
-   `assigned / max(1, length / 400mm)` makes a *short* route full at one worker while a long route
+   `assigned / max(1, length / 400mm)` makes a _short_ route full at one worker while a long route
    accepts eight. The nearest, cheapest, highest-throughput water source in the flat was starved of
    labour **by construction**.
 
@@ -69,15 +80,15 @@ workers onto water routes and recovers to 35.8 by t=330. Population **14 → 30*
 
 ## 4. Obsolete claims from the handoff
 
-- *"No independent criticism"* — five critics ran; reports in
+- _"No independent criticism"_ — five critics ran; reports in
   `artifacts/evidence/whole-home-reboot-final/critics/REPORTS.md`.
-- *"No performance evidence"* — measured on real hardware, all budgets pass.
-- *"No audio"* — wired and verified in-browser.
-- *"Occlusion never executes a raycast"* — not reproducible: `registered 98 / candidates 13 /
-  tests 15`, `fading: 1` in 26 of 26 blocked frames.
-- *"Existing evidence does not prove a connected run"* — it does prove connection; it does not prove
+- _"No performance evidence"_ — measured on real hardware, all budgets pass.
+- _"No audio"_ — wired and verified in-browser.
+- _"Occlusion never executes a raycast"_ — not reproducible: `registered 98 / candidates 13 /
+tests 15`, `fading: 1` in 26 of 26 blocked frames.
+- _"Existing evidence does not prove a connected run"_ — it does prove connection; it does not prove
   duration.
-- *"The brood build starves because moisture supply is insufficient"* — false. Supply was never the
+- _"The brood build starves because moisture supply is insufficient"_ — false. Supply was never the
   constraint.
 
 ## 5. Exact reproduction paths
@@ -148,13 +159,13 @@ single search cost 8.6 ms. The frontier was fully re-sorted on every expansion a
 Binary heap. Same seed, **identical call count 20,624** — the search is unchanged, only the cost of
 selecting the minimum:
 
-| | before | after |
-| --- | --- | --- |
+|                     | before   | after        |
+| ------------------- | -------- | ------------ |
 | `findPath` per call | 8.619 ms | **2.471 ms** |
-| whole sim step | 7.106 ms | **2.071 ms** |
-| 420 s run, wall | 179 s | **52 s** |
+| whole sim step      | 7.106 ms | **2.071 ms** |
+| 420 s run, wall     | 179 s    | **52 s**     |
 
-The old code carried a comment predicting exactly this: *"Simplicity wins until it does not."*
+The old code carried a comment predicting exactly this: _"Simplicity wins until it does not."_
 
 ## 8. `region.traffic` is not a measure — and the fix is parked
 
@@ -196,7 +207,7 @@ unlit exteriors against the void from a vantage point no player can reach.
 Recorded because it is the failure mode this whole process exists to prevent — a defect invented by
 the measuring instrument, which I nearly spent an hour "fixing".
 
-**A constraint this exposes:** at 35 mm scale inside a 3.2 m room, *no* legal camera position sees a
+**A constraint this exposes:** at 35 mm scale inside a 3.2 m room, _no_ legal camera position sees a
 whole room. There is no establishing shot in this game. The "identify each room without HUD labels"
 gate therefore has to be judged from characteristic detail at floor level, or it certifies something
 the build cannot deliver. Captures are now taken at 1900 mm (default) and 3200 mm (max zoom-out).
@@ -228,18 +239,18 @@ It works, in the sense that it does exactly what §9 predicted. With the absolut
 
 It still does not win. Seed 20260805, full 50-minute cap:
 
-| | value |
-| --- | --- |
-| status | `playing` — cap reached, never resolved |
-| gates opened | 5 of 5 |
-| peak population | 74 |
-| deliveries | 1,457 |
-| **extermination sweeps** | **19** |
-| workers lost | 116 |
-| longest plateau | 12.6 s (inside the 45 s gate) |
+|                          | value                                   |
+| ------------------------ | --------------------------------------- |
+| status                   | `playing` — cap reached, never resolved |
+| gates opened             | 5 of 5                                  |
+| peak population          | 74                                      |
+| deliveries               | 1,457                                   |
+| **extermination sweeps** | **19**                                  |
+| workers lost             | 116                                     |
+| longest plateau          | 12.6 s (inside the 45 s gate)           |
 
 **The next defect is in `updateFinal`, not in the evidence model.** A sweep has a 110 s cooldown,
-severity escalating `SWEEP_ESCALATION` 0.18 per sweep, and *no terminal condition*. Nineteen sweeps
+severity escalating `SWEEP_ESCALATION` 0.18 per sweep, and _no terminal condition_. Nineteen sweeps
 in one run is the same metronome failure recorded earlier at 125 sweeps, just slower — past roughly
 ten minutes the endgame destroys footholds faster than the colony can retake them, so the
 four-region victory check in `evaluateRun` can never be simultaneously true.
@@ -263,11 +274,11 @@ The lever is committed and inert under current tuning: with the population-scale
 
 Every row below is the committed harness at 50-minute cap, seed as noted. No throwaway probes.
 
-| build | seed | status | min | gates | peak | deliveries | lost |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| shadow | 4242 | **won** | 6.4 | 3 | 29 | 223 | 0 |
-| scavenging | 31337 | **won** | 7.7 | 5 | 38 | 283 | 7 |
-| brood | 20260805 | **never completes** | 50 (cap) | 3 | 41 | 967–1377 | 241–346 |
+| build      | seed     | status              | min      | gates | peak | deliveries | lost    |
+| ---------- | -------- | ------------------- | -------- | ----- | ---- | ---------- | ------- |
+| shadow     | 4242     | **won**             | 6.4      | 3     | 29   | 223        | 0       |
+| scavenging | 31337    | **won**             | 7.7      | 5     | 38   | 283        | 7       |
+| brood      | 20260805 | **never completes** | 50 (cap) | 3     | 41   | 967–1377   | 241–346 |
 
 So the honest headline is not "the run is 6.4 minutes and needs lengthening". It is:
 
@@ -282,7 +293,7 @@ So the honest headline is not "the run is 6.4 minutes and needs lengthening". It
 
 **Next diagnostic, and this time instrument before touching anything:** log per-cause worker deaths
 (threat kind, starvation, stuck-recovery) per minute for the brood build, alongside the objective
-blocker at each stall. The question to answer first is *why gate four never opens* — not why the run
+blocker at each stall. The question to answer first is _why gate four never opens_ — not why the run
 is short. Nothing about length is worth tuning while a whole specialization cannot finish.
 
 ---
@@ -292,14 +303,14 @@ is short. Nothing about length is worth tuning while a whole specialization cann
 Six independent personas scored the build against `CLAUDE.md` and then a skeptic tried to refute
 each one's three highest-value findings. Fourteen survived.
 
-| persona | score | one-line verdict |
-| --- | --- | --- |
-| 3D 아트 디렉터 | 41 | every delivered frame contains at least two items from §7's banned list |
-| 신규 플레이어 | 41 | ten control lines that self-destruct on the first keypress and never return |
-| 게임 디자이너 | 33 | run length arithmetically fixed at ~4 minutes by two constants |
-| 한국 UX 비평가 | 43 | 주방만 남긴 게임이 아직도 "이 집 전체"라고 말한다 |
-| 기술 검증자 | 44 | the evidence harness drives a mouse mechanic deleted 22 commits ago |
-| 공간 · 레벨 디자이너 | 34 | 2 of 6 climbs sit inside their own blockers |
+| persona              | score | one-line verdict                                                            |
+| -------------------- | ----- | --------------------------------------------------------------------------- |
+| 3D 아트 디렉터       | 41    | every delivered frame contains at least two items from §7's banned list     |
+| 신규 플레이어        | 41    | ten control lines that self-destruct on the first keypress and never return |
+| 게임 디자이너        | 33    | run length arithmetically fixed at ~4 minutes by two constants              |
+| 한국 UX 비평가       | 43    | 주방만 남긴 게임이 아직도 "이 집 전체"라고 말한다                           |
+| 기술 검증자          | 44    | the evidence harness drives a mouse mechanic deleted 22 commits ago         |
+| 공간 · 레벨 디자이너 | 34    | 2 of 6 climbs sit inside their own blockers                                 |
 
 **Average 39.3.** My own earlier estimate was 51.8. The gap is not that the build got worse between
 the two — it is that these personas were made to cite `file:line` or an image filename for every
@@ -335,18 +346,18 @@ Before diagnosing the game, diagnose the thing doing the looking.
 
 ### Round 1 results (all verified by control comparison or real browser)
 
-| defect | how it was found | evidence it is fixed |
-| --- | --- | --- |
-| 2 of 6 climbs unenterable | persona cited `kitchen.ts:267` / `:217` against `nav.ts:489` | new guard is RED on the old file, GREEN on the new; `bin.inside.food` reachable |
-| 2 chair climb mouths 134 mm apart | **my new guard**, not the personas | guard GREEN at 267 mm |
-| trap ground the colony 14 → 2 in 40 s | traced the run at 20 s intervals | routes through a kill zone are refused; population holds |
-| one sweep made the run unwinnable | worklist predicted it before it fired | refuges rebuild; damage clears on retake |
-| alert 3 stopped every worker silently | deliveries froze at 158 for 160 s | rule removed; run 3.47 → 6.07 → win |
-| household could trap the nest doorstep | routes 8 → 2, moisture 85 with food 0 | aim walks outward past a 350 mm sanctuary |
-| Korean described a sealed five-room flat | persona quoted `ko.ts:328/335/177` | `grep` clean outside sealed blocks |
-| F named nowhere on screen | persona traced `boot.ts:99-111` | browser: "F 여기서 페로몬 길 시작" |
-| help card unrecoverable | persona traced `input.ts:146` | browser: Esc restores all 10 lines |
-| floor stains were grey rectangles | persona cited `shapes.ts:151` + the frames | organic outline; puddle contained |
+| defect                                   | how it was found                                             | evidence it is fixed                                                            |
+| ---------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| 2 of 6 climbs unenterable                | persona cited `kitchen.ts:267` / `:217` against `nav.ts:489` | new guard is RED on the old file, GREEN on the new; `bin.inside.food` reachable |
+| 2 chair climb mouths 134 mm apart        | **my new guard**, not the personas                           | guard GREEN at 267 mm                                                           |
+| trap ground the colony 14 → 2 in 40 s    | traced the run at 20 s intervals                             | routes through a kill zone are refused; population holds                        |
+| one sweep made the run unwinnable        | worklist predicted it before it fired                        | refuges rebuild; damage clears on retake                                        |
+| alert 3 stopped every worker silently    | deliveries froze at 158 for 160 s                            | rule removed; run 3.47 → 6.07 → win                                             |
+| household could trap the nest doorstep   | routes 8 → 2, moisture 85 with food 0                        | aim walks outward past a 350 mm sanctuary                                       |
+| Korean described a sealed five-room flat | persona quoted `ko.ts:328/335/177`                           | `grep` clean outside sealed blocks                                              |
+| F named nowhere on screen                | persona traced `boot.ts:99-111`                              | browser: "F 여기서 페로몬 길 시작"                                              |
+| help card unrecoverable                  | persona traced `input.ts:146`                                | browser: Esc restores all 10 lines                                              |
+| floor stains were grey rectangles        | persona cited `shapes.ts:151` + the frames                   | organic outline; puddle contained                                               |
 
 **First honest performance measurement on this branch** — real Chrome, Apple M1, GPU timer query,
 three routes walked, population 2 → 9, one live threat:
@@ -390,12 +401,12 @@ rectangles")을 치명으로 지목했다.
 방향의 근거였으므로 가정하지 않고 시험했다. 그라디언트를 야간 값에서 순백까지, 빌드를 매
 단계 검증하며:
 
-| sky | frame mean | pure black |
-| --- | --- | --- |
-| #4d6b82 | 40.99 % | 3.21 % |
-| #8fb4d8 | 40.50 % | 3.34 % |
-| #cfe0f0 | 40.23 % | 3.46 % |
-| #ffffff | 40.60 % | 3.34 % |
+| sky     | frame mean | pure black |
+| ------- | ---------- | ---------- |
+| #4d6b82 | 40.99 %    | 3.21 %     |
+| #8fb4d8 | 40.50 %    | 3.34 %     |
+| #cfe0f0 | 40.23 %    | 3.46 %     |
+| #ffffff | 40.60 %    | 3.34 %     |
 
 단조롭지 않고 캡처 노이즈 안이다. `scene.environment`를 null로 두면 오히려 낫고,
 `envMapIntensity` 1→6도 무반응이다. 텍스처는 바인딩돼 있다(25 → 27). **왜인지 모른다.**
@@ -404,11 +415,11 @@ rectangles")을 치명으로 지목했다.
 
 제거 실험. 각 케이스마다 치환 확인 · typecheck · build · 캡처 PASS를 모두 검증:
 
-| 케이스 | frame mean | pure black |
-| --- | --- | --- |
-| 기준 | 40.22 % | 3.46 % |
-| 앰비언트 0.04 → **0.6** (15배) | 40.16 % | **3.46 %** |
-| 오클루전 페이드 제거 | 40.34 % | 5.28 % |
+| 케이스                         | frame mean | pure black |
+| ------------------------------ | ---------- | ---------- |
+| 기준                           | 40.22 %    | 3.46 %     |
+| 앰비언트 0.04 → **0.6** (15배) | 40.16 %    | **3.46 %** |
+| 오클루전 페이드 제거           | 40.34 %    | 5.28 %     |
 
 **앰비언트를 15배로 올려도 순수 검정이 소수점 둘째 자리까지 동일하다.** 두 결과를 합치면
 결론은 하나다: 남은 검정 픽셀들은 **조명이 부족한 표면이 아니라, 어떤 조명 항도 닿지 않는
@@ -463,11 +474,11 @@ build의 종료 코드, 캡처가 PASS를 냈는지를 각각 확인하고, 하�
 라이브러리 재질 **전부**를 순백으로 강제했다. 치환이 먹혔다는 증거는 프레임 평균이 크게
 뛴 것이다. 그런데 순수 검정은 움직이지 않는다.
 
-| 케이스 | frame mean | pure black |
-| --- | --- | --- |
-| 기준 | 40.61 % | 3.34 % |
+| 케이스                    | frame mean  | pure black |
+| ------------------------- | ----------- | ---------- |
+| 기준                      | 40.61 %     | 3.34 %     |
 | 라이브러리 재질 전부 흰색 | **58.31 %** | **3.46 %** |
-| 바퀴 재질 전부 흰색 | 40.49 % | 3.34 % |
+| 바퀴 재질 전부 흰색       | 40.49 %     | 3.34 %     |
 
 세 개의 부정 결과를 합치면: 남은 순수 검정은 **조명이 부족한 표면이 아니고, 라이브러리
 재질도 아니고, 바퀴도 아니다.** 앰비언트 15배·환경맵 순백·전 재질 백색 어느 것도 그 픽셀을
@@ -489,12 +500,12 @@ build의 종료 코드, 캡처가 PASS를 냈는지를 각각 확인하고, 하�
 
 **측정한 것**
 
-| 사실 | 근거 |
-| --- | --- |
-| 누수 아님 | `capture.mjs` 20회 재시작, geometries 121 → 121 정확히 복귀 |
-| 동일 조건 변동 | 같은 세션 연속 2회가 **162**, 그다음 **152** |
-| 천장 위치 | `SCENE_CEILINGS.geometries = 160` — 위 변동 폭 **한가운데** |
-| 이전 표본 | 커밋 `93f8604`에서 152. **표본 하나**다 |
+| 사실           | 근거                                                        |
+| -------------- | ----------------------------------------------------------- |
+| 누수 아님      | `capture.mjs` 20회 재시작, geometries 121 → 121 정확히 복귀 |
+| 동일 조건 변동 | 같은 세션 연속 2회가 **162**, 그다음 **152**                |
+| 천장 위치      | `SCENE_CEILINGS.geometries = 160` — 위 변동 폭 **한가운데** |
+| 이전 표본      | 커밋 `93f8604`에서 152. **표본 하나**다                     |
 
 **모르는 것 (추측하지 않는다)**
 
@@ -536,36 +547,36 @@ build의 종료 코드, 캡처가 PASS를 냈는지를 각각 확인하고, 하�
 
 ## 19. 런 길이: 튜닝으로는 닿지 않는다는 것을 계측으로 확정
 
-목표는 한 방에서 25~35분. 측정값은 3.1~4.9분. 이건 유일한 필수 FAIL이고
+목표는 한 방에서 25~~35분. 측정값은 3.1~~4.9분. 이건 유일한 필수 FAIL이고
 `tests/unit/run.test.ts`에 `it.fails`로 살아 있다. 이번에 **왜** 안 움직이는지를 쟀다.
 
 ### 4분이 무엇으로 채워져 있는가 (4런 계측)
 
 brood/20260805, 252초:
 
-| 조건 | 충족 |
-| --- | --- |
-| 적응 | 20초 |
-| 수분 20 | 44초 |
-| 먹이 30 | 142초 |
-| 거점 6/8 | 150초 |
+| 조건                                 | 충족      |
+| ------------------------------------ | --------- |
+| 적응                                 | 20초      |
+| 수분 20                              | 44초      |
+| 먹이 30                              | 142초     |
+| 거점 6/8                             | 150초     |
 | **개체 12 — 마지막 게임플레이 조건** | **169초** |
-| 소탕 발화 | 246초 |
-| 승리 | 252초 |
+| 소탕 발화                            | 246초     |
+| 승리                                 | 252초     |
 
 **169초 이후 77초는 소탕 쿨다운을 기다리는 시간이다 — 런의 31%.**
 scavenging은 121초 → 196초로 37%. 즉 "4분 런"은 **콘텐츠 2.8분 + 대기 1.2분**이다.
 
 ### 지금까지 시도된 지렛대와 결과
 
-| 시도 | 출처 | 결과 |
-| --- | --- | --- |
-| 게이트 비용 ×1.6 / ×2 / ×2.5 (4회) | `house.ts:75-108` | 못 이기거나 굶어 죽음 |
-| 공급량 ×1.7 | 같은 곳 | 런이 **네 배 짧아짐** — 공급은 인구를 통해 복리로 불어난다 |
-| 앞의 두 게이트만 인상 (7번째 시도) | 같은 곳 | 두 빌드 모두 55분에 게이트 0개. 되돌림 |
-| 거점 4 → 8 | 이 세션 | 2.57~3.43분 → 3.29~5.10분. **유일하게 움직인 것** |
-| 부엌 루틴 2 → 6 | 이 세션 | 변화 없음 |
-| 은폐·노출 배선 | 이 세션 | 변화 없음 (오히려 압력이 낮아짐) |
+| 시도                               | 출처              | 결과                                                       |
+| ---------------------------------- | ----------------- | ---------------------------------------------------------- |
+| 게이트 비용 ×1.6 / ×2 / ×2.5 (4회) | `house.ts:75-108` | 못 이기거나 굶어 죽음                                      |
+| 공급량 ×1.7                        | 같은 곳           | 런이 **네 배 짧아짐** — 공급은 인구를 통해 복리로 불어난다 |
+| 앞의 두 게이트만 인상 (7번째 시도) | 같은 곳           | 두 빌드 모두 55분에 게이트 0개. 되돌림                     |
+| 거점 4 → 8                         | 이 세션           | 2.57~~3.43분 → 3.29~~5.10분. **유일하게 움직인 것**        |
+| 부엌 루틴 2 → 6                    | 이 세션           | 변화 없음                                                  |
+| 은폐·노출 배선                     | 이 세션           | 변화 없음 (오히려 압력이 낮아짐)                           |
 
 ### 결정
 
@@ -591,11 +602,11 @@ scavenging은 121초 → 196초로 37%. 즉 "4분 런"은 **콘텐츠 2.8분 + �
 
 `kitchen.crumbs.toekick`의 `rate`를 1.5 / 2.6 / 3.6으로 3시드 × 2빌드 스윕:
 
-| rate | 정점 개체 | 런 길이 |
-| --- | --- | --- |
-| 1.5 | 12~14 | 10.51~19.53분 |
-| 2.6 | 12~14 | 10.26~19.53분 |
-| 3.6 | 12~14 | 10.31~19.53분 |
+| rate | 정점 개체 | 런 길이       |
+| ---- | --------- | ------------- |
+| 1.5  | 12~14     | 10.51~19.53분 |
+| 2.6  | 12~14     | 10.26~19.53분 |
+| 3.6  | 12~14     | 10.31~19.53분 |
 
 **완전히 무변화다.** 일꾼은 적재가 아니라 이동에 시간을 쓴다. 병목은 왕복
 시간당 운반량이고, 채집 속도는 그 식에 거의 들어가지 않는다.
@@ -614,11 +625,11 @@ scavenging은 121초 → 196초로 37%. 즉 "4분 런"은 **콘텐츠 2.8분 + �
 §20에 이어 두 번째 스윕. `workers.ts`의 `crowding = 1 + assigned * 0.85`를
 0.85 / 0.45 / 0.22로 3시드 × 2빌드:
 
-| crowding | 정점 개체 | 비고 |
-| --- | --- | --- |
-| 0.85 | 12~14 | 현행 |
-| 0.45 | 12~14 | 무변화 |
-| 0.22 | 12~16 | 777/brood **패배**, 4242/shadow 정체 25초 |
+| crowding | 정점 개체 | 비고                                      |
+| -------- | --------- | ----------------------------------------- |
+| 0.85     | 12~14     | 현행                                      |
+| 0.45     | 12~14     | 무변화                                    |
+| 0.22     | 12~16     | 777/brood **패배**, 4242/shadow 정체 25초 |
 
 인구는 움직이지 않고 0.22는 런을 깨뜨린다. 제거: 경로당 인원 조정.
 
@@ -629,10 +640,10 @@ scavenging은 121초 → 196초로 37%. 즉 "4분 런"은 **콘텐츠 2.8분 + �
 
 번식 조건은 `food >= 6.5 + pop * 0.0075 * RESERVE`다. 개체 13에서:
 
-| RESERVE | 필요 먹이 | 실측 먹이 범위 |
-| --- | --- | --- |
-| 90 | 15.3 | 9~32 — 자주 감당 가능 |
-| **210** | **27.0** | 9~32 — **대부분 막힘** |
+| RESERVE | 필요 먹이 | 실측 먹이 범위         |
+| ------- | --------- | ---------------------- |
+| 90      | 15.3      | 9~32 — 자주 감당 가능  |
+| **210** | **27.0**  | 9~32 — **대부분 막힘** |
 
 거점이 바닥 근처에 몰려 수입이 공짜였을 때 210은 소탕 한 번을 버티는 완충이었다.
 경로가 방을 가로지르는 지금은 살 수 없는 사치이고, 군체는 13에서 멈춘다.
@@ -646,11 +657,11 @@ scavenging은 121초 → 196초로 37%. 즉 "4분 런"은 **콘텐츠 2.8분 + �
 
 §20·§21의 두 음성 결과가 좁힌 산술 가설을 실행했다. 3시드 × 2빌드, 세 지표 동시 판정:
 
-| reserve | 승리 | 정점 개체(테스트 시드) | 결승선 하락 | 런 길이 |
-| --- | --- | --- | --- | --- |
-| 90 | **5/6 — 패배 1** | 28 | 6/6 | 10.06~**34.23**분 |
-| 150 | **6/6** | **25** | 6/6 | 8.69~23.70분 |
-| 210 | 6/6 | 13 | 6/6 | 9.51~19.53분 |
+| reserve | 승리             | 정점 개체(테스트 시드) | 결승선 하락 | 런 길이           |
+| ------- | ---------------- | ---------------------- | ----------- | ----------------- |
+| 90      | **5/6 — 패배 1** | 28                     | 6/6         | 10.06~**34.23**분 |
+| 150     | **6/6**          | **25**                 | 6/6         | 8.69~23.70분      |
+| 210     | 6/6              | 13                     | 6/6         | 9.51~19.53분      |
 
 **90은 25~35분 설계 구간에 이 프로젝트 사상 처음으로 닿는다**(4242/brood 34.23분).
 그런데도 기각한다 — 20260805/brood가 진다. 나쁜 1분을 흡수하지 못하는 완충은
@@ -677,17 +688,17 @@ scavenging은 121초 → 196초로 37%. 즉 "4분 런"은 **콘텐츠 2.8분 + �
 
 ### 선택 루프를 직접 계측 (bot.ts:411-431, 20260805/brood 전체 런)
 
-| 자원 | 경로 배정 | 기각 사유 집계 |
-| --- | --- | --- |
-| crumbs.toekick | N | considered 17, alreadyRouted 35 |
-| drip.trap | **Y** | considered 28 |
-| fridge.seal | N | considered 28 |
-| rice | N | considered 22 |
-| sponge | **Y** | considered 50 |
-| bin | **Y** | considered 14 |
-| table.crumbs | **Y** | considered 26 |
-| table.ring | **Y** | considered 27 |
-| bin.inside.food | **Y** | considered 4 |
+| 자원            | 경로 배정 | 기각 사유 집계                  |
+| --------------- | --------- | ------------------------------- |
+| crumbs.toekick  | N         | considered 17, alreadyRouted 35 |
+| drip.trap       | **Y**     | considered 28                   |
+| fridge.seal     | N         | considered 28                   |
+| rice            | N         | considered 22                   |
+| sponge          | **Y**     | considered 50                   |
+| bin             | **Y**     | considered 14                   |
+| table.crumbs    | **Y**     | considered 26                   |
+| table.ring      | **Y**     | considered 27                   |
+| bin.inside.food | **Y**     | considered 4                    |
 
 `notFound` 0건, `empty` 0건, `noPath` 0건. **모든 자원이 매번 후보로 검토된다.**
 아홉 중 여섯이 실제로 경로를 받는다. 지는 것들은 점수에서 진다 —
@@ -783,29 +794,29 @@ t=1440  routes=4  foodRoutes=4   food=0   wet=147
 §25가 지목한 실험을 돌렸다. `UPKEEP_FOOD` × `BROOD_RESERVE_SECONDS = 90`,
 3시드 × 2빌드, 네 지표 동시:
 
-| UPKEEP_FOOD | 승리 | 런 길이 | 최소 정점 개체 | 하락 |
-| --- | --- | --- | --- | --- |
-| 0.0075 (현행) | 5/6 | 10.1~**34.2**분 | 22 | 6/6 |
-| 0.0060 (−20%) | 4/6 | 6.9~30.1분 | 19 | 6/6 |
-| 0.0048 (−36%) | 5/6 | 8.4~15.8분 | 16 | 5/6 |
+| UPKEEP_FOOD   | 승리 | 런 길이         | 최소 정점 개체 | 하락 |
+| ------------- | ---- | --------------- | -------------- | ---- |
+| 0.0075 (현행) | 5/6  | 10.1~**34.2**분 | 22             | 6/6  |
+| 0.0060 (−20%) | 4/6  | 6.9~30.1분      | 19             | 6/6  |
+| 0.0048 (−36%) | 5/6  | 8.4~15.8분      | 16             | 5/6  |
 
 **먹이를 싸게 하면 런이 짧아진다.** 군체가 더 빨리 자라 더 빨리 이긴다.
 어느 값도 6/6에 닿지 못한다. §25의 비율 가설은 기각한다.
 
 ### 열 번의 측정이 만든 하나의 결론
 
-| 시도 | 방향 | 결과 |
-| --- | --- | --- |
-| 게이트 비용 ×1.6 / ×2 / ×2.5 | 어렵게 | 못 이기거나 굶어 죽음 |
-| 공급량 ×1.7 | 쉽게 | 런 **4배 짧아짐** |
-| 앞 게이트만 인상 | 어렵게 | 55분에 게이트 0개 |
-| 거점 4 → 8 | 콘텐츠 | +약 1분 |
-| 부엌 루틴 2 → 6 | 콘텐츠 | 변화 없음 |
-| 은폐·노출 배선 | 콘텐츠 | 변화 없음 |
-| 자원 채집 rate ×2.4 | 쉽게 | 변화 없음 (§20) |
-| 경로당 인원 | 쉽게 | 변화 없음, 극단값은 패배 (§21) |
-| 시작 자원 800mm 이동 | 어렵게 | **3.1~4.9 → 8.7~23.7분** |
-| 먹이 유지비 −20% / −36% | 쉽게 | **짧아짐** (§26) |
+| 시도                         | 방향   | 결과                           |
+| ---------------------------- | ------ | ------------------------------ |
+| 게이트 비용 ×1.6 / ×2 / ×2.5 | 어렵게 | 못 이기거나 굶어 죽음          |
+| 공급량 ×1.7                  | 쉽게   | 런 **4배 짧아짐**              |
+| 앞 게이트만 인상             | 어렵게 | 55분에 게이트 0개              |
+| 거점 4 → 8                   | 콘텐츠 | +약 1분                        |
+| 부엌 루틴 2 → 6              | 콘텐츠 | 변화 없음                      |
+| 은폐·노출 배선               | 콘텐츠 | 변화 없음                      |
+| 자원 채집 rate ×2.4          | 쉽게   | 변화 없음 (§20)                |
+| 경로당 인원                  | 쉽게   | 변화 없음, 극단값은 패배 (§21) |
+| 시작 자원 800mm 이동         | 어렵게 | **3.1~~4.9 → 8.7~~23.7분**     |
+| 먹이 유지비 −20% / −36%      | 쉽게   | **짧아짐** (§26)               |
 
 방향이 완벽하게 일관된다. **쉽게 만들면 짧아지고, 어렵게 만들면 진다.**
 유일하게 길이를 늘린 것은 어렵게 만든 쪽(자원 이동)이고, 그것도 승률을 대가로 냈다.
@@ -830,11 +841,11 @@ t=1440  routes=4  foodRoutes=4   food=0   wet=147
 `deliver()`의 수입에 군체 규모 체감 `/(1 + population/K)`를 넣고 출하 설정
 (reserve 150)에서 한 번에 한 변수만:
 
-| K | 승리 | 런 길이 | 최소 정점 | 최장 정체 |
-| --- | --- | --- | --- | --- |
-| 없음 | **6/6** | 8.7~23.7분 | 14 | 17초 |
-| 40 | 3/6 | 10.9~**60.0**분 (하나는 상한에서 미완) | 16 | 21초 |
-| 22 | 2/6 | 11.5~23.8분 | 13 | 16초 |
+| K    | 승리    | 런 길이                                | 최소 정점 | 최장 정체 |
+| ---- | ------- | -------------------------------------- | --------- | --------- |
+| 없음 | **6/6** | 8.7~23.7분                             | 14        | 17초      |
+| 40   | 3/6     | 10.9~**60.0**분 (하나는 상한에서 미완) | 16        | 21초      |
+| 22   | 2/6     | 11.5~23.8분                            | 13        | 16초      |
 
 **길어지긴 한다 — 58분, 60분 상한 초과. 그런데 이기지 못해서 길어진다.**
 두 세션 전 게이트 비용 ×2.5의 "45분에 승리 없음"과 같은 실패 양식이다.
@@ -870,11 +881,11 @@ t=1440  routes=4  foodRoutes=4   food=0   wet=147
 
 측정:
 
-| 시드 | 부엌 루틴 | 빌드 밖 루틴 | 결과 |
-| --- | --- | --- | --- |
-| 20260805 | 6/6 | **0** | 승 10.28분 |
-| 777 | 6/6 | **0** | 승 9.04분 (이전 23.70분) |
-| 4242 | 6/6 | **0** | **패** 16.21분 (이전 승) |
+| 시드     | 부엌 루틴 | 빌드 밖 루틴 | 결과                     |
+| -------- | --------- | ------------ | ------------------------ |
+| 20260805 | 6/6       | **0**        | 승 10.28분               |
+| 777      | 6/6       | **0**        | 승 9.04분 (이전 23.70분) |
+| 4242     | 6/6       | **0**        | **패** 16.21분 (이전 승) |
 
 `test:slow` 18/19 — 정점 개체 17, 기준 20.
 
@@ -908,12 +919,12 @@ if (!run.house.regions.some((r) => r.id === spec.region)) continue;
 
 ### 결과
 
-| 역할 대응 SPECS | L* | 판정 |
-| --- | --- | --- |
-| `floorVinyl` (바닥) | 38.5 | 기준 |
-| `cabinetDoor` (캐비닛 면) | **19.4** | 고침 — 이전 42.3으로 바닥보다 밝았다 |
-| `worktop` (조리대) | 62.4 | 바닥보다 밝음 — 창 밑 상판으로 타당, 사다리에 단 없음 |
-| `laminate` / `plasterWall` / `tileWall` | 71.0 / 64.1 / 85.3 | 사다리에 단 없음 |
+| 역할 대응 SPECS                         | L*                 | 판정                                                  |
+| --------------------------------------- | ------------------ | ----------------------------------------------------- |
+| `floorVinyl` (바닥)                     | 38.5               | 기준                                                  |
+| `cabinetDoor` (캐비닛 면)               | **19.4**           | 고침 — 이전 42.3으로 바닥보다 밝았다                  |
+| `worktop` (조리대)                      | 62.4               | 바닥보다 밝음 — 창 밑 상판으로 타당, 사다리에 단 없음 |
+| `laminate` / `plasterWall` / `tileWall` | 71.0 / 64.1 / 85.3 | 사다리에 단 없음                                      |
 
 나머지 39개는 소품이다(쌀·종이·유리·천·플라스틱·금속). 바이블의 사다리는 이들에
 단을 매기지 않으며, 매기지 않은 것에 순서 위배를 물을 수 없다.
@@ -925,7 +936,7 @@ if (!run.house.regions.some((r) => r.id === spec.region)) continue;
 
 최대 이격은 `plasterWall` L*64.1 대 바이블의 방 그림자 L*4.5다. 이건 순서가 아니라
 **절대값** 비교이고, 알베도와 화면값의 범주 차이에 정면으로 걸린다 — 단조성 논증이
-닿지 않는 자리다. 렌더된 프레임은 평균 휘도 0.316~0.361, 근검정 0.00~0.63%로
+닿지 않는 자리다. 렌더된 프레임은 평균 휘도 0.316~~0.361, 근검정 0.00~~0.63%로
 측정됐고 밤 부엌으로서 명백히 틀렸다고 말할 근거가 없다. 근거 없이 벽을 어둡게 하면
 §7이 금지한 균일한 어둠으로 가는 길이고, 이 저장소에 그 사건이 두 번 기록돼 있다.
 
@@ -939,10 +950,10 @@ if (!run.house.regions.some((r) => r.id === spec.region)) continue;
 시뮬레이션은 시드된 결정론적 RNG를 쓰므로, 소비자 아홉을 빼면 스트림 전체가 어긋난다.
 3시드로는 체계적 효과와 재추첨을 구분할 수 없다. 8시드 × 2빌드 = 16런으로 다시 쟀다.
 
-| | 승리 | 런 길이 중앙값 | 정점 개체 중앙값 | 정점 ≥ 20 |
-| --- | --- | --- | --- | --- |
-| 현행 | 15/16 | 11.7분 (8.7~23.7) | 17 (14~25) | **3/16** |
-| 지역 게이트 | 14/16 | 10.2분 (8.6~20.2) | 16 (12~21) | 2/16 |
+|             | 승리  | 런 길이 중앙값    | 정점 개체 중앙값 | 정점 ≥ 20 |
+| ----------- | ----- | ----------------- | ---------------- | --------- |
+| 현행        | 15/16 | 11.7분 (8.7~23.7) | 17 (14~25)       | **3/16**  |
+| 지역 게이트 | 14/16 | 10.2분 (8.6~20.2) | 16 (12~21)       | 2/16      |
 
 **총량에서 중립이다.** §28의 판정은 잡음이었고, 되돌림의 근거는 서지 않는다.
 그 수정은 옳고(존재하지 않는 방을 시뮬레이션하지 않는다) 대가는 측정되지 않는다.
@@ -972,9 +983,9 @@ if (!run.house.regions.some((r) => r.id === spec.region)) continue;
 새 단언이 드러낸 "군체가 거점 여덟을 차지하고 3분의 1만 채운다"를 고치라는 지적을
 받았다. 고치기 전에 프레이밍을 확인했다. 616 표본:
 
-| | 비율 |
-| --- | --- |
-| 수용력 도달 | **0%** |
+|                                       | 비율    |
+| ------------------------------------- | ------- |
+| 수용력 도달                           | **0%**  |
 | 수용력 여유는 있는데 먹이 예약에 막힘 | **70%** |
 
 **수용력이 성장을 막은 적이 한 번도 없다.** 막는 것은 `food >= 6.5 + pop × 0.0075 × 150`
@@ -985,13 +996,13 @@ if (!run.house.regions.some((r) => r.id === spec.region)) continue;
 
 이 결합을 풀 상수는 전부 쓸어봤다:
 
-| 지렛대 | 결과 | 기록 |
-| --- | --- | --- |
-| 자원 채집 rate | 정점 개체 무변화 | §20 |
-| 경로당 운반 인원 | 무변화, 극단값은 패배 | §21 |
-| BROOD_RESERVE_SECONDS | 90이면 정점 22~28인데 **패배 1** | §22 |
-| 먹이 유지비 | 낮추면 런이 짧아짐 | §26 |
-| 군체 규모 수입 체감 | 패배 | §27 |
+| 지렛대                | 결과                             | 기록 |
+| --------------------- | -------------------------------- | ---- |
+| 자원 채집 rate        | 정점 개체 무변화                 | §20  |
+| 경로당 운반 인원      | 무변화, 극단값은 패배            | §21  |
+| BROOD_RESERVE_SECONDS | 90이면 정점 22~28인데 **패배 1** | §22  |
+| 먹이 유지비           | 낮추면 런이 짧아짐               | §26  |
+| 군체 규모 수입 체감   | 패배                             | §27  |
 
 reserve 90이 정점 개체를 22~28로 올린다 — 수용력 대비 절반이다. 그래도 6/6을
 못 지킨다. **어떤 상수 하나도 이 비율을 고치지 못한다.**
@@ -1019,12 +1030,12 @@ reserve 90이 정점 개체를 22~28로 올린다 — 수용력 대비 절반이
 바닥에서 볼 수 없는 셋에 `hidden: true`를 붙였다(`bin.inside.food`, `fridge.seal`,
 `table.ring`). 3시드 × 2빌드:
 
-| 시드/빌드 | 결과 | 길이 | 전부 발견 |
-| --- | --- | --- | --- |
-| 20260805/brood | 승 | **10.82분** | 36초 |
-| 20260805/shadow | 패 | 16.50분 | 36초 |
-| 777/brood · shadow | 승 · 승 | 11.98 · 12.64분 | 36초 |
-| 4242/brood · shadow | 승 · 승 | 16.62 · **49.04분** | 36초 |
+| 시드/빌드           | 결과    | 길이                | 전부 발견 |
+| ------------------- | ------- | ------------------- | --------- |
+| 20260805/brood      | 승      | **10.82분**         | 36초      |
+| 20260805/shadow     | 패      | 16.50분             | 36초      |
+| 777/brood · shadow  | 승 · 승 | 11.98 · 12.64분     | 36초      |
+| 4242/brood · shadow | 승 · 승 | 16.62 · **49.04분** | 36초      |
 
 발견은 실제로 일어난다 — tick 0이 아니라 36초다. 그런데 정규 시드가 13.18 → 10.82분으로
 떨어져 방금 소원에서 게이트로 승격시킨 `> 12.5분` 단언을 깬다.
@@ -1040,10 +1051,10 @@ reserve 90이 정점 개체를 22~28로 올린다 — 수용력 대비 절반이
 그래서 순서대로 했다. 먼저 런 길이 단언을 분포 위로 옮기고(같은 빌드 3시드의 중앙값),
 그다음 세 줄을 다시 넣었다. 분포 게이트가 거부했다:
 
-| | brood 3시드 | 중앙값 |
-| --- | --- | --- |
+|               | brood 3시드           | 중앙값    |
+| ------------- | --------------------- | --------- |
 | `hidden` 없음 | 13.18 · 10.45 · 16.21 | **13.18** |
-| `hidden` 셋 | 10.82 · 11.98 · 16.62 | **11.98** |
+| `hidden` 셋   | 10.82 · 11.98 · 16.62 | **11.98** |
 
 **중앙값이 실제로 떨어진다.** 단일 시드 잡음이 아니었고, 첫 되돌림은 옳았다.
 분포 게이트는 남긴다 — 그게 이 답을 낸 도구다.
@@ -1082,8 +1093,7 @@ reserve 90이 정점 개체를 22~28로 올린다 — 수용력 대비 절반이
 
 ```ts
 const waitingOnStores =
-  run.objective.blockerKey === 'blocker.food' ||
-  run.objective.blockerKey === 'blocker.moisture';
+  run.objective.blockerKey === 'blocker.food' || run.objective.blockerKey === 'blocker.moisture';
 run.colony.broodHold = waitingOnStores && run.colony.population >= 12;
 ```
 
@@ -1116,7 +1126,6 @@ run.colony.broodHold = waitingOnStores && run.colony.population >= 12;
 
 계측기를 열네 번 틀렸고, 이번 것은 내가 아니라 적대적 검증자가 찾았다.
 
-
 ## 35. 계측기를 고치니 런이 짧아졌다 — §27은 약해진 게 아니라 강해졌다
 
 §34가 찾은 죽은 트리거를 고쳤다. `tests/bot.ts`의 hold 조건을 도달 불가능한
@@ -1125,10 +1134,10 @@ run.colony.broodHold = waitingOnStores && run.colony.population >= 12;
 
 3시드 brood, 같은 커밋:
 
-| | 런 길이 | 중앙값 |
-| --- | --- | --- |
+|             | 런 길이               | 중앙값    |
+| ----------- | --------------------- | --------- |
 | H 죽어 있음 | 11.22 · 14.31 · 16.76 | **14.31** |
-| H 작동 | 11.22 · 11.95 · 12.17 | **11.95** |
+| H 작동      | 11.22 · 11.95 · 12.17 | **11.95** |
 
 **번식을 관리하는 봇은 더 빨리 이긴다.** 굶주림 나선을 피하니 효율이 올라가고
 결승선에 먼저 닿는다. 이전의 긴 런은 부분적으로 봇이 성장을 잘못 관리한 결과였다.
@@ -1159,13 +1168,13 @@ run.colony.broodHold = waitingOnStores && run.colony.population >= 12;
 
 그래서 이 수정의 증거 등급은 이렇다:
 
-| 검증 | 상태 |
-| --- | --- |
-| 소스 논증 (정렬 순서와 depth write) | 확인 |
-| typecheck · lint · 단위 89/89 · test:slow 19/19 · 빌드 | 통과 |
-| 캡처 (콘솔 0, 경고 0, 20회 재시작 동일) · perf 전 항목 | 통과 |
-| 출하 번들의 런타임 상태 | **확인** — `depthTest:false` 메시 12개, renderOrder 3(링)과 2(필·리본) |
-| **프롭 뒤의 링이 보이는 프레임** | **없음** |
+| 검증                                                   | 상태                                                                   |
+| ------------------------------------------------------ | ---------------------------------------------------------------------- |
+| 소스 논증 (정렬 순서와 depth write)                    | 확인                                                                   |
+| typecheck · lint · 단위 89/89 · test:slow 19/19 · 빌드 | 통과                                                                   |
+| 캡처 (콘솔 0, 경고 0, 20회 재시작 동일) · perf 전 항목 | 통과                                                                   |
+| 출하 번들의 런타임 상태                                | **확인** — `depthTest:false` 메시 12개, renderOrder 3(링)과 2(필·리본) |
+| **프롭 뒤의 링이 보이는 프레임**                       | **없음**                                                               |
 
 §11은 "특정 주장에 대한 기록된 실브라우저 증거 없이 성공을 보고하지 말라"고 한다.
 이 수정이 회귀를 일으키지 않는다는 것은 증거가 있다. **이 수정이 의도한 것을 한다는
@@ -1188,24 +1197,24 @@ run.colony.broodHold = waitingOnStores && run.colony.population >= 12;
 흔적을 남기고, 다수 승리 규칙은 이미 "전부는 필요 없다"고 말한다.
 
 ```ts
-const spread = 1 / (1 + heldHere * 0.12);   // 2곳 0.81 · 8곳 0.51
+const spread = 1 / (1 + heldHere * 0.12); // 2곳 0.81 · 8곳 0.51
 region.evidence -= EVIDENCE_DECAY * dt * abandoned * max(COOL_FLOOR, 1 - busy) * spread;
 ```
 
 3시드 brood:
 
-| 시드 | 이전 | 이후 |
-| --- | --- | --- |
+| 시드     | 이전       | 이후                                 |
+| -------- | ---------- | ------------------------------------ |
 | 20260805 | 승 12.17분 | **패** 18.07분 · 최대보유 5 · 소탕 0 |
-| 777 | 승 11.95분 | **패** 17.07분 · 최대보유 7 · 소탕 1 |
-| 4242 | 승 11.22분 | **패** 15.76분 · 최대보유 5 · 소탕 0 |
+| 777      | 승 11.95분 | **패** 17.07분 · 최대보유 7 · 소탕 1 |
+| 4242     | 승 11.22분 | **패** 15.76분 · 최대보유 5 · 소탕 0 |
 
 **되돌린다.** 3/3 패배는 튜닝으로 다듬을 여지가 아니라 규칙이 군체를 못 살게
 만든다는 뜻이다.
 
 ### 남는 것
 
-방향은 확인됐다 — 보유에 값을 붙이면 런이 길어지고(11~12분 → 16~18분) 거점
+방향은 확인됐다 — 보유에 값을 붙이면 런이 길어지고(11~~12분 → 16~~18분) 거점
 확장이 실제로 억제된다(8 → 5~7). 그게 정확히 W1이 요구하는 결정이다.
 0.12가 너무 클 뿐이다. 다음 시도는 0.04 / 0.07을 쓸어 승률을 지키는 값을 찾는
 것이고, 이번 세션이 확립한 대로 **승률·정점 개체·결승선 하락·런 길이를 함께**
@@ -1215,11 +1224,11 @@ region.evidence -= EVIDENCE_DECAY * dt * abandoned * max(COOL_FLOOR, 1 - busy) *
 
 §37의 후속 스윕. 3시드 brood, 네 지표 동시:
 
-| k | 승리 | 런 길이 중앙값 | 범위 | 정점 개체 | 최대 보유 | 결승선 하락 |
-| --- | --- | --- | --- | --- | --- | --- |
-| 없음 | **3/3** | 11.95분 | 11.22~12.17 | 13~17 | 6 | 3/3 |
-| **0.04** | 2/3 | **24.87분** | **17.04~27.51** | 14~17 | 7~8 | 3/3 |
-| 0.07 | 1/3 | 14.55분 | 13.71~17.42 | 14~17 | 6~7 | 3/3 |
+| k        | 승리    | 런 길이 중앙값 | 범위            | 정점 개체 | 최대 보유 | 결승선 하락 |
+| -------- | ------- | -------------- | --------------- | --------- | --------- | ----------- |
+| 없음     | **3/3** | 11.95분        | 11.22~12.17     | 13~17     | 6         | 3/3         |
+| **0.04** | 2/3     | **24.87분**    | **17.04~27.51** | 14~17     | 7~8       | 3/3         |
+| 0.07     | 1/3     | 14.55분        | 13.71~17.42     | 14~17     | 6~7       | 3/3         |
 
 **k=0.04의 중앙값 24.87분은 25~35분 목표 구간의 문턱이고 최댓값 27.51분은 그 안이다.**
 프로젝트 통틀어 처음이다. 시작점이 3.1~4.9분이었다.
@@ -1236,6 +1245,7 @@ region.evidence -= EVIDENCE_DECAY * dt * abandoned * max(COOL_FLOOR, 1 - busy) *
 지는지 확인하기 전에는 출하할 수 없다.** 이번 스윕은 총계만 냈다.
 
 다음 단계는 셋 중 하나다:
+
 1. 시드별 결과를 찍어 정규 시드가 이기면 그대로 출하한다.
 2. 정규 시드가 지면 0.045 / 0.05를 좁게 쓸어 승률을 회복하는 값을 찾는다.
 3. 그래도 안 되면 이건 "길이를 승률로 사는" 교환이며, 브리프가 금지한 것은 아니지만
@@ -1260,14 +1270,14 @@ region.evidence -= EVIDENCE_DECAY * dt * abandoned * max(COOL_FLOOR, 1 - busy) *
 
 증거 등급:
 
-| 검증 | 상태 |
-| --- | --- |
-| 소스 (id → 안정적 스케일, ±12%) | 확인 |
-| typecheck · lint · 단위 89/89 · test:slow 19/19 · 빌드 | 통과 |
-| 캡처 (콘솔 0, 경고 0, 20회 재시작 동일, draw call 불변) | 통과 |
-| 런타임 스케일 (경로를 놓고 45초 배달 후 씬 순회) | **확인** — 보이는 몸 3개가 `[0.88, 1.0, 1.101]`. 정찰병 1.0, 일꾼 둘이 서로 25% 차이 |
-| 스크린샷 | `artifacts/evidence/completion/workers/workers-varied.png` |
-| **일꾼 여럿이 빽빽이 겹친 프레임** | **없음** — 45초에 군체가 둘까지만 자란다 |
+| 검증                                                    | 상태                                                                                 |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 소스 (id → 안정적 스케일, ±12%)                         | 확인                                                                                 |
+| typecheck · lint · 단위 89/89 · test:slow 19/19 · 빌드  | 통과                                                                                 |
+| 캡처 (콘솔 0, 경고 0, 20회 재시작 동일, draw call 불변) | 통과                                                                                 |
+| 런타임 스케일 (경로를 놓고 45초 배달 후 씬 순회)        | **확인** — 보이는 몸 3개가 `[0.88, 1.0, 1.101]`. 정찰병 1.0, 일꾼 둘이 서로 25% 차이 |
+| 스크린샷                                                | `artifacts/evidence/completion/workers/workers-varied.png`                           |
+| **일꾼 여럿이 빽빽이 겹친 프레임**                      | **없음** — 45초에 군체가 둘까지만 자란다                                             |
 
 §36에서 W2에 대해 세운 구분과 같다. **"회귀를 일으키지 않는다"는 증거가 있고
 "의도한 것을 한다"는 증거가 없다.** 둘은 다른 주장이다.
@@ -1282,10 +1292,10 @@ region.evidence -= EVIDENCE_DECAY * dt * abandoned * max(COOL_FLOOR, 1 - busy) *
 
 ### 이 세션의 미검증 목록
 
-| 항목 | 소스/게이트 | 시각 확인 |
-| --- | --- | --- |
-| W2 오버레이 (`be8dda4`) | 확인 (출하 번들에서 depthTest:false 12개) | 없음 (§36) |
-| W3 일꾼 변주 (`f7781d3`) | 확인 | 없음 (§39) |
+| 항목                     | 소스/게이트                               | 시각 확인  |
+| ------------------------ | ----------------------------------------- | ---------- |
+| W2 오버레이 (`be8dda4`)  | 확인 (출하 번들에서 depthTest:false 12개) | 없음 (§36) |
+| W3 일꾼 변주 (`f7781d3`) | 확인                                      | 없음 (§39) |
 
 둘 다 §3·§10이 시각으로 규정한 항목이다. 게이트가 초록이라는 것과 계약이
 요구하는 그림이 나온다는 것은 다른 말이고, 이 저장소는 그 혼동 때문에 §11을 갖고 있다.
@@ -1323,10 +1333,10 @@ W3의 남은 증거는 "일꾼 여럿이 겹친 프레임"이고, 두 번 시도
 
 ### 미검증 표 갱신
 
-| 항목 | 소스/게이트 | 런타임 기제 | 시각 |
-| --- | --- | --- | --- |
-| W2 오버레이 | 확인 | 확인 (번들에서 depthTest:false 12개) | 없음 |
-| W3 일꾼 변주 | 확인 | 확인 (`[0.88, 1.0, 1.101]`) | 부분 — 3체 프레임만 |
+| 항목         | 소스/게이트 | 런타임 기제                          | 시각                |
+| ------------ | ----------- | ------------------------------------ | ------------------- |
+| W2 오버레이  | 확인        | 확인 (번들에서 depthTest:false 12개) | 없음                |
+| W3 일꾼 변주 | 확인        | 확인 (`[0.88, 1.0, 1.101]`)          | 부분 — 3체 프레임만 |
 
 둘 다 기제는 실행 중인 빌드에서 확인됐고, 계약이 요구하는 **그림**은 아직이다.
 이제 그 그림을 막고 있는 것이 코드가 아니라 하네스라는 것까지 특정됐다.
@@ -1370,10 +1380,10 @@ D2  t=25.7 → 45.7 → 65.7   20초 대기당 정확히 20초
 
 미검증 표는 그대로다:
 
-| 항목 | 소스/게이트 | 런타임 기제 | 시각 |
-| --- | --- | --- | --- |
-| W2 오버레이 | 확인 | 확인 | **확인 — 아래 §49** |
-| W3 일꾼 변주 | 확인 | 확인 | **확인 — §45, 몸 10개·스케일 10종, `workers-crowd.png`** |
+| 항목         | 소스/게이트 | 런타임 기제 | 시각                                                     |
+| ------------ | ----------- | ----------- | -------------------------------------------------------- |
+| W2 오버레이  | 확인        | 확인        | **확인 — 아래 §49**                                      |
+| W3 일꾼 변주 | 확인        | 확인        | **확인 — §45, 몸 10개·스케일 10종, `workers-crowd.png`** |
 
 플래그 수정 자체는 유지한다. 하네스가 실제 시간으로 도는 것은 그 자체로 옳고,
 캡처가 39초 시점에 배달 20건을 기록하게 된 것도 그 덕이다.
@@ -1385,16 +1395,16 @@ D2  t=25.7 → 45.7 → 65.7   20초 대기당 정확히 20초
 
 비평가가 같은 크롭에서 재측정한 값:
 
-| 지표 | 이전 | 이후 |
-| --- | --- | --- |
-| 플레이 영역 중간톤 (L* 20~40) | 39.6 % | **3.0 %** |
-| 플레이 영역 어두운 값 (L* < 20) | 6.6 % | **61.5 %** |
+| 지표                            | 이전   | 이후       |
+| ------------------------------- | ------ | ---------- |
+| 플레이 영역 중간톤 (L* 20~40)   | 39.6 % | **3.0 %**  |
+| 플레이 영역 어두운 값 (L* < 20) | 6.6 %  | **61.5 %** |
 
 **§7이 금지한 균일한 어둠이다.** 프레임의 60%가 근검정 쪽으로 쏠렸다.
 
 ### 내 검증이 왜 통과했나
 
-나는 프레임 **평균 휘도**와 근검정 비율을 쟀고 0.316~0.361 / 0.00~0.63%로 정상이었다.
+나는 프레임 **평균 휘도**와 근검정 비율을 쟀고 0.316~~0.361 / 0.00~~0.63%로 정상이었다.
 평균은 분포가 무너져도 움직이지 않는다 — 밝은 창과 어두운 캐비닛이 평균에서 서로를
 지운다. 근검정 임계(4%)도 L* 20 근처의 붕괴를 잡지 못한다.
 
@@ -1413,11 +1423,11 @@ D2  t=25.7 → 45.7 → 65.7   20초 대기당 정확히 20초
 
 `cabinetDoor`를 `0x6d6257`로 복귀. 플레이 영역(1520×760 크롭) 분포:
 
-| | 되돌린 뒤 | 회귀 상태 (비평가 측정) |
-| --- | --- | --- |
-| 어두움 (<20%) | **1.3 %** | 61.5 % |
-| 중간톤 (20~40%) | **52.0 %** | 3.0 % |
-| 밝음 (>40%) | 46.7 % | — |
+|                 | 되돌린 뒤  | 회귀 상태 (비평가 측정) |
+| --------------- | ---------- | ----------------------- |
+| 어두움 (<20%)   | **1.3 %**  | 61.5 %                  |
+| 중간톤 (20~40%) | **52.0 %** | 3.0 %                   |
+| 밝음 (>40%)     | 46.7 %     | —                       |
 
 프레임이 회복됐다. 사다리 순서 위반은 다시 열린 채로 두고, 다음에 고칠 때는
 가장 넓은 수직면이 아니라 바닥 쪽에서 접근해야 한다 — 비교의 반대편이고
@@ -1460,11 +1470,11 @@ R7 claimed=- t=206 pop=2 cap=9
 
 ### W3 증거의 현재 상태
 
-| 검증 | 상태 |
-| --- | --- |
-| 소스 (id → 안정적 ±12% 스케일) | 확인 |
-| 런타임 (실행 중인 번들) | 확인 — `[0.88, 1.0, 1.101]`, 세 몸이 서로 다름 |
-| 밀집 프레임 (여럿이 겹침) | **확인** — t=349, 개체 9, 몸 10개에 서로 다른 스케일 10개 (0.88~1.101). `artifacts/evidence/completion/workers/workers-crowd.png` |
+| 검증                           | 상태                                                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| 소스 (id → 안정적 ±12% 스케일) | 확인                                                                                                                              |
+| 런타임 (실행 중인 번들)        | 확인 — `[0.88, 1.0, 1.101]`, 세 몸이 서로 다름                                                                                    |
+| 밀집 프레임 (여럿이 겹침)      | **확인** — t=349, 개체 9, 몸 10개에 서로 다른 스케일 10개 (0.88~1.101). `artifacts/evidence/completion/workers/workers-crowd.png` |
 
 네 번의 시도로 장애물이 세 겹이었음이 드러났다: 스크립트의 `best` 버그(§41),
 헤드리스 rAF 스로틀(§40), 그리고 하네스에 차지 수단이 없던 것(여기). 셋 다 고쳤고
@@ -1495,7 +1505,6 @@ claim#3@235s (food 3, routes 5)
 군체를 주지 않는다**는 사실이었고, 그건 옳은 동작이다. 밀집 프레임을 원하면 봇처럼
 경로를 여럿 놓고 몇 분을 더 돌려야 한다.
 
-
 ## 45. W3의 밀집 프레임이 나왔다 — 네 번째 시도, 세 결함을 고친 뒤
 
 봇처럼 몰았다: 시작 즉시 경로 셋, 30초마다 거점 차지와 경로 추가, 5분 이상.
@@ -1525,10 +1534,10 @@ const dt = Math.min(0.05, steps * SIM_DT || 1 / 60);
 스텝을 하나도 만들지 않은 프레임에 시각 시간 16.7 ms를 통째로 청구한다.
 패널이 두 경로를 그대로 복제해 잰 값:
 
-| | 60 Hz | 120 Hz | 144 Hz | 240 Hz |
-| --- | --- | --- | --- | --- |
+|                       | 60 Hz | 120 Hz    | 144 Hz    | 240 Hz    |
+| --------------------- | ----- | --------- | --------- | --------- |
 | 시각 시간 / 실제 시간 | 1.00× | **2.00×** | **2.40×** | **4.00×** |
-| 스텝 0 프레임 | 0/600 | 600/1200 | 840/1440 | 1800/2400 |
+| 스텝 0 프레임         | 0/600 | 600/1200  | 840/1440  | 1800/2400 |
 
 이 `dt`는 오클루전·카메라 감쇠·보행·위협 맥동·오디오 베드에 전부 들어간다.
 `DEFAULT_FADE_SECONDS = 0.22`가 144 Hz에서 **92 ms**가 되고, §3이 요구하는
@@ -1557,11 +1566,11 @@ draw 438/900 · triangles 174k/400k · geometries 141/196.
 
 ### 잰 것과 못 잰 것
 
-| 주장 | 상태 |
-| --- | --- |
+| 주장                                    | 상태                                |
+| --------------------------------------- | ----------------------------------- |
 | 시각 타임베이스가 144 Hz에서 실시간이다 | **측정** — frames 1099 / sim 7.63 s |
-| perf 전 항목이 HEAD에서 초록이다 | **측정** — 조용한 기계, 부하 2.45 |
-| 페이드가 §3의 150~300 ms 안에 있다 | **측정** — 144 Hz에서 **250 ms** |
+| perf 전 항목이 HEAD에서 초록이다        | **측정** — 조용한 기계, 부하 2.45   |
+| 페이드가 §3의 150~300 ms 안에 있다      | **측정** — 144 Hz에서 **250 ms**    |
 
 처음 시도는 40초 동안 아무 오클루더도 못 잡았다 — 정찰병이 싱크대 밑에서 시작하므로
 카메라와 몸 사이에 프롭이 오는 구도가 저절로 나오지 않는다. §45와 같은 교훈이다.
@@ -1584,11 +1593,11 @@ draw 438/900 · triangles 174k/400k · geometries 141/196.
 `695bc84`가 수용력을 보급에 이으면서 그 아래 상수의 세계가 바뀌었다. §22의 교훈대로
 다시 유도했다. 3시드 × 2빌드:
 
-| k | 승리 | brood 런 길이 | 중앙값 |
-| --- | --- | --- | --- |
-| **0.04** (현행) | **5/6** | 17.04 / 21.57 / 23.25 | 21.57 |
-| 0.055 | 3/6 | 12.48 / **26.65** / **30.50** | **26.65** |
-| 0.07 | 4/6 | 12.48 / 13.70 / 18.42 | 13.70 |
+| k               | 승리    | brood 런 길이                 | 중앙값    |
+| --------------- | ------- | ----------------------------- | --------- |
+| **0.04** (현행) | **5/6** | 17.04 / 21.57 / 23.25         | 21.57     |
+| 0.055           | 3/6     | 12.48 / **26.65** / **30.50** | **26.65** |
+| 0.07            | 4/6     | 12.48 / 13.70 / 18.42         | 13.70     |
 
 **0.055의 중앙값 26.65분은 25~35 구간 안이다.** 두 런이 구간 안에 들어간다(26.65, 30.50).
 그리고 승률이 5/6에서 3/6으로 떨어진다.
@@ -1604,11 +1613,11 @@ draw 438/900 · triangles 174k/400k · geometries 141/196.
 
 구간에 세 번 닿았고 **세 번 다 같은 값을 요구했다**:
 
-| 언제 | 설정 | 중앙값 | 승률 |
-| --- | --- | --- | --- |
-| §22 | 예약 90 | 34.23분(최대) | 5/6 — 정규 시드 패배 |
-| §38 | 보유세 0.04 (수용력 수정 전) | 24.87분 | 5/6 |
-| §47 | 보유세 0.055 (수용력 수정 후) | **26.65분** | **3/6** |
+| 언제 | 설정                          | 중앙값        | 승률                 |
+| ---- | ----------------------------- | ------------- | -------------------- |
+| §22  | 예약 90                       | 34.23분(최대) | 5/6 — 정규 시드 패배 |
+| §38  | 보유세 0.04 (수용력 수정 전)  | 24.87분       | 5/6                  |
+| §47  | 보유세 0.055 (수용력 수정 후) | **26.65분**   | **3/6**              |
 
 **구간은 도달 불가능하지 않다. 매번 승률이 값이다.** 그리고 그 교환은 상수를 더
 돌린다고 사라지지 않는다 — 열네 번의 스윕이 같은 벽을 보여줬다.
@@ -1621,10 +1630,10 @@ draw 438/900 · triangles 174k/400k · geometries 141/196.
 §47이 "남은 경로는 콘텐츠"라고 적었다. 새 문자열이 필요 없는 콘텐츠 하나를 시험했다 —
 `SWEEPS_TO_SURVIVE`를 1에서 2로. 가격이 아니라 할 일을 더하는 쪽이다.
 
-| | 승리 | brood 런 길이 | 중앙값 |
-| --- | --- | --- | --- |
-| 1 (현행) | 5/6 | 17.04 / 21.57 / 23.25 | 21.57 |
-| 2 | 5/6 | 17.04 / 21.57 / 23.25 | 21.57 |
+|          | 승리 | brood 런 길이         | 중앙값 |
+| -------- | ---- | --------------------- | ------ |
+| 1 (현행) | 5/6  | 17.04 / 21.57 / 23.25 | 21.57  |
+| 2        | 5/6  | 17.04 / 21.57 / 23.25 | 21.57  |
 
 **자릿수까지 동일하다.** 런들이 이미 승리 시점에 소탕을 둘 이상 겪고 있으므로 둘을
 요구해도 아무것도 막지 않는다. 지렛대가 무력하다.
@@ -1639,7 +1648,6 @@ draw 438/900 · triangles 174k/400k · geometries 141/196.
 문자열·막마다의 밸런스·매번의 재측정을 요구하고, 그건 §21이 "끝낼 수 없는 예산으로
 시작할 일이 아니다"라고 적은 규모다. 첫 막(`updateFinal` → `chapter.final`)이 착지해
 기제가 도는 것은 확인됐으니, 다음은 두 번째 막을 저작하는 일이다.
-
 
 ## 49. W2의 프레임을 찍었다 — 페이드 중인 오클루더 여덟과 오버레이 열다섯이 같은 프레임에
 
@@ -1672,11 +1680,11 @@ overlays=15  fadedOccluders=8  routes=3
 
 4차 아트 비평이 47을 매기며 원인을 지목했고, 그건 내 수정이다.
 
-| 상태 | 플레이 영역 |
-| --- | --- |
-| 캐비닛 어둡게 (`969a504`) | L*<20이 **61.5 %** — §7 균일한 어둠 |
-| 바닥 밝게 (`f2f7837`) | 평균 **L\* 50.2**, 바닥 패치 0.688 — 이 프로젝트가 이미 기각한 값보다 밝다 |
-| 되돌린 뒤 (HEAD) | 프레임 평균 0.428 |
+| 상태                      | 플레이 영역                                                                |
+| ------------------------- | -------------------------------------------------------------------------- |
+| 캐비닛 어둡게 (`969a504`) | L*<20이 **61.5 %** — §7 균일한 어둠                                        |
+| 바닥 밝게 (`f2f7837`)     | 평균 **L\* 50.2**, 바닥 패치 0.688 — 이 프로젝트가 이미 기각한 값보다 밝다 |
+| 되돌린 뒤 (HEAD)          | 프레임 평균 0.428                                                          |
 
 **같은 문서를 양쪽에서 만족시키려다 양쪽으로 넘어갔다.** `ART_BIBLE.md`의 사다리는
 **밤 실내의 화면값**을 규정하는데 나는 두 번 다 **알베도**에 적용했다. §29에서 그 범주
@@ -1738,11 +1746,11 @@ lights-zero+white    mean=0.4049  pureBlack=0.21%
 §51에서 앵커를 틀려 아무것도 재지 못했다. `slot.intensity`(`lighting.ts:236`)로 다시 걸고
 비평가의 순서를 그대로 돌렸다:
 
-| 상태 | 프레임 평균 | 순수검정 |
-| --- | --- | --- |
-| A 기준선 | 0.4049 | 0.21 % |
-| B 여섯 슬롯 강도 0 | **0.0119** | **84.05 %** |
-| C B + 흰 하늘 | **0.0119** | **84.05 %** |
+| 상태               | 프레임 평균 | 순수검정    |
+| ------------------ | ----------- | ----------- |
+| A 기준선           | 0.4049      | 0.21 %      |
+| B 여섯 슬롯 강도 0 | **0.0119**  | **84.05 %** |
+| C B + 흰 하늘      | **0.0119**  | **84.05 %** |
 
 **B에서 방이 캄캄해진다** — 여섯 스포트라이트가 프레임의 거의 전부다. 그리고 **C가 B와
 소수점 넷째 자리까지 같다.** 조명을 전부 끈 상태에서 하늘을 검정에서 흰색으로 바꿨는데
@@ -1778,7 +1786,7 @@ lights-zero+white    mean=0.4049  pureBlack=0.21%
 
 남은 유력 용의자는 `night.ts:29`가 스스로 적어둔 것이다 — `customProgramCacheKey()`가
 `onBeforeCompile.toString()`을 반환하므로 **모든 야간 재질이 프로그램 하나를 공유한다.**
-그리고 같은 파일 :131이 이미 기록한다: `scene.environment`를 null로 토글해도, 
+그리고 같은 파일 :131이 이미 기록한다: `scene.environment`를 null로 토글해도,
 `envMapIntensity`를 1에서 6으로 올려도 아무것도 움직이지 않는다. 셰이더가 환경을
 **샘플링하지 않는다**는 뜻이고, 공유 프로그램이 그 이유일 수 있다.
 
@@ -1797,12 +1805,12 @@ lights-zero+white    mean=0.4049  pureBlack=0.21%
 
 이제 네 가지 독립적 조작이 전부 무반응이다:
 
-| 조작 | 결과 |
-| --- | --- |
-| 하늘 `#4d6b82` → `#ffffff` | 무변화 |
-| `scene.environment = null` | 무변화 (저장소 기존 기록) |
-| `envMapIntensity` 1 → 6 | 무변화 (저장소 기존 기록) |
-| **`scene.environmentIntensity` 1 → 40** | **무변화** |
+| 조작                                    | 결과                      |
+| --------------------------------------- | ------------------------- |
+| 하늘 `#4d6b82` → `#ffffff`              | 무변화                    |
+| `scene.environment = null`              | 무변화 (저장소 기존 기록) |
+| `envMapIntensity` 1 → 6                 | 무변화 (저장소 기존 기록) |
+| **`scene.environmentIntensity` 1 → 40** | **무변화**                |
 
 값의 문제가 아니다. 환경 항이 셰이더에 **존재하지 않는다.** `night.ts:131`이
 "거의 기여하지 않는데 이유를 모르겠다"로 남긴 것은 이제 "기여 경로가 없다"로
@@ -1818,15 +1826,14 @@ lights-zero+white    mean=0.4049  pureBlack=0.21%
 갈라지면 원인은 그 재질이고, 안 갈라지면 `makeGradientEnv`가 돌려주는 텍스처 쪽이다
 — `pmrem.dispose()`가 `target.texture` 반환 앞에 있다.
 
-
 ## 53. 두 용의자를 모두 배제했다 — 환경이 죽은 이유는 아직 모른다
 
 §52가 확정한 것(환경 기여가 정확히 0)에 대해 용의자 둘을 측정으로 검사했다.
 둘 다 아니다.
 
-| 검사 | 결과 |
-| --- | --- |
-| 조명 0 (대조) | mean **0.0119** |
+| 검사                                      | 결과            |
+| ----------------------------------------- | --------------- |
+| 조명 0 (대조)                             | mean **0.0119** |
 | 조명 0 + `pmrem.dispose()` 제거 + 흰 하늘 | mean **0.0119** |
 
 `pmrem.dispose()`가 `target.texture` 반환 앞에 있는 것은 원인이 아니다. 제거하고
@@ -1882,12 +1889,12 @@ r185의 표준 프래그먼트에서 환경 항을 담고 있는 청크인지 �
 §54는 "하네스 부팅 실패"를 기록하고 다음 세션에 확인하라고 남겼다. 확인했다. **실패는 없었다.**
 네 개의 서로 다른 계측 오류가 겹쳐 있었을 뿐이다.
 
-| # | 증상 | 실제 원인 |
-| - | ---- | --------- |
-| 22 | 탐침 출력이 0줄 | 탐침을 `/tmp`에 둬서 `@playwright/test` 해석 실패. 내 `grep`이 그 오류를 삼킴 — 탐침은 아무것도 검사한 적이 없다 |
-| 23 | `window.__game` 30초 타임아웃 | `vite preview`는 `base:'./'`라 dist를 루트에 마운트한다. `/bug-game/`로 접근하니 index만 SPA 폴백으로 200이고 **번들은 404**였다 |
-| 24 | Chrome `ERR_CONNECTION_REFUSED` | Chrome이 루프백에 못 간다. LAN IP(`172.30.1.44`)로는 즉시 성공 — 게임과 무관 |
-| 25 | 캔버스 평균 휘도 0, 아주 어두운 픽셀 100% | WebGL 캔버스는 `preserveDrawingBuffer: false`라 `drawImage` 판독이 빈 화면을 준다 |
+| #   | 증상                                      | 실제 원인                                                                                                                        |
+| --- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 22  | 탐침 출력이 0줄                           | 탐침을 `/tmp`에 둬서 `@playwright/test` 해석 실패. 내 `grep`이 그 오류를 삼킴 — 탐침은 아무것도 검사한 적이 없다                 |
+| 23  | `window.__game` 30초 타임아웃             | `vite preview`는 `base:'./'`라 dist를 루트에 마운트한다. `/bug-game/`로 접근하니 index만 SPA 폴백으로 200이고 **번들은 404**였다 |
+| 24  | Chrome `ERR_CONNECTION_REFUSED`           | Chrome이 루프백에 못 간다. LAN IP(`172.30.1.44`)로는 즉시 성공 — 게임과 무관                                                     |
+| 25  | 캔버스 평균 휘도 0, 아주 어두운 픽셀 100% | WebGL 캔버스는 `preserveDrawingBuffer: false`라 `drawImage` 판독이 빈 화면을 준다                                                |
 
 **25번이 중요하다.** 실제 Playwright 스크린샷의 평균 휘도는 **0.4103**, 아주 어두운 픽셀 **0.56%**다.
 4·5차 패널이 보고한 "프레임 평균 0.0105"와 "여섯 스포트라이트 영구 강도 0"은 같은 종류의 판독일
@@ -1910,6 +1917,7 @@ r185의 표준 프래그먼트에서 환경 항을 담고 있는 청크인지 �
 명시하므로, 카메라를 당기면 limb 두께도 함께 재도출해야 한다.
 
 ### 다음 세션의 순서
+
 1. `capture.mjs`의 휘도 게이트가 캔버스 판독을 쓰는지 확인한다 — 쓴다면 25번과 같은 함정이고 스크린샷 기반으로 바꿔야 한다.
 2. `BASE_URL`이 실제로 마운트되는 경로인지 고정한다(23번 재발 방지). 서빙은 `/tmp/bg-serve/bug-game -> dist` 심볼릭 링크 + `python3 -m http.server`로 재현했다.
 3. 그 뒤에 아트를 다시 진단한다. **§52~§53의 결론을 그대로 신뢰하지 말 것** — 그 측정들이 25번과 같은 계측을 썼는지부터 확인한다.
@@ -2022,6 +2030,7 @@ typecheck 통과 · 단위 89/89 · 빌드 성공
 P0의 한 축일 뿐이고 판 깊이와 결은 그대로다. 다음 패스가 이어서 해야 할 일이다.
 
 ### 다음 순서
+
 1. 문 P0 마저 닫기 — 판 깊이를 키우고 결/색 변주를 준다.
 2. 바닥 P1 — 타일 줄눈과 마모. 화면에서 가장 큰 면이라 점수 기여가 가장 클 것이다.
 3. 광원 P1 — 흰 덩어리 뒤에 기구 지오메트리를 놓는다.
@@ -2032,12 +2041,12 @@ P0의 한 축일 뿐이고 판 깊이와 결은 그대로다. 다음 패스가 �
 외부 모델(Codex)로 서로 다른 세 페르소나를 읽기 전용으로 돌렸다. 같은 모델이 만들고 같은 모델이
 채점하는 구조를 깨는 것이 목적이었다.
 
-| 페르소나 | 점수 |
-| -------- | ---- |
-| 버그/기술 | **72** |
-| 방향/프로덕트 | **57** |
-| 아트(§58, Claude 페르소나) | 58 |
-| **게임성** | **43** |
+| 페르소나                   | 점수   |
+| -------------------------- | ------ |
+| 버그/기술                  | **72** |
+| 방향/프로덕트              | **57** |
+| 아트(§58, Claude 페르소나) | 58     |
+| **게임성**                 | **43** |
 
 **세 페르소나가 독립적으로 같은 근본 원인에 도달했다: 재미가 없고, 이유는 결정이 없다는 것이다.**
 
@@ -2120,12 +2129,12 @@ draw calls 328 · triangles 158758   ← §58과 동일. 렌더 비용 0
 봇은 키를 누르지 못한다. 밸런스가 실제로 걸린 유일한 분기가 어떤 자동 실행도 못 만지는 분기였다.
 `layBait(run)`으로 시뮬레이션 층에 빼내고 봇이 누르게 했다. 그러자 측정이 가능해졌고, 즉시 깨졌다.
 
-| 조건 | 결과 |
-| ---- | ---- |
-| 미끼 없음 (기준선) | **19/19 통과** |
-| 미끼, `BAIT_EVIDENCE = 0.25` | 3 실패 — 거점 4/8, `run.won` 없음 |
-| 미끼, **`BAIT_EVIDENCE = 0.02`** (사실상 공짜) | **동일하게 3 실패** |
-| 미끼, 이미 승리 지분 보유 시에만 허용 | 여전히 실패, 거점 3/8 |
+| 조건                                           | 결과                              |
+| ---------------------------------------------- | --------------------------------- |
+| 미끼 없음 (기준선)                             | **19/19 통과**                    |
+| 미끼, `BAIT_EVIDENCE = 0.25`                   | 3 실패 — 거점 4/8, `run.won` 없음 |
+| 미끼, **`BAIT_EVIDENCE = 0.02`** (사실상 공짜) | **동일하게 3 실패**               |
+| 미끼, 이미 승리 지분 보유 시에만 허용          | 여전히 실패, 거점 3/8             |
 
 **증거 가중치를 0.02까지 낮춰도 결과가 같다는 것이 답이다. 비용은 증거가 아니라 잃어버린 75초다.**
 군체는 그 시간에 무너진 거점을 수리하고 비축을 회복한다. 밸런스상 그 대기는 일하고 있었다.

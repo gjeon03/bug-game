@@ -50,7 +50,9 @@ const browser = await chromium.launch({ args: ['--use-gl=angle', '--enable-unsaf
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
-page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+page.on('console', (m) => {
+  if (m.type() === 'error') errors.push(m.text());
+});
 
 await page.goto(BASE, { waitUntil: 'load' });
 await page.waitForFunction(() => window.__game !== undefined, { timeout: 60000 });
@@ -64,11 +66,11 @@ await page.waitForTimeout(300);
 
 const MM = 35 / 26;
 for (const room of ROOMS) {
-  for (const [tag, mmDist] of [['near', room.near], ['wide', room.wide]]) {
-    await page.evaluate(
-      ([id, d]) => window.__game.viewRegion(id, d),
-      [room.id, mmDist / MM],
-    );
+  for (const [tag, mmDist] of [
+    ['near', room.near],
+    ['wide', room.wide],
+  ]) {
+    await page.evaluate(([id, d]) => window.__game.viewRegion(id, d), [room.id, mmDist / MM]);
     // Long enough for several animation frames, so the lock is proven to hold rather than assumed.
     await page.waitForTimeout(900);
     const name = `${room.id}-${tag}.png`;

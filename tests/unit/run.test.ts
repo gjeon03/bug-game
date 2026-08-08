@@ -4,11 +4,21 @@ import { playRun, type BotTrace } from '../bot';
 import type { AdaptationFamily, Run } from '../../src/colony/types';
 
 /**
- * SLOW SUITE — run with `pnpm test:slow`, not `pnpm test`.
+ * THE DESIGN GATE. In `pnpm test`, and it must stay there.
  *
- * Each describe block plays a complete run at 60 Hz. It was previously in the default gate and made
- * `pnpm test` never finish, which an independent technical verifier caught by killing it after
- * 600 s with two workers still pegged at 100 % CPU. A gate nobody can run to the end is not a gate.
+ * Each describe block plays a complete run at 60 Hz. This file was exiled to a `test:slow` script
+ * because it once made `pnpm test` never finish — an independent verifier killed it after 600 s with
+ * two workers pegged at 100 % CPU. That was true of the whole-home tree with a bot that froze on
+ * stale polylines. **It is no longer true, and nobody re-measured:** this file is 6.3 s, and
+ * `pnpm test` with it included is 11 s.
+ *
+ * The cost of the exile was that the only assertions describing the *game* — is it won, is it paced,
+ * is there ever nothing to do for 45 s, does an extermination actually get survived, do two builds
+ * diverge — sat outside every gate, every precommit and CI, while 89 tests about grids and buffers
+ * reported green. "51 tests pass" was reported several times while this file was red.
+ *
+ * If a change here makes the suite slow again, make the run shorter or the sampling coarser. Do not
+ * move it back out of the gate.
  *
  * Can the game be played, and does playing it well produce the run the design describes?
  *
@@ -159,9 +169,10 @@ describe('a competently played run takes the kitchen', () => {
       .map((seed) => play(seed, 'brood').trace.seconds / MINUTE)
       .sort((a, b) => a - b);
     const median = minutes[1]!;
-    expect(median, `run lengths ${minutes.map((m) => m.toFixed(2)).join(', ')} min`).toBeGreaterThan(
-      12.5,
-    );
+    expect(
+      median,
+      `run lengths ${minutes.map((m) => m.toFixed(2)).join(', ')} min`,
+    ).toBeGreaterThan(12.5);
   });
 
   it('gets the player acting and delivering quickly', () => {

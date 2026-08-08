@@ -1,4 +1,9 @@
-> **STALE — describes the superseded single-kitchen build (branch `main` / commit `df9db36`), not this one.** This document has NOT been rewritten for the whole-home rebuild and parts of it are now wrong. The current, accurate state is `GAUNTLET_STATE.md` (live state, verified measurements, ranked open defects), `CANCELLED_GOAL_HANDOFF_AUDIT.md` (what was inherited and what became of it), and `LOCAL_REVIEW.md` (how to run it). Rewriting this file is outstanding work.
+> **Scope note, 2026-08-09.** The classification vocabulary below (intentional final · authored
+> final · generated final · licensed final · temporary) is current and binding — §7 of `CLAUDE.md`
+> depends on it. The **per-item table** was written for the Canvas2D build and has not been
+> re-derived for the three.js kitchen, where **all art is procedural three.js geometry authored in
+> millimetres and no external asset is downloaded or required**. Treat the vocabulary as law and the
+> item list as historical until an entry is re-verified against `src/view/props/`.
 
 # ASSET_MANIFEST — Baseboard Empire
 

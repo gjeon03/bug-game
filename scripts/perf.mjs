@@ -277,6 +277,8 @@ await browser.close();
 
 const failed = verdict.filter((line) => !line.pass);
 if (failed.length > 0) {
-  console.error(`\n${failed.length} budget line(s) failed: ${failed.map((l) => l.metric).join(', ')}`);
+  console.error(
+    `\n${failed.length} budget line(s) failed: ${failed.map((l) => l.metric).join(', ')}`,
+  );
   process.exit(1);
 }

@@ -1,219 +1,99 @@
-# Gauntlet State
+# 현재 상태 — 이 파일이 유일한 출처
 
-## Status
-CANCELLED
+`CLAUDE.md` §0a. 다른 문서가 이 파일과 다르면 그 문서가 틀렸다. **매 턴 갱신하지 않는다.**
+계측 결과가 결정을 바꿀 때만 갱신한다. 서사는 커밋 메시지에 쓴다.
 
-> Cancelled by the user on 2026-08-08 via `/gauntlet-mode cancel`, mid-run. Nothing below is
-> retracted: the Goal Ledger, every measurement, and the remaining gaps are preserved exactly as
-> they stood so a later `/gauntlet-mode <task>` can pick the thread back up.
->
-> State at cancellation — the scoring bar had been reset twice by the user (5 @ 90 -> 4 @ 80 ->
-> 3 @ 80), and the most recent panel was run through **Codex**, not Claude personas, to break the
-> build-and-grade-with-the-same-model loop: bug/technical **72**, direction **57**, art **58**,
-> gameplay **43**. Gameplay was the binding constraint and all three critics named the same cause —
-> after a route is drawn there is nothing to decide.
->
-> Landed and verified this run: emergency recall (§60, kept). Landed and then **reverted on
-> measurement**: the bait (§61 -> §62) — skipping the 75-second sweep cooldown lost the run even
-> when its evidence cost was dropped to near zero, because the colony spends that window repairing
-> refuges and rebuilding stores. The wait is unengaging, not wasted, and those need different fixes.
->
-> Also corrected here for whoever resumes: `pnpm test` does NOT run the run-length or victory
-> tests. Only `pnpm test:slow` executes `tests/unit/run.test.ts`. Simulation changes verified
-> against the fast suite alone are not verified.
->
-> Full narrative, including 27 instrument failures and the reversals they caused, is in
-> `COMPLETION_RECOVERY.md` §54-§62.
+**브랜치** — `git rev-parse --abbrev-ref HEAD`로 확인. **범위** — 부엌 한 곳(2026-08-07).
 
-## Phase
-ADDRESS
+---
 
-## Depth
-DEEP — a game with visual, gameplay, audio and performance surfaces; multi-system coupling; and a
-recorded history of premature completion claims (CLAUDE.md §11 exists because of it).
+## 0. 품질 기준 (2026-08-09 교체)
 
-## Goal Ledger
+**폐기된 기준: "게임 분야별 페르소나 비평가 4인이 각각 80점 이상."**
 
-**G1 (locked, 2026-08-08)** — Improve the kitchen build until **four different game-discipline
-persona agents each score it 80 or above**, independently and with adversarial verification of
-their findings.
+네 번 측정했다. 평균 51.0 → 52.75 → 52.0, **최저점은 51 → 47로 후퇴**했고 최저점이 기준선이었다.
+네 패널의 처방은 **4건 전부** adversarial 검증에서 `holdsUp=false`였다 — 하나는 전제가 성립하지
+않았고, 하나는 이미 트리에 반영돼 있었고, 하나는 처방 패치가 대수적으로 뒤집혀 회귀를 낳을
+것이었다. 1회당 30~35분과 서브에이전트 9개가 들었고, 그중 한 번은 측정 대상 머신에 부하를 걸어
+정상 빌드를 32.20 ms로 잘못 읽게 만들었다.
 
-Prior context, preserved but superseded as the scoring bar: an earlier standing goal asked for five
-personas at 90+. The last measured average under that rubric was **41.0** (five personas, every
-top-fix challenged; all five challenges returned holdsUp=false). G1 lowers the bar to 4 @ 80 but
-does not discard anything already achieved.
+**분해능 없는 계기의 최솟값을 기준으로 삼으면 개선과 잡음을 구분할 수 없다.** 실제로 구분하지
+못했다.
 
-## Outcome
-A kitchen-only 3D infestation game that four independent game-discipline critics would each sign off
-at 80/100 in their own discipline.
+**새 기준: 아래 결함 원장이 전부 닫히는 것.** 한 항목을 닫는다는 것은 —
+재현 절차 · 고치기 전 수치 · 수정 · 같은 수치 재측정 · 회귀 스위트 그린. 다섯 개 전부.
 
-## Mandatory Criteria
-- [FAIL] Four distinct persona critics each score >= 80. **Fourth measurement, panel `wpy2b4fkp`
-  at HEAD:**
+- 항목은 **플레이어가 관측할 수 있는 증상**으로 쓴다. 점수도, 코드 냄새도 항목이 아니다.
+- 항목은 누구나 연다. 닫는 것은 그 항목을 연 것과 **같은 양을 다시 재는 것**뿐이다.
+- **검증에 실패한 처방은 항목을 열지 않는다.** 진단은 옳을 수 있고 처방이 틀린 것이다.
+- 비평 패널은 **진단 도구로는 계속 쓴다.** 산출물은 후보 항목이고, 점수는 기록하되 게이트가
+  아니다. 좋아졌는지 알려고 돌리지 말고, 무엇이 잘못됐는지 알려고 돌린다.
 
-  | discipline | 1st | 2nd | 3rd | 4th |
-  | --- | --- | --- | --- | --- |
-  | Systems & economy | 36 | 44 | 51 | **48** |
-  | Level & environment | 38 | 52 | 51 | **55** |
-  | Art direction | 52 | 47 | 51 | **47** |
-  | Game feel & technical | 53 | 61 | 58 | **58** |
+---
 
-  **Lowest 51 -> 47. That is backwards**, and it is the number the bar is measured on. Level is the
-  only discipline still climbing (38 -> 55). Art has now scored 47 twice — once with the cabinetDoor
-  regression in the tree and once after it was reverted and the ladder fixed from the floor side, so
-  the second 47 is a different judgement about a different tree and needs reading rather than
-  assuming. Systems gave back 3 points, which is the same direction as the 3.3 min of pacing
-  `695bc84` cost.
+## 1. 기계 게이트 — HEAD 기준
 
-  Four panels in, the mean has barely moved (51.0 -> 52.75 -> 52.0) while the spread has widened.
+| 게이트                             | 상태                                                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------- |
+| typecheck · lint                   | PASS                                                                            |
+| `pnpm test`                        | **108/108, 11.1초** — 전체 런 설계 스위트 19개 포함(2026-08-09 게이트 편입)     |
+| production build + subpath         | PASS                                                                            |
+| 실브라우저 캡처                    | 콘솔 오류 0 · 경고 0 · 실패/외부 요청 0 · 재시작 20회 GPU 누수 0 (121→121)      |
+| 한국어                             | 화면 전체 한국어, 라틴 단어 0 (`prompt-evidence` PASS)                          |
+| 성능 @1080p (유휴 머신, 실 Chrome) | p50 **16.70**/16.7 · p95 18.60/20 · p99 18.70/33 · 드로우콜 464/900 — 전부 그린 |
 
-  **Provenance checked.** The workflow brief still says "at HEAD 2de6a8e" — stale prose in the
-  script, 54 commits behind. The critics do not check out a SHA; they read the working tree on disk,
-  and their own citations prove which tree that was: art cites `f2f7837` (the floor lift) and
-  `3b68df4` (the cabinet revert), level cites `b094a43` (a docblock sync from this session). All
-  HEAD-side. The third panel's consolidator caught the same stale prose itself and said so — "scored
-  tree f2f7837, not the briefed 2de6a8e". The 47 is the shipped tree's score.
-- [PASS] typecheck, lint clean — verified this pass
-- [PASS] unit 89/89 — verified this pass
-- [PASS] test:slow 19/19 — verified at commit 894a101
-- [PASS] production build + subpath check — verified at commit 894a101
-- [PASS] real-browser: zero console errors, zero warnings, zero failed/external requests
-- [PASS] 20 restarts leave no GPU leak (121 -> 121)
-- [PASS] all on-screen text Korean, zero latin words (prompt-evidence PASS)
-- [PASS] perf @1080p at HEAD, measured on an idle machine (load 2.45): p50 **16.70**/16.7,
-  p95 18.60/20, p99 18.70/33, GPU p99 13.73/33, draw calls 464/900, triangles 174k/400k,
-  geometries 141/196, textures 27/40, programs 0/40. Every line green.
+`pnpm test:slow`는 **없어졌다.** `test`에 흡수됐다. 그 분리는 "밸런스 테스트는 너무 느리다"는
+전제 위에 있었는데, 재측정하니 그 파일 단독 **6.3초**, 전체 스위트 **11.1초**였다. 전제가 언제
+거짓이 됐는지 아무도 재보지 않았고, 그동안 게임을 단언하는 유일한 파일이 모든 게이트 밖에 있었다.
 
-  This is the same p50 as before the failed reading, which confirms §33: the 32.20 measured under
-  load average 4.25 was the panel's nine subagents, not a regression. `scripts/perf.mjs` now refuses
-  to measure above a third of the cores (`fc0d1a8`), so that particular mistake cannot recur.
-- [PARTIAL] run length — **measured at HEAD `695bc84`, six runs, five won:**
+---
 
-  | seed | brood | shadow |
-  | --- | --- | --- |
-  | 20260805 | 17.04 won | 19.70 won |
-  | 777 | 23.25 won | 16.31 won |
-  | 4242 | 21.57 **lost** | 12.75 won |
+## 2. 결함 원장
 
-  Brood median **21.57 min** against the 25-35 band — 3.43 short. It was 0.13 short before
-  `695bc84` wired capacity to supply changes; that fix cost 3.3 min of brood median and is a
-  deliberate correctness-over-pacing trade, recorded in its commit. Shadow improved on two of three
-  seeds (11.29 -> 19.70, 14.29 -> 16.31), so the loss is not uniform.
+### 열림
 
-  The 12.5-minute halfway floor IS asserted (`tests/unit/run.test.ts:158`, three-seed median). The
-  25-35 band is not, and asserting it today would ship a red suite.
-- [PASS] `test:slow` 19/19 at HEAD aa29e9a, including the re-derived population assertion.
+| #   | 플레이어가 겪는 증상                                                                                                | 연 근거 (수치)                                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| D1  | **길을 그린 뒤에 결정할 것이 없다.** Codex 3인 진단에서 게임성이 최저(43)였고, 세 비평이 모두 같은 원인을 지목했다. | 게임성 43 / 버그·기술 72 / 방향 57 / 아트 58 (§59)                                                          |
+| D2  | **런이 짧다.** brood 중앙값 21.57분, 목표대는 25~35분. 6회 중 1회 패배.                                             | 시드별 17.04 / 21.57 / 23.25. 12.5분 하한만 단언됨(`run.test.ts:158`); 25~35대를 단언하면 스위트가 빨개진다 |
+| D3  | **적응 계열이 한 루프에 곱해지는 스칼라다.** 두 빌드가 갈린다고 주장하는 테스트가 둘을 구분하지 못한다.             | 게임성 비평가 지적, 재현됨                                                                                  |
+| D4  | **정찰병이 선 표면에만 길이 묶인다.** 다른 표면의 지점으로는 드래그로 경로를 낼 수 없다.                            | 재현 절차 있음, 수치 미측정                                                                                 |
+| D5  | **아트에 팔레트도 명도 위계도 밤도 없다.** 아트 점수가 47에서 두 번 멈췄다.                                         | 가시영역 히스토그램 dark 1.3 % / mid 49.1 % / light 49.6 %                                                  |
+| D6  | **75초 소탕 대기가 지루하다.** 죽은 시간은 아니다 — 그 창에서 군체가 거점을 수리하고 저장을 다시 쌓는다.            | 미끼로 대기를 건너뛰게 하자 증거 비용을 0에 가깝게 낮춰도 런을 잃었다 (§61→§62 되돌림)                      |
 
-## Quality Bar
-Not "it works". Four disciplines must each find it good: systems/economy, level/environment,
-art direction (stylised is explicitly acceptable — photorealism is NOT the bar), and game feel.
+**D6 주의:** 이 대기를 다시 다룰 때 "건너뛰게 하기"는 이미 측정으로 기각됐다. 지루함과 낭비는
+서로 다른 문제이고 서로 다른 수정이 필요하다.
 
-## Persona Panel — 2026-08-08 (run wf_575f0e85-da4, 4 critics + 4 adversarial challengers)
+### 닫힘 — 낡은 메모에서 자꾸 다시 열리므로 여기 남긴다
 
-| Discipline | Score | Their top fix | Challenge |
-| --- | --- | --- | --- |
-| Systems & economy | 36 | per-refuge `heat` rising with deliveries routed out of it, wired into the three places that read nothing | **holdsUp=false**, +2 — challenger re-ran `tests/bot.ts` on three seeds with traffic/busy/evidence/alert instrumented and found the premise did not hold |
-| Level & environment | 38 | a graded cover-and-light field in `exposureZones`, with `concealment` feeding it | **holdsUp=false**, +3 — "most of the change is already in the tree", which is correct: it landed in 4ffc882 while the panel was running |
-| Art direction (stylised) | 52 | put the shipped materials back on the value ladder ART_BIBLE.md already specifies; edit the SPECS hex literals only | — |
-| Game feel & technical | 53 | feed the view layer real elapsed seconds rather than simulation steps; fix the fade time constant | **holdsUp=false**, +3 — the prescribed patch is algebraically inverted and would ship a regression (`occlusion.ts:330`) |
+- **호출자 없는 오디오 메서드** — `4012b29`에서 13개 → **0개**.
+- **ART_BIBLE 명도 사다리** — `f462e05`에서 **지배 제약에서 지침으로 강등**. 두 번 시도, 두 번
+  회귀: `cabinetDoor`를 어둡게 하니 가시영역 61.5 %가 L\* 20 아래로, `floorVinyl`을 올리니 평균
+  L\* 50.2로 이미 기각된 값을 넘어섰다. 실제 제약은 **측정된 휘도 대역**이다. **알비도를 옮겨
+  사다리 순서를 세 번째로 쫓지 말 것.** 사다리의 칸은 화면 값이고 이것들은 알비도다.
+- **봉인 지역 루틴** — `aa29e9a`에서 닫힘. 게이트는 `household.ts:290`. `state.ts`의 `ROUTINES`에
+  `living.tv` 등이 남아 있는 것은 `SEALED_REGIONS`가 재활성화 목록이기 때문이고, 존재가 실행의
+  증거가 아니다.
+- **루틴에 위치가 없음** — `082f21d` (`routineAt`이 `refilledBy`에서 유도, 큐 위치 1→6개).
+- **`695bc84`의 3.3분** — 용량이 공급을 따라가게 만든 대가로 brood 중앙값이 3.3분 줄었다.
+  페이싱보다 정확성을 택한 의도된 거래이고 되돌릴 대상이 아니다.
 
-**All four prescriptions failed adversarial verification.** The diagnoses are not thereby wrong; the
-prescriptions were. Weight the next pass toward the two lowest scores (36 and 38), not the mean.
+---
 
-Sharpest new finding, from art at 52: *"a frame that has no palette, no value hierarchy and no
-night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder down and the shipped
-`SPECS` hex literals do not follow it. That is the fifth instance this session of the same shape:
-**documented, and not honoured.**
+## 3. 반복되는 결함 형태 (세 패스 연속 관찰)
 
-## Evidence Ledger
-- gates -> `pnpm typecheck | lint | test | test:slow | build`
-- subpath -> `scripts/check-subpath.mjs`
-- runtime -> `scripts/capture.mjs` (console, requests, 20-restart leak)
-- korean -> `scripts/prompt-evidence.mjs`
-- perf -> `scripts/perf.mjs` (refuses a dirty tree; judged in-page against one source of truth)
-- balance -> `tests/bot.ts` bot runs, 3 seeds x 3 builds
+**계산되고, 카탈로그에 등재되고, 테스트되고, 한 번도 실행되지 않는 코드.** 여섯 번째 내비 링크,
+`zoneHeld`, `costKey`, 다섯 개의 오디오 엔딩이 전부 이 형태였다. 새 시스템을 넣을 때 **호출자가
+있는지 먼저 확인**할 것 — 바뀐 빌드에서 바이트 동일한 출력이 나오면 그 코드는 실행되지 않았다.
 
-## Current Risk Areas
-- Run length is the largest single gap and no fix so far has moved it materially.
-- A repeated defect shape found three passes running: **code that is computed, catalogued, tested,
-  and never executed** (the sixth nav link, `zoneHeld`, `costKey`, five audio endings). The density
-  cluster is suspected to be the same shape.
+## 4. 증거 대장
 
-## Remaining High-Impact Gaps
+- 게이트 → `pnpm typecheck | lint | test | build`
+- 서브패스 → `scripts/check-subpath.mjs`
+- 런타임 → `scripts/capture.mjs` (콘솔·요청·재시작 20회 누수)
+- 한국어 → `scripts/prompt-evidence.mjs`
+- 성능 → `scripts/perf.mjs` (더러운 트리 거부, 코어 1/3 초과 부하에서 측정 거부)
+- 밸런스 → `tests/bot.ts`, 3시드 × 3빌드
 
-1. **Persona bar.** Third panel: systems 51 · level 51 · art 51 · feel 58, against 80 for each.
-   Scored at `97c1846`; **three behaviour changes have landed since** — `a430a22` visual timebase,
-   `695bc84` capacity/supply wiring, `cf26b07` the second act — so the shipped tree has no valid
-   score. The fourth panel is IN FLIGHT, not failed: its task output file is written only at
-   completion, so a 0-byte read mid-run means "still going", and the run directory shows agent
-   transcripts growing (1.8 MB at last check) with the journal at 8 entries. Two separate readings
-   of that 0-byte file were both taken mid-flight and read as a harness failure. These panels take
-   roughly 30-35 minutes; check `subagents/workflows/<runId>/journal.jsonl` for progress, not the
-   task output.
-2. **Run length** — brood median **21.57 min** at HEAD (17.04 / 21.57 / 23.25), one of six runs
-   lost, band not asserted. It peaked at 24.87 and gave 3.3 min back to `695bc84`. Three settings
-   have put the median inside the band and all three cost win rate (§47), so the remaining path is
-   content, not another constant.
-3. ~~W2 / W3 visual evidence~~ — **both CLOSED.** §45 captured ten bodies at ten distinct scales;
-   §49 captured a frame holding fifteen `depthTest:false` overlays and eight actively-faded
-   occluders at once, which is the condition the fix exists for.
-   `artifacts/evidence/completion/{workers,overlay}/`.
-
-### Closed, and recorded here because they keep being re-opened from stale notes
-
-- **Zero-caller audio methods** — CLOSED at `4012b29`. Thirteen at the session's start, **zero** now:
-  four deleted as remnants of removed mechanics (`operationCard`, `tierUp`, `upgrade`,
-  `routineTaken`), the rest wired to real events.
-- **ART_BIBLE value ladder** — **DELIBERATELY VIOLATED at HEAD, and it must stay that way.**
-  Two attempts, two regressions: darkening `cabinetDoor` put 61.5 % of the playable region below
-  L* 20 (§7 uniform darkness, art 47); lifting `floorVinyl` instead satisfied the order and
-  overshot the other way to playable-region mean L* 50.2, brighter than a value this project had
-  already swept and rejected (art 47 again). `f462e05` reverts to `#5b5a5e` and demotes the ladder
-  from a governing constraint to guidance — the measured luminance band is the real constraint.
-  **Do not chase the ordering a third time by moving albedos.** The bible's rungs are SCREEN values
-  and these are albedos; the lever that could satisfy both is lighting, and that mechanism is
-  recorded as measured-dead at `night.ts:119-138`. See `COMPLETION_RECOVERY.md` §50. `floorVinyl` #5b5a5e -> #6e6d72 lifts it
-  to L* 46.3 above `cabinetDoor`'s 42.3, so the documented order holds without darkening the largest
-  vertical area — the move that caused the §42 regression. Playable-region histogram at HEAD:
-  dark 1.3 % / mid 49.1 % / light 49.6 %, against 61.5 % / 3.0 % under the regression.
-
-- **Sealed-region routines** — CLOSED in `aa29e9a`. The gate is `household.ts:290`
-  (`if (!run.house.regions.some((r) => r.id === spec.region)) continue;`). The `ROUTINES` entries
-  for `living.tv` / `bathroom.use` / `bedroom.phone` REMAIN in `state.ts` on purpose: `SEALED_REGIONS`
-  is a reactivation list and they return with their rooms. Their presence in that array is not
-  evidence they execute.
-- **Post-revert luminance distribution** — RECORDED in §42. Playable region, same crop:
-  L*<20 **1.3 %**, L*20-40 **52.0 %**, L*>40 46.7 %, against 61.5 % / 3.0 % under the regression.
-- **Routines carry no position** — CLOSED in `082f21d` (`routineAt` derives it from `refilledBy`;
-  six distinct cue positions where there was one).
-
-## Last Pass (HEAD `cf26b07`)
-
-- gates at HEAD: typecheck, lint, unit 89/89, `test:slow` 19/19, build, capture (0 console errors,
-  20 restarts identical), prompt-evidence PASS, perf all green (measured at `1e81ddb` on an idle
-  machine; nothing since touches the render path).
-- **`cf26b07` — the kitchen's second act.** `ChapterId` gains `hold`, one Korean string, and the
-  transition hangs on a colony milestone rather than a door. Three acts now fire in every run:
-  `kitchen@0 -> hold@3.9-4.4 min -> final@8.5-9.5 min`. The first attempt used the full winning
-  share as the trigger and never appeared, because `finaleArmed` tests the same threshold and
-  `final` overwrote `hold` in the same tick — two acts on one event are one act. Moved to half the
-  share, which is where the job actually changes.
-- Run length and win rate are unchanged by it (17.04 / 23.25 / 21.57, five of six won). **This act
-  names time that already existed; it does not create any.** The band still needs content.
-- `695bc84` (capacity follows supply) cost 3.3 min of brood median as a deliberate
-  correctness-over-pacing trade — the supplied/held HUD added this session was reading live route
-  health beside a capacity number that had gone stale.
-- `2f6ced1` corrected a stale note: the ART_BIBLE ladder order HOLDS at HEAD
-  (`cabinetDoor` L* 42.3 below `floorVinyl` L* 46.3).
-
-## Blockers
-
-**None.** The previous entry named act authoring as a scoped blocker on the grounds of context
-budget. That was wrong — a budget is not an external blocker, and the first act has now landed:
-`updateFinal` advances the chapter on a colony milestone rather than on a gate, so the chapter
-machinery executes for the first time in the project's life. Measured, three brood seeds: the run
-crosses into `chapter.final` at 6.50 / 9.43 / 9.52 min.
-
-What remains is more of the same work, not a different kind: further acts, each redefining what
-holding the kitchen means, each needing objectives, Korean strings, balance and a re-measure. That
-is ordinary authoring and it is where the next session starts.
+프레임은 재생성물이라 추적하지 않는다. 비교 기준으로 남겨야 하는 프레임은
+`artifacts/evidence/baseline/`으로 **의도적으로 승격**하고, 무엇의 기준인지 여기 한 줄 적는다.

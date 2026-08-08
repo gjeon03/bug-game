@@ -195,7 +195,8 @@ export const ko = {
    * lines were pushing the player toward the play the economy had just started charging for.
    */
   'objective.kitchen.grow': '군체를 불려라. 거점은 보급선이 닿아 있을 때만 식구를 늘려 준다.',
-  'objective.kitchen.expand': '필요한 만큼만 차지해라. 거점을 늘릴수록 집이 너희를 더 오래 기억한다.',
+  'objective.kitchen.expand':
+    '필요한 만큼만 차지해라. 거점을 늘릴수록 집이 너희를 더 오래 기억한다.',
   'objective.final.title': '주방을 지켜라',
   /*
    * This is the line the player reads for most of the run, and it described a different game.

@@ -382,7 +382,6 @@ export class GameAudio {
     }
   }
 
-
   routineEnd(pan: number): void {
     if (!this.sfxBus) return;
     this.toneVoice(this.sfxBus, 'sine', 260, 150, 0.4, 0.05, pan, 0.03);
@@ -433,7 +432,6 @@ export class GameAudio {
     if (!this.uiBus) return;
     this.toneVoice(this.uiBus, 'sine', 330, 220, 0.4, 0.07, 0, 0.02);
   }
-
 
   /** The household commits to extermination. */
   finalResponse(): void {
@@ -521,7 +519,6 @@ export class GameAudio {
     this.toneVoice(this.sfxBus, 'sine', 300, 720, 0.2, 0.05, pan, 0.01);
   }
 
-
   footWarn(pan: number, distance: number): void {
     if (!this.sfxBus || !this.gate('footWarn', 0.2)) return;
     const near = Math.max(0.15, 1 - distance / 1400);
@@ -576,7 +573,6 @@ export class GameAudio {
     if (!this.uiBus || !this.gate('susp', 0.9)) return;
     this.toneVoice(this.uiBus, 'sine', 240, 200, 0.32, 0.045, 0, 0.02);
   }
-
 
   uiTick(): void {
     if (!this.uiBus || !this.gate('ui', 0.04)) return;

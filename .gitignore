@@ -14,3 +14,14 @@ scripts/tmp/
 
 # Bake pipeline scratch renders (the packed atlases in public/art/ ARE committed)
 tools/bake/.cache/
+
+# Regenerated evidence. `capture.mjs`, `perf.mjs` and `prompt-evidence.mjs` rewrite these frames on
+# every run, so tracking them turned ten screenshots into 28 commits each and .git into 1.2 GB.
+# The small JSON/MD reports in the same directories ARE tracked — they are diffable and they are the
+# evidence that a claim was measured. A frame that must survive as a comparison basis is promoted by
+# copying it into artifacts/evidence/baseline/, which is tracked.
+artifacts/evidence/completion/**/*.png
+artifacts/evidence/whole-home-reboot-final/**/*.png
+artifacts/evidence/redesign-final/**/*.png
+artifacts/evidence/shots/**/*.png
+!artifacts/evidence/baseline/**

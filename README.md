@@ -1,105 +1,44 @@
-> **STALE — describes the superseded single-kitchen build (branch `main` / commit `df9db36`), not this one.** This document has NOT been rewritten for the whole-home rebuild and parts of it are now wrong. The current, accurate state is `GAUNTLET_STATE.md` (live state, verified measurements, ranked open defects), `CANCELLED_GOAL_HANDOFF_AUDIT.md` (what was inherited and what became of it), and `LOCAL_REVIEW.md` (how to run it). Rewriting this file is outstanding work.
+# 부엌을 점거하라
 
-# Baseboard Empire
+한밤중 한국 아파트 부엌에 숨어드는 **정찰 바퀴벌레**를 조작하는 3D 전략-액션 게임. 몸으로 직접 걸은
+길만 페로몬 길이 되고, 일꾼은 명령이 아니라 그 길만 읽습니다. 보급로가 늘수록 군체는 강해지지만,
+사람은 정확히 어디를 쳐야 하는지 배웁니다.
 
-A top-down macro-noir strategy-action game about growing a cockroach colony inside a hostile human
-kitchen. You play the lead scout. Your workers never take orders — they only read the pheromone you
-secrete with your own body, so **the only routes your colony can use are the routes you personally
-walked.**
+TypeScript · Vite · three.js(WebGL2). 결정론적 고정 스텝 시뮬레이션. 모든 아트는 밀리미터 단위로
+작성된 절차적 three.js 지오메트리이고, 외부 에셋을 내려받지 않습니다. 한국어 전용 UI, 폰트는
+NanumSquareNeo 로컬 번들.
 
-Every metre of open tile you route across is evidence — and the household remembers **where**. It
-cleans the corridors you use, puts traps on the lines your workers actually walk, and aims the spray
-at the region it has the most evidence about. Win by holding three regions of the kitchen at once and
-surviving what that provokes.
-
-**Play it: <https://gjeon03.github.io/bug-game/>**
-
-> Runs entirely in the browser. No server, no network requests, no asset files — every sprite,
-> texture, fixture and sound is generated procedurally at boot.
-
-## Play
+## 실행
 
 ```bash
 pnpm install
-pnpm dev          # http://127.0.0.1:5273/
+pnpm build && pnpm preview   # http://127.0.0.1:4273/
 ```
 
-| Input                 | Action                                                                |
-| --------------------- | --------------------------------------------------------------------- |
-| `W A S D` / arrows    | Move the scout                                                        |
-| Hold `LMB` or `Space` | Lay a pheromone trail from the scout's body                           |
-| Hold `RMB` or `X`     | Rub a trail out · **tap** to recall every worker                      |
-| `E`                   | Inspect a source · claim a crack · fit out a foothold · repair a nest |
-| `1` `2` `3`           | Answer a choice: an adaptation, or what a foothold becomes            |
-| `Shift`               | Sprint — fast, loud, and it shows                                     |
-| `Esc` / `P`           | Pause + settings                                                      |
-| `R`                   | Restart                                                               |
+조작법과 첫 플레이 경로는 [`LOCAL_REVIEW.md`](LOCAL_REVIEW.md)에 있습니다.
 
-**The one rule that matters:** a route only works when one end sits on a claimed nest and the other
-on food or moisture. Both ends pulse warm when it is live.
-
-## A run
-
-Four operations, about 15–18 minutes. An operation ends when you **achieve** it, not when a clock says
-so — but every operation has a soft limit, and running long makes the household restless.
-
-1. **Establish the nest** — get out of the wall, connect food and moisture to home, reach 12 roaches.
-2. **Infiltrate the routines** — the fridge opens, the tap runs, the bin lid goes up. Each is a
-   windfall on ground you would rather not be standing on. Exploit two, and claim your first crack.
-3. **Specialise the infestation** — nine adaptations in three families; you can afford about four.
-   Every one of them costs you something you will miss.
-4. **Claim the kitchen** — hold three regions at once, and survive the can.
-
-Territory is made of routes and bodies, so you cannot bank it the way you bank food. The last minute
-is the fight.
-
-## Commands
+## 검증
 
 ```bash
-pnpm dev            # dev server
-pnpm build          # typecheck + production build → dist/
-pnpm serve:nested   # serve dist/ under /bug-game/ (GitHub Pages subpath simulation)
-pnpm test           # unit + integration tests (headless, DOM-free)
-pnpm test:e2e       # real-browser gameplay tests against the nested production build
-pnpm verify         # format + lint + typecheck + unit + build + e2e + evidence
-pnpm verify:live    # load the deployed URL, play it, and record what happened
+pnpm review    # format · lint · typecheck · test(108개, ~11초) · build · 실브라우저 캡처
 ```
 
-## How it is built
+`pnpm test`에는 게임 자체를 단언하는 전체 런 스위트(`tests/unit/run.test.ts`)가 포함됩니다 — 승리
+여부, 페이싱, 45초 무의사결정 구간 부재, 박멸 생존, 빌드 간 분화, 재시작 결정성. 이 파일이 게이트
+밖에 있던 동안 "테스트 통과"가 여러 번 잘못 보고됐기 때문에, 다시 빼지 않습니다.
 
-TypeScript + Vite + a purpose-built Canvas2D runtime. No gameplay runtime dependencies; the shipped
-bundle is ~40 kB gzipped.
+## 문서
 
-```
-src/
-  core/    deterministic helpers: seeded RNG, fixed-step clock, spatial hash, telemetry, storage
-  sim/     ALL authoritative state. DOM-free, deterministic from (seed, input log), unit-testable
-  render/  Canvas2D: procedural sprite atlas, baked solids, particles, half-res lighting composite
-  audio/   WebAudio synthesis only — no sample files
-  ui/      DOM overlay: HUD, pause + settings, interlude and end cards
-```
+| 파일                                                         | 내용                                          |
+| ------------------------------------------------------------ | --------------------------------------------- |
+| [`CLAUDE.md`](CLAUDE.md)                                     | 운영 규칙 — 저장소 경계, 게이트, 방법론       |
+| [`.claude/gauntlet-state.md`](.claude/gauntlet-state.md)     | **현재 상태의 유일한 출처.** 결함 원장        |
+| [`LOCAL_REVIEW.md`](LOCAL_REVIEW.md)                         | 로컬 실행, 조작법, 검증된 것과 아닌 것        |
+| [`DECISIONS.md`](DECISIONS.md)                               | 중요한 이탈과 그 근거                         |
+| [`ASSET_MANIFEST.md`](ASSET_MANIFEST.md)                     | 에셋 제작 방식과 완성도 분류                  |
+| [`docs/COMPLETION_RECOVERY.md`](docs/COMPLETION_RECOVERY.md) | 동결된 세션 기록(§62까지). 읽되 덧붙이지 않음 |
+| [`docs/superseded/`](docs/superseded/)                       | 폐기된 빌드의 문서. **다시 쓰지 않음**        |
 
-`sim/` never imports from `render/`, `audio/` or `ui/`, and never touches `window`. That boundary is
-enforced by lint rules and is what lets the entire simulation run headless in Vitest and reproduce a
-run exactly from a seed — including `tests/unit/balance.test.ts`, which plays a complete scripted
-three-night run in about a second and fails if the game stops being winnable, or if a covered route
-stops being measurably safer than one across open floor.
+## 배포
 
-## Documentation
-
-| File                 | What it holds                                                       |
-| -------------------- | ------------------------------------------------------------------- |
-| `GAME_CONTRACT.md`   | Design thesis, verbs, loop, win/lose, budgets, completion gates     |
-| `ARCHITECTURE.md`    | Subsystems, state ownership, update order, test seams               |
-| `ART_BIBLE.md`       | Shape language, palette, lighting logic, animation and VFX rules    |
-| `ASSET_MANIFEST.md`  | Every visible and audible element, its production method and status |
-| `TEST_PLAN.md`       | Test layers, the states captured, playtest scenarios, perf capture  |
-| `PLAYTEST_REPORT.md` | Measured results from the scripted playtests                        |
-| `DEPLOYMENT.md`      | Static/Pages deployment, verification status, external blocker      |
-| `DECISIONS.md`       | Every material deviation from the brief, with rationale             |
-
-Evidence — screenshots, telemetry, run records, critiques — lives in `artifacts/evidence/`.
-
-## Licence
-
-MIT. All art and audio are first-party and generated by code in this repository.
+`main` 푸시 시 GitHub Pages로 자동 배포됩니다: <https://gjeon03.github.io/bug-game/>

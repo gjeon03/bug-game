@@ -15,7 +15,15 @@ const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:4278/bug-game/';
 const OUT = resolve('artifacts/evidence/completion/prompts');
 mkdirSync(OUT, { recursive: true });
 
-const browser = await chromium.launch({ args: ['--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--use-gl=angle', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: [
+    '--disable-background-timer-throttling',
+    '--disable-renderer-backgrounding',
+    '--disable-backgrounding-occluded-windows',
+    '--use-gl=angle',
+    '--enable-unsafe-swiftshader',
+  ],
+});
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 
 const errors = [];

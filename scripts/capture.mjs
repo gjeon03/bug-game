@@ -27,7 +27,14 @@ const errors = [];
 const missingRequests = [];
 
 const browser = await chromium.launch({
-  args: ['--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--use-gl=angle', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  args: [
+    '--disable-background-timer-throttling',
+    '--disable-renderer-backgrounding',
+    '--disable-backgrounding-occluded-windows',
+    '--use-gl=angle',
+    '--enable-unsafe-swiftshader',
+    '--ignore-gpu-blocklist',
+  ],
 });
 const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
 const page = await context.newPage();
@@ -211,7 +218,6 @@ if (luma !== null && (luma < 0.15 || luma > 0.75)) {
   );
 }
 
-
 // Resolution sweep.
 for (const [w, h, name] of [
   [1280, 720, '06-1280x720'],
@@ -281,9 +287,7 @@ console.log(`  ${RESTARTS} restarts identical: ${identical}`);
 
 const COUNTED = ['textures', 'geometries', 'materials', 'meshes'];
 const afterRestarts = await state();
-console.log(
-  `  GPU objects boot ${COUNTED.map((k) => `${k} ${boot.stats[k]}`).join(' ')}`,
-);
+console.log(`  GPU objects boot ${COUNTED.map((k) => `${k} ${boot.stats[k]}`).join(' ')}`);
 console.log(
   `  GPU objects restart 1 -> ${RESTARTS}: ` +
     COUNTED.map((k) => `${k} ${baseline[k]}->${afterRestarts.stats[k]}`).join(', '),
@@ -325,7 +329,6 @@ console.log(
 );
 console.log('draw calls     :', final.stats?.drawCalls, 'triangles:', final.stats?.triangles);
 console.log('restarts equal :', identical);
-
 
 await browser.close();
 process.exit(errors.length === 0 && missingRequests.length === 0 ? 0 : 1);

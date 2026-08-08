@@ -1,7 +1,10 @@
 # LOCAL_REVIEW — how to run this build
 
-**Branch** `experiment/whole-home-infestation-3d` · local only. Nothing here has been pushed,
-merged, deployed, or opened as a pull request.
+The build is a **kitchen-only** 3D infestation game (scope narrowed 2026-08-07). Verify the branch
+with `git rev-parse --abbrev-ref HEAD`; this file used to name one and it went stale.
+
+Current state, ranked open defects and the quality bar live in `.claude/gauntlet-state.md`. That file
+is the only source of truth — if this one disagrees with it, this one is wrong.
 
 ---
 
@@ -28,7 +31,7 @@ pnpm dev                # dev server, http://127.0.0.1:5273
 pnpm build              # tsc --noEmit && vite build
 pnpm preview            # serve the production build, http://127.0.0.1:4273
 pnpm serve:nested       # serve the production build under /bug-game/, http://127.0.0.1:4274/bug-game/
-pnpm test               # unit tests (the full-run balance tests are slow — minutes)
+pnpm test               # 108 tests, ~11 s — includes the full-run design suite
 pnpm capture            # drive the built game in a browser and write artifacts/evidence/
 ```
 
@@ -95,21 +98,21 @@ from real world positions. It unlocks on your first keypress (browsers require a
 
 **NOT verified — do not read these as done:**
 
-- **The run is not currently winnable end-to-end by the scripted player.** Fixing three genuinely
-  broken systems (inert cover zones, five missing household routines, a victory condition that was
-  strictly dominated by the gate before it) changed the balance, and the economy has not been
-  re-derived on top of the corrected systems. The previous "won in 21.4 minutes" was true, and was
-  true _because_ those systems were broken. See `GAUNTLET_STATE.md` §4.
-- **A complete human playthrough.** Nobody has played this from beginning to end.
-- **Visual finish.** An independent critic could not name the room without reading the HUD. See
-  `artifacts/evidence/whole-home-reboot-final/critics/REPORTS.md` — all five critics returned FAIL,
-  with 14 blocker findings between them. Several remain open.
-- **`pnpm test` does not complete.** The full-run balance tests are far too slow to be a gate. Run
-  `npx vitest run tests/unit/house.test.ts tests/unit/occlusion.test.ts tests/unit/profiler.test.ts`
-  for the fast suite (79 tests, under a second).
+- **A complete human playthrough.** Nobody has played this from beginning to end. The scripted
+  player wins five of six runs across three seeds and two builds; a human has not.
+- **Visual finish.** Art has been scored 47–58 by independent critics across four passes and has not
+  moved. See defect D5 in `.claude/gauntlet-state.md`.
 
 ## Known limitations
 
-See `GAUNTLET_STATE.md` for the ranked list with evidence. The largest are: no audio wiring, chapter
-pacing front-loaded (measured and documented, with a rejected fix recorded), and no real-hardware
-performance measurement.
+`.claude/gauntlet-state.md` §2 holds the ranked list with its evidence. The largest are:
+
+- **D1 — after a route is drawn there is nothing to decide.** Three independent critics named the
+  same cause, and gameplay was the lowest-scoring discipline at 43.
+- **D2 — run length.** brood median 21.57 min against a 25–35 min target; six runs, one lost.
+- **D5 — no palette, no value hierarchy, no night.**
+
+Corrections to older notes in this file, kept because they were repeatedly re-derived: audio **is**
+wired (`src/audio/bridge.ts`, verified in real Chrome), performance **has** been measured on real
+hardware (p50 16.70 ms on an M1 via Metal), and `pnpm test` **does** complete — it is 11 s and it now
+includes the full-run design suite.

@@ -186,7 +186,8 @@ export async function claimNearest(page) {
     for (const [id, site] of g.run.house.footholds) {
       const state = g.run.footholds.get(id);
       if (state?.claimed && state.damage < 0.5) continue;
-      if (g.run.colony.food < site.cost.food || g.run.colony.moisture < site.cost.moisture) continue;
+      if (g.run.colony.food < site.cost.food || g.run.colony.moisture < site.cost.moisture)
+        continue;
       const d = Math.hypot(site.at.x - s.x, site.at.z - s.z);
       if (d < bestD) {
         bestD = d;
