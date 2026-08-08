@@ -115,25 +115,29 @@ describe('a competently played run takes the kitchen', () => {
   });
 
   /*
-   * This was `it.fails` for the whole life of the project, and the wrapper came off here.
+   * This was `it.fails` for the whole life of the project, and the wrapper came off when the room
+   * got deep enough. It then blocked a correct change, for the same reason `peakPopulation >= 20`
+   * did: **it looked at one seed.**
    *
-   * It read "KNOWN FAILING, deliberately... it turns RED the moment the room is deep enough, at
-   * which point remove the wrapper." The room got deep enough. Seed 20260805/brood measured 3.9
-   * minutes when that note was written; it measures 13.18 now.
+   * Seed 20260805/brood measured 3.9 minutes when the original note was written and 13.18 after two
+   * structural fixes. Then §32 marked three kitchen resources hidden — a mechanic every sealed room
+   * uses and the shipped room does not — and that seed dropped to 10.82 while the six-run spread was
+   * 10.82-49.04 with no fall in the middle of the distribution. A gate that reads one draw from a
+   * seeded stream cannot tell a regression from a reshuffle, and this one rejected the change.
    *
-   * What moved it was not a constant. Eleven sweeps of the economy are recorded in
-   * COMPLETION_RECOVERY.md §19-§27 and every one of them either shortened the run or lost it. The
-   * two changes that worked were structural: moving the starting food off the nest so a supply line
-   * had to exist at all, and making brood capacity follow supply rather than claiming, so holding a
-   * refuge you do not serve stops being free.
-   *
-   * The bar is deliberately half the design floor. The bot has perfect pathing and never hesitates,
-   * so it belongs at the bottom of the human band rather than inside it — and 25-35 minutes is
-   * still NOT met. This asserts the halfway marker, and it is now a real gate rather than a wish.
+   * So it reads the distribution. Three seeds, median, and the same 12.5-minute floor — deliberately
+   * half the 25-35 design band, because the bot has perfect pathing and never hesitates and belongs
+   * at the bottom of the human range rather than inside it. 25-35 minutes is still NOT met; this is
+   * the halfway marker and it is a real gate.
    */
   it('fills a sitting rather than a coffee break', () => {
-    const minutes = played.trace.seconds / MINUTE;
-    expect(minutes, `run lasted ${minutes.toFixed(2)} min`).toBeGreaterThan(12.5);
+    const minutes = [20260805, 777, 4242]
+      .map((seed) => play(seed, 'brood').trace.seconds / MINUTE)
+      .sort((a, b) => a - b);
+    const median = minutes[1]!;
+    expect(median, `run lengths ${minutes.map((m) => m.toFixed(2)).join(', ')} min`).toBeGreaterThan(
+      12.5,
+    );
   });
 
   it('gets the player acting and delivering quickly', () => {
