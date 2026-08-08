@@ -35,7 +35,9 @@ at 80/100 in their own discipline.
   | Art direction | 52 | 56 | **47** | **-5 from first** |
   | Game feel & technical | 53 | 57 | **61** | +4 |
 
-  Lowest 44, average 51.0. **Art regressed, and the cause is mine**: the `cabinetDoor` albedo change
+  Lowest 44, average 51.0. **Art's 47 was scored on 969a504, which `3b68df4` has since reverted** —
+  the shipped tree no longer contains the change that caused it, so that number describes a state
+  that is gone. Re-measure before acting on it. The cause was mine: the `cabinetDoor` albedo change
   (969a504) was re-measured on the same crop and the playable region's midtones (L* 20-40) fell
   39.6 % -> 3.0 % while L* < 20 rose 6.6 % -> **61.5 %**. That is §7's banned uniform darkness. My
   own check passed because frame MEAN luminance stayed at 0.316-0.361 — the mean hid a collapsed

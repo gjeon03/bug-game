@@ -184,8 +184,17 @@ export const ko = {
     '식탁 다리를 잇는 받침 안쪽 빈 곳. 방의 반대쪽 끝을 잡으려면 여기가 있어야 한다.',
   'objective.kitchen.firstHold': '싱크대 밑 틈을 거점으로 삼아라. E를 눌러 차지한다.',
   'objective.kitchen.firstRoute': '먹이까지 페로몬 길을 놓아라. 일꾼이 그 길을 따라 나른다.',
-  'objective.kitchen.grow': '군체를 불려라. 거점마다 품을 수 있는 수가 정해져 있다.',
-  'objective.kitchen.expand': '남은 거점을 차지해 주방 전체를 군체의 영역으로 만들어라.',
+  /*
+   * Both of these taught rules the game no longer has, and the player was reading them all run.
+   *
+   * `grow` said capacity comes from claiming a refuge. It comes from SUPPLYING one — a refuge with
+   * no healthy route feeding it contributes nothing (`state.ts recomputeCapacity`). `expand` said
+   * take the rest of them; holding now taxes how fast the room forgets you
+   * (`household.ts`, 4 % per refuge), and victory needs a majority rather than all. So the two
+   * lines were pushing the player toward the play the economy had just started charging for.
+   */
+  'objective.kitchen.grow': '군체를 불려라. 거점은 보급선이 닿아 있을 때만 식구를 늘려 준다.',
+  'objective.kitchen.expand': '필요한 만큼만 차지해라. 거점을 늘릴수록 집이 너희를 더 오래 기억한다.',
   'objective.final.title': '주방을 지켜라',
   /*
    * This is the line the player reads for most of the run, and it described a different game.
