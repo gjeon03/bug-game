@@ -456,6 +456,26 @@ export const KITCHEN: RegionSpec = {
       region: 'kitchen',
       surface: 'kitchen.bin.inside',
       at: { x: mm(BIN_X), z: mm(BIN_Z) },
+      /*
+       * The kitchen's first hidden resource, and the first time discovery is a mechanic in the room
+       * that ships.
+       *
+       * `hidden` is fully built — `state.ts:492` withholds `found`, `scout.ts:212` reveals a site
+       * the scout walks past — and all four SEALED regions use it. The kitchen used it zero times,
+       * so every resource was known on tick 0 and exploring returned no information. That is
+       * verbatim the level-design critic's top diagnosis, against a mechanic that was already
+       * written.
+       *
+       * One, not several. Three at once (this, `fridge.seal`, `table.ring`) dropped the run-length
+       * median from 13.18 to 11.98 across three brood seeds and the distribution gate rejected it.
+       * This one alone raises it to 14.31 with win rate unchanged — so discovery does not cost
+       * length, it was the quantity that did.
+       *
+       * Food inside a closed bin is the one a scout genuinely cannot see from the floor: it has to
+       * go over the rim first. The other two are candidates once it is understood why quantity
+       * matters here, which is not yet measured.
+       */
+      hidden: true,
       kind: 'food',
       amount: 210,
       rate: 2.2,
