@@ -1,5 +1,5 @@
 {
-  "headSha": "2de6a8e8ab01a9ce44d5779f711d6aa4c86331d8",
+  "headSha": "9db096e5ff33e27225dd07a5af033be1b6c6ec2f",
   "hardware": {
     "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
     "vendor": "Google Inc. (Apple)",
@@ -7,8 +7,8 @@
   },
   "window": {
     "seconds": 45,
-    "frames": 2727,
-    "measuredSeconds": 45.46709999996424
+    "frames": 1617,
+    "measuredSeconds": 45.47760000002384
   },
   "duringCapture": {
     "time": 99,
@@ -16,33 +16,33 @@
     "workers": 9,
     "routes": 3,
     "threats": 0,
-    "deliveries": 51
+    "deliveries": 52
   },
   "audio": {
     "started": true,
-    "voices": 0
+    "voices": 2
   },
   "presented": {
-    "p50": 16.69999999999709,
-    "p95": 18.60000000000582,
-    "p99": 18.700000000004366,
-    "worst": 18.80000000000291
+    "p50": 32.30000000000291,
+    "p95": 50,
+    "p99": 52,
+    "worst": 68.69999999999709
   },
   "cpu": {
-    "p50": 3.799999952316284,
-    "p99": 5.200000047683716
+    "p50": 4.899999976158142,
+    "p99": 7.600000023841858
   },
   "gpu": {
-    "p50": 12.1195,
-    "p99": 15.214999,
-    "samples": 2727
+    "p50": 18.276916,
+    "p99": 31.228916,
+    "samples": 1614
   },
   "frameTails": {
-    "over16": 1001,
-    "over33": 0,
-    "over50": 0,
+    "over16": 1202,
+    "over33": 715,
+    "over50": 71,
     "over100": 0,
-    "over50Pct": 0
+    "over50Pct": 4.390847247990106
   },
   "scene": {
     "scoutHidden": true,
@@ -52,8 +52,8 @@
     "geometries": 141,
     "materials": 52,
     "textures": 27,
-    "drawCalls": 533,
-    "triangles": 164907,
+    "drawCalls": 524,
+    "triangles": 182219,
     "lights": 3,
     "occluders": 16,
     "occluderTests": 107,
@@ -67,27 +67,27 @@
   "verdict": [
     {
       "metric": "p50",
-      "value": 16.69999999999709,
+      "value": 32.30000000000291,
       "budget": 16.7,
-      "pass": true
+      "pass": false
     },
     {
       "metric": "p95",
-      "value": 18.60000000000582,
+      "value": 50,
       "budget": 20,
-      "pass": true
+      "pass": false
     },
     {
       "metric": "p99",
-      "value": 18.700000000004366,
+      "value": 52,
       "budget": 33,
-      "pass": true
+      "pass": false
     },
     {
       "metric": "frames over 50 ms (%)",
-      "value": 0,
+      "value": 4.390847247990106,
       "budget": 1,
-      "pass": true
+      "pass": false
     },
     {
       "metric": "frames over 100 ms",
@@ -97,20 +97,20 @@
     },
     {
       "metric": "gpu p99",
-      "value": 15.214999,
+      "value": 31.228916,
       "budget": 33,
       "pass": true,
-      "note": "2727 samples"
+      "note": "1614 samples"
     },
     {
       "metric": "peak draw calls",
-      "value": 533,
+      "value": 524,
       "budget": 900,
       "pass": true
     },
     {
       "metric": "peak triangles",
-      "value": 164907,
+      "value": 182219,
       "budget": 400000,
       "pass": true
     },
