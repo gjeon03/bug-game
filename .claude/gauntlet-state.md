@@ -99,16 +99,29 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
   cluster is suspected to be the same shape.
 
 ## Remaining High-Impact Gaps
-1. Persona scores 36 / 38 / 52 / 53. Attack the two lowest, then re-run the panel.
-2. `hidden:` resources — PARTIAL. `kitchen.bin.inside.food` landed in 9db096e and raised the
-   run-length median 13.18 -> 14.31. Two more candidates deferred until it is understood why three
-   at once cost length when one gains it.
-3. ~~Routines carry no position~~ — CLOSED in 082f21d: `routineAt` derives it from the
-   resources each routine refills, giving six distinct cue positions where there was one.
-4. Eight audio methods still with zero callers; four are for mechanics that no longer exist and
+
+1. **Persona bar.** systems 44 · level 52 · art 47 · feel 61, against 80 for each. Art's 47 was
+   scored on `969a504`, reverted by `3b68df4`; it has no valid score for the shipped tree. Panel
+   `w5ygqggh8` is re-scoring at `97c1846`.
+2. **Run length** — median 24.87 min, one seed 17.04, one of six runs lost, band not asserted.
+3. **ART_BIBLE value ladder** — deliberately re-opened after the revert. Next approach is the floor
+   side of the comparison, not the widest vertical face (`materials.ts cabinetDoor` comment).
+4. **Eight audio methods with zero callers**, four of them for mechanics that no longer exist and
    should be deleted rather than wired.
-5. Routines belonging to sealed regions (`bedroom.phone`, `living.tv`, `bathroom.use`, ...) still
-   fire and consume director time in a kitchen-only build.
+5. **W2 / W3 visual evidence** — both confirmed in source and in the running bundle, neither shown
+   in a frame. `COMPLETION_RECOVERY.md` §36, §39, §41.
+
+### Closed, and recorded here because they keep being re-opened from stale notes
+
+- **Sealed-region routines** — CLOSED in `aa29e9a`. The gate is `household.ts:290`
+  (`if (!run.house.regions.some((r) => r.id === spec.region)) continue;`). The `ROUTINES` entries
+  for `living.tv` / `bathroom.use` / `bedroom.phone` REMAIN in `state.ts` on purpose: `SEALED_REGIONS`
+  is a reactivation list and they return with their rooms. Their presence in that array is not
+  evidence they execute.
+- **Post-revert luminance distribution** — RECORDED in §42. Playable region, same crop:
+  L*<20 **1.3 %**, L*20-40 **52.0 %**, L*>40 46.7 %, against 61.5 % / 3.0 % under the regression.
+- **Routines carry no position** — CLOSED in `082f21d` (`routineAt` derives it from `refilledBy`;
+  six distinct cue positions where there was one).
 
 ## Last Pass (HEAD: the overlay fix below)
 
