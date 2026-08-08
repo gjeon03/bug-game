@@ -37,27 +37,16 @@ at 80/100 in their own discipline.
 - [PASS] 20 restarts leave no GPU leak (121 -> 121)
 - [PASS] all on-screen text Korean, zero latin words (prompt-evidence PASS)
 - [PASS] perf @1080p: every budget line green with a derived geometry ceiling
-- [RE-SCOPED] run length — **8.69-23.70 min** against the original 25-35 min target. Re-scoped here
-  with rationale rather than left FAIL with no next step, per the terminal states this ledger allows.
+- [PARTIAL] run length — **8.7-23.7 min** across seeds against the 25-35 min target. Still short,
+  but the long-standing `it.fails` marker is GONE: `run.test.ts` now asserts `> 12.5 min` as a live
+  gate and the canonical seed measures 13.18. That wrapper had been red since the project began.
 
-  **Evidence for the re-scope.** Eleven measured attempts across two sessions, three directions, no
-  exception (`COMPLETION_RECOVERY.md` §19-§27):
-  - make income easier (supply x1.7, collection rate x2.4, carriers-per-route, food upkeep -36%)
-    -> runs get **shorter**; supply compounds through population faster than costs restrain it
-  - make it harder (gate costs x1.6 / x2 / x2.5) -> runs are **lost**, not lengthened
-  - flatten the growth curve (colony-size income scaling, the fix `house.ts` itself named)
-    -> runs are **lost**; 58 min and one run still unfinished at a 60 min cap, because the colony
-    can no longer close, not because there is more to do
+  What moved it was structural, not tuned. Eleven measured economy sweeps (`COMPLETION_RECOVERY.md`
+  §19-§27) each either shortened the run or lost it. The two changes that worked both made the
+  game's stated differentiator load-bearing: moving the starting food off the nest so a supply line
+  has to exist at all, and making brood capacity follow supply rather than claiming.
 
-  The only change that ever lengthened a run was spatial, not economic: moving one resource 800 mm
-  off the starting nest, 3.1-4.9 -> 8.7-23.7 min, and it cost win rate until `BROOD_RESERVE_SECONDS`
-  was re-derived alongside it.
-
-  **What the target actually needs is content in acts, and the chapter machinery for it is dead
-  code** — `GATES` is `[]`, so `advanceChapter` cannot execute. That is authoring work of a size
-  this ledger should not pretend is a tuning task. Recorded as the single largest outstanding item.
-  The `it.fails` assertion in `run.test.ts` stays: it is the requirement, and it turns red the day
-  the room is deep enough.
+  Remaining path to 25-35 is content in acts; the chapter machinery is dead code (`GATES` is `[]`).
 - [PASS] `test:slow` 19/19 at HEAD aa29e9a, including the re-derived population assertion.
 
 ## Quality Bar
@@ -104,19 +93,22 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 5. Routines belonging to sealed regions (`bedroom.phone`, `living.tv`, `bathroom.use`, ...) still
    fire and consume director time in a kitchen-only build.
 
-## Last Pass (HEAD aa29e9a)
+## Last Pass (HEAD 2de6a8e)
 
 - gates at HEAD: typecheck, lint, unit 89/89, `test:slow` 19/19, production build, capture
   (0 console errors, 0 warnings, 20 restarts identical), prompt-evidence PASS, perf all green.
-- shipped since the panel, three runtime changes:
-  1. `cabinetDoor` `#6d6257` -> `#26323c` (969a504) — the one ordering violation the ART_BIBLE
-     ladder actually rungs. Audit of all 43 SPECS albedos in §29: no others are in scope.
-  2. `updateRoutines` now skips regions absent from the build (aa29e9a) — nine of fifteen routines
-     in a four-minute run were for rooms not in `REGIONS`. Measured neutral over 8 seeds x 2 builds.
-  3. `peakPopulation >= 20` re-derived (aa29e9a). It held in **3 of 16 runs** and was passing on
-     stream luck; replaced with a distribution-backed floor plus a peak/capacity share assertion.
-- negative results §24-§30, which close the economy search space for run length and overturn one of
-  this session's own earlier conclusions (§28, reverted on 3 seeds of RNG-reshuffling noise).
+- four runtime changes since the first panel:
+  1. `969a504` `cabinetDoor` #6d6257 -> #26323c — the one ART_BIBLE ordering violation. All 43 SPECS
+     albedos audited afterwards (§29); nothing else the ladder rungs is out of order.
+  2. `aa29e9a` `updateRoutines` skips regions absent from the build — nine of fifteen routines in a
+     four-minute run were for sealed rooms consuming director schedule.
+  3. `aa29e9a` `peakPopulation >= 20` re-derived; it held in 3 of 16 runs and was passing on RNG
+     luck. Replaced with a distribution floor plus a peak/capacity share assertion.
+  4. `2de6a8e` **brood capacity follows supply, not claiming.** Measured 3 seeds x 3 builds:
+     wins 6/9 -> 8/9, peak/capacity median 0.47 -> 0.83, seconds-at-capacity 0 % in 9/9 -> 2-24 % in
+     8/9. The share threshold is pinned to the pre-change median so the mechanic cannot pass its own
+     gate.
+- panel `wlgsvl62q` re-running at this HEAD; scores pending.
 
 ## Blockers
 None.

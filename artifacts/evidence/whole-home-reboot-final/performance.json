@@ -1,5 +1,5 @@
 {
-  "headSha": "aa29e9adc01f92f9ad82bec9ef0029b5df6d1d0f",
+  "headSha": "2de6a8e8ab01a9ce44d5779f711d6aa4c86331d8",
   "hardware": {
     "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
     "vendor": "Google Inc. (Apple)",
@@ -8,7 +8,7 @@
   "window": {
     "seconds": 45,
     "frames": 2727,
-    "measuredSeconds": 45.4665
+    "measuredSeconds": 45.46709999996424
   },
   "duringCapture": {
     "time": 99,
@@ -16,7 +16,7 @@
     "workers": 9,
     "routes": 3,
     "threats": 0,
-    "deliveries": 52
+    "deliveries": 51
   },
   "audio": {
     "started": true,
@@ -29,16 +29,16 @@
     "worst": 18.80000000000291
   },
   "cpu": {
-    "p50": 4.199999988079071,
-    "p99": 7
+    "p50": 3.799999952316284,
+    "p99": 5.200000047683716
   },
   "gpu": {
-    "p50": 12.36425,
-    "p99": 13.717249,
+    "p50": 12.1195,
+    "p99": 15.214999,
     "samples": 2727
   },
   "frameTails": {
-    "over16": 1018,
+    "over16": 1001,
     "over33": 0,
     "over50": 0,
     "over100": 0,
@@ -52,11 +52,11 @@
     "geometries": 141,
     "materials": 52,
     "textures": 27,
-    "drawCalls": 462,
-    "triangles": 174719,
+    "drawCalls": 533,
+    "triangles": 164907,
     "lights": 3,
     "occluders": 16,
-    "occluderTests": 110,
+    "occluderTests": 107,
     "occluderCandidates": 16,
     "fading": 1,
     "visibleRoaches": 9,
@@ -97,20 +97,20 @@
     },
     {
       "metric": "gpu p99",
-      "value": 13.717249,
+      "value": 15.214999,
       "budget": 33,
       "pass": true,
       "note": "2727 samples"
     },
     {
       "metric": "peak draw calls",
-      "value": 462,
+      "value": 533,
       "budget": 900,
       "pass": true
     },
     {
       "metric": "peak triangles",
-      "value": 174719,
+      "value": 164907,
       "budget": 400000,
       "pass": true
     },
