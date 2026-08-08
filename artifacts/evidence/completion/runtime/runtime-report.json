@@ -56,7 +56,7 @@
     "blocker": null,
     "scout": {
       "surface": "kitchen.floor",
-      "x": 1438,
+      "x": 1427,
       "z": -1983
     },
     "stats": {
@@ -96,7 +96,7 @@
     "blocker": null,
     "scout": {
       "surface": "kitchen.floor",
-      "x": 1264,
+      "x": 1265,
       "z": -2048
     },
     "stats": {

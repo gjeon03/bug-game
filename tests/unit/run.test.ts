@@ -36,12 +36,29 @@ const MINUTE = 60;
 interface Played {
   readonly run: Run;
   readonly trace: BotTrace;
+  /** Fewest refuges held at once AFTER the colony first reached the winning share. */
+  readonly troughAfterPeak: number;
 }
 
 function play(seed: number, build: AdaptationFamily): Played {
   const run = createRun(seed);
-  const trace = playRun(run, { build, skipBathroom: false, maxSeconds: 50 * MINUTE });
-  return { run, trace };
+  let peak = 0;
+  let trough = Infinity;
+  const trace = playRun(run, {
+    build,
+    skipBathroom: false,
+    maxSeconds: 50 * MINUTE,
+    sample: (r) => {
+      const ids = kitchenRefuges(r);
+      const held = ids.filter((id) => {
+        const state = r.footholds.get(id);
+        return state?.claimed === true && state.damage < 1;
+      }).length;
+      if (held > peak) peak = held;
+      if (peak >= Math.ceil(ids.length * 0.75) && held < trough) trough = held;
+    },
+  });
+  return { run, trace, troughAfterPeak: trough };
 }
 
 /** Every refuge the kitchen offers. Victory is defined against this set, so the tests are too. */
@@ -119,9 +136,23 @@ describe('a competently played run takes the kitchen', () => {
   });
 
   it('survives an actual extermination before it is allowed to win', () => {
-    // Victory used to be strictly dominated by the last gate's own requirements, so the finale
-    // never ran and the win screen congratulated the player for withstanding nothing.
+    /*
+     * `exterminationSweeps >= 1` was the whole of this test, and it was an assertion that could not
+     * fail. The sweep levelled exactly one refuge, held went 8 to 7 against a threshold of 6, and
+     * `evaluateRun` declared victory later in the SAME tick — measured across nine bot runs, sweep
+     * timestamp and win timestamp were identical in all nine. The finale was a formality the test
+     * certified as an ordeal.
+     *
+     * What has to be true is that the colony was actually knocked under the line it needs and had
+     * to get back to it. That is the trough, not the counter.
+     */
     expect(played.run.stats.exterminationSweeps).toBeGreaterThanOrEqual(1);
+
+    const need = Math.ceil(kitchenRefuges(played.run).length * 0.75);
+    expect(
+      played.troughAfterPeak,
+      `held never dropped below ${need} after the sweep — the finale did nothing`,
+    ).toBeLessThan(need);
   });
 
   it('grows a colony that is visible rather than numerical', () => {

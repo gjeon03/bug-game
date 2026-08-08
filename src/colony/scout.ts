@@ -350,8 +350,17 @@ export function claimFoothold(run: Run, id: string): boolean {
   if (!site || !state) return false;
   if (state.claimed && state.damage <= 0) return false;
 
-  // A fresh take is the whole price; a repair is the fraction that was broken.
-  const share = state.claimed ? Math.max(0.2, Math.min(1, state.damage)) : 1;
+  /*
+   * A fresh take is the whole price; a repair is the fraction that was broken, capped below it.
+   *
+   * The cap is what keeps a harder sweep from becoming a costlier one. `strikeFootholds` now levels
+   * up to three refuges at high severity and leaves them `claimed` with `damage = 1`, and without
+   * the cap that arrives here as `share = 1` — the full price of ground the colony already knows.
+   * Recovery would then scale with punishment, which is the "buy length with prices" shape the
+   * brief rejects outright. Rebuilding on a floor you have already mapped costs less than taking it
+   * cold, and that is also just true.
+   */
+  const share = state.claimed ? Math.max(0.2, Math.min(0.7, state.damage)) : 1;
   const food = site.cost.food * share;
   const moisture = site.cost.moisture * share;
 

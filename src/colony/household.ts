@@ -731,28 +731,60 @@ export function strikeFootholds(run: Run, region: RegionId, amount: number): voi
    *
    * It is also the attributable version: the refuge you used hardest is the refuge they found.
    */
-  let focus = '';
-  let mostBrood = -1;
+  const held: { id: string; brood: number }[] = [];
   for (const [id, state] of run.footholds) {
     const site = run.house.footholds.get(id);
-    if (!site || site.region !== region || !state.claimed) continue;
-    if (state.brood <= mostBrood) continue;
-    mostBrood = state.brood;
-    focus = id;
+    if (!site || site.region !== region || !state.claimed || state.damage >= 1) continue;
+    held.push({ id, brood: state.brood });
   }
+  held.sort((a, b) => b.brood - a.brood);
 
-  for (const [id, state] of run.footholds) {
-    const site = run.house.footholds.get(id);
-    if (!site || site.region !== region || !state.claimed) continue;
+  /*
+   * How many refuges a sweep levels scales with how hard it was provoked.
+   *
+   * One, always, made the ending unfalsifiable. Measured across nine bot runs: eight refuges, a
+   * victory threshold of six, and exactly one refuge levelled — so held went 8 to 7, stayed above
+   * the threshold, and `evaluateRun` declared victory later in the SAME tick as the sweep. Sweep
+   * timestamp and win timestamp were identical in all nine. "The colony has to still be standing
+   * afterwards" was a sentence about nothing.
+   *
+   * It is a PROPORTION of what is held, not a count. A count tied to the current eight refuges
+   * would have to be retuned the moment the room gains or loses one, and the first version of this
+   * was exactly that mistake: `1 + floor(amount * 3)` gives two at the maximum first-sweep severity
+   * of 0.65, which against a threshold of `ceil(8 * 0.75) = 6` leaves held at exactly six and the
+   * win still lands in the sweep's own tick. Measured: nine of nine runs, unchanged.
+   *
+   * As a share it says the right thing at any size — the household found the colony, and how much
+   * of it they wreck depends on how loudly it announced itself. A quiet colony at severity 0.3
+   * loses one and gets the old survivable event; a provoked one at 0.65 loses three and drops under
+   * the line it needs, so the ending is something to work back from.
+   */
+  const levelled = Math.max(1, Math.min(held.length, Math.round(held.length * amount * 0.6)));
 
-    // The glancing share is deliberately small: a sweep that half-wrecks everything leaves the
-    // player with four repairs and no priority, which reads as attrition rather than as an event.
-    state.damage = id === focus ? 1 : Math.min(1, state.damage + amount * 0.35);
+  for (let i = 0; i < held.length; i++) {
+    const entry = held[i]!;
+    const state = run.footholds.get(entry.id)!;
+    const site = run.house.footholds.get(entry.id)!;
 
-    if (state.damage >= 1) {
-      state.claimed = false;
-      state.brood = 0;
-      logEvent(run, 'log.foothold.lost', 'danger', { foothold: site.labelKey });
+    if (i >= levelled) {
+      // The glancing share is deliberately small: a sweep that half-wrecks everything leaves the
+      // player with eight repairs and no priority, which reads as attrition rather than as an event.
+      state.damage = Math.min(0.95, state.damage + amount * 0.35);
+      continue;
     }
+
+    /*
+     * A levelled refuge stays `claimed`.
+     *
+     * It used to be cleared, and that quietly made retaking it cost full price — `scout.ts` charges
+     * `share = claimed ? damage : 1`. So every increase in how hard the sweep hits was also an
+     * increase in what the player pays to recover, which is precisely the "buy length with prices"
+     * move the brief rejects and thirteen recorded attempts have already failed at. Keeping the flag
+     * makes the retake a repair, and it keeps `isFirstTake` false so the adaptation point cannot be
+     * farmed by losing the same refuge twice. `damage = 1` is what stops it counting as held.
+     */
+    state.damage = 1;
+    state.brood = 0;
+    logEvent(run, 'log.foothold.lost', 'danger', { foothold: site.labelKey });
   }
 }
