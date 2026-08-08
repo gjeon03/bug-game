@@ -108,11 +108,17 @@ night"* — and the fix is that `ART_BIBLE.md` already writes the value ladder d
 ## Remaining High-Impact Gaps
 
 1. **Persona bar.** Third panel: systems 51 · level 51 · art 51 · feel 58, against 80 for each.
-   Scored at `97c1846`; nine commits have landed since, two of them behaviour changes (`a430a22`
-   visual timebase, `695bc84` capacity/supply wiring), so the shipped tree has no valid score.
-2. **Run length** — median 24.87 min, one seed 17.04, one of six runs lost, band not asserted.
-3. **W2 / W3 visual evidence** — both confirmed in source and in the running bundle, neither shown
-   in a frame. `COMPLETION_RECOVERY.md` §36, §39, §41.
+   Scored at `97c1846`; **three behaviour changes have landed since** — `a430a22` visual timebase,
+   `695bc84` capacity/supply wiring, `cf26b07` the second act — so the shipped tree has no valid
+   score. A fourth panel was launched and returned nothing (0-byte output).
+2. **Run length** — brood median **21.57 min** at HEAD (17.04 / 21.57 / 23.25), one of six runs
+   lost, band not asserted. It peaked at 24.87 and gave 3.3 min back to `695bc84`. Three settings
+   have put the median inside the band and all three cost win rate (§47), so the remaining path is
+   content, not another constant.
+3. **W2 visual evidence** — the overlay is confirmed in source and in the running bundle but has
+   never been shown in a frame with a prop in front of the ring. `COMPLETION_RECOVERY.md` §36.
+   (**W3 is CLOSED** — §45 captured ten bodies at ten distinct scales,
+   `artifacts/evidence/completion/workers/workers-crowd.png`.)
 
 ### Closed, and recorded here because they keep being re-opened from stale notes
 
